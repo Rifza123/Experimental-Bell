@@ -60,9 +60,10 @@ _Cara penggunaan: #enhance phox4_
 infos.set = `
 [ BOT SETTING ]
 
-- public <true/false>
-- autotyping <true/false>
-- autoreadsw <true/false>
+- public <on/off>
+- autotyping <on/off>
+- autoreadsw <on/off>
+- bell <on/off>
 
 _Example: .set public true_`
 
