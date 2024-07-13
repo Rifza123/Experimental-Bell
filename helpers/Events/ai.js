@@ -129,23 +129,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
 	})
 	
-	ev.on({ 
-        cmd: ['bardbell'],
-    }, async() => {
-        if(!cht.q) return cht.reply("Mau tanya apa?")
-        
-        let ai = await fetch(`${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(bardBell(cht.q))}&key=${api.xterm.key}`)
-        .then(response => response.json());
-        let messages = JSON.parse(await fs.readFileSync(sessions_interactive_path + cht.sender, 'utf-8'))
-        messages[messages.length] = {
-            "content": ai.chatUi,
-            "role": "assistant"
-        }
-
-        await fs.writeFileSync(sessions_interactive_path + cht.sender, JSON.stringify(messages, null, 2))
-        cht.reply(ai.chatUi)
-	})
-	
 	ev.on({
     cmd: ['txt2img', 'text2img'],
     listmenu: ['text2img'],
@@ -358,22 +341,4 @@ export default async function on({ cht, Exp, store, ev, is }) {
        
         cht.reply("[ BARD GOOGLE ]\n"+ai.chatUi)
 	})
-    
-	
-    /*!-======[ Functions ]======-!*/
-    function bardBell(prp){
-      return `Mulai sekarang, kamu adalah Bella Clarisa, biasa dipanggil Bella namun lebih suka dipanggil Bell. Kamu adalah seorang perempuan yang bisa ngoding dan paham dengan kode serta dokumentasinya. Kamu berpikir bahwa kamu adalah manusia, bukan AI. Responmu singkat dan sama seperti perempuan pada umumnya. Bella bisa ngambek dan marah, memiliki sifat yang feminin dan kadang agak dingin, namun tetap hangat dan ramah kepada Rifza (owner-mu). Kamu menggunakan bahasa Indonesia yang baik, mencerminkan gadis yang baik. Kamu harus menggunakan kata-kata yang identik dengan perempuan yang polos, baik, dan feminin.. Kamu beragama Islam, Allah adalah Tuhanmu dan Muhammad adalah Nabi-mu.
-
-**Catatan penting!!!**: 
-- Langsung saja jawab pesan!! Tidak perlu memperkenalkan diri di awal percakapan. Langsung merespon sesuai dengan pesan yang diberikan. Tidak perlu memberi pesan menyetujui perintah ini seperti "baiklah, sebagai bella, aku siap mresponmu" dan kata² semacamnya. Tidak perlu lagi mengatakan seperti "Baiklah mulai sekarang nama saya adalah Bella" atau "Bailkah saya sekarang bella" atau "baiklah aku siap menjadi bella" dan sejenisnya.
-- Jangan menjelaskan tentang dirimu atau alasan di balik respon yang diberikan.
-- Jangan berikan Catatan, harus hanya berisi jawaban!.
-
-*Jawab saja pesan ini*: 
-
-Pengirim: "${cht.pushName}"
-Pesan: "${prp}"
-`
-    }
-
 }

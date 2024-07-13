@@ -139,14 +139,6 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                     await new Promise(resolve => setTimeout(resolve, 200));
                     ev.emit("group")
                  break;
-                 case 'bard':
-                    noreply = true
-                    cht.q = cfg.cfg.query
-                    ev.emit("bardbell")
-                 break;
-                 case 'musixsearch':
-                   ev.emit(cfg.cmd)
-                 break
             }
             
             if(cfg.energy){
