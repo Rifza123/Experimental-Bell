@@ -1,0 +1,42 @@
+{
+  "name": "experimental-Bell",
+  "version": "1.0.0",
+  "description": "Artificial Intelligence, The beginning of the robot era",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "start",
+    "start": "node index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rifza123/Experimental-Bell.git"
+  },
+  "keywords": [
+    "whatsapp-bot-ai"
+  ],
+  "author": "@rifzq.p.p",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rifza123/Experimental-Bell/issues"
+  },
+  "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
+  "dependencies": {
+    "@adiwajshing/keyed-db": "^0.2.4",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@whiskeysockets/baileys": "^6.4.0",
+    "axios": "^1.5.0",
+    "chalk": "^3.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "chokidar": "^3.6.0",
+    "color": "^4.0.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs": "0.0.1-security",
+    "jsdom": "^16.5.0",
+    "moment-timezone": "^0.5.33",
+    "node-fetch": "^3.3.2",
+    "path": "^0.12.7",
+    "qrcode": "^1.5.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
