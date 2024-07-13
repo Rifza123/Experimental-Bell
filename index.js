@@ -39,7 +39,7 @@ let {
 } = baileys;
 
 
-let store = makeInMemoryStore({ logger: pino().child(cfg.logger) });
+let store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
 async function launch() {
     const rl = readline.createInterface({
@@ -70,7 +70,7 @@ async function launch() {
         const Exp = makeWASocket({
             logger: pino({ level: 'silent' }),
             printQRInTerminal: !global.pairingCode,
-            browser: cfg.browser,
+            browser: ['Chrome (Linux)', global["botname"], '1.0.0'],
             auth: state,
             generateHighQualityLinkPreview: true,
             msgRetryCounterCache

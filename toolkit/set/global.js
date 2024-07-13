@@ -49,13 +49,8 @@ global['cfg'] = {
     public: !0,
     ai_interactive: !0,
     autotyping: !1,
-    browser: ['Chrome (Linux)', botname, '1.0.0'],
     first: {
         energy: 200
-    },
-    logger: {
-        level: 'silent',
-        stream: 'store'
     },
     menu: {
         frames: {
