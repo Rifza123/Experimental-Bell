@@ -64,6 +64,8 @@ infos.set = `
 - autotyping <on/off>
 - autoreadsw <on/off>
 - bell <on/off>
+- autoreadpc <on/off>
+- autoreadgc <on/of>
 
 _Example: .set public true_`
 

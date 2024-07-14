@@ -49,6 +49,8 @@ global['cfg'] = {
     public: !0,
     ai_interactive: !0,
     autotyping: !1,
+    autoreadpc: !1,
+    autoreadgc: !1,
     first: {
         energy: 200
     },

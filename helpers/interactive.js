@@ -82,6 +82,7 @@ async function In({ cht, Exp, store, ev, ai, is }) {
             })
             let config = _ai.data
             console.log(config)
+            await Exp.func.addAiResponse()
             let noreply = false
             switch (config?.cmd) {
                 case 'public':

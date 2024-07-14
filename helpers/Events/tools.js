@@ -6,7 +6,7 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let { sender } = cht
+    let _key = key[cht.sender]
 
     ev.on({ 
         cmd: ['remini'], 
@@ -20,12 +20,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
     }, async({ media }) => {
         try{
-            await cht.edit("Bntr...", key[sender])
+            await cht.edit("Bntr...", _key)
             let tph = await TelegraPh(media)
-            await cht.edit('Processing...', key[sender])
+            await cht.edit('Processing...', _key)
             let res = (await fetch(api.xterm.url + "/api/tools/remini?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
             await Exp.sendMessage(cht.id, { image: { url: res.url }, caption: `Response Time: ${res.run_Time}`}, { quoted: cht })
-            cht.edit("Nih", key[sender])
+            cht.edit("Nih", _key)
         } catch (e) {
             cht.reply("!Type error:\n" + e)
         }
@@ -42,7 +42,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            save: true
         }
     }, async({ media }) => {
-        await cht.edit("Bntr...", key[sender])
+        await cht.edit("Bntr...", _key)
         let tph = await TelegraPh(media)
             await fs.unlinkSync(media)
             cht.reply(tph)
@@ -53,7 +53,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async() => {
         let tryng= 0;
         let key = data.key[cht.sender]
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", key[sender])
+        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", _key)
             await Exp.sendPresenceUpdate('recording', cht.id);
             await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
 	})
@@ -90,7 +90,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let type = cht.q ? cht.q : "text"
         if(cht.q == "list") return cht.reply(infos.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
-        await cht.edit("Uploading image...", key[sender])
+        await cht.edit("Uploading image...", _key)
         let imgurl = await TelegraPh(media)
         await fs.unlinkSync(media)
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
@@ -101,7 +101,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           try{
             let s = await fetch(`${api.xterm.url}/api/tools/enhance/taskStatus?id=${ai.id}`)
             .then(response => response.json());
-            await cht.edit(`Status: ${s?.status}\nProgress: ${s?.progress}%`, key[sender])
+            await cht.edit(`Status: ${s?.status}\nProgress: ${s?.progress}%`, _key)
             if (s.task_status == "failed") {
                 return cht.reply(s.task_status)
             }
@@ -138,7 +138,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            msg: "Mana audionya?"
         }
     }, async({ media }) => {
-         await cht.edit("Bntar tak dengerin dulu...", key[sender])
+         await cht.edit("Bntar tak dengerin dulu...", _key)
          musixSearch(media)
          .then(a => cht.reply(a))
 	})
@@ -167,7 +167,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            msg: "Mana audionya?"
         }
     }, async({ media }) => {
-         await cht.edit("Tunggu ya, sabar", key[sender])
+         await cht.edit("Tunggu ya, sabar", _key)
          let response = await fetch(`${api.xterm.url}/api/audioProcessing/stems?key=${api.xterm.key}`, {
            method: 'POST',
              headers: {

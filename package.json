@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Rifza123/XilverMoods-MD.git"
+    "url": "git+https://github.com/Rifza123/Experimental-Bell.git"
   },
   "keywords": [
     "whatsapp-bot-ai"
@@ -18,9 +18,9 @@
   "author": "@rifzq.p.p",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Rifza123/XilverMoods-MD/issues"
+    "url": "https://github.com/Rifza123/Experimental-Bell/issues"
   },
-  "homepage": "https://github.com/Rifza123/XilverMoods-MD#readme",
+  "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

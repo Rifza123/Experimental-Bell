@@ -91,12 +91,14 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
     };
 
     if (!is.group && cht.msg) {
-        global.cfg["autotyping"] && Exp.sendPresenceUpdate('composing', cht.id);
+        global.cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id);
+        global.cfg["autoreadpc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ PRV ]', 'red') + ' >';
         console.log(`${prefix} From: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
     }
 
     if (is.group) {
+        global.cfg["autoreadgc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ GR ]', 'pink') + ' >';
         console.log(`${prefix} From: ${color(cht.id, 'cyan')} User: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
     }

@@ -10,7 +10,7 @@ let infos = cfg.menu.infos;
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
-    let { sender } = cht
+    let _key = key[cht.sender]
 
     ev.on({ 
         cmd: ['cover','covers'],
@@ -27,7 +27,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            }
         }
     }, async({ media }) => {
-        await cht.edit('```Wait...```', key[sender])
+        await cht.edit('```Wait...```', _key)
         axios.post(`${api.xterm.url}/api/audioProcessing/voice-covers?model=${cht.q}&key=${api.xterm.key}`, media, {
             headers: {
                 'Content-Type': 'application/octet-stream'
@@ -47,14 +47,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                      case 'starting':
                      case 'processing':
                      case 'mixing':
-                         cht.edit(data.msg, key[sender])
+                         cht.edit(data.msg, _key)
                      break
                      case 'success':
                          await Exp.sendMessage(cht.id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
                          response.data.destroy();
                      break
                      case 'failed':
-                         cht.edit('Failed❗️:', key[sender]);
+                         cht.edit('Failed❗️:', _key);
                          response.data.destroy(); 
                      break
                  }
@@ -62,7 +62,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            });
          })
          .catch(error => {
-             cht.edit('Error:'+error.response ? error.response.data : error.message, key[sender])
+             cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
          });
     })
     
@@ -75,7 +75,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
     console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
-        cht.edit("Bntr...", key[sender])
+        cht.edit("Bntr...", _key)
         Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 } }, { quoted: cht })
 	})
 	
@@ -96,7 +96,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             if(!cht.q) return cht.reply(infos.filters)
            type = cht.q
         }
-        await cht.edit("Bntr...", key[sender])
+        await cht.edit("Bntr...", _key)
         let tph = await TelegraPh(media)
         try{
           fs.unlinkSync(media)
@@ -105,7 +105,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             if(!ai.status) return cht.reply(ai?.msg || "Error!")
             while(tryng < 50){
                let s = await fetch(api.xterm.url + "/api/img2img/filters/batchProgress?id="+ai.id).then(a => a.json())
-               cht.edit(s?.progress || "Prepare... ", key[sender])
+               cht.edit(s?.progress || "Prepare... ", _key)
                if(s.status == 3){
                   return Exp.sendMessage(cht.id, { image: { url: s.url } }, { quoted: cht })                
                }
@@ -125,7 +125,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['bell2speech'],
         energy: 5
     }, async() => {
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", key[sender])
+        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", _key)
             await Exp.sendPresenceUpdate('recording', cht.id);
             await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
 	})
@@ -146,7 +146,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let loraPart = model.split("[")[1]?.replace("]", "");
     let loras = loraPart ? JSON.parse("[" + loraPart + "]") : [];
 
-    await cht.edit('```Bntr..```', key[sender])
+    await cht.edit('```Bntr..```', _key)
 
       try {
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -213,9 +213,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             let s = await sResponse.json();
 
             if (s.taskStatus === 0) {
-                await cht.edit('```Starting..```', key[sender])
+                await cht.edit('```Starting..```', _key)
             } else if (s.taskStatus === 1) {
-                await cht.edit("Processing.... " + s.progress + "%", key[sender])
+                await cht.edit("Processing.... " + s.progress + "%", _key)
             } else if (s.taskStatus === 2) {
                 return Exp.sendMessage(cht.id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht });
             } else if (s.taskStatus === 3) {

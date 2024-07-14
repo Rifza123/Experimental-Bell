@@ -9,7 +9,7 @@ let infos = cfg.menu.infos;
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let { sender } = cht
+    let _key = key[cht.sender]
     
     ev.on({ 
       cmd: ['pinterestdl', 'pindl'], 
@@ -36,14 +36,14 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await cht.reply('```Processing...```')
         try {
             let m = await mediafireDl(q);
-            await cht.edit("Checking media type...", key[sender])
+            await cht.edit("Checking media type...", _key)
             let { headers } = await axios.get(m.link);
             let type = headers["content-type"];
-            await cht.edit("Sending...", key[sender] )
+            await cht.edit("Sending...", _key )
             await Exp.sendMessage(cht.id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht });
-            await cht.edit("Success", key[sender] )
+            await cht.edit("Success", _key )
         } catch (e) {
-            await cht.edit("TypeErr: " + e, key[sender] )
+            await cht.edit("TypeErr: " + e, _key )
         }
     });
 
@@ -57,9 +57,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(!(is.quoted?.url || is.url)) return cht.reply("Mana urlnya?")
         let url = is.quoted?.url || is.url 
         if(!(url ? url[0].includes("tiktok.com") : false)) return cht.reply("Itu bukan link tiktok!")
-        await cht.edit("Bntr..", key[sender])
+        await cht.edit("Bntr..", _key)
         let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" + url[0] + "&key=" + api.xterm.key).then(a => a.json())).data;
-        await cht.edit("Lagi dikirim...", key[sender]);
+        await cht.edit("Lagi dikirim...", _key);
         let type = data.type;
         if (type == 'image') {
             for (let image of data.media) {
@@ -68,7 +68,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else if (type == 'video') {
             await Exp.sendMessage(cht.id, { video: { url: data.media[1].url } }, { quoted: cht });
         }
-        await cht.edit("Dah tuh", key[sender]);
+        await cht.edit("Dah tuh", _key);
     });
 
     ev.on({ 
@@ -81,9 +81,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let q = is.quoted?.url || is.url || (typeof cht.q !== 'undefined' ? [cht.q] : null);
         if (!q) return cht.reply('Harap sertakan url/judul videonya!');
         try {
-            await cht.edit("Searching...", key[sender])
+            await cht.edit("Searching...", _key)
             let search = (await fetch(api.xterm.url + "/api/search/youtube?query=" + q[0] + "&key=" + api.xterm.key).then(a => a.json())).data;
-            await cht.edit("Downloading...", key[sender])
+            await cht.edit("Downloading...", _key)
             let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=" + q[0] + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3") + "&key=" + api.xterm.key).then(a => a.json())).data;
             let item = search.items[0];
             
@@ -106,7 +106,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 },
             };
             console.log(audio)
-            await cht.edit("Sending...", key[sender])
+            await cht.edit("Sending...", _key)
             await Exp.sendMessage(cht.id, audio, { quoted: cht });
         } catch (e) {
             console.log(e);
