@@ -9,13 +9,14 @@ let infos = cfg.menu.infos;
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let _key = key[cht.sender]
+    let { sender } = cht
     
     ev.on({ 
       cmd: ['pinterestdl', 'pindl'], 
       listmenu: ['pinterestdl'], 
       tag: 'downloader',
-      args: "Mana linknya?"
+      args: "Mana linknya?",
+      energy: 5
     }, async () => {
         let q = is.quoted?.url || is.url;
         await cht.reply('```Processing...```')
@@ -31,9 +32,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 8 
     }, async () => {
+        const _key = key[sender]
         let q = is.quoted?.url || is.url;
         if (!q) return cht.reply("Mana linknya?");
-        await cht.reply('```Processing...```')
+        await cht.edit('```Processing...```', _key)
         try {
             let m = await mediafireDl(q);
             await cht.edit("Checking media type...", _key)
@@ -54,6 +56,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 4 
     }, async () => {
+        const _key = key[sender]
         if(!(is.quoted?.url || is.url)) return cht.reply("Mana urlnya?")
         let url = is.quoted?.url || is.url 
         if(!(url ? url[0].includes("tiktok.com") : false)) return cht.reply("Itu bukan link tiktok!")
@@ -78,6 +81,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 4 
     }, async () => {
+        const _key = key[sender]
         let q = is.quoted?.url || is.url || (typeof cht.q !== 'undefined' ? [cht.q] : null);
         if (!q) return cht.reply('Harap sertakan url/judul videonya!');
         try {

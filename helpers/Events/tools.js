@@ -6,7 +6,7 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let _key = key[cht.sender]
+    let { sender } = cht
 
     ev.on({ 
         cmd: ['remini'], 
@@ -19,6 +19,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            save: true
         }
     }, async({ media }) => {
+       const _key = key[sender]
         try{
             await cht.edit("Bntr...", _key)
             let tph = await TelegraPh(media)
@@ -42,20 +43,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
            save: true
         }
     }, async({ media }) => {
-        await cht.edit("Bntr...", _key)
+        await cht.edit("Bntr...", key[sender])
         let tph = await TelegraPh(media)
             await fs.unlinkSync(media)
             cht.reply(tph)
-	})
-	ev.on({ 
-        cmd: ['bell2speech'],
-        energy: 5
-    }, async() => {
-        let tryng= 0;
-        let key = data.key[cht.sender]
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", _key)
-            await Exp.sendPresenceUpdate('recording', cht.id);
-            await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
 	})
 
 	ev.on({ 
@@ -69,7 +60,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            save: true
         }
     }, async({ media }) => {
-        await cht.reply("Bntr...")
+        await cht.edit("Bntr...", key[sender])
         let tph = await TelegraPh(media)
             await fs.unlinkSync(media)
         let dsc = await fetch(`${api.xterm.url}/api/img2txt/instant-describe?url=${tph}&key=${api.xterm.key}`)
@@ -87,6 +78,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            save: true
         }
     }, async({ media }) => {
+        const _key = key[sender]
         let type = cht.q ? cht.q : "text"
         if(cht.q == "list") return cht.reply(infos.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
@@ -138,7 +130,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            msg: "Mana audionya?"
         }
     }, async({ media }) => {
-         await cht.edit("Bntar tak dengerin dulu...", _key)
+         await cht.edit("Bntar tak dengerin dulu...", key[sender])
          musixSearch(media)
          .then(a => cht.reply(a))
 	})
@@ -167,7 +159,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            msg: "Mana audionya?"
         }
     }, async({ media }) => {
-         await cht.edit("Tunggu ya, sabar", _key)
+         await cht.edit("Tunggu ya, sabar", key[sender])
          let response = await fetch(`${api.xterm.url}/api/audioProcessing/stems?key=${api.xterm.key}`, {
            method: 'POST',
              headers: {

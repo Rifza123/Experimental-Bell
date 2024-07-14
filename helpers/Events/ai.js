@@ -10,7 +10,7 @@ let infos = cfg.menu.infos;
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
-    let _key = key[cht.sender]
+    let { sender } = cht
 
     ev.on({ 
         cmd: ['cover','covers'],
@@ -27,6 +27,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            }
         }
     }, async({ media }) => {
+        const _key = key[sender]
         await cht.edit('```Wait...```', _key)
         axios.post(`${api.xterm.url}/api/audioProcessing/voice-covers?model=${cht.q}&key=${api.xterm.key}`, media, {
             headers: {
@@ -75,7 +76,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
     console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
-        cht.edit("Bntr...", _key)
+        cht.edit("Bntr...", key[sender])
         Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 } }, { quoted: cht })
 	})
 	
@@ -90,6 +91,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            save: true
         }
     }, async({ media }) => {
+        const _key = key[sender]
         let tryng = 0;
         let type = "anime2d"
         if(cht.cmd == "filters"){
@@ -125,7 +127,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['bell2speech'],
         energy: 5
     }, async() => {
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", _key)
+        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", key[sender])
             await Exp.sendPresenceUpdate('recording', cht.id);
             await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
 	})
@@ -135,7 +137,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     listmenu: ['text2img'],
     tag: 'stablediffusion',
     energy: 5
-}, async () => {
+    }, async () => {
+    const _key = key[sender]
     if (!cht.q) return cht.reply(infos.txt2img);
     let [model, prompt, negative] = cht.q.split("|");
     if (!model.includes("[")) {
