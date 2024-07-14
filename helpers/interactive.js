@@ -80,10 +80,10 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                msgtype: cht.type,
                _logic: false
             })
-            let cfg = _ai.data
-            console.log(cfg)
+            let config = _ai.data
+            console.log(config)
             let noreply = false
-            switch (cfg.cmd) {
+            switch (config?.cmd) {
                 case 'public':
                 if(!is.owner) return cht.reply("Maaf, males nanggepin")
                     global.cfg.public = !0
@@ -96,37 +96,36 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                  break;
                  case 'voice':
                         await Exp.sendPresenceUpdate('recording', cht.id);
-                        await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cfg.msg}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
+                        await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${config?.msg}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
                  break;
                  case 'tiktok':
                  case 'pinterestdl':
                  case 'menu':
                     noreply = true
-                    is.url = [cfg?.cfg?.url ?? ""]
-                    await cht.reply(cfg?.msg ?? "ok")
-                    ev.emit(cfg.cmd)
+                    is.url = [config?.cfg?.url ?? ""]
+                    await cht.reply(config?.msg ?? "ok")
+                    ev.emit(config?.cmd)
                  break;
                  
                  case 'ytm4a':
                  case 'ytmp4':
                     noreply = true
-                    cht.cmd = cfg.cmd
-                    is.url = [cfg.cfg.url]
-                    await cht.reply(cfg.msg ?? "ok")
-                    ev.emit(cfg.cmd)
+                    cht.cmd = config?.cmd
+                    is.url = [config?.cfg.url]
+                    await cht.reply(config?.msg ?? "ok")
+                    ev.emit(config?.cmd)
                  break;
                  case 'lora':
                     noreply = true
-                    cht.q = "18|"+cfg.cfg.prompt
-                    await cht.reply(cfg.msg ?? "ok")
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    ev.emit(cfg.cmd)
+                    cht.q = "18|"+config?.cfg.prompt
+                    await cht.reply(config?.msg ?? "ok")
+                    ev.emit(config?.cmd)
                  break;
                  case 'pinterest':
                     noreply = true
-                    await cht.reply(cfg?.msg ?? "ok")
-                    cht.q = cfg.cfg.query
-                    ev.emit(cfg.cmd)
+                    await cht.reply(config?.msg ?? "ok")
+                    cht.q = config?.cfg.query
+                    ev.emit(config?.cmd)
                  break;
                  case 'closegroup':
                     noreply = true
@@ -136,26 +135,25 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                  case 'opengroup':
                     noreply = true
                     cht.q = "open"
-                    await new Promise(resolve => setTimeout(resolve, 200));
                     ev.emit("group")
                  break;
             }
             
-            if(cfg.energy){
+            if(config?.energy){
                 let conf = {}
-                    conf.energy = /[+-]/.test(`${cfg.energy}`) ? `${cfg.energy}` : `+${cfg.energy}`
+                    conf.energy = /[+-]/.test(`${config?.energy}`) ? `${config?.energy}` : `+${config?.energy}`
                 if(conf.energy.startsWith("-")){
                     conf.action = "reduceEnergy"
                 } else {
                     conf.action = "addEnergy"
                 }
                 await Exp.func.archiveMemories[conf.action](cht.sender, parseInt(conf.energy.slice(1)))
-                await cht.reply(cfg.energy + " Energy⚡️")
-                cfg.energyreply = true
+                await cht.reply(config?.energy + " Energy⚡️")
+                config.energyreply = true
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            if (cfg.cmd !== "voice" && !noreply) {
-                cfg.msg && await cht[cfg.energyreply ? "edit" : "reply"](cfg.msg, key[cht.sender])
+            if (config?.cmd !== "voice" && !noreply) {
+                config?.msg && await cht[config?.energyreply ? "edit" : "reply"](config?.msg, key[cht.sender])
             }
         } catch (error) {
             console.error("Error parsing AI response:", error);
@@ -163,7 +161,5 @@ async function In({ cht, Exp, store, ev, ai, is }) {
         }
 	}
 	
-	function logic(){
-	    return fs.readFileSync(fol[3] + "logic.txt", "utf8")
-	}
+	
 }

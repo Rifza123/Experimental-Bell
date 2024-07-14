@@ -107,4 +107,4 @@ async function launch() {
   		});
 }
 launch()
-process.on('uncaughtException', console.log);
+//process.on('uncaughtException', console.log);

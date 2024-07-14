@@ -9,7 +9,7 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r();
 let infos = cfg.menu.infos;
 
 /*!-======[ Default Export Function ]======-!*/
-export default async function on({ cht, Exp, store, ev, is }) {
+export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender } = cht
 
     ev.on({ 
@@ -73,6 +73,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
+    console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
         cht.edit("Bntr...", key[sender])
         Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 } }, { quoted: cht })

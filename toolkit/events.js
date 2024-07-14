@@ -6,12 +6,14 @@ const { func } = await "./toolkit/func.js".r();
 const { ArchiveMemories } = await "./toolkit/usr.js".r();
 
 class EventEmitter {
-    constructor({ Exp, cht, is }) {
+    constructor({ Exp, store, cht, ai, is }) {
         this.Exp = Exp;
-        this.c = cht;
+        this.store = store;
+        this.cht = cht;
+        this.ai = ai;
         this.is = is;
         this.eventFiles = [];
-        this.dataEvents = Data.Events
+        this.dataEvents = Data.Events;  
     }
 
     on(eventMap, resolve) {
@@ -34,53 +36,53 @@ class EventEmitter {
         let media = null;
         await func.addCmd();
         await func.addCMDForTop(event);
-        if (this.c.memories.energy < 1 && ev.energy) {
-            return this.c.reply(`Males😞\n⚡️Energy: ${this.c.memories.energy}`);
+        if (this.cht.memories.energy < 1 && ev.energy) {
+            return this.cht.reply(`Males😞\n⚡️Energy: ${this.cht.memories.energy}`);
         }
-        if (ev.args && !this.c.q) return this.c.reply(ev.args);
+        if (ev.args && !this.cht.q) return this.cht.reply(ev.args);
         if (ev.media) {
             const { type, msg, etc } = ev.media;
-            if (type === "image" && !this.is.quoted?.image) return this.c.reply(msg);
+            if (type === "image" && !this.is.quoted?.image) return this.cht.reply(msg);
             if (type === "audio") {
-                if (!this.is.quoted?.audio) return this.c.reply(msg);
-                if (etc && this.is.quoted?.audio?.seconds > etc.seconds) return this.c.reply(etc.msg);
+                if (!this.is.quoted?.audio) return this.cht.reply(msg);
+                if (etc && this.is.quoted?.audio?.seconds > etc.seconds) return this.cht.reply(etc.msg);
             }
             media = ev.media.save
                 ? await this.Exp.func.downloadSave(this.is.quoted[type], type)
-                : await this.c.quoted.download();
+                : await this.cht.quoted.download();
         }
 
         if (ev.energy) {
-            await ArchiveMemories.reduceEnergy(this.c.sender, ev.energy);
-            await this.c.reply(`-${ev.energy} Energy⚡`);
+            await ArchiveMemories.reduceEnergy(this.cht.sender, ev.energy);
+            await this.cht.reply(`-${ev.energy} Energy⚡`);
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         ev.resolve({ media });
     }
     
-    async loadEventHandler(file, exported) {
+    async loadEventHandler(file) {
         if (!Data.Events.has(file)) {
             const { default: on } = await `./helpers/Events/${file}`.r();
             Data.Events.set(file, on);
         }
     }
 
-    async loadEventHandlers(exported) {
+    async loadEventHandlers() {
         this.eventFiles = readdirSync('./helpers/Events').filter(file => file.endsWith('.js'));
         for (const file of this.eventFiles) {
-            await this.loadEventHandler(file, exported);
+            await this.loadEventHandler(file, { ...this, ev: this });
             let on = this.dataEvents.get(file);
-            await on(exported);
+            await on({ ...this, ev: this });
         }
     }
     
-    async reloadEventHandlers(exported) {
+    async reloadEventHandlers() {
         this.eventFiles = readdirSync('./helpers/Events').filter(file => file.endsWith('.js'));
         for (const file of this.eventFiles) {
             Data.Events.delete(file);
-            await this.loadEventHandler(file, exported);
+            await this.loadEventHandler(file, { ...this, ev: this });
             let on = Data.Events.get(file);
-            await on(exported);
+            await on({ ...this, ev: this });
         }
     }
 }

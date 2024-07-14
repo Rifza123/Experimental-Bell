@@ -25,6 +25,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         try {
         await cht.edit("Bntr...", key[sender])
         let pint = (await fetch(api.xterm.url + "/api/search/pinterest-video?query=" + cht.q + "&key=" + api.xterm.key).then(a => a.json())).data
+        if(pint.pins.length < 1) return cht.reply("Video tidak ditemukan!")
         let pin = pint.pins[Math.floor(Math.random() * pint.pins.length)]
         let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + pin.link + "&key=" + api.xterm.key).then(a => a.json())).data
         let _pin = Object.values(p.videos)[0].url

@@ -106,11 +106,9 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
 
     if (!is.memories) await ArchiveMemories.add(cht.sender);
 
-    const ev = new EventEmitter({ Exp, cht, is });
-    const exported = { Exp, ev, store, cht, ai, is };
-
-    await ev.loadEventHandlers(exported);
-    await In(exported);
+    const ev = new EventEmitter({ Exp, store, cht, ai, is });
+    await ev.loadEventHandlers();
+    await In({ Exp, store, ev, cht, ai, is });
 
     cht.cmd && await ev.emit(cht.cmd);
 
@@ -125,7 +123,7 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
         onreload = true;
         setTimeout(async () => {
              try{ 
-                 await ev.reloadEventHandlers(exported);
+                 await ev.reloadEventHandlers();
              } catch {}
                  onreload = false;
              }, 2000); 
