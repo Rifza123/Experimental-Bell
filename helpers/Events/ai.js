@@ -123,15 +123,6 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	
 	})
 	
-	ev.on({ 
-        cmd: ['bell2speech'],
-        energy: 5
-    }, async() => {
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", key[sender])
-            await Exp.sendPresenceUpdate('recording', cht.id);
-            await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
-	})
-	
 	ev.on({
     cmd: ['txt2img', 'text2img'],
     listmenu: ['text2img'],
