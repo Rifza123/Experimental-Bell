@@ -1,6 +1,6 @@
 # Experimental-Bell
 
-##Instalasi awal
+## Instalasi awal
 
 1. Update package
 
@@ -26,7 +26,7 @@ apt install ffmpeg -y
 apt install git
 ```
 
-5. Clone repository dari git
+5. Cloning repo
 
 ```bash
 git clone https://github.com/Rifza123/Experimental-Bell.git
@@ -74,7 +74,7 @@ Jika mengalami kesulitan, coba hapus folder `lib/connection/session` dan jalanka
 
 ```javascript
 const fs = "fs".import(); 
-// Atau bisa gunakan await untuk modul mengatasi promise
+// Atau bisa gunakan await untuk mengatasi promise
 //const fs = await "fs".import()
 ```
 
