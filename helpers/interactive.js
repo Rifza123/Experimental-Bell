@@ -88,16 +88,16 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                 case 'public':
                 if(!is.owner) return cht.reply("Maaf, males nanggepin")
                     global.cfg.public = !0
-                    cht.reply("Berhasil mengubah mode menjadi public!")
+                    return cht.reply("Berhasil mengubah mode menjadi public!")
                  break;
                 case 'self':
                 if(!is.owner) return cht.reply("Maaf, males nanggepin")
                     global.cfg.public = !1
-                    cht.reply("Berhasil mengubah mode menjadi self!")
+                    await cht.reply("Berhasil mengubah mode menjadi self!")
                  break;
                  case 'voice':
-                        await Exp.sendPresenceUpdate('recording', cht.id);
-                        await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${config?.msg}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
+                   await Exp.sendPresenceUpdate('recording', cht.id);
+                   return Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${config?.msg}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
                  break;
                  case 'tiktok':
                  case 'pinterestdl':
@@ -105,7 +105,7 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                     noreply = true
                     is.url = [config?.cfg?.url ?? ""]
                     await cht.reply(config?.msg ?? "ok")
-                    ev.emit(config?.cmd)
+                    return ev.emit(config?.cmd)
                  break;
                  
                  case 'ytm4a':
@@ -114,29 +114,29 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                     cht.cmd = config?.cmd
                     is.url = [config?.cfg.url]
                     await cht.reply(config?.msg ?? "ok")
-                    ev.emit(config?.cmd)
+                    return ev.emit(config?.cmd)
                  break;
                  case 'lora':
                     noreply = true
                     cht.q = "18|"+config?.cfg.prompt
                     await cht.reply(config?.msg ?? "ok")
-                    ev.emit(config?.cmd)
+                    return ev.emit(config?.cmd)
                  break;
                  case 'pinterest':
                     noreply = true
                     await cht.reply(config?.msg ?? "ok")
                     cht.q = config?.cfg.query
-                    ev.emit(config?.cmd)
+                    return ev.emit(config?.cmd)
                  break;
                  case 'closegroup':
                     noreply = true
                     cht.q = "close"
-                    ev.emit("group")
+                    return ev.emit("group")
                  break;
                  case 'opengroup':
                     noreply = true
                     cht.q = "open"
-                    ev.emit("group")
+                    return ev.emit("group")
                  break;
             }
             
@@ -151,7 +151,6 @@ async function In({ cht, Exp, store, ev, ai, is }) {
                 await Exp.func.archiveMemories[conf.action](cht.sender, parseInt(conf.energy.slice(1)))
                 await cht.reply(config?.energy + " Energy⚡️")
                 config.energyreply = true
-                await new Promise(resolve => setTimeout(resolve, 1000));
             }
             if (config?.cmd !== "voice" && !noreply) {
                 config?.msg && await cht[config?.energyreply ? "edit" : "reply"](config?.msg, key[cht.sender])

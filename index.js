@@ -22,12 +22,12 @@ const NodeCache = "nodecache".import()
 let { Boom } = "boom".import();
 
 /*!-======[ Functions Imports ]======-!*/
-const { EventEmitter } = await (fol[0] + "events.js").r();
-const { ArchiveMemories } = await (fol[0] + "usr.js").r();
-const { color, bgcolor } = await (fol[0] + "color.js").r();
-const { ai } = await (fol[2] + "reasoner.js").r();
-const { func } = await (fol[0] + "func.js").r();
-let { Connecting } = await (fol[8] + "systemConnext.js").r()
+const { EventEmitter } = await "./toolkit/events.js".r();
+const { ArchiveMemories } = await "./toolkit/usr.js".r();
+const { color, bgcolor } = await './toolkit/color.js'.r();
+const { ai } = await "./machine/reasoner.js".r();
+const { func } = await "./toolkit/func.js".r();
+let { Connecting } = await "./connection/systemConnext.js".r()
 
 let {
     makeWASocket,
@@ -92,8 +92,8 @@ async function launch() {
         Exp.ev.on('messages.upsert', async ({
   			messages
   		}) => {
-  	    	const { default: helper } = await (fol[1] + "client.js").r()
-  	    	const { default: In } = await (fol[1] + "interactive.js").r();
+  	    	const { default: helper } = await "./helpers/client.js".r()
+  	    	const { default: In } = await "./helpers/interactive.js".r();
 
   			const cht = messages[0];
   			      cht.id = cht.key.remoteJid
@@ -107,4 +107,4 @@ async function launch() {
   		});
 }
 launch()
-//process.on('uncaughtException', console.log);
+process.on('uncaughtException', console.log);

@@ -109,7 +109,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     },
                 },
             };
-            console.log(audio)
             await cht.edit("Sending...", _key)
             await Exp.sendMessage(cht.id, audio, { quoted: cht });
         } catch (e) {

@@ -110,10 +110,10 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
 
     const ev = new EventEmitter({ Exp, store, cht, ai, is });
     await ev.loadEventHandlers();
-    await In({ Exp, store, ev, cht, ai, is });
 
     cht.cmd && await ev.emit(cht.cmd);
 
+     await In({ Exp, store, ev, cht, ai, is });
     /*!-======[ Chat Interactions Add ]======-!*/
     if (!cht.cmd || is.botMention) {
         ArchiveMemories.addChat(cht.sender);
