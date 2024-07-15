@@ -4,7 +4,7 @@ const axios = "axios".import()
 const https = 'https'.import()
 const moment = "timezone".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
-const { ArchiveMemories } = await "./toolkit/usr.js".r()
+const { ArchiveMemories } = await (fol[0] + "usr.js").r()
 
 export class func {
     static async getSender(jid) {

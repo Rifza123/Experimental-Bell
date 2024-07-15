@@ -14,7 +14,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: "tools",
         energy: 11,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana fotonya?",
            save: true
         }
@@ -38,7 +38,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 5,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana gambarnya?",
            save: true
         }
@@ -55,7 +55,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 1,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana gambarnya?",
            save: true
         }
@@ -73,7 +73,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 4,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana fotonya?",
            save: true
         }

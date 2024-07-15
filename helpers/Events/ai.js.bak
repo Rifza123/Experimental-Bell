@@ -19,7 +19,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 7,
         args: "Sertakan modelnya!",
         media: { 
-           type: ["audio"],
+           type: "audio",
            msg: "Reply audionya?",
            etc: {
                 seconds: 360,
@@ -86,7 +86,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: 'art',
         energy: 7,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana fotonya?",
            save: true
         }
@@ -283,7 +283,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: "ai",
         energy: 185,
         media: { 
-           type: ["image"],
+           type: "image",
            msg: "Mana fotonya?"
         }
     }, async({ media }) => {

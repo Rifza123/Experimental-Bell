@@ -19,6 +19,11 @@ export class ArchiveMemories {
         if (!stats) return status;
 
         let usr = await fs.readFile(fol[6] + somebody, 'utf8');
+        if (!usr) {
+            console.error(`File ${fol[6] + somebody} is empty or not found.`);
+            return null; // or handle accordingly
+        }
+
         try {
             let arc = JSON.parse(usr);
             arc.role = await role(arc.chat);
@@ -32,6 +37,11 @@ export class ArchiveMemories {
 
     static async addEnergy(somebody, jmlh) {
         let usr = await fs.readFile(fol[6] + somebody, 'utf8');
+        if (!usr) {
+            console.error(`File ${fol[6] + somebody} is empty or not found.`);
+            throw new Error(`File ${fol[6] + somebody} is empty or not found.`);
+        }
+
         try {
             let arc = JSON.parse(usr);
             arc.energy += parseInt(jmlh);
@@ -47,6 +57,11 @@ export class ArchiveMemories {
 
     static async reduceEnergy(somebody, jmlh) {
         let usr = await fs.readFile(fol[6] + somebody, 'utf8');
+        if (!usr) {
+            console.error(`File ${fol[6] + somebody} is empty or not found.`);
+            throw new Error(`File ${fol[6] + somebody} is empty or not found.`);
+        }
+
         try {
             let arc = JSON.parse(usr);
             arc.role = await role(arc.chat);
@@ -63,6 +78,11 @@ export class ArchiveMemories {
 
     static async addChat(somebody) {
         let usr = await fs.readFile(fol[6] + somebody, 'utf8');
+        if (!usr) {
+            console.error(`File ${fol[6] + somebody} is empty or not found.`);
+            throw new Error(`File ${fol[6] + somebody} is empty or not found.`);
+        }
+
         try {
             let arc = JSON.parse(usr);
             arc.chat += 1;

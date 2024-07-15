@@ -7,7 +7,7 @@ const chokidar = "chokidar".import();
 let is = {};
 
 /*!-======[ Events Update ]======-!*/
-const watcher = chokidar.watch('./helpers/Events');
+const watcher = chokidar.watch(fol[7]);
 let onreload = false;
 
 /*!-======[ Default Export Function ]======-!*/
@@ -31,7 +31,7 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
     cht.cmd = cht.msg.startsWith(cht.prefix) ? cht.msg.slice(1).toLowerCase().trim().split(/ +/).shift() : null;
     cht.memories = await ArchiveMemories.get(cht.sender);
     cht.download = async () => Exp.func.download(cht.message[type], cht.type);
-
+    cht[Exp.func['getType'](cht.type)] = cht.message[type]
     if (cht.quoted) {
         const quotedParticipant = cht.message[type]?.contextInfo?.participant;
         cht.quoted.sender = await Exp.func['getSender'](quotedParticipant);

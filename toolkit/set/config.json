@@ -1,0 +1,65 @@
+{
+  "owner": [
+    "6283110928302@s.whatsapp.net"
+  ],
+  "botname": "(Experimental) -▪︎ Bella-AI",
+  "botfullname": "Bella Clarissa",
+  "botnickname": "Bella",
+  "ownername": "rifza",
+  "cfg": {
+    "public": true,
+    "ai_interactive": true,
+    "autotyping": true,
+    "autoreadpc": false,
+    "autoreadgc": false,
+    "first": {
+      "energy": 200
+    },
+    "menu": {
+      "frames": {
+        "brackets": [
+          "[",
+          "]"
+        ],
+        "head": "┌",
+        "body": "│⇨",
+        "foot": "└"
+      },
+      "tags": {
+        "ai": "*<🧠Artificial Intelegen>*",
+        "downloader": "*<📥Media Downloader>*",
+        "group": "*<🏢Only Group!>*",
+        "maker": "*<🖨Maker>*",
+        "owner": "*<👤Only owner!>*",
+        "religion": "*<☪️Religion>*",
+        "game": "*<🎮Game>*",
+        "RPG": "*<🗺RPG Survival>*",
+        "tools": "*<🛠Tools>*",
+        "search": "*<🔍Search>*",
+        "art": "*<🌌Art Works>*",
+        "stablediffusion": "*<🫧Stable Diffusion (AI)>*",
+        "tts": "*<🗣Text To Speech (AI)>*",
+        "voice_changer": "*<🎙Voice Changer (AI)>*",
+        "other": "*<Others>*",
+        "bluearchive": "*<Blue Archive TTS (AI)*"
+      },
+      "infos": {
+        "lora": "\n*Perhatikan petunjuk berikut!*\n ```[ StableDiffusion - Lora++ ]```\n\nPenggunaan: <prefix><command> <ID>|<prompt>\nContoh: #lora 3|beautyfull cat with aesthetic jellyfish, sea god themes\n\n => _ID adalah nomor dari model yang tersedia di list_\n\n_*silahkan lihat list model yang tersedia:*_\n\n*[ID] [NAME]*\n\n[1] [Donghua#01]\n[2] [YunXi - PerfectWorld]\n[3] [Sea God(Tang San) - Douluo Dalu]\n[4] [XiaoYiXian - Battle Throught The Heavens]\n[5] [Angel God(Xian Renxue) - Douluo Dalu]\n[6] [Sheng Cai'er - Throne Of Seal]\n[7] [HuTao - Genshin Impact]\n[8] [TangWutong - The Unrivaled Tang Sect]\n[9] [CaiLin(Medusa) -BattleThroughtTheHeavens]\n[10] [Elaina-MajoNoTabiTabi]\n[11] [Jiang Nanan - TheUnrivaledTangSect]\n[12] [Cailin(Queen Medusa) - BTTH [4KUltraHD]]\n[13] [MaXiaoTao-TheUnrivaledTangSect]\n[14] [YorForger-Spy x Family]\n[15] [Boboiboy Galaxy]\n[16] [Hisoka morow]\n[17] [Ling Luochen ▪︎ The Unrivaled Tang Sect]\n[18] [Tang Wutong ▪︎ The Unrivaled Tang Sect]\n[19] [Huo Yuhao ▪︎ The Unrivaled Tang Sect]",
+        "enhance": "\n*SILAHKAN PILIH TYPE YANG TERSEDIA!*\n▪︎ Photo style\n- phox2 \n- phox4\n▪︎ Anime style\n- anix2\n- anix4\n▪︎ Standard\n- stdx2\n- stdx4\n▪︎ Face Enhance\n- cf\n▪︎ Object text\n- text\n\n_Cara penggunaan: #enhance phox4_\n",
+        "set": "\n[ BOT SETTING ]\n\n- public <on/off>\n- autotyping <on/off>\n- autoreadsw <on/off>\n- bell <on/off>\n- autoreadpc <on/off>\n- autoreadgc <on/of>\n\n_Example: .set public true_",
+        "filters": "*Harap masukan type nya!*\n            \nList Type:\n\n▪︎ 3D:\n- disney\n- 3dcartoon\n▪︎ Anime:\n- anime2d\n- maid\n▪︎ Painting:\n- colorfull\n▪︎ Digital:\n- steam\n\n_Contoh: .filters steam_",
+        "txt2img": "\n*[ CARA PENGGUNAAN ]*\nParam: `.txt2img <checkpoint>[<lora>]|<prompt>`\n\n ▪︎ `Tanpa lora`\n-  .txt2img <checkpoint>[]|<prompt>\n\n ▪︎ `1 lora`\n-  .txt2img <checkpoint>[<lora>]|<prompt>\n\n ▪︎ `lebih dari 1 lora`\n- .txt2img <checkpoint>[<lora>,<lora>,...more lora]|<prompt>\n--------------------------------------------------\n ▪︎ `Contoh`: \n- *.txt2img 1233[9380]|1girl, beautiful, futuristic, armored mecha*\n--------------------------------------------------\n `Searching id`: \n - lora: .lorasearch <query>\n - checkpoint: .checkpointsearch <query>\n\n"
+      }
+    }
+  },
+  "api": {
+    "rifza": {
+      "key": "Bell409",
+      "url": "https://rifza.me"
+    },
+    "xterm": {
+      "key": "Bell409",
+      "url": "https://ai.xterm.codes"
+    }
+  }
+}

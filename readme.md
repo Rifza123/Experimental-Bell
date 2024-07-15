@@ -37,23 +37,17 @@ Jika mengalami kesulitan, coba hapus folder `lib/connection/session` dan jalanka
 
 ---
 
-### Cara Mengimpor Modul dengan Berbeda
+### Cara Mengimpor Modul
 
-#### Contoh 1
 ```javascript
 const fs = "fs".import(); 
-// Tidak menggunakan await karena sudah didefinisikan di string.prototype.js
-```
-
-#### Contoh 2
-```javascript
-const fetch = await "node-fetch".import();
-// Gunakan await untuk modul yang belum didefinisikan di prototype
+// Atau bisa gunakan await untuk modul mengatasi promise
+//const fs = await "fs".import()
 ```
 
 ---
 
-### Cara Mengimpor Fungsi dengan Berbeda
+### Cara Mengimpor Fungsi
 
 Impor fungsi selalu dimulai dari awal, jadi tidak perlu kembali mundur dengan cara `../../`. Semua dimulai dari awal!
 
@@ -65,7 +59,7 @@ const events = await "./tolkit/events.js".r()
 
 ---
 
-### Penggunaan Event Emitter sebagai Alternatif case
+### Penggunaan Event Emitter dengan Ternary Operator Chaining
 
 Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomatis terdeteksi.
 
@@ -79,7 +73,7 @@ ev.on({
     energy: 7, // Harga penggunaan energi pada event ini
     args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
     media: { // Membutuhkan media
-        type: "audio", // Membutuhkan media bertipe audio, tipe terdiri dari audio, document, video, image, sticker
+        type: ["audio"], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
         msg: "Reply audionya?", // Respon jika tidak ada audio yang di-reply
         etc: { // Lain-lain
             seconds: 360, // Maksimal audio 360 detik

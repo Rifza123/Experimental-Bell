@@ -1,17 +1,49 @@
+/*!-≈≈≈≈≈[
+   !- Script ini mengutamakan efisiensi dan penghematan code
+*/
+
 /*!-======[ Modules Imports ]======-!*/
 const { createRequire } = 'module'.import()
 const { fileURLToPath } = 'url'.import()
 const fs = "fs".import()
 const path = 'path'.import()
-const db = './toolkit/db/'
-if (!fs.existsSync(db + 'cmd.json')) {//antisipasi jika terhapus/hilang
+
+/*!-======[ Path ]======-!
+  !- Semua halaman folder telah di definisikan disini
+*/
+global['fol'] = {
+    0: './toolkit/',
+    1: './helpers/',
+    2: './machine/',
+    3: './toolkit/set/',
+    4: './machine/tokens/',
+    5: './toolkit/db/',
+    6: './toolkit/db/user/',
+    7: './helpers/Events/',
+    8: './connection/'
+}
+global['session'] = fol[8] + 'session';
+
+const db = fol[0] + 'db/'
+const conf = fol[3] + 'config.json'
+let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'))
+let config = JSON.parse(fs.readFileSync(conf))
+let keys = Object.keys(config)
+
+//antisipasi jika terhapus/hilang
+if (!fs.existsSync(db + 'cmd.json')) {
   	fs.writeFileSync(db + 'cmd.json', JSON.stringify({
   		"total": 0,
   		"ai_response": 0,
   		"cmd": []
   }, null, 2))
 }
-  
+
+/*!-======[ Definition of config  ]======-!*/
+for (let i of keys){
+  global[i] = config[i]
+}
+
 /*!-======[ Global function ]======-!*/
 global['__filename'] = (imp)=> fileURLToPath(imp);
 global['require'] = (imp)=> createRequire(imp);
@@ -23,82 +55,10 @@ global['from'] = {
     'sender': '@s.whatsapp.net'
 };
 
-/*!-======[ Set bot information ]======-!*/
-global['owner'] = [
-    '6283110928302'
-].map(a => a + from.sender);
-global['botname'] = '(Experimental) -▪︎ Bella-AI';
-global['botfullname'] = "Bella Clarissa"
-global['botnickname'] = "Bella"
-global['ownername'] = "rifza"
-
-/*!-======[ Path ]======-!*/
-global['session'] = './connection/session';
-global['fol'] = {
-    0: './toolkit/',
-    1: './helpers/',
-    2: './machine/',
-    3: './toolkit/set/',
-    4: './machine/tokens/',
-    5: './toolkit/db/',
-    6: './toolkit/db/user/',
-}
-
-/*!-======[ Set configuration ]======-!*/
-global['cfg'] = {
-    public: !0,
-    ai_interactive: !0,
-    autotyping: !1,
-    autoreadpc: !1,
-    autoreadgc: !1,
-    first: {
-        energy: 200
-    },
-    menu: {
-        frames: {
-            brackets: ["[","]"],
-            head: '┌',
-            body: '│⇨',
-             foot: '└',
-        },
-        tags: {
-            ai: '*<🧠Artificial Intelegen>*',
-            downloader: '*<📥Media Downloader>*',
-            group: '*<🏢Only Group!>*',
-            maker: '*<🖨Maker>*',
-            owner: '*<👤Only owner!>*',
-            religion: '*<☪️Religion>*',
-            game: '*<🎮Game>*',
-            RPG: '*<🗺RPG Survival>*',
-            tools: '*<🛠Tools>*',
-            search: '*<🔍Search>*',
-            art: '*<🌌Art Works>*',
-            stablediffusion: '*<🫧Stable Diffusion (AI)>*',
-            tts: '*<🗣Text To Speech (AI)>*',
-            voice_changer: '*<🎙Voice Changer (AI)>*',
-            other: '*<Others>*',
-            bluearchive: '*<Blue Archive TTS (AI)*',
-        },
-        infos: {
-        }
-    }
-};
-
-global["api"] = {
-    rifza: {
-        key: "Bell409",
-        url: "https://rifza.me"
-    },
-    xterm: {
-        key: "Bell409",
-        url: "https://ai.xterm.codes"
-    }
-}
-
 /*!-======[ DATA CACHE ]======-!*/
 global["Data"] = {
     use: { 
-        cmds: JSON.parse(fs.readFileSync('./toolkit/db/cmd.json'))
+        cmds
     },
     events: {},
     Events: new Map()
@@ -108,4 +68,14 @@ global["Data"] = {
 global["key"] = {}
 
 /*!-======[ Definition of Infos  ]======-!*/
-await "./toolkit/set/infos.js".r()
+await (fol[3] + "infos.js").r()
+
+/*!-======[ Auto Update config.json ]======-!
+   !- Setiap perubahan pada config yang terdapat pada global akan disimpan secara permanen setiap 30 detik
+*/
+setInterval(async() => {
+    for(let i of keys){
+      config[i] = global[i]
+    }
+    await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
+}, 30000);
