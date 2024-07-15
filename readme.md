@@ -1,14 +1,47 @@
 # Experimental-Bell
 
+##Instalasi awal
+
+1. Update package
+
+```bash
+apt update && apt upgrade
+```
+
+2. Install nodejs
+
+```bash
+apt install nodejs -y
+```
+
+3. Install ffmpeg (ini diperlukan ubtuk mengkonversi ke format webp terutama pada "stiker")
+
+```bash
+apt install ffmpeg -y
+```
+
+4. Install git
+
+```bash
+apt install git
+```
+
+5. Clone repository dari git
+
+```bash
+git clone https://github.com/Rifza123/Experimental-Bell.git
+```
+
 ## Cara Pasang
 
 ### Prasyarat
-Pastikan Anda memiliki Node.js dan npm terinstal di komputer Anda.
 
 1. Saat Anda mendapatkan kode sumber ini, pastikan untuk menginstal semua modul yang diperlukan dengan menjalankan perintah ini di terminal atau command prompt:
 
 ```bash
 cd /halaman/mengarah/ke/Experimental-Bell
+```
+```bash
 npm install
 ```
 
