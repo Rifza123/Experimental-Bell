@@ -278,6 +278,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            msg: "Mana fotonya?"
         }
     }, async({ media }) => {
+        const _key = key[sender]
         const response = await axios.post(api.xterm.url+'/api/img2video/luma?key=Bell409', media, {
                 headers: {
                     'Content-Type': 'application/octet-stream'
@@ -299,10 +300,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                             }
                         console.log(data)
                         switch (data.status) {
-                            case "pending":
                             case "processing":
-                                if(rsp !== data.status) cht.reply(data.status)
-                                rsp = data.status
+                                cht.edit(("Processing.... " + data.progress + "%"), _key)
                             break;
                             case "failed":
                                 cht.reply(data.status)
