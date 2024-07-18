@@ -14,7 +14,7 @@ apt update && apt upgrade
 apt install nodejs -y
 ```
 
-3. Install ffmpeg (ini diperlukan ubtuk mengkonversi ke format webp terutama pada "stiker")
+3. Install ffmpeg (ini diperlukan untuk mengkonversi ke format webp terutama pada "stiker")
 
 ```bash
 apt install ffmpeg -y
