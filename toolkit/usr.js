@@ -102,7 +102,7 @@ export class ArchiveMemories {
         } catch (error) {
             console.error('Error parsing JSON:', error);
             console.error('File content:', usr);
-            throw error;
+            throw error
         }
     }
     
