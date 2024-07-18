@@ -27,6 +27,16 @@ export class ArchiveMemories {
         try {
             let arc = JSON.parse(usr);
             arc.role = await role(arc.chat);
+            if(!arc.lastCharge){
+                arc.lastCharge = Date.now()
+                await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
+            }
+            let charge = await this.chargeEnergy(arc.energy, arc.lastCharge)
+            if(charge >= 5){
+                arc.energy += charge
+                arc.lastCharge = Date.now()
+                await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
+            }
             return arc;
         } catch (error) {
             console.error('Error parsing JSON:', error);
@@ -94,5 +104,25 @@ export class ArchiveMemories {
             console.error('File content:', usr);
             throw error;
         }
+    }
+    
+    static async chargeEnergy(energy, time) {
+        let maxCharge = 200
+        let chargeRate = 10
+        let interval = 5 * 60000;
+
+        let elapsedTime = Date.now() - parseInt(time);
+
+        let intervals = Math.floor(elapsedTime / interval)
+
+        let charge = intervals * chargeRate
+
+        if (charge > maxCharge) {
+            charge = maxCharge
+        }
+        if((charge + energy) > maxCharge){
+           charge = maxCharge - energy
+        }
+        return charge
     }
 }
