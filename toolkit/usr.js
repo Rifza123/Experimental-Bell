@@ -41,7 +41,7 @@ export class ArchiveMemories {
                     lastCharge: Date.now()
                 }
             }
-            let charge = await this.chargeEnergy(arc.energy, arc.lastCharge)
+            let charge = await this.chargeEnergy(arc.energy, arc.lastCharge, arc.maxCharge, arc.chargeRate, arc.chargingSpeed)
             if(charge > 0){
                 arc.energy += charge
                 arc.lastCharge = Date.now()
@@ -116,10 +116,7 @@ export class ArchiveMemories {
         }
     }
     
-    static async chargeEnergy(energy, time) {
-        let maxCharge = 200
-        let chargeRate = 10
-        let interval = 5 * 60000;
+    static async chargeEnergy(energy, time, maxCharge, chargeRate, interval) {
 
         let elapsedTime = Date.now() - parseInt(time);
 

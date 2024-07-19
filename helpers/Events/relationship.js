@@ -14,12 +14,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
             txt += "\nNama: " + cht.pushName
             txt += "\nRole: " + cht.memories.role
             txt += "\nChatting: " + cht.memories.chat
-            txt += "\nEnergy: (⚡️)" + cht.memories.energy
+            txt += "\nEnergy: ⚡" + cht.memories.energy
             txt += "\n\n ▪︎ *[🔋] Boost*"
             txt += "\n- isCharging: " + (cht.memories.energy< cht.memories.maxCharge)
-            txt += "\n- Charging Speed: (⚡)" + cht.memories.chargeRate + " Energy/" + speed
+            txt += "\n- Charging Speed: ⚡" + cht.memories.chargeRate + " Energy/" + speed
             txt += "\n- Max Charge: " + cht.memories.maxCharge
-            txt += "\n- Last Charge: " + Exp.func.dateFormatter(cht.memories.lastCharge)
+            txt += "\n- Last Charge: " + Exp.func.dateFormatter(cht.memories.lastCharge, "Asia/Jakarta")
         cht.reply(txt)
     })
     
