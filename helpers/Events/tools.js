@@ -112,8 +112,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	
 	ev.on({ 
         cmd: ['ss','ssweb'],
-        listmenu: ['tools'],
-        tag: 'search',
+        listmenu: ['ssweb'],
+        tag: 'tools',
         energy: 2
     }, async() => {
         let q = is.quoted?.url || is.url 
