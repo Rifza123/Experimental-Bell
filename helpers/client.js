@@ -12,7 +12,6 @@ let onreload = false;
 
 /*!-======[ Default Export Function ]======-!*/
 export default
-
 async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMemories, EventEmitter, getContentType }) {
     let type = getContentType(cht.message);
     Exp.func = func;
