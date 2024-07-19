@@ -106,8 +106,6 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
     /*!-======[ Block Chat ]======-!*/
     if (global.cfg.public == false && !is.owner && !is.me) return;
 
-    if (!is.memories) await ArchiveMemories.add(cht.sender);
-
     const ev = new EventEmitter({ Exp, store, cht, ai, is });
     await ev.loadEventHandlers();
 

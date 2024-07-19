@@ -41,7 +41,8 @@
         "tts": "*<🗣Text To Speech (AI)>*",
         "voice_changer": "*<🎙Voice Changer (AI)>*",
         "other": "*<Others>*",
-        "bluearchive": "*<Blue Archive TTS (AI)*"
+        "bluearchive": "*<Blue Archive TTS (AI)*",
+        "relationship": "*<💍Relationship>*"
       },
       "infos": {
         "lora": "\n*Perhatikan petunjuk berikut!*\n ```[ StableDiffusion - Lora++ ]```\n\nPenggunaan: <prefix><command> <ID>|<prompt>\nContoh: #lora 3|beautyfull cat with aesthetic jellyfish, sea god themes\n\n => _ID adalah nomor dari model yang tersedia di list_\n\n_*silahkan lihat list model yang tersedia:*_\n\n*[ID] [NAME]*\n\n[1] [Donghua#01]\n[2] [YunXi - PerfectWorld]\n[3] [Sea God(Tang San) - Douluo Dalu]\n[4] [XiaoYiXian - Battle Throught The Heavens]\n[5] [Angel God(Xian Renxue) - Douluo Dalu]\n[6] [Sheng Cai'er - Throne Of Seal]\n[7] [HuTao - Genshin Impact]\n[8] [TangWutong - The Unrivaled Tang Sect]\n[9] [CaiLin(Medusa) -BattleThroughtTheHeavens]\n[10] [Elaina-MajoNoTabiTabi]\n[11] [Jiang Nanan - TheUnrivaledTangSect]\n[12] [Cailin(Queen Medusa) - BTTH [4KUltraHD]]\n[13] [MaXiaoTao-TheUnrivaledTangSect]\n[14] [YorForger-Spy x Family]\n[15] [Boboiboy Galaxy]\n[16] [Hisoka morow]\n[17] [Ling Luochen ▪︎ The Unrivaled Tang Sect]\n[18] [Tang Wutong ▪︎ The Unrivaled Tang Sect]\n[19] [Huo Yuhao ▪︎ The Unrivaled Tang Sect]",

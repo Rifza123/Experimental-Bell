@@ -7,7 +7,11 @@ export class ArchiveMemories {
         const obj = {
            chat: 1,
            role: role(1),
-           energy: cfg.first.energy
+           energy: cfg.first.energy,
+           chargingSpeed: 1800000,
+           chargeRate: 10,
+           maxCharge: 200,
+           lastCharge: Date.now()
         };
         await fs.writeFile(fol[6] + somebody, JSON.stringify(obj, null, 2));
         return obj;
@@ -16,27 +20,33 @@ export class ArchiveMemories {
     static async get(somebody) {
         let status = false;
         let stats = await fs.stat(fol[6] + somebody).catch(() => false);
-        if (!stats) return status;
+        if (!stats) await this.add(somebody) 
 
         let usr = await fs.readFile(fol[6] + somebody, 'utf8');
         if (!usr) {
             console.error(`File ${fol[6] + somebody} is empty or not found.`);
-            return null; // or handle accordingly
+            await this.add(somebody)
+            usr = await fs.readFile(fol[6] + somebody, 'utf8')
         }
 
         try {
             let arc = JSON.parse(usr);
             arc.role = await role(arc.chat);
-            if(!arc.lastCharge){
-                arc.lastCharge = Date.now()
-                await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
+            if(!arc.lastCharge || !arc.maxCharge || !arc.chargingSpeed || !arc.chargeRate){
+                arc = {
+                    ...arc,
+                    chargingSpeed: 3600000,
+                    chargeRate: 10,
+                    maxCharge: 200,
+                    lastCharge: Date.now()
+                }
             }
             let charge = await this.chargeEnergy(arc.energy, arc.lastCharge)
-            if(charge >= 5){
+            if(charge > 0){
                 arc.energy += charge
                 arc.lastCharge = Date.now()
-                await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
             }
+                await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
             return arc;
         } catch (error) {
             console.error('Error parsing JSON:', error);
@@ -102,7 +112,7 @@ export class ArchiveMemories {
         } catch (error) {
             console.error('Error parsing JSON:', error);
             console.error('File content:', usr);
-            throw error
+            throw error;
         }
     }
     
