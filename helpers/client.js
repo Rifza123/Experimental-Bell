@@ -74,7 +74,7 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
         Exp.groupAdmins = Exp.func.getGroupAdmins(groupMetadata.participants);
         is.botAdmin = Exp.groupAdmins.includes(Exp.number) || false;
         is.groupAdmins = Exp.groupAdmins.includes(cht.sender);
-    }
+    };
 
     is.memories = cht.memories;
     is.quoted = cht.quoted;
@@ -95,13 +95,13 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
         global.cfg["autoreadpc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ PRV ]', 'red') + ' >';
         console.log(`${prefix} From: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
-    }
+    };
 
     if (is.group) {
         global.cfg["autoreadgc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ GR ]', 'pink') + ' >';
         console.log(`${prefix} From: ${color(cht.id, 'cyan')} User: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
-    }
+    };
     
     /*!-======[ Block Chat ]======-!*/
     if (global.cfg.public == false && !is.owner && !is.me) return;
