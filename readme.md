@@ -92,7 +92,7 @@ const events = await "./tolkit/events.js".r()
 
 ---
 
-### Penggunaan Event Emitter dengan Ternary Operator Chaining
+### Pendefinisian Fitur pada Event Emitter
 
 Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomatis terdeteksi.
 
