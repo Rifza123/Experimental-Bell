@@ -45,7 +45,8 @@ async function In({ cht, Exp, store, ev, ai, is }) {
 	}
 	else if (isExec) {
 		if (!is.owner) return
-		if(cht.msg.slice(2).includes("rm -rf *")) return cht.reply("Mau hapus aku? jahat bgt anjg!😡")
+		let dangerous = cht.msg.slice(2)
+		if(dangerous.trim().replace(/[ ]/g, "") == "rm-rf*") return cht.reply("Hah?")
 		let txt;
 		try {
             const { stdout, stderr } = await _exec(cht.msg.slice(2));

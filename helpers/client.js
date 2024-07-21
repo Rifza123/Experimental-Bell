@@ -2,7 +2,7 @@
 const chalk = "chalk".import();
 const { watch } = "fs".import();
 const chokidar = "chokidar".import();
-
+const { getBinaryNodeChild, jidNormalizedUser } = "baileys".import()
 /*!-======[ Cache ]======-!*/
 let is = {};
 
@@ -12,6 +12,7 @@ let onreload = false;
 
 /*!-======[ Default Export Function ]======-!*/
 export default
+
 async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMemories, EventEmitter, getContentType }) {
     let type = getContentType(cht.message);
     Exp.func = func;
@@ -64,7 +65,7 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
     is.video = cht.type == "video";
     is.document = cht.type == "document";
     is.url = cht.msg.match(/https?:\/\/[^\s]+/g) || null;
-
+    
     if (is.group) {
         const groupMetadata = await Exp.groupMetadata(cht.id);
         Exp.groupMetdata = groupMetadata;
@@ -73,11 +74,27 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
         Exp.groupAdmins = Exp.func.getGroupAdmins(groupMetadata.participants);
         is.botAdmin = Exp.groupAdmins.includes(Exp.number) || false;
         is.groupAdmins = Exp.groupAdmins.includes(cht.sender);
-    };
+    }
 
     is.memories = cht.memories;
     is.quoted = cht.quoted;
-
+    Exp.profilePictureUrl = async(jid, type = 'image', timeoutMs) => {
+		jid = jidNormalizedUser(jid)
+		const result = await Exp.query({
+			tag: 'iq',
+			attrs: {
+				target: jid,
+				to: "@s.whatsapp.net",
+				type: 'get',
+				xmlns: 'w:profile:picture'
+			},
+			content: [
+				{ tag: 'picture', attrs: { type, query: 'url' } }
+			]
+		}, timeoutMs)
+		const child = getBinaryNodeChild(result, 'picture')
+		return child?.attrs?.url
+	}
     cht.reply = async function (text) {
         let { key } = await Exp.sendMessage(cht.id, { text: text }, { quoted: cht });
         global.key[cht.sender] = key;
@@ -94,13 +111,13 @@ async function client({ Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMe
         global.cfg["autoreadpc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ PRV ]', 'red') + ' >';
         console.log(`${prefix} From: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
-    };
+    }
 
     if (is.group) {
         global.cfg["autoreadgc"] && await Exp.readMessages([cht.key])
         const prefix = bgcolor('[ GR ]', 'pink') + ' >';
         console.log(`${prefix} From: ${color(cht.id, 'cyan')} User: ${color(cht.pushName, 'cyan')} Conversation: ${color(cht.msg, 'green')}`);
-    };
+    }
     
     /*!-======[ Block Chat ]======-!*/
     if (global.cfg.public == false && !is.owner && !is.me) return;

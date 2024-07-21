@@ -2,131 +2,159 @@ const fs = "fs".import().promises;
 const { role } = await './toolkit/role.js'.r();
 
 export class ArchiveMemories {
-
-    static async add(somebody) {
-        const obj = {
-           chat: 1,
-           role: role(1),
-           energy: cfg.first.energy,
-           chargingSpeed: 1800000,
-           chargeRate: 10,
-           maxCharge: 200,
-           lastCharge: Date.now()
+    static async add(userJid) {
+        const userId = userJid.split("@")[0];
+        const userData = {
+            chat: 1,
+            role: await role(1),
+            energy: cfg.first.energy,
+            chargingSpeed: 1800000,
+            chargeRate: 10,
+            maxCharge: 200,
+            lastCharge: Date.now()
         };
-        await fs.writeFile(fol[6] + somebody, JSON.stringify(obj, null, 2));
-        return obj;
+        global.Data.users[userId] = userData;
+        return userData;
     }
 
-    static async get(somebody) {
-        let status = false;
-        let stats = await fs.stat(fol[6] + somebody).catch(() => false);
-        if (!stats) await this.add(somebody);
-
-        let usr = await fs.readFile(fol[6] + somebody, 'utf8');
-        if (!usr) {
-            console.error(`File ${fol[6] + somebody} is empty or not found.`);
-            await this.add(somebody);
-            usr = await fs.readFile(fol[6] + somebody, 'utf8');
+    static async get(userJid) {
+        const userId = userJid.split("@")[0];
+        let userData = global.Data.users[userId];
+        
+        if (!userData) {
+            await this.add(userJid);
+            userData = global.Data.users[userId];
         }
 
         try {
-            let arc = JSON.parse(usr);
-            arc.role = await role(arc.chat);
-            if (!arc.lastCharge || !arc.maxCharge || !arc.chargingSpeed || !arc.chargeRate) {
-                arc = {
-                    ...arc,
+            userData.role = await role(userData.chat);
+            if (!userData.lastCharge || !userData.maxCharge || !userData.chargingSpeed || !userData.chargeRate) {
+                userData = {
+                    ...userData,
                     chargingSpeed: 3600000,
                     chargeRate: 10,
                     maxCharge: 200,
                     lastCharge: Date.now()
                 };
             }
-            let charge = await this.chargeEnergy(arc.energy, arc.lastCharge, arc.maxCharge, arc.chargeRate, arc.chargingSpeed);
-            if (charge > 0) {
-                arc.energy += charge;
-                arc.lastCharge = Date.now();
+            const chargeAmount = await this.chargeEnergy(userData.energy, userData.lastCharge, userData.maxCharge, userData.chargeRate, userData.chargingSpeed);
+            if (chargeAmount > 0) {
+                userData.energy += chargeAmount;
+                userData.lastCharge = Date.now();
             }
-            await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
-            return arc;
+            global.Data.users[userId] = userData;
+            return userData;
         } catch (error) {
-            console.error('Error parsing JSON:', error);
-            console.error('File content:', usr);
+            console.error('Error processing user data:', error);
             throw error;
         }
     }
 
-    static async addEnergy(somebody, jmlh) {
-        let usr = await fs.readFile(fol[6] + somebody, 'utf8');
-        if (!usr) {
-            console.error(`File ${fol[6] + somebody} is empty or not found.`);
-            throw new Error(`File ${fol[6] + somebody} is empty or not found.`);
+    static async addEnergy(userJid, amount) {
+        const userId = userJid.split("@")[0];
+        let userData = global.Data.users[userId];
+        
+        if (!userData) {
+            console.error(`User data for ${userJid} not found.`);
+            throw new Error(`User data for ${userJid} not found.`);
         }
 
         try {
-            let arc = JSON.parse(usr);
-            arc.energy += parseInt(jmlh);
-            arc.role = await role(arc.chat);
-            await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
-            return arc;
+            userData.energy += parseInt(amount);
+            userData.role = await role(userData.chat);
+            global.Data.users[userId] = userData;
+            return userData;
         } catch (error) {
-            console.error('Error parsing JSON:', error);
-            console.error('File content:', usr);
+            console.error('Error adding energy:', error);
             throw error;
         }
     }
 
-    static async reduceEnergy(somebody, jmlh) {
-        let usr = await fs.readFile(fol[6] + somebody, 'utf8');
-        if (!usr) {
-            console.error(`File ${fol[6] + somebody} is empty or not found.`);
-            throw new Error(`File ${fol[6] + somebody} is empty or not found.`);
+    static async reduceEnergy(userJid, amount) {
+        const userId = userJid.split("@")[0];
+        let userData = global.Data.users[userId];
+        
+        if (!userData) {
+            console.error(`User data for ${userJid} not found.`);
+            throw new Error(`User data for ${userJid} not found.`);
         }
 
         try {
-            let arc = JSON.parse(usr);
-            arc.role = await role(arc.chat);
-            let newEnergy = arc.energy - parseInt(jmlh);
-            arc.energy = newEnergy < 0 ? 0 : newEnergy;
-            await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
-            return arc;
+            userData.role = await role(userData.chat);
+            let newEnergy = userData.energy - parseInt(amount);
+            userData.energy = newEnergy < 0 ? 0 : newEnergy;
+            global.Data.users[userId] = userData;
+            return userData;
         } catch (error) {
-            console.error('Error parsing JSON:', error);
-            console.error('File content:', usr);
+            console.error('Error reducing energy:', error);
             throw error;
         }
     }
 
-    static async addChat(somebody) {
-        let usr = await fs.readFile(fol[6] + somebody, 'utf8');
-        if (!usr) {
-            console.error(`File ${fol[6] + somebody} is empty or not found.`);
-            throw new Error(`File ${fol[6] + somebody} is empty atau tidak ditemukan.`);
+    static async addChat(userJid) {
+        const userId = userJid.split("@")[0];
+        let userData = global.Data.users[userId];
+        
+        if (!userData) {
+            console.error(`User data for ${userJid} not found.`);
+            throw new Error(`User data for ${userJid} not found.`);
         }
 
         try {
-            let arc = JSON.parse(usr);
-            arc.chat += 1;
-            arc.role = await role(arc.chat);
-            await fs.writeFile(fol[6] + somebody, JSON.stringify(arc, null, 2));
-            return arc;
+            userData.chat += 1;
+            userData.role = await role(userData.chat);
+            global.Data.users[userId] = userData;
+            return userData;
         } catch (error) {
-            console.error('Error parsing JSON:', error);
-            console.error('File content:', usr);
+            console.error('Error updating chat count:', error);
             throw error;
         }
     }
     
-    static async chargeEnergy(energy, time, maxCharge, chargeRate, interval) {
-        let elapsedTime = Date.now() - parseInt(time);
-        let intervals = Math.floor(elapsedTime / interval);
-        let charge = intervals * chargeRate;
+    static async chargeEnergy(energy, lastChargeTime, maxCharge, chargeRate, chargingInterval) {
+        const elapsedTime = Date.now() - parseInt(lastChargeTime);
+        const chargeIntervals = Math.floor(elapsedTime / chargingInterval);
+        let chargeAmount = chargeIntervals * chargeRate;
 
-        if (charge > maxCharge) {
-            charge = maxCharge;
+        if (chargeAmount > maxCharge) {
+            chargeAmount = maxCharge;
         }
-        if ((charge + energy) > maxCharge) {
-            charge = maxCharge - energy;
+        if ((chargeAmount + energy) > maxCharge) {
+            chargeAmount = maxCharge - energy;
         }
-        return charge;
+        return chargeAmount;
+    }
+    
+    static async combineAllUserFiles() {
+        try {
+            let files = await fs.readdir(fol[6]);
+            let combinedData = {};
+
+            for (let file of files) {
+                let filePath = path.join(fol[6], file);
+                let fileContent;
+                
+                try {
+                    fileContent = await fs.readFile(filePath, 'utf8');
+                } catch (readError) {
+                    console.error(`Error reading file ${filePath}:`, readError);
+                    continue; 
+                }
+
+                try {
+                    let userData = JSON.parse(fileContent);
+                    combinedData[file] = userData;
+                } catch (parseError) {
+                    console.error(`Error parsing JSON from file ${filePath}:`, parseError);
+                    continue; 
+                }
+            }
+
+            await fs.writeFile('users.json', JSON.stringify(combinedData, null, 2));
+            console.log('All user data combined successfully!');
+        } catch (error) {
+            console.error('Error combining user files:', error);
+            throw error;
+        }
     }
 }

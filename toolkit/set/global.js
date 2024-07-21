@@ -24,9 +24,8 @@ global['fol'] = {
 }
 global['session'] = fol[8] + 'session';
 
-const db = fol[0] + 'db/'
+const db = fol[5]
 const conf = fol[3] + 'config.json'
-let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'))
 let config = JSON.parse(fs.readFileSync(conf))
 let keys = Object.keys(config)
 
@@ -38,6 +37,13 @@ if (!fs.existsSync(db + 'cmd.json')) {
   		"cmd": []
   }, null, 2))
 }
+
+if (!fs.existsSync(fol[6] + 'users.json')) {
+  	fs.writeFileSync(fol[6]  + 'users.json', JSON.stringify({}, null, 2))
+}
+
+let users = JSON.parse(fs.readFileSync(fol[6] + 'users.json'))
+let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'))
 
 /*!-======[ Definition of config  ]======-!*/
 for (let i of keys){
@@ -61,7 +67,8 @@ global["Data"] = {
         cmds
     },
     events: {},
-    Events: new Map()
+    Events: new Map(),
+    users
 }
 
 /*!-======[ Cache Key Message ]======-!*/
@@ -78,4 +85,29 @@ setInterval(async() => {
       config[i] = global[i]
     }
     await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
-}, 30000);
+    await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
+}, 10000);
+
+
+const originalConsoleError = console.error;
+const originalConsoleLog = console.log;
+
+const ignoreTexts = ["Timed Out", "rate-overlimit"];
+
+function shouldIgnore(message) {
+  return ignoreTexts.some(ignoreText => message.includes(ignoreText));
+}
+
+console.error = function (message, ...optionalParams) {
+  if (typeof message === 'string' && shouldIgnore(message)) {
+    return;
+  }
+  originalConsoleError.apply(console, [message, ...optionalParams]);
+};
+
+console.log = function (message, ...optionalParams) {
+  if (typeof message === 'string' && shouldIgnore(message)) {
+    return;
+  }
+  originalConsoleLog.apply(console, [message, ...optionalParams]);
+};

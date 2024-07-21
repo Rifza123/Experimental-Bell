@@ -11,7 +11,7 @@
     "ai_interactive": true,
     "autotyping": true,
     "autoreadpc": false,
-    "autoreadgc": false,
+    "autoreadgc": true,
     "first": {
       "energy": 200
     },
