@@ -1,5 +1,5 @@
 /*!-======[ Module Imports ]======-!*/
-const fs = "fs".import();
+const fs = "fs".import()
 const { default: ms } = await "ms".import()
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -9,7 +9,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'relationship'
     }, async() => {
         let speed = ms(cht.memories.chargingSpeed)
-        let url;
+        let url
         try {
             url = await Exp.profilePictureUrl(cht.sender)
         } catch {

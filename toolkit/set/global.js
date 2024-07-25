@@ -29,6 +29,13 @@ const conf = fol[3] + 'config.json'
 let config = JSON.parse(fs.readFileSync(conf))
 let keys = Object.keys(config)
 
+//antisipasi kalo masi pake config lama
+if(!(config.cfg.ai_interactive?.group || config.cfg.ai_interactive?.private)){
+    config.cfg.ai_interactive = {
+      group: false
+    }
+    config.cfg.ai_interactive.private = true
+}
 //antisipasi jika terhapus/hilang
 if (!fs.existsSync(db + 'cmd.json')) {
   	fs.writeFileSync(db + 'cmd.json', JSON.stringify({
@@ -36,14 +43,18 @@ if (!fs.existsSync(db + 'cmd.json')) {
   		"ai_response": 0,
   		"cmd": []
   }, null, 2))
-}
+};
+if (!fs.existsSync(db + 'preferences.json')) {
+  	fs.writeFileSync(db + 'preferences.json', JSON.stringify({}))
+};
 
 if (!fs.existsSync(fol[6] + 'users.json')) {
   	fs.writeFileSync(fol[6]  + 'users.json', JSON.stringify({}, null, 2))
-}
+};
 
-let users = JSON.parse(fs.readFileSync(fol[6] + 'users.json'))
-let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'))
+let users = JSON.parse(fs.readFileSync(fol[6] + 'users.json'));
+let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'));
+let preferences = JSON.parse(fs.readFileSync(db + 'preferences.json'));
 
 /*!-======[ Definition of config  ]======-!*/
 for (let i of keys){
@@ -62,31 +73,30 @@ global['from'] = {
 };
 
 /*!-======[ DATA CACHE ]======-!*/
+global["keys"] = {}
 global["Data"] = {
+    Events: new Map(),
+    events: {},
+    users,
+    preferences,
     use: { 
         cmds
-    },
-    events: {},
-    Events: new Map(),
-    users
+    }
 }
 
-/*!-======[ Cache Key Message ]======-!*/
-global["key"] = {}
-
-/*!-======[ Definition of Infos  ]======-!*/
+/*!-======[ Definition of Infos ]======-!*/
 await (fol[3] + "infos.js").r()
 
-/*!-======[ Auto Update config.json ]======-!
-   !- Setiap perubahan pada config yang terdapat pada global akan disimpan secara permanen setiap 30 detik
-*/
+/*!-======[ Auto Update ]======-!*/
+await (fol[0] + "detector.js").r();
 setInterval(async() => {
     for(let i of keys){
       config[i] = global[i]
     }
     await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
     await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
-}, 10000);
+    await fs.writeFileSync(db + 'preferences.json', JSON.stringify(Data.preferences, null, 2))
+}, 15000);
 
 
 const originalConsoleError = console.error;

@@ -9,7 +9,7 @@
       ▪︎ https://xterm.tech
   */
 /*!-======[ Preparing Configuration ]======-!*/
-await import("./toolkit/set/string.prototype.js")
+await import ("./toolkit/set/string.prototype.js")
 await "./toolkit/set/global.js".r()
 
 /*!-======[ Mudules Imports ]======-!*/
@@ -18,13 +18,13 @@ const fs = "fs".import()
 const chalk = "chalk".import()
 const baileys = "baileys".import()
 const pino = "pino".import()
-const NodeCache = "nodecache".import()
 let { Boom } = "boom".import();
 
 /*!-======[ Functions Imports ]======-!*/
+Data.helper = (await "./helpers/client.js".r()).default
+Data.In = (await "./helpers/interactive.js".r()).default
 const { EventEmitter } = await "./toolkit/events.js".r();
 const { ArchiveMemories } = await "./toolkit/usr.js".r();
-const { color, bgcolor } = await './toolkit/color.js'.r();
 const { ai } = await "./machine/reasoner.js".r();
 const { func } = await "./toolkit/func.js".r();
 let { Connecting } = await "./connection/systemConnext.js".r()
@@ -37,7 +37,6 @@ let {
   	fetchLatestBaileysVersion,
   	makeInMemoryStore
 } = baileys;
-
 
 let store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
@@ -66,16 +65,18 @@ async function launch() {
   	let { state, saveCreds } = await useMultiFileAuthState(session);
     
     let { version } = fetchLatestBaileysVersion();
-        const msgRetryCounterCache = new NodeCache();
         const Exp = makeWASocket({
             logger: pino({ level: 'silent' }),
             printQRInTerminal: !global.pairingCode,
             browser: ['Chrome (Linux)', global["botname"], '1.0.0'],
-            auth: state,
-            generateHighQualityLinkPreview: true,
-            msgRetryCounterCache
+            auth: state
         });
         
+        Exp.func = func
+        const exps = {
+           Exp, store, In: Data.In, ai, ArchiveMemories, EventEmitter, getContentType,
+           is: {}
+        };
          if (global.pairingCode && !Exp.authState.creds.registered) {
             const phoneNumber = await question(chalk.yellow('Please type your WhatsApp number : '));
             let code = await Exp.requestPairingCode(phoneNumber.replace(/[+ -]/g, ""));
@@ -87,14 +88,10 @@ async function launch() {
         });
 
         Exp.ev.on('creds.update', saveCreds);
-        store.bind(Exp.ev);
         
         Exp.ev.on('messages.upsert', async ({
   			messages
   		}) => {
-  	    	const { default: helper } = await "./helpers/client.js".r()
-  	    	const { default: In } = await "./helpers/interactive.js".r();
-
   			const cht = messages[0];
   			      cht.id = cht.key.remoteJid
   			if (!cht.message) return;
@@ -103,8 +100,9 @@ async function launch() {
   				let typ = getContentType(cht.message);
   				console.log((/protocolMessage/i.test(typ)) ? `${cht.key.participant.split('@')[0]} Deleted story❗` : 'View user stories : ' + cht.key.participant.split('@')[0]);
   			}
-  			await helper({Exp, store, cht, In, func, ai, color, bgcolor, ArchiveMemories, EventEmitter, getContentType})
-  		});
+             Data.helper({ cht, ...exps });
+	});
+	store.bind(Exp.ev);
 }
 launch()
-process.on('uncaughtException', console.log);
+

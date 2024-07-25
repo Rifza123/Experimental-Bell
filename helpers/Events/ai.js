@@ -1,17 +1,15 @@
 /*!-======[ Module Imports ]======-!*/
-const axios = "axios".import();
-const fs = "fs".import();
+const axios = "axios".import()
+const fs = "fs".import()
 
 /*!-======[ Functions Imports ]======-!*/
-const { TelegraPh } = await (fol[0] + 'telegraph.js').r();
+const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 
 /*!-======[ Configurations ]======-!*/
-let infos = cfg.menu.infos;
-
+let infos = cfg.menu.infos
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender } = cht
-
     ev.on({ 
         cmd: ['cover','covers'],
         listmenu: ['covers `Maintenance`'],
@@ -27,7 +25,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            }
         }
     }, async({ media }) => {
-        const _key = key[sender]
+        const _key = keys[sender]
         await cht.edit('```Wait...```', _key)
         axios.post(`${api.xterm.url}/api/audioProcessing/voice-covers?model=${cht.q}&key=${api.xterm.key}`, media, {
             headers: {
@@ -37,11 +35,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         })
          .then(response => {
            response.data.on('data', async chunk => {
-             const eventString = chunk.toString();
-             const eventData = eventString.match(/data: (.+)/);
+             const eventString = chunk.toString()
+             const eventData = eventString.match(/data: (.+)/)
         
              if (eventData) {
-                 const data = JSON.parse(eventData[1]);
+                 const data = JSON.parse(eventData[1])
                  switch (data.status){
                      case 'searching':
                      case 'separating':
@@ -52,19 +50,19 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                      break
                      case 'success':
                          await Exp.sendMessage(cht.id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
-                         response.data.destroy();
+                         response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit('Failed❗️:', _key);
-                         response.data.destroy(); 
+                         cht.edit('Failed❗️:', _key)
+                         response.data.destroy() 
                      break
                  }
              }
-           });
+           })
          })
          .catch(error => {
              cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
-         });
+         })
     })
     
     ev.on({ 
@@ -76,7 +74,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
     console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
-        cht.edit("Bntr...", key[sender])
+        cht.edit("Bntr...", keys[sender])
         Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 } }, { quoted: cht })
 	})
 	
@@ -91,8 +89,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            save: true
         }
     }, async({ media }) => {
-        const _key = key[sender]
-        let tryng = 0;
+        const _key = keys[sender]
+        let tryng = 0
         let type = "anime2d"
         if(cht.cmd == "filters"){
             if(!cht.q) return cht.reply(infos.filters)
@@ -114,7 +112,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                if(s.status == 4){
                   return cht.reply("Maaf terjadi kesalhan. coba gunakan gambar lain!")
                }
-               await new Promise(resolve => setTimeout(resolve, 2000));
+               await new Promise(resolve => setTimeout(resolve, 2000))
             }
      } catch(e) {
         console.error(e)
@@ -123,31 +121,24 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	
 	})
 	
-	ev.on({ 
-        cmd: ['bell2speech'],
-        energy: 5
-    }, async() => {
-        if(!cht.q) return cht.edit("Harap sertakan teks untuk diucapkan!", key[sender])
-            await Exp.sendPresenceUpdate('recording', cht.id);
-            await Exp.sendMessage(cht.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
-	})
+	
 	
 	ev.on({
-    cmd: ['txt2img', 'text2img'],
-    listmenu: ['text2img'],
-    tag: 'stablediffusion',
-    energy: 5
+        cmd: ['txt2img', 'text2img'],
+        listmenu: ['text2img'],
+        tag: 'stablediffusion',
+        energy: 5
     }, async () => {
-    const _key = key[sender]
-    if (!cht.q) return cht.reply(infos.txt2img);
-    let [model, prompt, negative] = cht.q.split("|");
+    const _key = keys[sender]
+    if (!cht.q) return cht.reply(infos.txt2img)
+    let [model, prompt, negative] = cht.q.split("|")
     if (!model.includes("[")) {
-        return cht.reply(txt);
+        return cht.reply(txt)
     }
 
-    let ckpt = model.split("[")[0];
-    let loraPart = model.split("[")[1]?.replace("]", "");
-    let loras = loraPart ? JSON.parse("[" + loraPart + "]") : [];
+    let ckpt = model.split("[")[0]
+    let loraPart = model.split("[")[1]?.replace("]", "")
+    let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
 
     await cht.edit('```Bntr..```', _key)
 
@@ -155,21 +146,21 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let [checkpointsResponse, lorasResponse] = await Promise.all([
             fetch(api.xterm.url + "/api/text2img/stablediffusion/list_checkpoints"),
             fetch(api.xterm.url + "/api/text2img/stablediffusion/list_loras")
-        ]);
+        ])
 
         if (!checkpointsResponse.ok || !lorasResponse.ok) {
-            return cht.reply(`HTTP error! status: ${checkpointsResponse.status} or ${lorasResponse.status}`);
+            return cht.reply(`HTTP error! status: ${checkpointsResponse.status} or ${lorasResponse.status}`)
         }
 
         let [checkpoints, loraModels] = await Promise.all([
             checkpointsResponse.json(),
             lorasResponse.json()
-        ]);
+        ])
 
         let lora = loras.map(c => ({
             model: loraModels[c].model,
             weight: 0.65
-        }));
+        }))
 
         let body = {
             checkpoint: checkpoints[ckpt].model,
@@ -180,9 +171,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             sampling: "DPM++ 2M Karras",
             samplingSteps: 20,
             cfgScale: 7.5
-        };
+        }
 
-        console.log(body);
+        console.log(body)
 
         let aiResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/createTask?key=OPSIONAL`, {
             method: 'POST',
@@ -190,48 +181,48 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(body)
-        });
+        })
 
         if (!aiResponse.ok) {
-            return cht.reply(`HTTP error! status: ${aiResponse.status}`);
+            return cht.reply(`HTTP error! status: ${aiResponse.status}`)
         }
 
-        let ai = await aiResponse.json();
+        let ai = await aiResponse.json()
 
         if (!ai.status) {
-            console.log(ai);
-            return cht.reply("Gagal!");
+            console.log(ai)
+            return cht.reply("Gagal!")
         }
 
-        let tryng = 0;
+        let tryng = 0
         while (tryng < 50) {
-            tryng += 1;
+            tryng += 1
 
-            let sResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/taskStatus?id=${ai.id}`);
+            let sResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/taskStatus?id=${ai.id}`)
 
             if (!sResponse.ok) {
-                return cht.reply(`HTTP error! status: ${sResponse.status}`);
+                return cht.reply(`HTTP error! status: ${sResponse.status}`)
             }
 
-            let s = await sResponse.json();
+            let s = await sResponse.json()
 
             if (s.taskStatus === 0) {
                 await cht.edit('```Starting..```', _key)
             } else if (s.taskStatus === 1) {
                 await cht.edit("Processing.... " + s.progress + "%", _key)
             } else if (s.taskStatus === 2) {
-                return Exp.sendMessage(cht.id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht });
+                return Exp.sendMessage(cht.id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht })
             } else if (s.taskStatus === 3) {
-                return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!");
+                return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
             }
 
-            await new Promise(resolve => setTimeout(resolve, 4000));
+            await new Promise(resolve => setTimeout(resolve, 4000))
         }
       } catch (error) {
-        console.log(error);
-        cht.reply("Error: " + error.message);
+        console.log(error)
+        cht.reply("Error: " + error.message)
       }
-    });
+    })
     
     ev.on({ 
         cmd: ['lorasearch','checkpointsearch'],
@@ -287,20 +278,20 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            msg: "Mana fotonya?"
         }
     }, async({ media }) => {
-        const _key = key[sender]
-        const response = await axios.post(api.xterm.url+'/api/img2video/luma?key=Bell409', media, {
+        const _key = keys[sender]
+        const response = await axios.post(`${api.xterm.url}/api/img2video/luma?key=${api.xterm.key}${cht?.q ? ("&prompt=" + cht.q) : ""}`, media, {
                 headers: {
                     'Content-Type': 'application/octet-stream'
                 },
                 responseType: 'stream'
-            });
+            })
              let rsp = "rfz"
             response.data.on('data', (chunk) => {
                 try {
-                    const eventString = chunk.toString();
-                    const eventData = eventString.match(/data: (.+)/);
+                    const eventString = chunk.toString()
+                    const eventData = eventString.match(/data: (.+)/)
                     if (eventData && eventData[1]) {
-                        let data;
+                        let data
                            try {
                               data = JSON.parse(eventData[1])
                             } catch (e) {
@@ -311,22 +302,22 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                         switch (data.status) {
                             case "processing":
                                 cht.edit(("Processing.... " + data.progress + "%"), _key)
-                            break;
+                            break
                             case "failed":
                                 cht.reply(data.status)
-                                response.data.destroy();
-                                break;
+                                response.data.destroy()
+                                break
                             case "completed":
                                 Exp.sendMessage(cht.id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
-                                response.data.destroy();
-                                break;
+                                response.data.destroy()
+                                break
                             default:
-                                console.log('Unknown status:', data);
+                                console.log('Unknown status:', data)
                         }
                     }
                 } catch (e) {
-                    console.error('Error processing chunk:', e.message);
-                    response.data.destroy();
+                    console.error('Error processing chunk:', e.message)
+                    response.data.destroy()
                     cht.reply("Err!!")
                 }
             })
@@ -340,8 +331,90 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         if(!cht.q) return cht.reply("Mau tanya apa?")
         
         let ai = await fetch(`${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`)
-        .then(response => response.json());
+        .then(response => response.json())
        
         cht.reply("[ BARD GOOGLE ]\n"+ai.chatUi)
 	})
+	
+    ev.on({ 
+        args: infos.bell,
+        cmd: ['bell', 'autoai', 'aichat', 'ai_interactive'],
+        tag: "ai",
+        listmenu: ["autoai"]
+    }, async () => {
+        Data.preferences[cht.id] = Data.preferences[cht.id] || {}
+        let q = cht.q
+        let set = {
+            "on": {
+                "done": "Berhasil!, ai_interactive telah diaktifkan dalam chat ini!",
+                "value": true
+            },
+            "off": {
+                "done": "Berhasil!, ai_interactive telah dimatikan dalam chat ini!",
+                "value": false
+            },
+            "on-group": {
+                "done": "Berhasil!, ai_interactive telah diaktifkan di semua grup!",
+                "owner": true,
+                "for": from.group,
+                "value": true
+            },
+            "on-private": {
+                "done": "Berhasil!, ai_interactive telah diaktifkan di semua chat private!",
+                "owner": true,
+                "for": from.sender,
+                "value": true
+            },
+            "off-group": {
+                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat group!",
+                "owner": true,
+                "for": from.group,
+                "value": false
+            },
+            "off-private": {
+                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat private!",
+                "owner": true,
+                "for": from.sender,
+                "value": false
+            },
+            "on-all": {
+                "done": "Berhasil!, ai_interactive telah diaktifkan di semua chat!",
+                "owner": true,
+                "for": "all",
+                "value": true
+            },
+            "off-all": {
+                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat!",
+                "owner": true,
+                "for": "all",
+                "value": false
+            }
+        }[q]
+
+        let alls = Object.keys(Data.preferences)
+        if (!set) return cht.reply(infos.bell)
+        if (set.owner && !is.owner) return cht.reply("Khusus Owner!")
+        if (cht.id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply("Khusus Admin!")
+
+        if (set.for) {
+            let $config = set.for === from.group ? "group" :
+                set.for === from.sender ? "private" :
+                "all"
+            if ($config === "all") {
+                cfg.ai_interactive.group = set.value
+                cfg.ai_interactive.private = set.value
+            } else {
+                cfg.ai_interactive[$config] = set.value
+            }
+            alls = set.for === from.group ? alls.filter(a => a.endsWith(from.group)) :
+                set.for === from.sender ? alls.filter(a => a.endsWith(from.sender)) :
+                alls
+            for (let i of alls) {
+                Data.preferences[i].ai_interactive = set.value
+            }
+        } else {
+            Data.preferences[cht.id].ai_interactive = set.value
+        }
+        cht.reply(set.done)
+    })
 }

@@ -1,11 +1,11 @@
 /*!-======[ Module Imports ]======-!*/
-const axios = "axios".import();
+const axios = "axios".import()
 
 /*!-======[ Function Imports ]======-!*/
-const { mediafireDl } = await (fol[0] + 'mediafire.js').r();
+const { mediafireDl } = await (fol[0] + 'mediafire.js').r()
 
 /*!-======[ Configurations ]======-!*/
-let infos = cfg.menu.infos;
+let infos = cfg.menu.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -18,12 +18,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 5
     }, async () => {
-        let q = is.quoted?.url || is.url;
+        let q = is.quoted?.url || is.url
         await cht.reply('```Processing...```')
-        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + q + "&key=" + api.xterm.key).then(a => a.json())).data
-        let pin = Object.values(p.videos)[0].url;
-        Exp.sendMessage(cht.id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht });
-    });
+        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + q).then(a => a.json())).data
+        let pin = Object.values(p.videos)[0].url
+        Exp.sendMessage(cht.id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
+    })
     
     ev.on({ 
       cmd: ['mediafire', 'mediafiredl'], 
@@ -32,22 +32,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 8 
     }, async () => {
-        const _key = key[sender]
-        let q = is.quoted?.url || is.url;
-        if (!q) return cht.reply("Mana linknya?");
+        const _key = keys[sender]
+        let q = (is.quoted?.url || is.url)?.[0] || null
+        if (!q) return cht.reply("Mana linknya?")
         await cht.edit('```Processing...```', _key)
         try {
-            let m = await mediafireDl(q);
+            let m = await mediafireDl(q)
             await cht.edit("Checking media type...", _key)
-            let { headers } = await axios.get(m.link);
-            let type = headers["content-type"];
+            let { headers } = await axios.get(m.link)
+            let type = headers["content-type"]
             await cht.edit("Sending...", _key )
-            await Exp.sendMessage(cht.id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht });
+            await Exp.sendMessage(cht.id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht })
             await cht.edit("Success", _key )
         } catch (e) {
             await cht.edit("TypeErr: " + e, _key )
         }
-    });
+    })
 
     ev.on({ 
       cmd: ['tiktok', 'tiktokdl', 'tt'], 
@@ -56,40 +56,40 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: "Mana linknya?",
       energy: 4 
     }, async () => {
-        const _key = key[sender]
-        if(!(is.quoted?.url || is.url)) return cht.reply("Mana urlnya?")
-        let url = is.quoted?.url || is.url 
-        if(!(url ? url[0].includes("tiktok.com") : false)) return cht.reply("Itu bukan link tiktok!")
+        const _key = keys[sender]
+        let q = (is.quoted?.url || is.url)?.[0] || null
+        if (!q) return cht.reply("Mana linknya?")
+        if(!q.includes("tiktok.com")) return cht.reply("Itu bukan link tiktok!")
         await cht.edit("Bntr..", _key)
-        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" + url[0] + "&key=" + api.xterm.key).then(a => a.json())).data;
-        await cht.edit("Lagi dikirim...", _key);
-        let type = data.type;
+        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" + q).then(a => a.json())).data
+        await cht.edit("Lagi dikirim...", _key)
+        let type = data.type
         if (type == 'image') {
             for (let image of data.media) {
-                await Exp.sendMessage(cht.id, { image: { url: image.url } }, { quoted: cht });
+                await Exp.sendMessage(cht.id, { image: { url: image.url } }, { quoted: cht })
             }
         } else if (type == 'video') {
-            await Exp.sendMessage(cht.id, { video: { url: data.media[1].url } }, { quoted: cht });
+            await Exp.sendMessage(cht.id, { video: { url: data.media[1].url } }, { quoted: cht })
         }
-        await cht.edit("Dah tuh", _key);
-    });
+        await cht.edit("Dah tuh", _key)
+    })
 
     ev.on({ 
       cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       tag: 'downloader',
-      args: "Mana linknya?",
+      args: "Harap sertakan url/judul videonya!",
       energy: 4 
     }, async () => {
-        const _key = key[sender]
-        let q = is.quoted?.url || is.url || (typeof cht.q !== 'undefined' ? [cht.q] : null);
-        if (!q) return cht.reply('Harap sertakan url/judul videonya!');
+        const _key = keys[sender]
+        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
+        if (!q) return cht.reply('Harap sertakan url/judul videonya!')
         try {
             await cht.edit("Searching...", _key)
-            let search = (await fetch(api.xterm.url + "/api/search/youtube?query=" + q[0] + "&key=" + api.xterm.key).then(a => a.json())).data;
+            let search = (await fetch(api.xterm.url + "/api/search/youtube?query=" + q).then(a => a.json())).data
             await cht.edit("Downloading...", _key)
-            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=" + q[0] + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3") + "&key=" + api.xterm.key).then(a => a.json())).data;
-            let item = search.items[0];
+            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=" + q + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
+            let item = search.items[0]
             
             let audio = {
                 [cht.cmd === "ytmp4" ? "video" : "audio"]: { url: data.dlink },
@@ -108,12 +108,75 @@ export default async function on({ cht, Exp, store, ev, is }) {
                         mediaType: 2,
                     },
                 },
-            };
+            }
             await cht.edit("Sending...", _key)
-            await Exp.sendMessage(cht.id, audio, { quoted: cht });
+            await Exp.sendMessage(cht.id, audio, { quoted: cht })
         } catch (e) {
-            console.log(e);
-            cht.reply("TypeErr: " + e);
+            console.log(e)
+            cht.reply("TypeErr: " + e)
         }
-    });
+    })
+    
+    ev.on({ 
+      cmd: ['facebookdl','fb','fbdl','facebook'], 
+      listmenu: ['facebookdl'], 
+      tag: 'downloader',
+      args: "Mana linknya?",
+      energy: 5
+    }, async () => {
+        const _key = keys[sender]
+        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
+        if (!q) return cht.reply("Mana linknya?")
+        await cht.edit('```Processing...```', _key)
+        let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + q).then(a => a.json())).data
+        await cht.edit("Sending...", _key)
+        Exp.sendMessage(cht.id, { video: { url: f.urls.sd }, mimetype: "video/mp4", caption: f.title }, { quoted: cht })
+    })
+    
+    ev.on({ 
+      cmd: ['instagramdl','ig','igdl','instagram'], 
+      listmenu: ['instaramdl'], 
+      tag: 'downloader',
+      args: "Mana linknya?",
+      energy: 5
+    }, async () => {
+        const _key = keys[sender]
+        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
+        if(!q) return cht.edit("```Mana linknya?```", _key)
+        await cht.edit('```Processing...```', _key)
+        let f = (await fetch(api.xterm.url + "/api/downloader/instagram?url=" + q).then(a => a.json())).data
+        let text = "*!-======[ Instagram ]======-!*\n"
+            text += `\nTitle: ${f.title}`
+            text += `\nAccount: ${f.accountName}`
+            text += `\nLikes: ${f.likes}`
+            text += `\nComments: ${f.comments}`
+            text += `\nPostTime: ${f.postingTime}`
+            text += `\nPostUrl: ${f.postUrl}`
+        const info = {
+            text,
+            contextInfo: { 
+                externalAdReply: {
+                    title: cht.pushName,
+                    body: "Instagram Downloader",
+                    thumbnailUrl: f.imageUrl,
+                    sourceUrl: "https://github.com/Rifza123",
+                    mediaUrl: "http://ẉa.me/6283110928302/"+Math.floor(Math.random() * 100000000000000000),
+                    renderLargerThumbnail: true,
+                    showAdAttribution: true,
+                    mediaType: 1,
+                },
+                forwardingScore: 19,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterName: "Termai",
+                    newsletterJid: "120363301254798220@newsletter",
+                }
+            }
+        }
+        await Exp.sendMessage(cht.id, info, { quoted: cht })
+        let { content } = f
+        for(let i of content){
+            await Exp.sendMessage(cht.id, { [i.type]: { url: i.url } }, { quoted: cht })
+        }
+    })
 }

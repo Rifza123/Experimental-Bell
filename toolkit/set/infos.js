@@ -63,7 +63,6 @@ infos.set = `
 - public <on/off>
 - autotyping <on/off>
 - autoreadsw <on/off>
-- bell <on/off>
 - autoreadpc <on/off>
 - autoreadgc <on/of>
 
@@ -108,4 +107,37 @@ Param: ${dark}.txt2img <checkpoint>[<lora>]|<prompt>${dark}
  - lora: .lorasearch <query>
  - checkpoint: .checkpointsearch <query>
 
+`
+
+/*!-======[ Auto Bell info ]======-!*/
+infos.bell = `
+!-======[ Auto Ai Response ]======-!
+
+_List setting:_
+ !-===(👥)> *All User*
+- on
+- off
+    ${dark}Jika di grup maka khusus admin/owner${dark}
+
+ !-===(👤)> *Owner*
+- on-group
+    ${dark}Aktif di semua group${dark}
+
+- off-group
+    ${dark}Nonaktif di semua group${dark}
+
+- on-private
+    ${dark}Aktif disemua private chat${dark}
+
+- off-private
+    ${dark}Nonaktif disemua private chat${dark}
+
+- on-all
+    ${dark}Aktif di semua chat${dark}
+
+- off-all
+    ${dark}Nonaktif di semua chat${dark}
+    
+*Contoh:*
+> .bell on
 `

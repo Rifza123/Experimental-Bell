@@ -1,5 +1,5 @@
 /*!-======[ Module Imports ]======-!*/
-const fs = "fs".import();
+const fs = "fs".import()
 
 /*!-======[ Function Import ]======-!*/
 let exif = await (fol[0] + 'exif.js').r()

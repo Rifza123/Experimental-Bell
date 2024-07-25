@@ -1,5 +1,5 @@
 /*!-======[ Module Imports ]======-!*/
-const fs = "fs".import();
+const fs = "fs".import()
 const { downloadContentFromMessage } = "baileys".import()
 
 /*!-======[ Default Export Function ]======-!*/
@@ -43,7 +43,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'baileys',
         energy: 25
     }, async() => {
-       if (!(is?.owner || is?.admin)) return cht.reply("Maaf, males nanggepin. ini khusus owner/admin kalo di grup");
+       if (!(is?.owner || is?.admin)) return cht.reply("Maaf, males nanggepin. ini khusus owner/admin kalo di grup")
          if(cht.mention.length < 1) return cht.reply("Reply/tag orangnya!")
         let ab = store.messages[cht.id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
         if(ab.length == 0) return cht.reply("Org itu tak pernah mengirimkan foto/video 1xlihat!")
@@ -62,5 +62,39 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await Exp.sendMessage(cht.id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
         }
     })
+    
+    ev.on({ 
+        cmd: ['statistic','stats'],
+        listmenu: ['stats'],
+        tag: 'other'
+    }, async() => {
+    const { cpuUsage, memoryUsage, processStats } = await Exp.func.getSystemStats()
+    const runtimeText = processStats.runtime;
+        
+    const txt = cpuUsage.map(cpu => 
+        `💻 *CPU ${cpu.cpu + 1}*\n` 
+      + `   Model: ${cpu.model}\n`
+      + `   Usage: ${cpu.usage}\n`
+    ).join('\n')
+        + `🧠 *Memory Usage*\n` 
+        + `   Total: ${memoryUsage.totalMemory}\n` 
+        + `   Free: ${memoryUsage.freeMemory}\n` 
+        + `   Used: ${memoryUsage.usedMemory}\n` 
+        + `📊 *Process Memory Usage*\n` 
+        + `   RSS: ${processStats.memoryUsage.rss}\n` 
+        + `   Heap Total: ${processStats.memoryUsage.heapTotal}\n` 
+        + `   Heap Used: ${processStats.memoryUsage.heapUsed}\n` 
+        + `   External: ${processStats.memoryUsage.external}\n` 
+        + `🕒 *Runtime*\n` 
+        + `   ${runtimeText.days}d ${runtimeText.hours}h ${runtimeText.minutes}m ${runtimeText.seconds}s ${runtimeText.milliseconds}ms\n` 
+        + `🔧 *Process Info*\n` 
+        + `   PID: ${processStats.pid}\n` 
+        + `   Title: ${processStats.title}\n` 
+        + `   Exec Path: ${processStats.execPath}`;
+        return cht.reply(txt)
+    })
+
+
+
 
 }

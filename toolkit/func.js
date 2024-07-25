@@ -3,16 +3,19 @@ const fs = "fs".import()
 const axios = "axios".import()
 const https = 'https'.import()
 const moment = "timezone".import()
+const os = await "os".import()
+const process = await "process".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
+const { color, bgcolor } = await './toolkit/color.js'.r()
 
 export class func {
     static async getSender(jid) {
-        if (!jid) return jid;
+        if (!jid) return jid
         if (/:\d+@/gi.test(jid)) {
-            let { user, server } = jidDecode(jid) || {};
-            return user && server ? `${user}@${server}` : jid;
-        } else return jid;
+            let { user, server } = jidDecode(jid) || {}
+            return user && server ? `${user}@${server}` : jid
+        } else return jid
     }
 
     static getType(type) {
@@ -24,7 +27,7 @@ export class func {
                type === 'audioMessage' ? 'audio' :
                type === 'imageMessage' ? 'image' :
                type === 'viewOnceMessage' ? 'viewOnce' :
-               type;
+               type
     }
 
     static getGroupAdmins(participants) {
@@ -32,9 +35,9 @@ export class func {
     }
     
     static async downloadSave(message, filename) {
-        let quoted = message.msg ? message.msg : message;
-        let mime = (message.msg || message).mimetype || '';
-        let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
+        let quoted = message.msg ? message.msg : message
+        let mime = (message.msg || message).mimetype || ''
+        let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
         const stream = await downloadContentFromMessage(quoted, messageType)
 
         let buffer = Buffer.from([])        
@@ -42,9 +45,9 @@ export class func {
             buffer = Buffer.concat([buffer, chunk])
         }
         
-        let trueFileName = filename;
+        let trueFileName = filename
         await fs.writeFileSync(trueFileName, buffer)
-        return trueFileName;
+        return trueFileName
     }
 
     static async download(message, MessageType) {
@@ -65,13 +68,13 @@ export class func {
                 text = text.replace(regex, obj[key])
             }
         }
-        return text;
+        return text
     }
     
     static menuFormatter(data, frames, tags) {
         const normalizedData = {}
         Object.values(data).forEach(item => {
-            const tag = item.tag;
+            const tag = item.tag
             if (!normalizedData[tag]) {
                 normalizedData[tag] = new Set()
             }
@@ -124,8 +127,8 @@ export class func {
 			if (cekhN) {
 				let cemed = Data.use.cmds.cmd.find(i => i.name == NAMEQ)
 				var ussd = Data.use.cmds.cmd.indexOf(cemed)
-				Data.use.cmds.cmd[ussd].use += 1;
-				Data.use.cmds.cmd[ussd].times = time;
+				Data.use.cmds.cmd[ussd].use += 1
+				Data.use.cmds.cmd[ussd].times = time
 				fs.writeFileSync('./toolkit/db/cmd.json', JSON.stringify(Data.use.cmds, null, 2))
 			} else {
 				Data.use.cmds.cmd.push({
@@ -146,7 +149,7 @@ export class func {
 	
 	static topCmd = (i = 10) => {
 		const LIST_TOP = this.cmds().slice(0, i).map(([name, data]) => `${prefix}${data.name}(${data.use}) || ${data.times}`)
-		return LIST_TOP;
+		return LIST_TOP
 	}
 	static getBuffer = async (url, options) => {
       return new Promise((resolve, reject) => {
@@ -177,29 +180,29 @@ export class func {
         first = first.replace(/\s+/g, '')
         second = second.replace(/\s+/g, '')
 
-        if (first === second) return 1; 
-        if (first.length < 2 || second.length < 2) return 0;
+        if (first === second) return 1 
+        if (first.length < 2 || second.length < 2) return 0
 
         let firstBigrams = new Map()
         for (let i = 0; i < first.length - 1; i++) {
             const bigram = first.substring(i, i + 2)
             const count = firstBigrams.has(bigram)
                 ? firstBigrams.get(bigram) + 1
-                : 1;
+                : 1
 
             firstBigrams.set(bigram, count)
-        };
+        }
 
-        let intersectionSize = 0;
+        let intersectionSize = 0
         for (let i = 0; i < second.length - 1; i++) {
             const bigram = second.substring(i, i + 2)
             const count = firstBigrams.has(bigram)
                 ? firstBigrams.get(bigram)
-                : 0;
+                : 0
 
             if (count > 0) {
                 firstBigrams.set(bigram, count - 1)
-                intersectionSize++;
+                intersectionSize++
             }
         }
 
@@ -207,21 +210,21 @@ export class func {
     }
 
     static areArgsValid(mainString, targetStrings) {
-        if (typeof mainString !== 'string') return false;
-        if (!Array.isArray(targetStrings)) return false;
-        if (!targetStrings.length) return false;
-        if (targetStrings.find(function (s) { return typeof s !== 'string' })) return false;
-        return true;
+        if (typeof mainString !== 'string') return false
+        if (!Array.isArray(targetStrings)) return false
+        if (!targetStrings.length) return false
+        if (targetStrings.find(function (s) { return typeof s !== 'string' })) return false
+        return true
     }
 
     static findBestMatch(mainString, targetStrings) {
         if (!this.areArgsValid(mainString, targetStrings)) throw new Error('Bad arguments: First argument should be a string, second should be an array of strings')
 
-        const ratings = [];
-        let bestMatchIndex = 0;
+        const ratings = []
+        let bestMatchIndex = 0
 
         for (let i = 0; i < targetStrings.length; i++) {
-            const currentTargetString = targetStrings[i];
+            const currentTargetString = targetStrings[i]
             const currentRating = this.compareTwoStrings(mainString, currentTargetString)
             ratings.push({ target: currentTargetString, rating: currentRating })
             if (currentRating > ratings[bestMatchIndex].rating) {
@@ -231,34 +234,34 @@ export class func {
 
         const bestMatch = ratings[bestMatchIndex]
 
-        return { ratings: ratings, bestMatch: bestMatch, bestMatchIndex: bestMatchIndex };
+        return { ratings: ratings, bestMatch: bestMatch, bestMatchIndex: bestMatchIndex }
     }
 
     static searchSimilarStrings = async(query, data, threshold) => {
         return data.map((item, index) => {
             const similarity = this.compareTwoStrings(query, item.toLowerCase())
-            return { item, similarity, index };
+            return { item, similarity, index }
         }).filter(result => result.similarity >= threshold)
     }
     
     static newDate = () => {
         const now = moment.tz('Asia/Jakarta')
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        const indoMonthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+        const indoMonthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
-        const dayName = dayNames[now.day()]; 
-        const indoDayName = dayNames[now.day()]; 
-        const indoMonthName = indoMonthNames[now.month()];
+        const dayName = dayNames[now.day()] 
+        const indoDayName = dayNames[now.day()] 
+        const indoMonthName = indoMonthNames[now.month()]
         const dayNumber = now.format('DD') 
         const year = now.format('YYYY') 
         const formattedTime = now.format('HH:mm:ss') 
 
-        const wetonIndex = (now.day() + now.month() + now.year()) % 5;
-        const wetonNames = ['Legi', 'Pahing', 'Pon', 'Wage', 'Kliwon'];
-        const wetonJawa = wetonNames[wetonIndex];
+        const wetonIndex = (now.day() + now.month() + now.year()) % 5
+        const wetonNames = ['Legi', 'Pahing', 'Pon', 'Wage', 'Kliwon']
+        const wetonJawa = wetonNames[wetonIndex]
 
-        const combinedResult = `${indoDayName} ${wetonJawa}, ${dayNumber} ${indoMonthName} ${year}, ${formattedTime}`;
-        return combinedResult;
+        const combinedResult = `${indoDayName} ${wetonJawa}, ${dayNumber} ${indoMonthName} ${year}, ${formattedTime}`
+        return combinedResult
     }
     
     static archiveMemories = ArchiveMemories
@@ -275,9 +278,78 @@ export class func {
             second: '2-digit',
             hour12: false,
             timeZone: timezone || "Asia/Jakarta"
-        });
+        })
 
-        const date = new Date(time);
+        const date = new Date(time)
         return formatter.format(date)
+    }
+    static logMessage = (type, id, pushName, message) => {
+        const form = bgcolor(`[ ${type} ]`, type === 'PRIVATE' ? 'yellow' : 'gray')
+        return `${form} From: ${color(id, 'cyan')} | User: ${color(pushName, 'cyan')} | Msg: ${color(message, 'green')}`
+    }
+    static formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B'
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+        
+        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB'
+        else return (bytes / 1073741824).toFixed(2) + ' GB'
+    }
+    
+    static formatDuration(seconds) {
+        const days = Math.floor(seconds / (24 * 3600))
+        const hours = Math.floor((seconds % (24 * 3600)) / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        const secs = Math.floor(seconds % 60)
+        const millis = Math.floor((seconds - Math.floor(seconds)) * 1000)
+        return {
+            days,
+            hours,
+            minutes,
+            seconds: secs,
+            milliseconds: millis
+        }
+    }
+
+    static async getSystemStats() {
+        const cpus = os.cpus()
+        const cpuUsage = cpus.map((cpu, index) => {
+            const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
+            const idle = cpu.times.idle
+            const usage = ((total - idle) / total) * 100
+            return {
+                cpu: index,
+                model: cpu.model,
+                speed: cpu.speed,
+                usage: usage.toFixed(2) + '%'
+            }
+        })
+
+        const totalMemory = os.totalmem()
+        const freeMemory = os.freemem()
+        const memoryUsage = {
+            totalMemory: this.formatBytes(totalMemory),
+            freeMemory: this.formatBytes(freeMemory),
+            usedMemory: this.formatBytes(totalMemory - freeMemory)
+        }
+        
+        const uptime = process.uptime();
+        const processStats = {
+            pid: process.pid,
+            title: process.title,
+            execPath: process.execPath,
+            memoryUsage: {
+                rss: this.formatBytes(process.memoryUsage().rss),
+                heapTotal: this.formatBytes(process.memoryUsage().heapTotal),
+                heapUsed: this.formatBytes(process.memoryUsage().heapUsed),
+                external: this.formatBytes(process.memoryUsage().external)
+            },
+            runtime: this.formatDuration(uptime)
+        }
+
+        return {
+            cpuUsage,
+            memoryUsage,
+            processStats
+        }
     }
 }
