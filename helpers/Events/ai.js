@@ -7,11 +7,9 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 
 /*!-======[ Configurations ]======-!*/
 let infos = cfg.menu.infos
-
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender } = cht
-
     ev.on({ 
         cmd: ['cover','covers'],
         listmenu: ['covers `Maintenance`'],
@@ -430,5 +428,16 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
      if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
         await cht.edit("Bntr...", keys[sender])
         await Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+	})
+	
+	ev.on({ 
+        cmd: ['resetaichat','clearsesichat'],
+        tag: "ai",
+        listmenu: ["resetaichat"]
+    }, async() => {
+        
+        let ai = await fetch(`${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`)
+        .then(response => response.json())
+        cht.reply(ai.msg)
 	})
 }
