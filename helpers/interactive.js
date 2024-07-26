@@ -124,6 +124,11 @@ export default async function In({ cht, Exp, store, ev, ai, is }) {
                     await cht.reply(config?.msg ?? "ok")
                     return ev.emit(config?.cmd)
                  break
+                 case 'txt2img':
+                    cht.q = (config?.cfg?.prompt ?? "")
+                    await cht.reply(config?.msg ?? "ok")
+                    return ev.emit("dalle3")
+                 break
                  case 'pinterest':
                     noreply = true
                     await cht.reply(config?.msg ?? "ok")

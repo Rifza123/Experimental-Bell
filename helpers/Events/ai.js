@@ -74,8 +74,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
     console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
-        cht.edit("Bntr...", keys[sender])
-        Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 } }, { quoted: cht })
+        await cht.edit("Bntr...", keys[sender])
+        await Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key } }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -417,4 +417,16 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
         cht.reply(set.done)
     })
+    
+    ev.on({ 
+        cmd: ['dalle3'],
+        listmenu: ['dalle3'],
+        tag: 'ai',
+        energy: 10
+    }, async() => {
+    let [text1, text2] = cht.q ? cht.q.split("|") : []
+     if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
+        await cht.edit("Bntr...", keys[sender])
+        await Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+	})
 }
