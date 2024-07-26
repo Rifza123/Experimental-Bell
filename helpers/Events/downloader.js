@@ -135,7 +135,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     
     ev.on({ 
       cmd: ['instagramdl','ig','igdl','instagram'], 
-      listmenu: ['instaramdl'], 
+      listmenu: ['instagramdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
       energy: 5
