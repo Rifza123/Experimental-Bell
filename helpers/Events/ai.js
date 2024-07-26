@@ -11,6 +11,7 @@ let infos = cfg.menu.infos
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender } = cht
+
     ev.on({ 
         cmd: ['cover','covers'],
         listmenu: ['covers `Maintenance`'],
