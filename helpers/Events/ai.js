@@ -7,6 +7,7 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 
 /*!-======[ Configurations ]======-!*/
 let infos = cfg.menu.infos
+
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender } = cht
