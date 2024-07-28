@@ -105,7 +105,8 @@ ev.on({
     tag: "", // Tag ini menentukan di menu bagian mana list menu akan ditempatkan
     energy: 7, // Harga penggunaan energi pada event ini
     args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
-    media: { // Membutuhkan media
+    media: false,
+    /*media: { // Membutuhkan media
         type: ["audio"], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
         msg: "Reply audionya?", // Respon jika tidak ada audio yang di-reply
         etc: { // Lain-lain
@@ -113,11 +114,12 @@ ev.on({
             msg: "Audio tidak boleh lebih dari 360 detik!" // Respon jika lebih dari 360 detik
         },
         save: false // Jika true maka media akan disimpan dalam bentuk file audio.mp3
-    },
-    urls: {//Memerlukan url
+    },*/
+    urls: false,
+    /*urls: {//Memerlukan url
         msg: "Harap berikan link!",//Respon jika args bukan link
         formats: ["mediafire"]//Format url ini menentukan format apa yg terdapat pad url
-    }
+    }*/
 }, ({ args, media, urls }) => {
     // media adalah kembalian dari media yang di-download, 
     // jika save false maka media adalah buffer,
