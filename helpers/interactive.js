@@ -12,7 +12,7 @@ const { ai } = await "./machine/reasoner.js".r()
 export default 
 async function In({ cht, Exp, store, ev, is }) {
     try {
-        let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht?.msg
+        let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
         let isEval = cht?.msg?.startsWith('>')
         let isEvalSync = cht?.msg?.startsWith('=>')
         let isExec = cht?.msg?.startsWith('$')
@@ -64,6 +64,7 @@ async function In({ cht, Exp, store, ev, is }) {
         } else if (isBella) {
             let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : cht?.msg
             if (cht?.type === "audio") {
+                console.log(cht.type)
                 try {
                     chat = (await transcribe(await cht?.download()))?.text ?? ""
                 } catch (error) { 
@@ -87,7 +88,6 @@ async function In({ cht, Exp, store, ev, is }) {
                    _logic: false
                 })
                 let config = _ai?.data ?? {}
-                console.log(config)
                 await Exp.func.addAiResponse()
                 let noreply = false
                 switch (config?.cmd) {

@@ -4,6 +4,7 @@ const fs = "fs".import()
 /*!-======[ Functions Imports ]======-!*/
 const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 const { musixSearch } = await (fol[2] + 'musixsearch.js').r()
+const { transcribe } = await (fol[2] + 'transcribe.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {

@@ -43,7 +43,7 @@ async function client({ Exp, store, cht, is }) {
 
         cht.cmd && await ev.emit(cht.cmd)
 
-        cht.msg && await Data.In({ ev, ...exps })
+        await Data.In({ ev, ...exps })
 
         /*!-======[ Chat Interactions Add ]======-!*/
         if (!cht.cmd || is.botMention) {
