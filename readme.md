@@ -104,7 +104,9 @@ ev.on({
     listmenu: [''], // Bagian ini akan terlihat dalam menu
     tag: "", // Tag ini menentukan di menu bagian mana list menu akan ditempatkan
     energy: 7, // Harga penggunaan energi pada event ini
-    args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
+    args: false,
+    /*args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
+    */
     media: false,
     /*media: { // Membutuhkan media
         type: ["audio"], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
