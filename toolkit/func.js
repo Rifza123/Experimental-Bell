@@ -354,13 +354,14 @@ export class func {
     }
     
     static clearNumbers(text) {
+        if(!text) return
         [
             /@\u2068\u202e\d+~\u2069/g,
             /@\d+/g,
             /@\(\d+\)/g,
             /@<\d+>/g
         ].forEach((pattern) => {
-            text = text.replace(pattern, '')
+            text = text?.replace(pattern, '')
         })
 
         return text;

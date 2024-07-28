@@ -15,12 +15,14 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['pinterestdl', 'pindl'], 
       listmenu: ['pinterestdl'], 
       tag: 'downloader',
-      args: "Mana linknya?",
+      urls: {
+        msg: "Harap berikan link!",
+        formats: ["pinterest","pin"]
+      },
       energy: 5
-    }, async () => {
-        let q = is.quoted?.url || is.url
+    }, async ({ urls }) => {
         await cht.reply('```Processing...```')
-        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + q).then(a => a.json())).data
+        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + urls[0]).then(a => a.json())).data
         let pin = Object.values(p.videos)[0].url
         Exp.sendMessage(id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
     })
@@ -30,14 +32,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['mediafire'], 
       tag: 'downloader',
       args: "Mana linknya?",
+      urls: {
+        msg: "Harap berikan link!",
+        formats: ["mediafire"]
+      },
       energy: 8 
-    }, async () => {
+    }, async ({ urls }) => {
         const _key = keys[sender]
-        let q = (is.quoted?.url || is.url)?.[0] || null
-        if (!q) return cht.reply("Mana linknya?")
+        
         await cht.edit('```Processing...```', _key)
         try {
-            let m = await mediafireDl(q)
+            let m = await mediafireDl(urls[0])
             await cht.edit("Checking media type...", _key)
             let { headers } = await axios.get(m.link)
             let type = headers["content-type"]
@@ -54,14 +59,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['tiktok', 'ttdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
+      urls: {
+        msg: "Harap berikan link!",
+        formats: ["tiktok"]
+      },
       energy: 4 
-    }, async () => {
+    }, async ({ urls }) => {
         const _key = keys[sender]
-        let q = (is.quoted?.url || is.url)?.[0] || null
-        if (!q) return cht.reply("Mana linknya?")
-        if(!q.includes("tiktok.com")) return cht.reply("Itu bukan link tiktok!")
         await cht.edit("Bntr..", _key)
-        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" + q).then(a => a.json())).data
+        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" +urls[0]).then(a => a.json())).data
         await cht.edit("Lagi dikirim...", _key)
         let type = data.type
         if (type == 'image') {
@@ -80,9 +86,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'downloader',
       args: "Harap sertakan url/judul videonya!",
       energy: 4 
-    }, async () => {
+    }, async ({ args, urls }) => {
         const _key = keys[sender]
-        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
+        let q = urls || args || null
         if (!q) return cht.reply('Harap sertakan url/judul videonya!')
         try {
             await cht.edit("Searching...", _key)
@@ -122,13 +128,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['facebookdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
+      urls: {
+        msg: "Harap berikan link!",
+        formats: ["facebook","fb"]
+      },
       energy: 5
-    }, async () => {
+    }, async ({ urls }) => {
         const _key = keys[sender]
-        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
-        if (!q) return cht.reply("Mana linknya?")
         await cht.edit('```Processing...```', _key)
-        let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + q).then(a => a.json())).data
+        let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + urls[0]).then(a => a.json())).data
         await cht.edit("Sending...", _key)
         Exp.sendMessage(id, { video: { url: f.urls.sd }, mimetype: "video/mp4", caption: f.title }, { quoted: cht })
     })
@@ -138,13 +146,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['instaramdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
+      urls: {
+        msg: "Harap berikan link!",
+        formats: ["instagram"]
+      },
       energy: 5
-    }, async () => {
+    }, async ({ urls }) => {
         const _key = keys[sender]
-        let q = (is.quoted?.url || is.url)?.[0] || cht.q || null
-        if(!q) return cht.edit("```Mana linknya?```", _key)
         await cht.edit('```Processing...```', _key)
-        let f = (await fetch(api.xterm.url + "/api/downloader/instagram?url=" + q).then(a => a.json())).data
+        let f = (await fetch(api.xterm.url + "/api/downloader/instagram?url=" + urls[0]).then(a => a.json())).data
         let text = "*!-======[ Instagram ]======-!*\n"
             text += `\nTitle: ${f.title}`
             text += `\nAccount: ${f.accountName}`

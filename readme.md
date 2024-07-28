@@ -113,10 +113,20 @@ ev.on({
             msg: "Audio tidak boleh lebih dari 360 detik!" // Respon jika lebih dari 360 detik
         },
         save: false // Jika true maka media akan disimpan dalam bentuk file audio.mp3
+    },
+    urls: {//Memerlukan url
+        msg: "Harap berikan link!",//Respon jika args bukan link
+        formats: ["mediafire"]//Format url ini menentukan format apa yg terdapat pad url
     }
-}, ({ media }) => {
+}, ({ args, media, urls }) => {
     // media adalah kembalian dari media yang di-download, 
     // jika save false maka media adalah buffer,
     // jika save true maka media adalah nama file yang tersimpan
+    // urls adalah kembalian (berupa array yg berisi url) dari pesan(args) yang diterima
+    
+    //Tambahkan fungsi disini
+    /*contoh:
+      cht.reply("Ok")
+    */
 });
 ```

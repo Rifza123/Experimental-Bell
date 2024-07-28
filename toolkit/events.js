@@ -107,11 +107,12 @@ class EventEmitter {
         try {
             const eventFile = Data.events[event]?.eventFile;
             if (!eventFile) return;
-
+            
             await this.loadEventHandler(eventFile);
             const ev = Data.events[event];
             if (!ev) return;
-
+            let urls = (this.is.quoted?.url || this.is.url)?.length < 1 ? null : (this.is.quoted?.url || this.is.url)
+            let args = this.cht?.q
             let media = null;
 
             if (this.cht.memories.energy < 1 && ev.energy) {
@@ -142,13 +143,24 @@ class EventEmitter {
                     ? await this.Exp.func.downloadSave(save, mediaType)
                     : await download();
             }
+            
+            if (ev.urls) {
+               if(!urls) return this.cht.reply(ev.urls.msg);
+               if(ev.urls.formats){
+                   let isFormatsUrl = urls.some(url => 
+                       ev.urls.formats.some(keyword => url.toLowerCase().includes(keyword.toLowerCase()))
+                   )
+                   if(!isFormatsUrl) return this.cht.reply(`Url yang diberikan harus berupa url seperti:\n- ${ev.urls.formats.join("\n- ")}`)
+               }
+            }
 
             if (ev.energy) {
                 await ArchiveMemories.reduceEnergy(this.cht.sender, ev.energy);
                 await this.cht.reply(`-${ev.energy} Energy⚡`);
             }
-
-            await ev.resolve({ media });
+            
+            const resolves = { media, urls, args }
+            await ev.resolve(resolves);
             await func.addCmd();
             await func.addCMDForTop(event);
             return

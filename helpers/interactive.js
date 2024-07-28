@@ -88,6 +88,7 @@ async function In({ cht, Exp, store, ev, is }) {
                    _logic: false
                 })
                 let config = _ai?.data ?? {}
+                console.log(config)
                 await Exp.func.addAiResponse()
                 let noreply = false
                 switch (config?.cmd) {
@@ -157,11 +158,9 @@ async function In({ cht, Exp, store, ev, is }) {
                 }
             } catch (error) {
                 console.error("Error parsing AI response:", error)
-                cht.reply("Terjadi kesalahan saat memproses permintaan AI.")
             }
         }
     } catch (error) {
         console.error("Error in Interactive:", error)
-        cht.reply("Terjadi kesalahan pada sistem.")
     }
 }
