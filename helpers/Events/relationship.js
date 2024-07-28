@@ -3,6 +3,7 @@ const fs = "fs".import()
 const { default: ms } = await "ms".import()
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
+    const { id } = cht
     ev.on({ 
         cmd: ['status','profil','profile','relationship'],
         listmenu: ['profile'],
@@ -45,7 +46,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 }
             }
         }
-        Exp.sendMessage(cht.id, menu, { quoted: cht })
+        Exp.sendMessage(id, menu, { quoted: cht })
     })
     
 }

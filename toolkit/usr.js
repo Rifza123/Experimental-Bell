@@ -1,12 +1,12 @@
 const fs = "fs".import().promises;
-const { role } = await './toolkit/role.js'.r();
+const { role } = await './toolkit/role.js'.r()
 
 export class ArchiveMemories {
-    static async add(userJid) {
+    static add(userJid) {
         const userId = userJid.split("@")[0];
         const userData = {
             chat: 1,
-            role: await role(1),
+            role: role(1),
             energy: cfg.first.energy,
             chargingSpeed: 1800000,
             chargeRate: 10,
@@ -22,12 +22,11 @@ export class ArchiveMemories {
         let userData = global.Data.users[userId];
         
         if (!userData) {
-            await this.add(userJid);
-            userData = global.Data.users[userId];
+            userData = this.add(userJid)
         }
 
         try {
-            userData.role = await role(userData.chat);
+            userData.role = role(userData.chat);
             if (!userData.lastCharge || !userData.maxCharge || !userData.chargingSpeed || !userData.chargeRate) {
                 userData = {
                     ...userData,
@@ -37,7 +36,7 @@ export class ArchiveMemories {
                     lastCharge: Date.now()
                 };
             }
-            const chargeAmount = await this.chargeEnergy(userData.energy, userData.lastCharge, userData.maxCharge, userData.chargeRate, userData.chargingSpeed);
+            const chargeAmount = this.chargeEnergy(userData.energy, userData.lastCharge, userData.maxCharge, userData.chargeRate, userData.chargingSpeed); 
             if (chargeAmount > 0) {
                 userData.energy += chargeAmount;
                 userData.lastCharge = Date.now();
@@ -50,7 +49,7 @@ export class ArchiveMemories {
         }
     }
 
-    static async addEnergy(userJid, amount) {
+    static addEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
         let userData = global.Data.users[userId];
         
@@ -61,7 +60,7 @@ export class ArchiveMemories {
 
         try {
             userData.energy += parseInt(amount);
-            userData.role = await role(userData.chat);
+            userData.role = role(userData.chat); 
             global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
@@ -70,7 +69,7 @@ export class ArchiveMemories {
         }
     }
 
-    static async reduceEnergy(userJid, amount) {
+    static reduceEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
         let userData = global.Data.users[userId];
         
@@ -80,7 +79,7 @@ export class ArchiveMemories {
         }
 
         try {
-            userData.role = await role(userData.chat);
+            userData.role = role(userData.chat); 
             let newEnergy = userData.energy - parseInt(amount);
             userData.energy = newEnergy < 0 ? 0 : newEnergy;
             global.Data.users[userId] = userData;
@@ -91,7 +90,7 @@ export class ArchiveMemories {
         }
     }
 
-    static async addChat(userJid) {
+    static addChat(userJid) {
         const userId = userJid.split("@")[0];
         let userData = global.Data.users[userId];
         
@@ -102,7 +101,7 @@ export class ArchiveMemories {
 
         try {
             userData.chat += 1;
-            userData.role = await role(userData.chat);
+            userData.role = role(userData.chat); 
             global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
@@ -111,7 +110,7 @@ export class ArchiveMemories {
         }
     }
     
-    static async chargeEnergy(energy, lastChargeTime, maxCharge, chargeRate, chargingInterval) {
+    static chargeEnergy(energy, lastChargeTime, maxCharge, chargeRate, chargingInterval) {
         const elapsedTime = Date.now() - parseInt(lastChargeTime);
         const chargeIntervals = Math.floor(elapsedTime / chargingInterval);
         let chargeAmount = chargeIntervals * chargeRate;

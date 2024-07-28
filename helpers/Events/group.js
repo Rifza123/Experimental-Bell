@@ -3,7 +3,7 @@ const fs = "fs".import()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-
+   const { id } = cht
     ev.on({ 
         cmd: ['group'],
         listmenu: ['group <open/close>'],
@@ -21,7 +21,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else {
            return cht.reply("open/close?")
         }
-        Exp.groupSettingUpdate(cht.id, typ)
+        Exp.groupSettingUpdate(id, typ)
     })
     
     ev.on({ 
@@ -34,7 +34,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(!is.botAdmin) return cht.reply("Aku bukan admin :(")
         if(cht.mention.length > 0){
             if(is.botMention && cht.cmd == "kick") return msg.reply("Saya tidak ingin keluar!")
-            Exp.groupParticipantsUpdate(cht.id, cht.mention, cht.cmd == "kick"? "remove" : "add")
+            Exp.groupParticipantsUpdate(id, cht.mention, cht.cmd == "kick"? "remove" : "add")
         } else {
             let reply = `*Sertakan nomor/Reply/tag target yang akan dikeluaran dari group!*\n\nExample: \n\n*Cara #1* => _Dengan reply pesan target_\n - ${prefix + cht.cmd} \n \n*Cara #2* => _Dengan tag target_\n - ${prefix + cht.cmd} @exports.rifza \n \n*Cara #2* => _Dengan nomor target_\n - ${prefix + cht.cmd} +62 831-xxxx-xxxx` 
             cht.reply(reply)

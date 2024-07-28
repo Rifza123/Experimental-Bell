@@ -9,7 +9,7 @@ const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 let infos = cfg.menu.infos
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
-    let { sender } = cht
+    let { sender, id } = cht
     ev.on({ 
         cmd: ['cover','covers'],
         listmenu: ['covers `Maintenance`'],
@@ -49,7 +49,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                          cht.edit(data.msg, _key)
                      break
                      case 'success':
-                         await Exp.sendMessage(cht.id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
+                         await Exp.sendMessage(id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
                          response.data.destroy()
                      break
                      case 'failed':
@@ -75,7 +75,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
         await cht.edit("Bntr...", keys[sender])
-        await Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key } }, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key } }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -107,7 +107,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                let s = await fetch(api.xterm.url + "/api/img2img/filters/batchProgress?id="+ai.id).then(a => a.json())
                cht.edit(s?.progress || "Prepare... ", _key)
                if(s.status == 3){
-                  return Exp.sendMessage(cht.id, { image: { url: s.url } }, { quoted: cht })                
+                  return Exp.sendMessage(id, { image: { url: s.url } }, { quoted: cht })                
                }
                if(s.status == 4){
                   return cht.reply("Maaf terjadi kesalhan. coba gunakan gambar lain!")
@@ -211,7 +211,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             } else if (s.taskStatus === 1) {
                 await cht.edit("Processing.... " + s.progress + "%", _key)
             } else if (s.taskStatus === 2) {
-                return Exp.sendMessage(cht.id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht })
+                return Exp.sendMessage(id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht })
             } else if (s.taskStatus === 3) {
                 return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
             }
@@ -260,7 +260,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             .then(async a => {
                 try{ 
                     let data = await a.json()
-                    Exp.sendMessage(cht.id, { image: { url: data[cht.q].preview }, caption: data[cht.q].model }, { quoted: cht })
+                    Exp.sendMessage(id, { image: { url: data[cht.q].preview }, caption: data[cht.q].model }, { quoted: cht })
                 } catch (e){
                     console.log(e)
                     cht.reply("Tidak ditemukan!")
@@ -308,7 +308,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                                 response.data.destroy()
                                 break
                             case "completed":
-                                Exp.sendMessage(cht.id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
+                                Exp.sendMessage(id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
                                 response.data.destroy()
                                 break
                             default:
@@ -342,7 +342,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: "ai",
         listmenu: ["autoai"]
     }, async () => {
-        Data.preferences[cht.id] = Data.preferences[cht.id] || {}
+        Data.preferences[id] = Data.preferences[id] || {}
         let q = cht.q
         let set = {
             "on": {
@@ -394,7 +394,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let alls = Object.keys(Data.preferences)
         if (!set) return cht.reply(infos.bell)
         if (set.owner && !is.owner) return cht.reply("Khusus Owner!")
-        if (cht.id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply("Khusus Admin!")
+        if (id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply("Khusus Admin!")
 
         if (set.for) {
             let $config = set.for === from.group ? "group" :
@@ -413,7 +413,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 Data.preferences[i].ai_interactive = set.value
             }
         } else {
-            Data.preferences[cht.id].ai_interactive = set.value
+            Data.preferences[id].ai_interactive = set.value
         }
         cht.reply(set.done)
     })
@@ -427,7 +427,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
      if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
         await cht.edit("Bntr...", keys[sender])
-        await Exp.sendMessage(cht.id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
 	
 	ev.on({ 

@@ -6,6 +6,7 @@ let infos = cfg.menu.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
+   const { id } = cht
     const modes = {
         public: 'mode public',
         autotyping: 'auto typing',

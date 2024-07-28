@@ -9,7 +9,7 @@ let infos = cfg.menu.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let { sender } = cht
+    let { sender, id } = cht
     
     ev.on({ 
       cmd: ['pinterestdl', 'pindl'], 
@@ -22,7 +22,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await cht.reply('```Processing...```')
         let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + q).then(a => a.json())).data
         let pin = Object.values(p.videos)[0].url
-        Exp.sendMessage(cht.id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
+        Exp.sendMessage(id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
     })
     
     ev.on({ 
@@ -42,7 +42,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             let { headers } = await axios.get(m.link)
             let type = headers["content-type"]
             await cht.edit("Sending...", _key )
-            await Exp.sendMessage(cht.id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht })
+            await Exp.sendMessage(id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht })
             await cht.edit("Success", _key )
         } catch (e) {
             await cht.edit("TypeErr: " + e, _key )
@@ -66,10 +66,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let type = data.type
         if (type == 'image') {
             for (let image of data.media) {
-                await Exp.sendMessage(cht.id, { image: { url: image.url } }, { quoted: cht })
+                await Exp.sendMessage(id, { image: { url: image.url } }, { quoted: cht })
             }
         } else if (type == 'video') {
-            await Exp.sendMessage(cht.id, { video: { url: data.media[1].url } }, { quoted: cht })
+            await Exp.sendMessage(id, { video: { url: data.media[1].url } }, { quoted: cht })
         }
         await cht.edit("Dah tuh", _key)
     })
@@ -110,7 +110,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 },
             }
             await cht.edit("Sending...", _key)
-            await Exp.sendMessage(cht.id, audio, { quoted: cht })
+            await Exp.sendMessage(id, audio, { quoted: cht })
         } catch (e) {
             console.log(e)
             cht.reply("TypeErr: " + e)
@@ -130,12 +130,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await cht.edit('```Processing...```', _key)
         let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + q).then(a => a.json())).data
         await cht.edit("Sending...", _key)
-        Exp.sendMessage(cht.id, { video: { url: f.urls.sd }, mimetype: "video/mp4", caption: f.title }, { quoted: cht })
+        Exp.sendMessage(id, { video: { url: f.urls.sd }, mimetype: "video/mp4", caption: f.title }, { quoted: cht })
     })
     
     ev.on({ 
       cmd: ['instagramdl','ig','igdl','instagram'], 
-      listmenu: ['instagramdl'], 
+      listmenu: ['instaramdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
       energy: 5
@@ -173,10 +173,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 }
             }
         }
-        await Exp.sendMessage(cht.id, info, { quoted: cht })
+        await Exp.sendMessage(id, info, { quoted: cht })
         let { content } = f
         for(let i of content){
-            await Exp.sendMessage(cht.id, { [i.type]: { url: i.url } }, { quoted: cht })
+            await Exp.sendMessage(id, { [i.type]: { url: i.url } }, { quoted: cht })
         }
     })
 }

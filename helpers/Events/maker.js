@@ -6,7 +6,7 @@ let exif = await (fol[0] + 'exif.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-
+    const { id } = cht
     ev.on({ 
         cmd: ['s', 'sticker', 'setiker'], 
         listmenu: ['sticker'],
@@ -27,7 +27,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 				packname: 'My sticker',
 				author: 'Ⓒ' + cht.pushName
 			})
-       Exp.sendMessage(cht.id, { sticker: { url: res } }, { quoted: cht })
+       Exp.sendMessage(id, { sticker: { url: res } }, { quoted: cht })
     })
     
 

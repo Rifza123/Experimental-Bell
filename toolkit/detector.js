@@ -21,11 +21,9 @@ let onreload = false;
         onreload = true;
         setTimeout(async () => {
             try {
-                if (fileName === "client.js") {
                     Data.helper = (await "./helpers/client.js".r()).default;
-                } else if (fileName === "interactive.js") {
                     Data.In = (await "./helpers/interactive.js".r()).default;
-                }
+                    Data.utils = (await "./helpers/utils.js".r()).default;
                 console.log(chalk.green(`Helper ${fileName} reloaded successfully!`));
             } catch (error) {
                 console.error(chalk.red(`Error reloading ${fileName}:`, error));

@@ -118,10 +118,8 @@ class EventEmitter {
                 return this.cht.reply(`Males😞\n⚡️Energy: ${this.cht.memories.energy}`);
             }
 
-            if (ev.args && !this.cht.q) {
-                return this.cht.reply(ev.args);
-            }
-
+            if (ev.args && !this.cht.q) return this.cht.reply(ev.args);
+            
             if (ev.media) {
                 const { type, msg, etc } = ev.media;
                 let mediaType = this.getMediaType();
@@ -150,12 +148,12 @@ class EventEmitter {
                 await this.cht.reply(`-${ev.energy} Energy⚡`);
             }
 
-            ev.resolve({ media });
+            await ev.resolve({ media });
             await func.addCmd();
             await func.addCMDForTop(event);
             return
         } catch (error) {
-            return console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${events}"`, error.stack);
+            return console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${event}"`, error.stack);
         }
     }
 }

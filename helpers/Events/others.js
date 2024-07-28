@@ -4,7 +4,7 @@ const { downloadContentFromMessage } = "baileys".import()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-
+    const { id } = cht
     ev.on({ 
         cmd: ['menu'],
         listmenu: ['menu'],
@@ -34,7 +34,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 }
             }
         }
-        Exp.sendMessage(cht.id, menu, { quoted: cht })
+        Exp.sendMessage(id, menu, { quoted: cht })
     })
     
     ev.on({ 
@@ -45,7 +45,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async() => {
        if (!(is?.owner || is?.admin)) return cht.reply("Maaf, males nanggepin. ini khusus owner/admin kalo di grup")
          if(cht.mention.length < 1) return cht.reply("Reply/tag orangnya!")
-        let ab = store.messages[cht.id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
+        let ab = store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
         if(ab.length == 0) return cht.reply("Org itu tak pernah mengirimkan foto/video 1xlihat!")
         for(let aa of ab){
             let thay = {
@@ -59,7 +59,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             }
             let mssg = {}
             thay.type == "audio" && (mssg.ptt = true)
-            await Exp.sendMessage(cht.id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
+            await Exp.sendMessage(id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
         }
     })
     

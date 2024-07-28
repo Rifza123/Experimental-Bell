@@ -7,9 +7,8 @@ const { musixSearch } = await (fol[2] + 'musixsearch.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-    let { sender } = cht
-
-        ev.on({ 
+    let { sender, id } = cht
+    ev.on({ 
         cmd: ['remini'], 
         listmenu: ['remini'],
         tag: "tools",
@@ -25,10 +24,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
        let tph = await TelegraPh(media)
          await cht.edit('Processing...', _key)
        let res = (await fetch(api.xterm.url + "/api/tools/remini?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
-         await Exp.sendMessage(cht.id, { image: { url: res.url }, caption: `Response Time: ${res.run_Time}`}, { quoted: cht })
+         await Exp.sendMessage(id, { image: { url: res.url }, caption: `Response Time: ${res.run_Time}`}, { quoted: cht })
          cht.edit("Nih", _key)
     })
-    
+     
     ev.on({ 
         cmd: ['telegraph','tourl'],
         listmenu: ['tourl'],
@@ -84,7 +83,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
         .then(response => response.json())
 
-        if (!ai.status) return cht.reply(ai.msg)
+        if (!ai.status) return cht.reply(ai.cht)
         while (true) {
           try{
             let s = await fetch(`${api.xterm.url}/api/tools/enhance/taskStatus?id=${ai.id}`)
@@ -94,7 +93,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 return cht.reply(s.task_status)
             }
             if (s.task_status == "done") {
-                await Exp.sendMessage(cht.id, { image: { url: s.output }, caption: `Duration: ${(await "ms".r()).default(s.duration)}\nSize: ${s.img_out_h}x${s.img_out_w}\nSize: ${(s.filesize+"").toFormat()}` }, { quoted: cht })
+                await Exp.sendMessage(id, { image: { url: s.output }, caption: `Duration: ${(await "ms".r()).default(s.duration)}\nSize: ${s.img_out_h}x${s.img_out_w}\nSize: ${(s.filesize+"").toFormat()}` }, { quoted: cht })
                 break
             }
           await new Promise(resolve => setTimeout(resolve, 3000))
@@ -113,7 +112,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async() => {
         let q = is.quoted?.url || is.url 
         if(!q) return cht.reply("Mana linknya?")
-        Exp.sendMessage(cht.id, { image: { url : 'https://image.thum.io/get/width/1900/crop/1000/fullpage/' + q[0] }, caption: `Result✔️`}, { quoted: cht } )
+        Exp.sendMessage(id, { image: { url : 'https://image.thum.io/get/width/1900/crop/1000/fullpage/' + q[0] }, caption: `Result✔️`}, { quoted: cht } )
 	})
 	
 	ev.on({ 
@@ -146,6 +145,26 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	})
 	
 	ev.on({ 
+        cmd: ['getchid','getchannelid','getsaluranid','getidsaluran'],
+        listmenu: ['getchid'],
+        tag: 'tools',
+	    energy: 4,
+    }, async() => {
+      try {
+         if(!cht.quoted) return cht.reply("Reply pesan yang diteruskan dari saluran!")
+         let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message.extendedTextMessage.contextInfo.forwardedNewsletterMessageInfo
+         if(!res) return cht.reply("Gagal, id saluran mungkin tidak tersedia")
+         cht.edit(`[ *📡ID SALURAN/CH* ]`
+             + `\nID Saluran: ${res.newsletterJid}`
+             + `\nID Pesan: ${res.serverMessageId}`,
+         keys[sender])
+       } catch(e) {
+           console.log(cht.quoted)
+           cht.reply("Error get Channel id" + e.message)
+       }
+	})
+	
+	ev.on({ 
         cmd: ['delinstrument','delvocal'],
         listmenu: ['delinstrument','delvocal'],
         tag: 'tools',
@@ -164,6 +183,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
              body: media
          })
          let a = (await response.json()).data
-         Exp.sendMessage(cht.id, { audio: { url: a[cht.cmd == "delvocal" ? 0 : 1].link }, mimetype: "audio/mpeg" }, { quoted: cht })
+         Exp.sendMessage(id, { audio: { url: a[cht.cmd == "delvocal" ? 0 : 1].link }, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
 }
