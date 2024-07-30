@@ -100,36 +100,45 @@ Berikut adalah bagian-bagian yang tersedia dalam events ini:
 
 ```javascript
 ev.on({
-    cmd: [''], // Ini adalah cmd fitur yang digunakan sebagai pemanggil event, Anda bisa meletakkan banyak cmd
-    listmenu: [''], // Bagian ini akan terlihat dalam menu
-    tag: "", // Tag ini menentukan di menu bagian mana list menu akan ditempatkan
+    cmd: [''], // Cmd fitur yang digunakan sebagai pemanggil event, bisa banyak cmd
+    listmenu: [''], // Akan terlihat dalam menu
+    tag: "", // Menentukan di menu bagian mana list menu akan ditempatkan
     energy: 7, // Harga penggunaan energi pada event ini
     args: false,
     /*args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
     */
     media: false,
     /*media: { // Membutuhkan media
-        type: ["audio"], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
+        type: ["audio"], // Membutuhkan media bertipe audio (bisa audio, document, video, image, sticker)
         msg: "Reply audionya?", // Respon jika tidak ada audio yang di-reply
         etc: { // Lain-lain
             seconds: 360, // Maksimal audio 360 detik
-            msg: "Audio tidak boleh lebih dari 360 detik!" // Respon jika lebih dari 360 detik
         },
         save: false // Jika true maka media akan disimpan dalam bentuk file audio.mp3
     },*/
+    /*media: { // Membutuhkan media
+        type: ["sticker"], // Membutuhkan media bertipe sticker (bisa audio, document, video, image, sticker)
+        msg: "Reply stickernya?", // Respon jika tidak ada sticker yang di-reply
+        etc: { // Lain-lain
+            isAnimated: false, // Mengharuskan sticker bertipe video
+            isNoAnimated: false, // Mengharuskan sticker bertipe image
+            isAvatar: false, // Mengharuskan sticker bertipe avatar
+        },
+        save: false // Jika true maka media akan disimpan dalam bentuk file sticker.webp
+    },*/
     urls: false,
-    /*urls: {//Memerlukan url
-        msg: "Harap berikan link!",//Respon jika args bukan link
-        formats: ["mediafire"]//Format url ini menentukan format apa yg terdapat pad url
+    /*urls: { // Memerlukan url
+        msg: "Harap berikan link!", // Respon jika args bukan link
+        formats: ["mediafire"] // Menentukan format apa yang terdapat pada url
     }*/
 }, ({ args, media, urls }) => {
-    // media adalah kembalian dari media yang di-download, 
+    // media adalah hasil download media, 
     // jika save false maka media adalah buffer,
     // jika save true maka media adalah nama file yang tersimpan
-    // urls adalah kembalian (berupa array yg berisi url) dari pesan(args) yang diterima
+    // urls adalah hasil (array berisi url) dari pesan (args) yang diterima
     
-    //Tambahkan fungsi disini
-    /*contoh:
+    // Tambahkan fungsi disini
+    /* contoh:
       cht.reply("Ok")
     */
 });
