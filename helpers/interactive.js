@@ -10,7 +10,7 @@ const { transcribe } = await (fol[2] + 'transcribe.js').r()
 const { ai } = await "./machine/reasoner.js".r()
 
 export default 
-async function In({ cht, Exp, store, ev, is }) {
+async function In({ cht, Exp, store, is }) {
     try {
         let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
         let isEval = cht?.msg?.startsWith('>')
@@ -62,6 +62,7 @@ async function In({ cht, Exp, store, ev, is }) {
             }
             cht.reply(txt)
         } else if (isBella) {
+            console.log(is)
             let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : cht?.msg
             if (cht?.type === "audio") {
                 console.log(cht.type)

@@ -39,11 +39,12 @@ async function client({ Exp, store, cht, is }) {
         if(is.baileys) return
         let exps = { Exp, store, cht, is }
         let ev = Data.ev = new EventEmitter(exps)
-        await ev.loadEventHandlers()
 
-        cht.cmd && await ev.emit(cht.cmd)
-
-        await Data.In({ ev, ...exps })
+        if(cht.cmd){
+           await ev.emit(cht.cmd)
+        } else {
+            await Data.In(ev)
+        }
 
         /*!-======[ Chat Interactions Add ]======-!*/
         if (!cht.cmd || is.botMention) {

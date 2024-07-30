@@ -105,6 +105,7 @@ class EventEmitter {
 
     async emit(event) {
         try {
+            !isLoad && await this.loadEventHandlers()
             const eventFile = Data.events[event]?.eventFile;
             if (!eventFile) return;
             
@@ -113,6 +114,7 @@ class EventEmitter {
             if (!ev) return;
             let urls = (this.is.quoted?.url || this.is.url)?.length < 1 ? null : (this.is.quoted?.url || this.is.url)
             let args = this.cht?.q
+            let cht = this.cht
             let media = null;
 
             if (this.cht.memories.energy < 1 && ev.energy) {
@@ -159,7 +161,7 @@ class EventEmitter {
                 await this.cht.reply(`-${ev.energy} Energy⚡`);
             }
             
-            const resolves = { media, urls, args }
+            const resolves = { media, urls, args, cht }
             await ev.resolve(resolves);
             await func.addCmd();
             await func.addCMDForTop(event);

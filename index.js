@@ -67,10 +67,6 @@ async function launch() {
             auth: state
         });
         
-        const exps = {
-           Exp, store,
-           is: {}
-        };
          if (global.pairingCode && !Exp.authState.creds.registered) {
             const phoneNumber = await question(chalk.yellow('Please type your WhatsApp number : '));
             let code = await Exp.requestPairingCode(phoneNumber.replace(/[+ -]/g, ""));
@@ -86,18 +82,23 @@ async function launch() {
         Exp.ev.on('messages.upsert', async ({
   			messages
   		}) => {
-  			const cht = messages[0];
-  			      cht.id = cht.key.remoteJid
+  			const mess = messages[0]
+            const cht = {
+                ...mess,
+                id: mess.key.remoteJid
+            }
   			if (!cht.message) return;
   			if (cht.key.remoteJid === 'status@broadcast' && cfg.autoreadsw == true) {
-  				Exp.readMessages([cht.key]);
+  				await Exp.readMessages([cht.key]);
   				let typ = getContentType(cht.message);
   				console.log((/protocolMessage/i.test(typ)) ? `${cht.key.participant.split('@')[0]} Deleted story❗` : 'View user stories : ' + cht.key.participant.split('@')[0]);
   				return
   			}
-  			 const exs = { cht, ...exps }
-  			 await Data.utils(exs)
-             await Data.helper(exs);
+  			 if (cht.key.remoteJid !== 'status@broadcast'){
+  			     const exs = { cht, Exp, is: {}, store }
+  			     await Data.utils(exs)
+                 await Data.helper(exs);
+             }
 	});
 	store.bind(Exp.ev);
 }

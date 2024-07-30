@@ -4,6 +4,23 @@ const { getBinaryNodeChild, jidNormalizedUser, getContentType } = "baileys".impo
 export default 
 async function utils({ Exp, cht, is }) {
     try {
+        Object.assign(is, {
+            owner: false,
+            group: false,
+            me: false,
+            baileys: false,
+            botMention: false,
+            cmd: null,
+            sticker: false,
+            audio: false,
+            image: false,
+            video: false,
+            document: false,
+            url: null,
+            memories: null,
+            quoted: null,
+        })
+        
         Exp.func = func
 
         Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {

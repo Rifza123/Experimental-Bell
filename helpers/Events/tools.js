@@ -1,5 +1,6 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
+const { generateWAMessageFromContent } = "baileys".import()
 
 /*!-======[ Functions Imports ]======-!*/
 const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
@@ -162,6 +163,38 @@ export default async function on({ cht, Exp, store, ev, is }) {
        } catch(e) {
            console.log(cht.quoted)
            cht.reply("Error get Channel id" + e.message)
+       }
+	})
+	
+	ev.on({ 
+        cmd: ['colong','c'],
+        listmenu: ['colong'],
+        tag: 'tools'
+    }, async({ cht }) => {
+    if (!is.owner) return cht.reply("Maaf, males nanggepin")
+      try {
+         if(!cht.quoted) return
+         let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message
+         let evaled = `(async()=>{let msg = await generateWAMessageFromContent(cht.sender, ${JSON.stringify(res, null, 2)}, {})`
+         + `\n  await Exp.relayMessage(msg.key.remoteJid, msg.message, {`
+         + `\n      messageId: msg.key.id`
+         + `\n  })`
+         + `\n})()`
+      
+         let random = Math.floor(Math.random() * 10000)
+         await eval(`ev.on({ 
+             cmd: ['${random}'],
+             listmenu: ['${random}'],
+             tag: 'other'
+         }, async({ cht }) => {
+             ${evaled.replace("cht.sender","cht.id")}
+         })`)
+         await sleep(3000)
+         await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
+         await sleep(3000)
+         await Exp.sendMessage(cht.sender, { text: evaled }, { quoted: cht })
+       } catch(e) {
+           console.log(cht.quoted)
        }
 	})
 	
