@@ -40,4 +40,33 @@ export default async function on({ cht, Exp, store, ev, is }) {
             cht.reply("on/off ?")
         }
     })
+    
+    ev.on({ 
+        cmd: ['setthumb'], 
+        listmenu: ['setthumb'],
+        media: {
+            type: ["image"],
+            save: false
+        },
+        tag: "owner"
+    }, async ({ media }) => {
+        if (!is.owner) return cht.reply("Maaf, males nanggepin")
+         await fs.writeFileSync(fol[3] + 'thumb.jpg', media)
+         cht.reply("Berhasil mengganti thumbnail menu!")
+    })
+    ev.on({ 
+        cmd: ['setpp'], 
+        listmenu: ['setpp'],
+        media: {
+            type: ["image"],
+            save: false
+        },
+        tag: "owner"
+    }, async ({ media }) => {
+        if (!is.owner) return cht.reply("Maaf, males nanggepin")
+          Exp.setProfilePicture(media)
+          .then(a => cht.reply("Success...✅️"))
+          .catch(e => cht.reply("TypeErr: " + e.message))
+    })
+    
 }

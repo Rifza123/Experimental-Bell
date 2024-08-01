@@ -219,4 +219,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
          let a = (await response.json()).data
          Exp.sendMessage(id, { audio: { url: a[cht.cmd == "delvocal" ? 0 : 1].link }, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
+	
+	ev.on({ 
+        cmd: ['toimage','toimg'],
+        listmenu: ['toimg'],
+        tag: 'tools',
+	    energy: 4,
+        media: { 
+           type: "sticker",
+           save: false
+        }
+    }, async({ media }) => {
+         Exp.sendMessage(id, { image: media }, { quoted: cht })
+	})
 }

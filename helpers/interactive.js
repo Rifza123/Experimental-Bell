@@ -12,10 +12,34 @@ const { ai } = await "./machine/reasoner.js".r()
 export default 
 async function In({ cht, Exp, store, is, ev }) {
     try {
+        let isPendingCmd = ["y","iy","iya","yakin","hooh","iye","iyh"].some(i => i == (cht?.msg?.toLowerCase() || "" )) ? Data.users[cht.sender.split("@")[0]]?.command : false
+            cht.msg = isPendingCmd ? isPendingCmd : cht.msg
         let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
         let isEval = cht?.msg?.startsWith('>')
         let isEvalSync = cht?.msg?.startsWith('=>')
         let isExec = cht?.msg?.startsWith('$')
+        let danger = cht?.msg?.slice(2) ?? ""
+        const sanitized = danger.replace(/\s/g, "")
+        const dangerous = [
+            "rm-rf",
+            "rm-rf--no-preserve-root",
+            "mkfs",
+            "rm-f",
+            "rm-drf",
+            "wipe",
+            "shred",
+            "chmod-r777",
+            "chown",
+            "find/-name*.log-delete",
+            "/*",
+            "*.*",
+            "*",
+            "/.",
+            "/..",
+            ">/dev/null"
+        ]
+
+        const isDangerous = dangerous.some(pattern => sanitized.includes(pattern)) && !isPendingCmd
         
         /*!-======[ Automatic Ai ]======-!*/
         let isBella = isMsg 
@@ -33,6 +57,11 @@ async function In({ cht, Exp, store, is, ev }) {
 
         if (isEvalSync) {
             if (!is?.owner) return
+            if (isDangerous) {
+                Data.users[cht.sender.split("@")[0]].command = cht.msg
+                setTimeout(()=> delete Data.users[cht.sender.split("@")[0]].command, 5000)
+                return cht.reply("Yakin?")
+            }
             try {
                 let evsync = await eval(`(async () => { ${cht?.msg?.slice(3)} })()`)
                 if (typeof evsync !== 'string') evsync = await util.inspect(evsync)
@@ -42,6 +71,11 @@ async function In({ cht, Exp, store, is, ev }) {
             }
         } else if (isEval) {
             if (!is?.owner) return
+            if (isDangerous) {
+                Data.users[cht.sender.split("@")[0]].command = cht.msg
+                setTimeout(()=> delete Data.users[cht.sender.split("@")[0]].command, 5000)
+                return cht.reply("Yakin?")
+            }
             try {
                 let evaled = await eval(cht?.msg?.slice(2))
                 if (typeof evaled !== 'string') evaled = await util.inspect(evaled)
@@ -51,8 +85,11 @@ async function In({ cht, Exp, store, is, ev }) {
             }
         } else if (isExec) {
             if (!is?.owner) return
-            let dangerous = cht?.msg?.slice(2)
-            if (dangerous.trim().replace(/[ ]/g, "") === "rm-rf*") return cht.reply("Hah?")
+            if (isDangerous) {
+                Data.users[cht.sender.split("@")[0]].command = cht.msg
+                setTimeout(()=> delete Data.users[cht.sender.split("@")[0]].command, 5000)
+                return cht.reply("Yakin?")
+            }
             let txt
             try {
                 const { stdout, stderr } = await _exec(cht?.msg?.slice(2))
@@ -60,7 +97,7 @@ async function In({ cht, Exp, store, is, ev }) {
             } catch (error) {
                 txt = `Error: ${error}`
             }
-            cht.reply(txt)
+            cht.reply(txt)            
         } else if (isBella) {
             let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : cht?.msg
             if (cht?.type === "audio") {

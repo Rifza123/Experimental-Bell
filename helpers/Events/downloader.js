@@ -94,8 +94,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await cht.edit("Searching...", _key)
             let search = (await fetch(api.xterm.url + "/api/search/youtube?query=" + q).then(a => a.json())).data
             await cht.edit("Downloading...", _key)
-            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=" + q + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
             let item = search.items[0]
+            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=https://www.youtube.com/watch?v=" + item.id  + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
             
             let audio = {
                 [cht.cmd === "ytmp4" ? "video" : "audio"]: { url: data.dlink },
@@ -119,7 +119,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await Exp.sendMessage(id, audio, { quoted: cht })
         } catch (e) {
             console.log(e)
-            cht.reply("TypeErr: " + e)
+            cht.reply("Tidak ditemukan!")
         }
     })
     

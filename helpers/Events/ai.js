@@ -4,7 +4,7 @@ const fs = "fs".import()
 
 /*!-======[ Functions Imports ]======-!*/
 const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
-
+const { gpt } = await (fol[2] + "gpt3.js").r()
 /*!-======[ Configurations ]======-!*/
 let infos = cfg.menu.infos
 /*!-======[ Default Export Function ]======-!*/
@@ -20,8 +20,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            type: ["audio"],
            msg: "Reply audionya?",
            etc: {
-                seconds: 360,
-                msg: "Audio tidak boleh lebih dari 360 detik!"
+                seconds: 360
            }
         }
     }, async({ media }) => {
@@ -121,8 +120,6 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	
 	})
 	
-	
-	
 	ev.on({
         cmd: ['txt2img', 'text2img'],
         listmenu: ['text2img'],
@@ -216,7 +213,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
             }
 
-            await new Promise(resolve => setTimeout(resolve, 4000))
+            await new Promise(resolve => setTimeout(resolve, 2000))
         }
       } catch (error) {
         console.log(error)
@@ -336,6 +333,16 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cht.reply("[ BARD GOOGLE ]\n"+ai.chatUi)
 	})
 	
+	ev.on({ 
+        cmd: ['gpt','gpt3'],
+        tag: "ai",
+        listmenu: ["gpt3"]
+    }, async() => {
+        if(!cht.q) return cht.reply("Mau tanya apa?")
+        let res = await gpt(cht.q)
+        cht.reply("[ GPT-3 ]\n"+res.response)
+	})
+	
     ev.on({ 
         args: infos.bell,
         cmd: ['bell', 'autoai', 'aichat', 'ai_interactive'],
@@ -418,7 +425,30 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cht.reply(set.done)
     })
     
-    ev.on({ 
+	ev.on({ 
+        cmd: ['resetaichat','clearsesichat'],
+        tag: "ai",
+        listmenu: ["resetaichat"]
+    }, async() => {
+        
+        let ai = await fetch(`${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`)
+        .then(response => response.json())
+        cht.reply(ai.msg)
+	})
+	
+	ev.on({ 
+        cmd: ['animediff'],
+        listmenu: ['animediff'],
+        tag: 'ai',
+        energy: 10
+    }, async() => {
+    let [text1, text2] = cht.q ? cht.q.split("|") : []
+     if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
+        await cht.edit("Bntr...", keys[sender])
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/animediff?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+	})
+	
+	ev.on({ 
         cmd: ['dalle3'],
         listmenu: ['dalle3'],
         tag: 'ai',
@@ -430,14 +460,4 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
 	
-	ev.on({ 
-        cmd: ['resetaichat','clearsesichat'],
-        tag: "ai",
-        listmenu: ["resetaichat"]
-    }, async() => {
-        
-        let ai = await fetch(`${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`)
-        .then(response => response.json())
-        cht.reply(ai.msg)
-	})
 }

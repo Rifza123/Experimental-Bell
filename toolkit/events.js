@@ -127,15 +127,30 @@ class EventEmitter {
                 const { type, msg, etc } = ev.media;
                 let mediaType = this.getMediaType();
                 if (!type.includes(mediaType)) {
-                    return this.cht.reply(msg);
+                    return this.cht.reply(msg || `Reply atau kirim ${type.join("/")} dengan caption: ${cht.msg}!`);
                 }
 
                 if (mediaType === "audio") {
-                    if (!(this.is.image || this.is.quoted?.audio)) {
-                        return this.cht.reply(msg);
-                    }
                     if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
-                        return this.cht.reply(etc.msg);
+                        return this.cht.reply(`Audio tidak boleh lebih dari ${etc.seconds}detik`);
+                    }
+                }
+                
+                if (mediaType === "video") {
+                    if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
+                        return this.cht.reply(`Video tidak boleh lebih dari ${etc.seconds}detik`);
+                    }
+                }
+                
+                if (mediaType === "sticker") {
+                    if (etc && etc.isNoAnimated && this.is.quoted?.sticker?.isAnimated) {
+                        return this.cht.reply("Sticker harus tipe Image!");
+                    }
+                    if (etc && etc.isAnimated && !this.is.quoted?.sticker?.isAnimated) {
+                        return this.cht.reply("Sticker harus tipe Video!");
+                    }
+                    if (etc && etc.isAvatar && !this.is.quoted?.sticker?.isAvatar) {
+                        return this.cht.reply("Sticker harus tipe Avatar!");
                     }
                 }
 

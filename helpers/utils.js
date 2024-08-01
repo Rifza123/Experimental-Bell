@@ -1,3 +1,5 @@
+import jimp from "jimp";
+
 const { func } = await "./toolkit/func.js".r()
 const { getBinaryNodeChild, jidNormalizedUser, getContentType } = "baileys".import()
 
@@ -22,35 +24,6 @@ async function utils({ Exp, cht, is }) {
         })
         
         Exp.func = func
-
-        Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
-            jid = jidNormalizedUser(jid)
-            const result = await Exp.query({
-                tag: 'iq',
-                attrs: {
-                    target: jid,
-                    to: "@s.whatsapp.net",
-                    type: 'get',
-                    xmlns: 'w:profile:picture'
-                },
-                content: [
-                    { tag: 'picture', attrs: { type, query: 'url' } }
-                ]
-            }, timeoutMs)
-
-            const child = getBinaryNodeChild(result, 'picture')
-            return child?.attrs?.url
-        }
-
-        cht.reply = async function (text) {
-            const { key } = await Exp.sendMessage(cht.id, { text }, { quoted: cht })
-            keys[cht.sender] = key
-            return { key }
-        }
-
-        cht.edit = async function (text, key) {
-            await Exp.sendMessage(cht.id, { text, edit: key }, { quoted: cht })
-        }
 
         const type = getContentType(cht?.message)
         const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.extendedTextMessage) : type
@@ -93,19 +66,19 @@ async function utils({ Exp, cht, is }) {
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
         cht.q = args?.join(' ') || cht?.quoted?.text || undefined
-        cht.mention = cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
-            ? cht.message[type].contextInfo.mentionedJid
-            : cht?.message?.[type]?.contextInfo?.participant
-                ? [cht.message[type].contextInfo.participant]
-                : cht.q
-                    ? cht.q.extractMentions()
+        cht.mention = cht.q && (cht.q.extractMentions()).length > 0
+           ? cht.q.extractMentions()
+              : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
+                 ? cht.message[type].contextInfo.mentionedJid
+                    : cht?.message?.[type]?.contextInfo?.participant
+                      ? [cht.message[type].contextInfo.participant]
                     : []
 
         Exp.number = Exp?.user?.id?.split(':')[0] + from.sender
 
-        is.owner = [Exp.number, ...global.owner].map(jid => jid.replace(/[^0-9]/g, '') + from.sender).includes(cht.sender)
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
+        is.owner = [Exp.number, ...global.owner].map(jid => jid.replace(/[^0-9]/g, '') + from.sender).includes(cht.sender) || is.me
         is.baileys = cht?.key?.id?.startsWith('BAE5') && cht?.key?.id?.length === 16
         is.botMention = cht?.mention?.includes(Exp.number)
         is.cmd = cht.cmd
@@ -122,12 +95,64 @@ async function utils({ Exp, cht, is }) {
             Exp.groupMembers = groupMetadata.participants
             Exp.groupName = groupMetadata.subject
             Exp.groupAdmins = Exp.func.getGroupAdmins(groupMetadata.participants)
-            is.botAdmin = Exp.groupAdmins.includes(Exp.number) || false
+            is.botAdmin = Exp.groupAdmins.includes(Exp.number)
             is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
         }
 
         is.memories = cht.memories
         is.quoted = cht.quoted
+        
+        Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
+            jid = jidNormalizedUser(jid)
+            const result = await Exp.query({
+                tag: 'iq',
+                attrs: {
+                    target: jid,
+                    to: "@s.whatsapp.net",
+                    type: 'get',
+                    xmlns: 'w:profile:picture'
+                },
+                content: [
+                    { tag: 'picture', attrs: { type, query: 'url' } }
+                ]
+            }, timeoutMs)
+
+            const child = getBinaryNodeChild(result, 'picture')
+            return child?.attrs?.url
+        }
+
+        Exp.setProfilePicture = async (buffer) => {
+          try{
+            const jimpread = await jimp.read(buffer);
+            const result = jimpread.getWidth() > jimpread.getHeight() ? jimpread.resize(550, jimp.AUTO) : jimpread.resize(jimp.AUTO, 650)
+            let buff = await result.getBufferAsync(jimp.MIME_JPEG)
+            return await Exp.query({ tag: 'iq', 
+                 attrs: { to: Exp.number, type:'set', xmlns: 'w:profile:picture' },
+                 content: [
+                   { 
+                     tag: 'picture', 
+                     attrs: { 
+                       type: 'image' 
+                     }, 
+                     content: buff
+                   }
+                 ]
+            })
+          } catch (e) {
+              throw new Error(e)
+          }
+        }
+
+        cht.reply = async function (text) {
+            const { key } = await Exp.sendMessage(cht.id, { text }, { quoted: cht })
+            keys[cht.sender] = key
+            return { key }
+        }
+
+        cht.edit = async function (text, key) {
+            await Exp.sendMessage(cht.id, { text, edit: key }, { quoted: cht })
+        }
+
     } catch (error) {
         console.error("Error in utils:", error)
     }
