@@ -78,8 +78,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	})
 	
 	ev.on({ 
-        cmd: ['filters','toanime','jadianime'],
-        listmenu: ['toanime','filters'],
+        cmd: ['filters','filter','toanime','jadianime','jadinyata','toreal'],
+        listmenu: ['toanime','filters','toreal'],
         tag: 'art',
         energy: 7,
         media: { 
@@ -91,9 +91,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         const _key = keys[sender]
         let tryng = 0
         let type = "anime2d"
-        if(cht.cmd == "filters"){
+        if(["filter","filters"].includes(cht.cmd)){
             if(!cht.q) return cht.reply(infos.filters)
            type = cht.q
+        } else if(["jadinyata","toreal"].includes(cht.cmd)){
+           type = "anime2real"
         }
         await cht.edit("Bntr...", _key)
         let tph = await TelegraPh(media)
@@ -323,10 +325,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     ev.on({ 
         cmd: ['bard','ai'],
         tag: "ai",
+        args: "Mau tanya apa?",
         listmenu: ["bard"]
     }, async() => {
-        if(!cht.q) return cht.reply("Mau tanya apa?")
-        
         let ai = await fetch(`${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`)
         .then(response => response.json())
        
@@ -336,9 +337,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	ev.on({ 
         cmd: ['gpt','gpt3'],
         tag: "ai",
+        args: "Mau tanya apa?",
         listmenu: ["gpt3"]
     }, async() => {
-        if(!cht.q) return cht.reply("Mau tanya apa?")
         let res = await gpt(cht.q)
         cht.reply("[ GPT-3 ]\n"+res.response)
 	})
@@ -430,7 +431,6 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: "ai",
         listmenu: ["resetaichat"]
     }, async() => {
-        
         let ai = await fetch(`${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`)
         .then(response => response.json())
         cht.reply(ai.msg)
@@ -440,10 +440,10 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['animediff'],
         listmenu: ['animediff'],
         tag: 'ai',
+        args: "*Harap beri deskripsi gambarnya!*",
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-     if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
         await cht.edit("Bntr...", keys[sender])
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/animediff?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
@@ -452,10 +452,10 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['dalle3'],
         listmenu: ['dalle3'],
         tag: 'ai',
+        args: "*Harap beri deskripsi gambarnya!*",
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-     if (!text1) return cht.reply(`*Harap beri deskripsi gambarnya!*`)
         await cht.edit("Bntr...", keys[sender])
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})

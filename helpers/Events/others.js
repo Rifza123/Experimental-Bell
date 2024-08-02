@@ -64,6 +64,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
     
     ev.on({ 
+        cmd: ['d','del','delete'],
+        listmenu: ['delete'],
+        tag: 'other'
+    }, async() => {
+        if(!cht.quoted) return cht.reply("Reply pesan nya!")
+        if(cht.quoted.sender !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply("Khusus admin!")
+        try{
+           cht.quoted.delete()
+        } catch {
+           cht.reply("Gagal!, mungkin aku bukan admin :)")
+        }
+    })
+    
+    ev.on({ 
         cmd: ['statistic','stats'],
         listmenu: ['stats'],
         tag: 'other'

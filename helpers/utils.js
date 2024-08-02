@@ -4,7 +4,7 @@ const { func } = await "./toolkit/func.js".r()
 const { getBinaryNodeChild, jidNormalizedUser, getContentType } = "baileys".import()
 
 export default 
-async function utils({ Exp, cht, is }) {
+async function utils({ Exp, cht, is, store }) {
     try {
         Object.assign(is, {
             owner: false,
@@ -62,6 +62,8 @@ async function utils({ Exp, cht, is }) {
             cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type]
             cht.quoted.download = async () => Exp.func.download(cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type], Exp.func['getType'](cht.quoted.type))
             cht.quoted.stanzaId = cht?.message?.extendedTextMessage?.contextInfo?.stanzaId
+            cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
+            
         }
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
@@ -79,7 +81,7 @@ async function utils({ Exp, cht, is }) {
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
         is.owner = [Exp.number, ...global.owner].map(jid => jid.replace(/[^0-9]/g, '') + from.sender).includes(cht.sender) || is.me
-        is.baileys = cht?.key?.id?.startsWith('BAE5') && cht?.key?.id?.length === 16
+        is.baileys = (cht?.key?.id?.startsWith('BAE5') || cht?.key?.id?.startsWith('BELL409')) && cht?.key?.id?.length === 16
         is.botMention = cht?.mention?.includes(Exp.number)
         is.cmd = cht.cmd
         is.sticker = cht.type === "sticker"
