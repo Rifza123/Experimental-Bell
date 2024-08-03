@@ -68,7 +68,7 @@ async function utils({ Exp, cht, is, store }) {
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
         cht.q = args?.join(' ') || cht?.quoted?.text || undefined
-        cht.mention = cht.q && (cht.q.extractMentions()).length > 0
+        cht.mention = cht.q && cht.quoted && (cht.q.extractMentions()).length > 0
            ? cht.q.extractMentions()
               : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
                  ? cht.message[type].contextInfo.mentionedJid
@@ -91,7 +91,7 @@ async function utils({ Exp, cht, is, store }) {
         is.document = cht.type === "document"
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g) || null
 
-        if (is.group) {
+        if (is.group && !is.baileys) {
             const groupMetadata = await Exp.groupMetadata(cht.id)
             Exp.groupMetdata = groupMetadata
             Exp.groupMembers = groupMetadata.participants

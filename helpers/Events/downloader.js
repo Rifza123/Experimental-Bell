@@ -98,8 +98,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=https://www.youtube.com/watch?v=" + item.id  + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
             
             let audio = {
-                [cht.cmd === "ytmp4" ? "video" : "audio"]: { url: data.dlink },
-                mimetype: cht.cmd === "ytmp4" ? "video/mp4" : "audio/mpeg",
+                [cht.cmd === "ytmp4" ? "video" : cht.cmd === "ytmp3" ? "document" : "audio"]: { url: data.dlink },
+                mimetype: cht.cmd === "ytmp4" ? "video/mp4" : cht.cmd === "ytmp3" ? "audio/mp3" : "audio/mpeg",
                 fileName: item.title + (cht.cmd === "ytmp4" ? ".mp4" : ".mp3"),
                 ptt: cht.cmd === "play",
                 contextInfo: {

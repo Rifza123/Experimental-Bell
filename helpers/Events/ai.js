@@ -78,7 +78,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	})
 	
 	ev.on({ 
-        cmd: ['filters','filter','toanime','jadianime','jadinyata','toreal'],
+        cmd: ['imglarger','enlarger','enlarge','filters','filter','toanime','jadianime','jadinyata','toreal'],
         listmenu: ['toanime','filters','toreal'],
         tag: 'art',
         energy: 7,
@@ -96,6 +96,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            type = cht.q
         } else if(["jadinyata","toreal"].includes(cht.cmd)){
            type = "anime2real"
+        } else if(['imglarger','enlarger','enlarge'].includes(cht.cmd)){
+           type = "enlarger"
         }
         await cht.edit("Bntr...", _key)
         let tph = await TelegraPh(media)
@@ -215,7 +217,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            await new Promise(resolve => setTimeout(resolve, 2500))
         }
       } catch (error) {
         console.log(error)
