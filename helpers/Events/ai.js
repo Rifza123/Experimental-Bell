@@ -81,7 +81,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['imglarger','enlarger','enlarge','filters','filter','toanime','jadianime','jadinyata','toreal'],
         listmenu: ['toanime','filters','toreal'],
         tag: 'art',
-        energy: 7,
+        energy: 50,
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
@@ -212,7 +212,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             } else if (s.taskStatus === 1) {
                 await cht.edit("Processing.... " + s.progress + "%", _key)
             } else if (s.taskStatus === 2) {
-                return Exp.sendMessage(id, { image: { url: s.result.url }, caption: s.result.info }, { quoted: cht })
+                return Exp.sendMessage(id, { image: { url: s.result.url } }, { quoted: cht })
             } else if (s.taskStatus === 3) {
                 return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
             }

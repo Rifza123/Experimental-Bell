@@ -9,9 +9,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['pin','pinterest','pinterestsearch'],
         listmenu: ['pinterest'],
         tag: 'search',
+        args: "Cari apa?",
+        badword: true,
         energy: 2
     }, async() => {
-        if(!cht.q) return cht.reply("Cari apa?")
         Exp.sendMessage(id, { image: { url: api.rifza.url + "/api/pinterest-v2?query="+cht.q } }, { quoted: cht })
 	})
 	
@@ -19,9 +20,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['pinvid','pinterestvid','pinterestvideo'],
         listmenu: ['pinterestvideo'],
         tag: 'search',
+        args: "Cari apa?",
+        badword: true,
         energy: 5
     }, async() => {
-        if(!cht.q) return cht.reply("Cari apa?")
         try {
         await cht.edit("Bntr...", keys[sender])
         let pint = (await fetch(api.xterm.url + "/api/search/pinterest-video?query=" + cht.q + "&key=" + api.xterm.key).then(a => a.json())).data

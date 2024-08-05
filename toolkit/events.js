@@ -121,7 +121,12 @@ class EventEmitter {
                 return this.cht.reply(`Males😞\n⚡️Energy: ${this.cht.memories.energy}`);
             }
 
-            if (ev.args && !this.cht.q) return this.cht.reply(ev.args);
+            if (ev.args){
+                if(!this.cht.q) return this.cht.reply(ev.args);
+                const badword = Data.badwords.filter(a => this.cht.q.includes(a))
+                this.is.badword = badword.length > 0
+                if(ev.badword && this.is.badword) return this.cht.reply(`Kata *${badword.join(", ")}* Tidak diizinkan!`)
+            }
             
             if (ev.media) {
                 const { type, msg, etc } = ev.media;

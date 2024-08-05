@@ -90,8 +90,8 @@ async function utils({ Exp, cht, is, store }) {
         is.video = cht.type === "video"
         is.document = cht.type === "document"
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g) || null
-
-        if (is.group && !is.baileys) {
+        if(is.me && is.baileys) return
+        if (is.group) {
             const groupMetadata = await Exp.groupMetadata(cht.id)
             Exp.groupMetdata = groupMetadata
             Exp.groupMembers = groupMetadata.participants

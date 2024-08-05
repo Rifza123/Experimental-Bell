@@ -52,9 +52,10 @@ if (!fs.existsSync(fol[6] + 'users.json')) {
   	fs.writeFileSync(fol[6]  + 'users.json', JSON.stringify({}, null, 2))
 };
 
-let users = JSON.parse(fs.readFileSync(fol[6] + 'users.json'));
-let cmds = JSON.parse(fs.readFileSync(db + 'cmd.json'));
-let preferences = JSON.parse(fs.readFileSync(db + 'preferences.json'));
+if (!fs.existsSync(db + 'badwords.json')) {
+  	fs.writeFileSync(db + 'badwords.json', JSON.stringify([], null, 2))
+};
+
 
 /*!-======[ Definition of config  ]======-!*/
 for (let i of keys){
@@ -74,13 +75,15 @@ global['from'] = {
 
 /*!-======[ DATA CACHE ]======-!*/
 global["keys"] = {}
+
 global["Data"] = {
     Events: new Map(),
     events: {},
-    users,
-    preferences,
+    badwords: JSON.parse(fs.readFileSync(db + 'badwords.json')),
+    users: JSON.parse(fs.readFileSync(fol[6] + 'users.json')),
+    preferences: JSON.parse(fs.readFileSync(db + 'preferences.json')),
     use: { 
-        cmds
+        cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
     }
 }
 
@@ -96,6 +99,7 @@ setInterval(async() => {
     await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
     await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
     await fs.writeFileSync(db + 'preferences.json', JSON.stringify(Data.preferences, null, 2))
+    await fs.writeFileSync(db + 'badwords.json', JSON.stringify(Data.badwords, null, 2))
 }, 15000);
 
 

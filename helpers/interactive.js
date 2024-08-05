@@ -155,9 +155,9 @@ async function In({ cht, Exp, store, is, ev }) {
                         return ev.emit(config?.cmd)
                     case 'lora':
                         noreply = true
-                        cht.q = "18|" + (config?.cfg?.prompt ?? "")
+                        cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, dull colors, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, out of frame, multiple people, cluttered background, cartoonish, bad face, double face, abnormal`
                         await cht.reply(config?.msg ?? "ok")
-                        return ev.emit(config?.cmd)
+                        return ev.emit("txt2img")
                     case 'txt2img':
                         cht.q = (config?.cfg?.prompt ?? "")
                         await cht.reply(config?.msg ?? "ok")

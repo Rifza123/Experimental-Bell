@@ -84,6 +84,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       tag: 'downloader',
+      badword: true,
       args: "Harap sertakan url/judul videonya!",
       energy: 4 
     }, async ({ args, urls }) => {
@@ -143,7 +144,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     
     ev.on({ 
       cmd: ['instagramdl','ig','igdl','instagram'], 
-      listmenu: ['instaramdl'], 
+      listmenu: ['instagramdl'], 
       tag: 'downloader',
       args: "Mana linknya?",
       urls: {

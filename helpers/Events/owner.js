@@ -6,6 +6,7 @@ let infos = cfg.menu.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
+
    const { id } = cht
     const modes = {
         public: 'mode public',
@@ -54,6 +55,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
          await fs.writeFileSync(fol[3] + 'thumb.jpg', media)
          cht.reply("Berhasil mengganti thumbnail menu!")
     })
+    
     ev.on({ 
         cmd: ['setpp'], 
         listmenu: ['setpp'],
@@ -69,4 +71,27 @@ export default async function on({ cht, Exp, store, ev, is }) {
           .catch(e => cht.reply("TypeErr: " + e.message))
     })
     
+    ev.on({ 
+        cmd: ['badword'], 
+        listmenu: ['badword'],
+        args: `Mau add, delete atau list?\nContoh: ${cht.msg} add|tobrut`,
+        tag: "owner"
+    }, async ({ media }) => {
+        if (!is.owner) return cht.reply("Maaf, males nanggepin")
+         let [act, input] = cht.q.split("|")
+         if(act == "add"){
+             Data.badwords.push(input)
+             cht.reply(`Berhasil menambahkan ${input} kedalam list badword!`)
+         } else if(act == "delete" || act == "d" || act == "del"){
+             Data.badwords = Data.badwords.filter(a => a !== input)
+             cht.reply(`Berhasil menambahkan ${input} kedalam list badword!`)
+         } else if(act == "list") {
+             let list = "*[ LIST BADWORD ]*\n"
+             for(let i of Data.badwords){
+                 list += `\n - ${i}`
+             }
+             cht.reply(list)
+         } else cht.reply(`Action mungkin tidak ada dalam list!\n*List Action*: add, delete, list\n\n_Contoh: ${cht.prefix + cht.cmd} add|tobrut_`)
+         
+    })
 }
