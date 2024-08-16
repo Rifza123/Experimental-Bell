@@ -4,44 +4,73 @@ const { role } = await './toolkit/role.js'.r()
 export class ArchiveMemories {
     static add(userJid) {
         const userId = userJid.split("@")[0];
+        let aut = cfg.first.autoai
+
         const userData = {
             chat: 1,
             role: role(1),
             energy: cfg.first.energy,
-            chargingSpeed: 1800000,
-            chargeRate: 10,
-            maxCharge: 200,
+            chargingSpeed: cfg.first.chargingSpeed,
+            chargeRate: cfg.first.chargeRate,
+            maxCharge: cfg.first.maxCharge,
+            flow: cfg.first.flow,
+            coins: cfg.first.coins,
+            charging: false,
+            premium: { time:0 },
+            autoai: { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false },
             lastCharge: Date.now()
         };
-        global.Data.users[userId] = userData;
+        Data.users[userId] = userData;
         return userData;
     }
 
     static async get(userJid) {
         const userId = userJid.split("@")[0];
-        let userData = global.Data.users[userId];
-        
+        let userData = Data.users[userId];
+        let aut = cfg.first.autoai
         if (!userData) {
             userData = this.add(userJid)
         }
+        if(!userData?.premium) userData.premium = { time:0 }
+        
+        if(!userData?.autoai) userData.autoai = { ...aut, use:0, reset:Date.now()+parseFloat(aut.delay), response:false }
+
+        let premium = userData.premium ? Date.now() < userData.premium.time : false
 
         try {
             userData.role = role(userData.chat);
             if (!userData.lastCharge || !userData.maxCharge || !userData.chargingSpeed || !userData.chargeRate) {
                 userData = {
                     ...userData,
-                    chargingSpeed: 3600000,
-                    chargeRate: 10,
-                    maxCharge: 200,
+                    chargingSpeed: cfg.first.chargingSpeed,
+                    chargeRate: cfg.first.chargeRate,
+                    maxCharge: cfg.first.maxCharge,
                     lastCharge: Date.now()
                 };
             }
-            const chargeAmount = this.chargeEnergy(userData.energy, userData.lastCharge, userData.maxCharge, userData.chargeRate, userData.chargingSpeed); 
-            if (chargeAmount > 0) {
-                userData.energy += chargeAmount;
-                userData.lastCharge = Date.now();
+            if (!userData.flow || !userData.coins) {
+                userData = {
+                    ...userData,
+                    flow: cfg.first.flow,
+                    coins: cfg.first.coins
+                };
             }
-            global.Data.users[userId] = userData;
+            let { chargeRate, maxCharge } = userData
+            if(premium && premium.maxCharge && premium.chargeRate){
+                maxCharge = parseFloat(userData.maxCharge) + parseFloat(premium.maxCharge)
+                chargeRate = parseFloat(userData.chargeRate) + parseFloat(premium.chargeRate)
+            }
+            if(userData.charging){
+                const chargeAmount = this.chargeEnergy(userData.energy, userData.lastCharge, maxCharge, chargeRate, userData.chargingSpeed); 
+                if (chargeAmount > 0) {
+                    userData.energy += chargeAmount;
+                    userData.lastCharge = Date.now();
+                }
+                if(userData.energy >= maxCharge){
+                    userData.charging = false
+                }
+            }
+            Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error processing user data:', error);
@@ -51,7 +80,7 @@ export class ArchiveMemories {
 
     static addEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
-        let userData = global.Data.users[userId];
+        let userData = Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -59,9 +88,9 @@ export class ArchiveMemories {
         }
 
         try {
-            userData.energy += parseInt(amount);
+            userData.energy += parseFloat(amount);
             userData.role = role(userData.chat); 
-            global.Data.users[userId] = userData;
+            Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error adding energy:', error);
@@ -71,7 +100,7 @@ export class ArchiveMemories {
 
     static reduceEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
-        let userData = global.Data.users[userId];
+        let userData = Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -80,9 +109,9 @@ export class ArchiveMemories {
 
         try {
             userData.role = role(userData.chat); 
-            let newEnergy = userData.energy - parseInt(amount);
+            let newEnergy = userData.energy - parseFloat(amount);
             userData.energy = newEnergy < 0 ? 0 : newEnergy;
-            global.Data.users[userId] = userData;
+            Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error reducing energy:', error);
@@ -92,7 +121,7 @@ export class ArchiveMemories {
 
     static addChat(userJid) {
         const userId = userJid.split("@")[0];
-        let userData = global.Data.users[userId];
+        let userData = Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -102,7 +131,7 @@ export class ArchiveMemories {
         try {
             userData.chat += 1;
             userData.role = role(userData.chat); 
-            global.Data.users[userId] = userData;
+            Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error updating chat count:', error);
@@ -111,7 +140,7 @@ export class ArchiveMemories {
     }
     
     static chargeEnergy(energy, lastChargeTime, maxCharge, chargeRate, chargingInterval) {
-        const elapsedTime = Date.now() - parseInt(lastChargeTime);
+        const elapsedTime = Date.now() - parseFloat(lastChargeTime);
         const chargeIntervals = Math.floor(elapsedTime / chargingInterval);
         let chargeAmount = chargeIntervals * chargeRate;
 
@@ -121,6 +150,7 @@ export class ArchiveMemories {
         if ((chargeAmount + energy) > maxCharge) {
             chargeAmount = maxCharge - energy;
         }
+
         return chargeAmount;
     }
     

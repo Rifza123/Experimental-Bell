@@ -43,7 +43,7 @@ async function In({ cht, Exp, store, is, ev }) {
         
         /*!-======[ Automatic Ai ]======-!*/
         let isBella = isMsg 
-            && Data.preferences[cht.id]?.ai_interactive
+            && (Data.preferences[cht.id]?.ai_interactive || is.owner)
             && !is?.document 
             && !is?.sticker 
             && (
@@ -97,17 +97,44 @@ async function In({ cht, Exp, store, is, ev }) {
             } catch (error) {
                 txt = `Error: ${error}`
             }
-            cht.reply(txt)            
+            cht.reply(txt)
         } else if (isBella) {
-            let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : cht?.msg
+            let usr = cht.sender.split("@")[0]
+            let user = Data.users[usr]
+            let premium = user.premium ? Date.now() < user.premium.time : false
+            user.autoai.use +=1
+            if(Date.now() >= user.autoai.reset && !premium){
+                user.autoai.use = 0
+                user.autoai.reset = Date.now()+parseInt(user.autoai.delay)
+                user.autoai.response = false
+            }
+            if(user.autoai.use > user.autoai.max && !premium){
+                let formatTimeDur = Exp.func.formatDuration(user.autoai.reset - Date.now())
+                let resetOn = Exp.func.dateFormatter(user.autoai.reset, "Asia/Jakarta")
+                let txt = `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`
+                if(!user.autoai.response){
+                    user.autoai.response = true
+                    cht.reply(txt)
+                    return
+                } else {
+                    return
+                }
+            }
+            
+            let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : (cht?.msg || "" )
+            let isImage = is?.image ? true : is.quoted?.image ? cht.quoted.sender !== Exp.number : false
             if (cht?.type === "audio") {
-                console.log(cht.type)
                 try {
                     chat = (await transcribe(await cht?.download()))?.text ?? ""
                 } catch (error) { 
                     console.error("Error transcribing audio:", error)
                     chat = ""
                 }
+            }
+            if(isImage){
+                let download = is.image ? cht?.download : cht?.quoted?.download
+                isImage = await download()
+                console.log(isImage)
             }
             chat = Exp.func.clearNumbers(chat)
             try {
@@ -121,7 +148,8 @@ async function In({ cht, Exp, store, is, ev }) {
                    date: Exp.func.newDate(),
                    role: cht?.memories?.role,
                    msgtype: cht?.type,
-                   _logic: false
+                   _logic: false,
+                   image: isImage
                 })
                 let config = _ai?.data ?? {}
                 console.log(config)
@@ -177,7 +205,7 @@ async function In({ cht, Exp, store, is, ev }) {
                         return ev.emit("group")
                 }
                 
-                if (config?.energy) {
+                if (config?.energy && cfg.ai_interactive.energy) {
                     let conf = {}
                     conf.energy = /[+-]/.test(`${config.energy}`) ? `${config.energy}` : `+${config.energy}`
                     if (conf.energy.startsWith("-")) {

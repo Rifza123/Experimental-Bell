@@ -8,6 +8,10 @@ const process = await "process".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
 const { color, bgcolor } = await './toolkit/color.js'.r()
+const Jimp = (await "jimp".import()).default
+const parseMs = (await "parse-ms".import()).default
+const cache = {}
+const CACHE_DURATION = 1 * 60 * 1000
 
 export class func {
     static async getSender(jid) {
@@ -18,7 +22,7 @@ export class func {
         } else return jid
     }
 
-    static getType(type) {
+    static getType = (type) => {
         return type === 'stickerMessage' ? 'sticker' :
                type === 'videoMessage' ? 'video' :
                type === 'liveLocationMessage' ? 'liveLocation' :
@@ -30,8 +34,21 @@ export class func {
                type
     }
 
-    static getGroupAdmins(participants) {
+    static getGroupAdmins = (participants) => {
         return participants.filter(participant => participant.admin !== null).map(participant => participant.id)
+    }
+    
+    static getGroupMetadata = async(chtId, Exp) => {
+        const currentTime = Date.now();
+        if (cache[chtId] && (currentTime - cache[chtId].timestamp < CACHE_DURATION)) {
+            return cache[chtId].metadata;
+        }
+        const groupMetadata = await Exp.groupMetadata(chtId);
+        cache[chtId] = {
+            metadata: groupMetadata,
+            timestamp: currentTime
+        };
+        return groupMetadata;
     }
     
     static async downloadSave(message, filename) {
@@ -265,29 +282,34 @@ export class func {
     }
     
     static archiveMemories = ArchiveMemories
+    static formatDuration = parseMs
+    static getRandomValue = (min, max) => min + Math.random() * (max - min);
     
     static dateFormatter = (time, timezone) => {
         const validTimezones = ['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura']
-        if(!validTimezones.includes(timezone)) return `Timezone invalid!, Look this: ${validTimezones.join(", ")}`
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-            timeZone: timezone || "Asia/Jakarta"
-        })
+        if (!validTimezones.includes(timezone)) {
+             return `Timezone invalid!, Look this: ${validTimezones.join(", ")}`
+        }
+        const options = { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+        const formatter = new Intl.DateTimeFormat('en-GB', options)
+        const parts = formatter.formatToParts(new Date(time))
 
-        const date = new Date(time)
-        return formatter.format(date)
+        const day = parts.find(part => part.type === 'day').value
+        const month = parts.find(part => part.type === 'month').value
+        const year = parts.find(part => part.type === 'year').value
+        const hours = parts.find(part => part.type === 'hour').value
+        const minutes = parts.find(part => part.type === 'minute').value
+        const seconds = parts.find(part => part.type === 'second').value
+
+        const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+        return formattedDate
     }
+
     static logMessage = (type, id, pushName, message) => {
-        const form = bgcolor(`[ ${type} ]`, type === 'PRIVATE' ? 'yellow' : 'gray')
+        const form = bgcolor(`[ ${type} ]`, type === 'PRIVATE' ? 'orange' : 'gray')
         return `${form} From: ${color(id, 'cyan')} | User: ${color(pushName, 'cyan')} | Msg: ${color(message, 'green')}`
     }
-    static formatBytes(bytes) {
+    static formatBytes = (bytes) => {
         if (bytes < 1024) return bytes + ' B'
         else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
         
@@ -295,22 +317,8 @@ export class func {
         else return (bytes / 1073741824).toFixed(2) + ' GB'
     }
     
-    static formatDuration(seconds) {
-        const days = Math.floor(seconds / (24 * 3600))
-        const hours = Math.floor((seconds % (24 * 3600)) / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const secs = Math.floor(seconds % 60)
-        const millis = Math.floor((seconds - Math.floor(seconds)) * 1000)
-        return {
-            days,
-            hours,
-            minutes,
-            seconds: secs,
-            milliseconds: millis
-        }
-    }
 
-    static async getSystemStats() {
+    static getSystemStats = async() => {
         const cpus = os.cpus()
         const cpuUsage = cpus.map((cpu, index) => {
             const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
@@ -353,7 +361,7 @@ export class func {
         }
     }
     
-    static clearNumbers(text) {
+    static clearNumbers = (text) => {
         if(!text) return
         [
             /@\u2068\u202e\d+~\u2069/g,
@@ -366,4 +374,69 @@ export class func {
 
         return text;
     }
+    
+   static parseTimeString = (timeStr) => {
+        const timeUnits = {
+            's': 1000,
+            'second': 1000,
+            'seconds': 1000,
+            'detik': 1000,
+            'm': 60000,
+            'minute': 60000,
+            'minutes': 60000,
+            'menit': 60000,
+            'h': 3600000,
+            'hour': 3600000,
+            'hours': 3600000,
+            'jam': 3600000,
+            'd': 86400000,
+            'day': 86400000,
+            'days': 86400000,
+            'hari': 86400000,
+            'w': 604800000,
+            'week': 604800000,
+            'weeks': 604800000,
+            'minggu': 604800000,
+            'mo': 2592000000,
+            'month': 2592000000,
+            'bulan': 2592000000,
+            'y': 31536000000,
+            'year': 31536000000,
+            'tahun': 31536000000
+        };
+
+        const regex = /(\d+)\s*(second|seconds|detik|minute|minutes|menit|hour|hours|jam|day|days|hari|week|weeks|minggu|month|mo|bulan|year|years|tahun|s|m|h|d|w|y)/gi;
+        let totalMilliseconds = 0;
+        let matches;
+        let matchFound = false;
+        while ((matches = regex.exec(timeStr)) !== null) {
+            matchFound = true;
+            const value = parseInt(matches[1]);
+            if (isNaN(value)) {
+                return false;
+            }
+            const unit = matches[2].toLowerCase();
+            if (!timeUnits[unit]) {
+                return false;
+            }
+            totalMilliseconds += value * timeUnits[unit];
+        }
+        if (!matchFound || totalMilliseconds === 0 || isNaN(totalMilliseconds)) {
+            return false;
+        }
+        return totalMilliseconds;
+   }
+   static getRandomItem = (items) => {
+       const random = Math.random()
+       let cumulativeProbability = 0
+
+       for (const [item, probability] of Object.entries(items)) {
+           cumulativeProbability += probability
+           if (random < cumulativeProbability) {
+               return item
+           }
+       }
+   }
+   
+
 }

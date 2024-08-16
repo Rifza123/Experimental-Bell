@@ -84,7 +84,8 @@ global["Data"] = {
     preferences: JSON.parse(fs.readFileSync(db + 'preferences.json')),
     use: { 
         cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
-    }
+    },
+    infos:{}
 }
 
 /*!-======[ Definition of Infos ]======-!*/

@@ -6,6 +6,8 @@ const { generateWAMessageFromContent } = "baileys".import()
 const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 const { musixSearch } = await (fol[2] + 'musixsearch.js').r()
 const { transcribe } = await (fol[2] + 'transcribe.js').r()
+const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
+const { EncryptJs } = await (fol[2] + 'encrypt.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -14,7 +16,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['remini'], 
         listmenu: ['remini'],
         tag: "tools",
-        energy: 11,
+        energy: 30,
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
@@ -31,26 +33,38 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
      
     ev.on({ 
-        cmd: ['telegraph','tourl'],
-        listmenu: ['tourl'],
+        cmd: ['tph','telegraph'],
+        listmenu: ['telegraph'],
         tag: 'tools',
         energy: 5,
         media: { 
            type: ["image"],
            msg: "Mana gambarnya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
         let tph = await TelegraPh(media)
             await cht.edit(tph, keys[sender])
-            fs.unlinkSync(media)
+	})
+	ev.on({ 
+        cmd: ['tourl','tmpfile','tmpfiles'],
+        listmenu: ['tourl'],
+        tag: 'tools',
+        energy: 5,
+        media: { 
+           type: ["image","sticker","audio","video"],
+           save: false
+        }
+    }, async({ media }) => {
+        let tmp = await tmpFiles(media)
+            await cht.edit(tmp, keys[sender])
 	})
 
 	ev.on({ 
         cmd: ['img2prompt','tomprompt','imgtoprompt','imagetoprompt','image2prompt'],
         listmenu: ['img2prompt'],
         tag: 'tools',
-        energy: 1,
+        energy: 28,
         media: { 
            type: ["image"],
            msg: "Mana gambarnya?",
@@ -68,7 +82,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['enhance','upscale'],
         listmenu: ['enhance', 'enhance list'],
         tag: 'tools',
-        energy: 4,
+        energy: 35,
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
@@ -110,7 +124,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['ss','ssweb'],
         listmenu: ['ssweb'],
         tag: 'tools',
-        energy: 2
+        energy: 7.5
     }, async() => {
         let q = is.quoted?.url || is.url 
         if(!q) return cht.reply("Mana linknya?")
@@ -121,7 +135,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['musixsearch','searchmusic','whatmusic','searchsong','musicrecognition'],
         listmenu: ['whatmusic'],
         tag: 'tools',
-	    energy: 4,
+	    energy: 10,
         media: { 
            type: "audio",
            msg: "Mana audionya?"
@@ -136,7 +150,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['audio2text','audio2txt','transcribe'],
         listmenu: ['transcribe'],
         tag: 'tools',
-	    energy: 4,
+	    energy: 25,
         media: { 
            type: "audio",
            msg: "Mana audionya?"
@@ -150,7 +164,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['getchid','getchannelid','getsaluranid','getidsaluran'],
         listmenu: ['getchid'],
         tag: 'tools',
-	    energy: 4,
+	    energy: 10,
     }, async() => {
       try {
          if(!cht.quoted) return cht.reply("Reply pesan yang diteruskan dari saluran!")
@@ -169,9 +183,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	ev.on({ 
         cmd: ['colong','c'],
         listmenu: ['colong'],
-        tag: 'tools'
+        tag: 'tools',
+        premium: true
     }, async({ cht }) => {
-    if (!is.owner) return cht.reply("Maaf, males nanggepin")
       try {
          if(!cht.quoted) return
          let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message
@@ -199,10 +213,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	})
 	
 	ev.on({ 
-        cmd: ['delinstrument','delvocal'],
-        listmenu: ['delinstrument','delvocal'],
+        cmd: ['vocalremover','stems'],
+        listmenu: ['vocalremover'],
         tag: 'tools',
-	    energy: 4,
+	    energy: 50,
         media: { 
            type: "audio",
            msg: "Mana audionya?"
@@ -217,7 +231,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
              body: media
          })
          let a = (await response.json()).data
-         Exp.sendMessage(id, { audio: { url: a[cht.cmd == "delvocal" ? 0 : 1].link }, mimetype: "audio/mpeg" }, { quoted: cht })
+         await Exp.sendMessage(id, { audio: { url: a[0].link }, mimetype: "audio/mpeg" }, { quoted: cht })
+         await Exp.sendMessage(id, { audio: { url: a[1].link }, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -232,4 +247,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async({ media }) => {
          Exp.sendMessage(id, { image: media }, { quoted: cht })
 	})
+	
+	ev.on({ 
+        cmd: ['enc','encryptjs','encrypt'],
+        listmenu: ['encryptjs'],
+        tag: 'tools',
+        args: "Mana code js nya?",
+        energy: 2
+    }, async() => {
+        let res = await EncryptJs(cht.q)
+        Exp.sendMessage(cht.id, { document: Buffer.from(res.data), mimetype:"application/javascript", fileName:"encrypt.js" }, { quoted:cht })
+	})
+	
 }

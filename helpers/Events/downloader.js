@@ -5,7 +5,7 @@ const axios = "axios".import()
 const { mediafireDl } = await (fol[0] + 'mediafire.js').r()
 
 /*!-======[ Configurations ]======-!*/
-let infos = cfg.menu.infos
+let infos = Data.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -19,7 +19,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         msg: "Harap berikan link!",
         formats: ["pinterest","pin"]
       },
-      energy: 5
+      energy: 7
     }, async ({ urls }) => {
         await cht.reply('```Processing...```')
         let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + urls[0]).then(a => a.json())).data
@@ -36,7 +36,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         msg: "Harap berikan link!",
         formats: ["mediafire"]
       },
-      energy: 8 
+      energy: 75
     }, async ({ urls }) => {
         const _key = keys[sender]
         
@@ -63,7 +63,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         msg: "Harap berikan link!",
         formats: ["tiktok"]
       },
-      energy: 4 
+      energy: 5
     }, async ({ urls }) => {
         const _key = keys[sender]
         await cht.edit("Bntr..", _key)
@@ -86,7 +86,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'downloader',
       badword: true,
       args: "Harap sertakan url/judul videonya!",
-      energy: 4 
+      energy: 5
     }, async ({ args, urls }) => {
         const _key = keys[sender]
         let q = urls || args || null

@@ -67,14 +67,15 @@ async function utils({ Exp, cht, is, store }) {
         }
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
-        cht.q = args?.join(' ') || cht?.quoted?.text || undefined
-        cht.mention = cht.q && cht.quoted && (cht.q.extractMentions()).length > 0
+        let q = args?.join(' ')
+        cht.q = q || cht?.quoted?.text
+        cht.mention = q && (cht.q.extractMentions()).length > 0
            ? cht.q.extractMentions()
               : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
                  ? cht.message[type].contextInfo.mentionedJid
                     : cht?.message?.[type]?.contextInfo?.participant
-                      ? [cht.message[type].contextInfo.participant]
-                    : []
+                       ? [cht.message[type].contextInfo.participant]
+                         : []
 
         Exp.number = Exp?.user?.id?.split(':')[0] + from.sender
 
@@ -92,7 +93,7 @@ async function utils({ Exp, cht, is, store }) {
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g) || null
         if(is.me && is.baileys) return
         if (is.group) {
-            const groupMetadata = await Exp.groupMetadata(cht.id)
+            const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
             Exp.groupMetdata = groupMetadata
             Exp.groupMembers = groupMetadata.participants
             Exp.groupName = groupMetadata.subject

@@ -11,7 +11,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'search',
         args: "Cari apa?",
         badword: true,
-        energy: 2
+        energy: 5
     }, async() => {
         Exp.sendMessage(id, { image: { url: api.rifza.url + "/api/pinterest-v2?query="+cht.q } }, { quoted: cht })
 	})
@@ -22,7 +22,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'search',
         args: "Cari apa?",
         badword: true,
-        energy: 5
+        energy: 21
     }, async() => {
         try {
         await cht.edit("Bntr...", keys[sender])

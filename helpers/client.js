@@ -8,6 +8,7 @@ const { EventEmitter } = await "./toolkit/events.js".r()
 export default
 
 async function client({ Exp, store, cht, is }) {
+//    if(cht.id == "120363243011382779@g.us" && !is.groupAdmins) return
     try {
         
         if (!(cht.id in Data.preferences)) {

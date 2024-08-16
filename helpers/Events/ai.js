@@ -5,8 +5,11 @@ const fs = "fs".import()
 /*!-======[ Functions Imports ]======-!*/
 const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 const { gpt } = await (fol[2] + "gpt3.js").r()
+const { GeminiImage } = await (fol[2] + "gemini.js").r()
+
 /*!-======[ Configurations ]======-!*/
-let infos = cfg.menu.infos
+let infos = Data.infos
+
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender, id } = cht
@@ -14,7 +17,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['cover','covers'],
         listmenu: ['covers `Maintenance`'],
         tag: 'voice_changer',
-        energy: 7,
+        energy: 70,
+        premium: true,
         args: "Sertakan modelnya!",
         media: { 
            type: ["audio"],
@@ -81,6 +85,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['imglarger','enlarger','enlarge','filters','filter','toanime','jadianime','jadinyata','toreal'],
         listmenu: ['toanime','filters','toreal'],
         tag: 'art',
+        premium: true,
         energy: 50,
         media: { 
            type: ["image"],
@@ -128,7 +133,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['txt2img', 'text2img'],
         listmenu: ['text2img'],
         tag: 'stablediffusion',
-        energy: 5
+        energy: 35,
+        premium: true
     }, async () => {
     const _key = keys[sender]
     if (!cht.q) return cht.reply(infos.txt2img)
@@ -145,8 +151,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
       try {
         let [checkpointsResponse, lorasResponse] = await Promise.all([
-            fetch(api.xterm.url + "/api/text2img/stablediffusion/list_checkpoints"),
-            fetch(api.xterm.url + "/api/text2img/stablediffusion/list_loras")
+            fetch(api.xterm.url + "/api/text2img/stablediffusion/list_checkpoints?key="+api.xterm.key),
+            fetch(api.xterm.url + "/api/text2img/stablediffusion/list_loras?key="+api.xterm.key)
         ])
 
         if (!checkpointsResponse.ok || !lorasResponse.ok) {
@@ -176,7 +182,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
         console.log(body)
 
-        let aiResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/createTask?key=OPSIONAL`, {
+        let aiResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/createTask?key=${api.xterm.key}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -229,10 +235,10 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['lorasearch','checkpointsearch'],
         listmenu: ['lorasearch','checkpointsearch'],
         tag: 'stablediffusion',
-	    energy: 1
+	    energy: 3
     }, async() => {
         if(!cht.q) return cht.reply("Mau cari model apa?")
-        fetch(api.xterm.url + "/api/text2img/stablediffusion/list_"+(cht.cmd == "lorasearch" ? "LORAS" : "CHECKPOINTS").toLowerCase())
+        fetch(`${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == "lorasearch" ? "loras" : "checkpoints"}?key=${api.xterm.key}`)
             .then(async a => {
                 let data = (await a.json())
                 Exp.func.searchSimilarStrings(cht.q.toLowerCase(),data.map(b=> b.model), 0.3)
@@ -253,11 +259,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['getlora','getcheckpoint'],
         listmenu: ['getlora','getcheckpoint'],
         tag: 'stablediffusion',
-	    energy: 1
+	    energy: 3
     }, async() => {
         if(!cht.q) return cht.reply("Harap masukan id nya?")
         if(isNaN(cht.q)) return cht.reply("Id harus berupa angka!")
-        fetch(api.xterm.url + "/api/text2img/stablediffusion/list_"+(cht.cmd == "getlora" ? "LORAS" : "CHECKPOINTS").toLowerCase())
+        fetch(`${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == "getlora" ? "loras" : "checkpoints"}?key=${api.xterm.key}`)
             .then(async a => {
                 try{ 
                     let data = await a.json()
@@ -274,6 +280,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['luma'],
         tag: "ai",
         energy: 185,
+        premium: true,
         media: { 
            type: ["image"],
            msg: "Mana fotonya?"
@@ -328,7 +335,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['bard','ai'],
         tag: "ai",
         args: "Mau tanya apa?",
-        listmenu: ["bard"]
+        listmenu: ["bard"],
+        energy: 7
     }, async() => {
         let ai = await fetch(`${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`)
         .then(response => response.json())
@@ -340,18 +348,36 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['gpt','gpt3'],
         tag: "ai",
         args: "Mau tanya apa?",
-        listmenu: ["gpt3"]
+        listmenu: ["gpt3"],
+        energy: 7
     }, async() => {
         let res = await gpt(cht.q)
         cht.reply("[ GPT-3 ]\n"+res.response)
 	})
 	
     ev.on({ 
-        args: infos.bell,
         cmd: ['bell', 'autoai', 'aichat', 'ai_interactive'],
         tag: "ai",
         listmenu: ["autoai"]
     }, async () => {
+        function sendAiInfo(){
+          Exp.sendMessage(id, {
+            text: infos.bell,
+            contextInfo: { 
+                externalAdReply: {
+                    title: cht.pushName,
+                    body: "Artificial Intelligence, The beginning of the robot era",
+                    thumbnailUrl: "https://telegra.ph/file/e072d1b7d5fe75221a36c.jpg",
+                    sourceUrl: "https://github.com/Rifza123",
+                    mediaUrl: `http://ẉa.me/6283110928302/9992828`,
+                    renderLargerThumbnail: true,
+                    showAdAttribution: true,
+                    mediaType: 1,
+                }
+            }
+          }, { quoted: cht })
+        }
+        if(!cht.q) return sendAiInfo()
         Data.preferences[id] = Data.preferences[id] || {}
         let q = cht.q
         let set = {
@@ -398,11 +424,23 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 "owner": true,
                 "for": "all",
                 "value": false
+            },
+            "on-energy": {
+                "done": "Berhasil!, sekarang energy bisa didapatkan dari interaksi!",
+                "owner": true,
+                "type": "energy",
+                "value": true
+            },
+            "off-energy": {
+                "done": "Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!",
+                "owner": true,
+                "type": "energy",
+                "value": false
             }
         }[q]
 
         let alls = Object.keys(Data.preferences)
-        if (!set) return cht.reply(infos.bell)
+        if (!set) return sendAiInfo()
         if (set.owner && !is.owner) return cht.reply("Khusus Owner!")
         if (id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply("Khusus Admin!")
 
@@ -422,9 +460,12 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             for (let i of alls) {
                 Data.preferences[i].ai_interactive = set.value
             }
+        } else if(set.type == "energy"){
+            cfg.ai_interactive.energy = set.value
         } else {
             Data.preferences[id].ai_interactive = set.value
         }
+        
         cht.reply(set.done)
     })
     
@@ -443,7 +484,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['animediff'],
         tag: 'ai',
         args: "*Harap beri deskripsi gambarnya!*",
-        energy: 10
+        energy: 17
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
         await cht.edit("Bntr...", keys[sender])
@@ -455,11 +496,26 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['dalle3'],
         tag: 'ai',
         args: "*Harap beri deskripsi gambarnya!*",
-        energy: 10
+        energy: 17,
+        badword: true
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
         await cht.edit("Bntr...", keys[sender])
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
 	
+	ev.on({ 
+        cmd: ['geminiimage','geminiimg'], 
+        listmenu: ['geminiimage'],
+        tag: "ai",
+        energy: 20,
+        args: "Mau tanya apa?",
+        media: { 
+           type: ["image"],
+           msg: "Mana fotonya?"
+        }
+    }, async({ media }) => {
+        let res = await GeminiImage(media, cht.q)
+        cht.reply(res)
+    })
 }

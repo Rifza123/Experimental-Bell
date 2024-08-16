@@ -21,7 +21,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     body: "Artificial Intelligence, The beginning of the robot era",
                     thumbnail: fs.readFileSync(fol[3] + "bell.jpg"),
                     sourceUrl: "https://github.com/Rifza123",
-                    mediaUrl: "http://ẉa.me/6283110928302/"+Math.floor(Math.random() * 100000000000000000),
+                    mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
                     renderLargerThumbnail: true,
                     showAdAttribution: true,
                     mediaType: 1,
@@ -41,6 +41,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['rvo','getviewonce'],
         listmenu: ['getviewonce'],
         tag: 'baileys',
+        premium: true,
         energy: 25
     }, async() => {
        if (!(is?.owner || is?.admin)) return cht.reply("Maaf, males nanggepin. ini khusus owner/admin kalo di grup")
@@ -107,8 +108,5 @@ export default async function on({ cht, Exp, store, ev, is }) {
         + `   Exec Path: ${processStats.execPath}`;
         return cht.reply(txt)
     })
-
-
-
 
 }
