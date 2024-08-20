@@ -134,7 +134,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['text2img'],
         tag: 'stablediffusion',
         energy: 35,
-        premium: true
+        premium: false
     }, async () => {
     const _key = keys[sender]
     if (!cht.q) return cht.reply(infos.txt2img)
@@ -267,7 +267,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             .then(async a => {
                 try{ 
                     let data = await a.json()
-                    Exp.sendMessage(id, { image: { url: data[cht.q].preview }, caption: data[cht.q].model }, { quoted: cht })
+                    Exp.sendMessage(id, { image: { url: `${data[cht.q].preview}&key=${api.xterm.key}` }, caption: data[cht.q].model }, { quoted: cht })
                 } catch (e){
                     console.log(e)
                     cht.reply("Tidak ditemukan!")
@@ -518,4 +518,28 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let res = await GeminiImage(media, cht.q)
         cht.reply(res)
     })
+    
+    ev.on({ 
+        cmd: ['prabowo','bell2speech'],
+        energy: 15,
+        args: "Harap sertakan teks untuk diucapkan!"
+    }, async() => {
+        await Exp.sendPresenceUpdate('recording', cht.id);
+        let v = cht.cmd.startsWith("bell") ? "bella" : "prabowo"
+        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
+	})
+   
+     let txtreply = `List voice models:\n- bella\n- prabowo\n- thomas_shelby\n- echilling\n- adam\n- michi_jkt48\n\nContoh: _.elevenlabs prabowo|halo_`	
+	ev.on({ 
+        cmd: ['elevenlabs'],
+        energy: 15,
+        args: txtreply
+    }, async() => {
+        let [voice,text] = cht.q.split("|")
+        let voices = ["prabowo","bella","echilling","adam","thomas_shelby","michi_jkt48"]
+        if(!voices.includes(voice)) return cht.reply(txtreply)
+        if(!text) return cht.reply(txtreply)
+        await Exp.sendPresenceUpdate('recording', cht.id);
+        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`}, mimetype: "audio/mpeg" }, { quoted: cht })
+	})
 }
