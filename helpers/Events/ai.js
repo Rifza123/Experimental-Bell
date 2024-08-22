@@ -520,23 +520,23 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     })
     
     ev.on({ 
-        cmd: ['prabowo','bell2speech'],
+        cmd: ['prabowo','jokowi','nokotan','michi_jkt48','bell2speech'],
         energy: 15,
         args: "Harap sertakan teks untuk diucapkan!"
     }, async() => {
         await Exp.sendPresenceUpdate('recording', cht.id);
-        let v = cht.cmd.startsWith("bell") ? "bella" : "prabowo"
+        let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
    
-     let txtreply = `List voice models:\n- bella\n- prabowo\n- thomas_shelby\n- echilling\n- adam\n- michi_jkt48\n\nContoh: _.elevenlabs prabowo|halo_`	
+     let txtreply = `List voice models:\n- bella\n- prabowo\n- thomas_shelby\n- echilling\n- adam\n- michi_jkt48\n- nokotan\n- jokowi\n- boboiboy\n\nContoh: _.elevenlabs prabowo|halo_`	
 	ev.on({ 
         cmd: ['elevenlabs'],
         energy: 15,
         args: txtreply
     }, async() => {
         let [voice,text] = cht.q.split("|")
-        let voices = ["prabowo","bella","echilling","adam","thomas_shelby","michi_jkt48"]
+        let voices = ["prabowo","bella","echilling","adam","thomas_shelby","michi_jkt48","nokotan","jokowi","boboiboy"]
         if(!voices.includes(voice)) return cht.reply(txtreply)
         if(!text) return cht.reply(txtreply)
         await Exp.sendPresenceUpdate('recording', cht.id);
