@@ -82,7 +82,7 @@ async function utils({ Exp, cht, is, store }) {
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
         is.owner = [Exp.number, ...global.owner].map(jid => jid.replace(/[^0-9]/g, '') + from.sender).includes(cht.sender) || is.me
-        is.baileys = (cht?.key?.id?.startsWith('BAE5') || cht?.key?.id?.startsWith('BELL409')) && cht?.key?.id?.length === 16
+        is.baileys = cht?.key?.id?.startsWith('3EB') || cht?.key?.id?.startsWith('BAE5') || cht?.key?.id?.startsWith('BELL409')
         is.botMention = cht?.mention?.includes(Exp.number)
         is.cmd = cht.cmd
         is.sticker = cht.type === "sticker"

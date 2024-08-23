@@ -45,6 +45,7 @@ async function In({ cht, Exp, store, is, ev }) {
         let isBella = isMsg 
             && (Data.preferences[cht.id]?.ai_interactive || is.owner)
             && !is?.document 
+            && !is.baileys
             && !is?.sticker 
             && (
                 cht?.msg?.toLowerCase().startsWith(botnickname.toLowerCase().slice(0, botnickname.length - 1)) && !cht?.me
@@ -148,7 +149,7 @@ async function In({ cht, Exp, store, is, ev }) {
                    date: Exp.func.newDate(),
                    role: cht?.memories?.role,
                    msgtype: cht?.type,
-                   _logic: false,
+                   _logic: " -kamu adalah gadis dengan rambut warna biru",
                    image: isImage
                 })
                 let config = _ai?.data ?? {}
