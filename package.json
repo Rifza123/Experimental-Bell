@@ -15,7 +15,7 @@
   "keywords": [
     "whatsapp-bot-ai"
   ],
-  "author": "@rifzq.p.p",
+  "author": "@rifza.p.p",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Rifza123/Experimental-Bell/issues"
@@ -23,24 +23,17 @@
   "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@whiskeysockets/baileys": "^6.4.0",
     "axios": "^1.5.0",
     "chalk": "^3.0.0",
     "cheerio": "^1.0.0-rc.12",
     "chokidar": "^3.6.0",
-    "color": "^4.0.0",
-    "dotenv": "^16.4.5",
     "fluent-ffmpeg": "^2.1.2",
     "fs": "0.0.1-security",
     "jimp": "^0.16.1",
     "jsdom": "^16.5.0",
     "moment-timezone": "^0.5.33",
-    "node-fetch": "^3.3.2",
     "node-webpmux": "^3.2.0",
-    "parse-ms": "^4.0.0",
-    "path": "^0.12.7",
-    "qrcode": "^1.5.0",
-    "qrcode-terminal": "^0.12.0"
+    "path": "^0.12.7"
   }
 }

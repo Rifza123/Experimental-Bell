@@ -77,6 +77,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else if (type == 'video') {
             await Exp.sendMessage(id, { video: { url: data.media[1].url } }, { quoted: cht })
         }
+         await Exp.sendMessage(id, { audio: { url: data.audio.url }, mimetype: "audio/mpeg"}, { quoted: cht })
         await cht.edit("Dah tuh", _key)
     })
 
@@ -120,7 +121,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await Exp.sendMessage(id, audio, { quoted: cht })
         } catch (e) {
             console.log(e)
-            cht.reply("Tidak ditemukan!")
+            cht.reply("Can't download from that url!")
         }
     })
     

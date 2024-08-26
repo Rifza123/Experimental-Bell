@@ -90,7 +90,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
     }, async({ media }) => {
         const _key = keys[sender]
-        let type = cht.q ? cht.q : "text"
+        let type = cht.q ? cht.q : "phox4"
         if(cht.q == "list") return cht.reply(infos.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
         await cht.edit("Uploading image...", _key)
@@ -109,7 +109,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 return cht.reply(s.task_status)
             }
             if (s.task_status == "done") {
-                await Exp.sendMessage(id, { image: { url: s.output }, caption: `Duration: ${(await "ms".r()).default(s.duration)}\nSize: ${s.img_out_h}x${s.img_out_w}\nSize: ${(s.filesize+"").toFormat()}` }, { quoted: cht })
+                await Exp.sendMessage(id, { image: { url: s.output } }, { quoted: cht })
                 break
             }
           await new Promise(resolve => setTimeout(resolve, 3000))

@@ -9,7 +9,6 @@ const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
 const { color, bgcolor } = await './toolkit/color.js'.r()
 const Jimp = (await "jimp".import()).default
-const parseMs = (await "parse-ms".import()).default
 const cache = {}
 const CACHE_DURATION = 1 * 60 * 1000
 
@@ -282,7 +281,50 @@ export class func {
     }
     
     static archiveMemories = ArchiveMemories
-    static formatDuration = parseMs
+    static toZeroIfInfinity(value) {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  static parseNumber(milliseconds) {
+    return {
+      days: Math.trunc(milliseconds / 86_400_000),
+      hours: Math.trunc(milliseconds / 3_600_000 % 24),
+      minutes: Math.trunc(milliseconds / 60_000 % 60),
+      seconds: Math.trunc(milliseconds / 1000 % 60),
+      milliseconds: Math.trunc(milliseconds % 1000),
+      microseconds: Math.trunc(this.toZeroIfInfinity(milliseconds * 1000) % 1000),
+      nanoseconds: Math.trunc(this.toZeroIfInfinity(milliseconds * 1e6) % 1000),
+    };
+  }
+
+  static parseBigint(milliseconds) {
+    return {
+      days: milliseconds / 86_400_000n,
+      hours: milliseconds / 3_600_000n % 24n,
+      minutes: milliseconds / 60_000n % 60n,
+      seconds: milliseconds / 1000n % 60n,
+      milliseconds: milliseconds % 1000n,
+      microseconds: 0n,
+      nanoseconds: 0n,
+    };
+  }
+
+   static formatDuration = (milliseconds) => {
+      switch (typeof milliseconds) {
+        case 'number': {
+          if (Number.isFinite(milliseconds)) {
+            return this.parseNumber(milliseconds);
+          }
+          break;
+        }
+
+        case 'bigint': {
+          return this.parseBigint(milliseconds);
+        }
+      }
+
+      throw new TypeError('Expected a finite number or bigint');
+   }
     static getRandomValue = (min, max) => min + Math.random() * (max - min);
     
     static dateFormatter = (time, timezone) => {
