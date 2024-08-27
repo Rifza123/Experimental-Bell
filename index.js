@@ -19,7 +19,6 @@ const chalk = "chalk".import()
 const baileys = "baileys".import()
 const pino = "pino".import()
 let { Boom } = "boom".import();
-const NodeCache = "nodecache".import()
 
 /*!-======[ Functions Imports ]======-!*/
 Data.helper = (await "./helpers/client.js".r()).default
