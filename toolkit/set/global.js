@@ -85,7 +85,22 @@ global["Data"] = {
     use: { 
         cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
     },
-    infos:{}
+    infos:{},
+    voices: [
+      "prabowo",
+      "yanzgpt",
+      "bella",
+      "megawati",
+      "echilling",
+      "adam",
+      "thomas_shelby",
+      "michi_jkt48",
+      "nokotan",
+      "jokowi",
+      "boboiboy",
+      "keqing",
+      "yanami_anna"
+    ]
 }
 
 /*!-======[ Definition of Infos ]======-!*/

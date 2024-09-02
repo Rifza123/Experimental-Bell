@@ -520,7 +520,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     })
     
     ev.on({ 
-        cmd: ['prabowo','megawati','jokowi','nokotan','michi_jkt48','bell2speech'],
+        cmd: Data.voices, //tambah voice di global.js
         energy: 15,
         args: "Harap sertakan teks untuk diucapkan!"
     }, async() => {
@@ -529,15 +529,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
    
-     let voices = ["prabowo","bella","megawati","echilling","adam","thomas_shelby","michi_jkt48","nokotan","jokowi","boboiboy"]
-     let txtreply = `List voice models:\n${voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
+     let txtreply = `List voice models:\n${Data.voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
 	ev.on({ 
         cmd: ['elevenlabs'],
         energy: 15,
         args: txtreply
     }, async() => {
         let [voice,text] = cht.q.split("|")
-        if(!voices.includes(voice)) return cht.reply(txtreply)
+        if(!Data.voices.includes(voice)) return cht.reply(txtreply)
         if(!text) return cht.reply(txtreply)
         await Exp.sendPresenceUpdate('recording', cht.id);
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`}, mimetype: "audio/mpeg" }, { quoted: cht })
