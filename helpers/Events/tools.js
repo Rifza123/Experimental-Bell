@@ -90,7 +90,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
     }, async({ media }) => {
         const _key = keys[sender]
-        let type = cht.q ? cht.q : "phox4"
+        let type = cht.q ? cht.q : "stdx4"
         if(cht.q == "list") return cht.reply(infos.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
         await cht.edit("Uploading image...", _key)
