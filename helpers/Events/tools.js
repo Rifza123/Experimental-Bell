@@ -9,6 +9,9 @@ const { transcribe } = await (fol[2] + 'transcribe.js').r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
 const { EncryptJs } = await (fol[2] + 'encrypt.js').r()
 
+/*!-======[ Configurations ]======-!*/
+let infos = Data.infos
+
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     let { sender, id } = cht
