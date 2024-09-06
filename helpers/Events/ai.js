@@ -3,9 +3,9 @@ const axios = "axios".import()
 const fs = "fs".import()
 
 /*!-======[ Functions Imports ]======-!*/
-const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 const { gpt } = await (fol[2] + "gpt3.js").r()
 const { GeminiImage } = await (fol[2] + "gemini.js").r()
+const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
 
 /*!-======[ Configurations ]======-!*/
 let infos = Data.infos
@@ -15,7 +15,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let { sender, id } = cht
     ev.on({ 
         cmd: ['cover','covers'],
-        listmenu: ['covers `Maintenance`'],
+        listmenu: ['covers'],
         tag: 'voice_changer',
         energy: 70,
         premium: true,
@@ -105,7 +105,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            type = "enlarger"
         }
         await cht.edit("Bntr...", _key)
-        let tph = await TelegraPh(media)
+        let tph = await tmpFiles(media)
         try{
           fs.unlinkSync(media)
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
@@ -482,7 +482,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	ev.on({ 
         cmd: ['animediff'],
         listmenu: ['animediff'],
-        tag: 'ai',
+        tag: 'stablediffusion',
         args: "*Harap beri deskripsi gambarnya!*",
         energy: 17
     }, async() => {
@@ -494,7 +494,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	ev.on({ 
         cmd: ['dalle3'],
         listmenu: ['dalle3'],
-        tag: 'ai',
+        tag: 'art',
         args: "*Harap beri deskripsi gambarnya!*",
         energy: 17,
         badword: true
@@ -518,27 +518,73 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let res = await GeminiImage(media, cht.q)
         cht.reply(res)
     })
-    
-    ev.on({ 
-        cmd: Data.voices, //tambah voice di global.js
-        energy: 15,
-        args: "Harap sertakan teks untuk diucapkan!"
-    }, async() => {
-        await Exp.sendPresenceUpdate('recording', cht.id);
-        let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd
-        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
-	})
-   
-     let txtreply = `List voice models:\n${Data.voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
+	
 	ev.on({ 
-        cmd: ['elevenlabs'],
-        energy: 15,
-        args: txtreply
-    }, async() => {
-        let [voice,text] = cht.q.split("|")
-        if(!Data.voices.includes(voice)) return cht.reply(txtreply)
-        if(!text) return cht.reply(txtreply)
-        await Exp.sendPresenceUpdate('recording', cht.id);
-        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`}, mimetype: "audio/mpeg" }, { quoted: cht })
-	})
+        cmd: ['songai','songgenerator'],
+        listmenu: ['songgenerator'],
+        tag: 'ai',
+        energy: 70,
+        premium: true,
+        args: "Sertakan prompt lagu yg ingin dibuat!"
+    }, async({ media }) => {
+        const _key = keys[sender]
+        const prompt = cht.q
+        await cht.edit('```Wait...```', _key)
+        axios({
+                method: 'post',
+                url: `${api.xterm.url}/api/audioProcessing/song-generator`,  
+                params: { prompt, key: api.xterm.key },
+                responseType: 'stream'
+         })
+         .then(response => {
+           response.data.on('data', async chunk => {
+             const eventString = chunk.toString()
+             const eventData = eventString.match(/data: (.+)/)
+        
+             if (eventData) {
+                 const data = JSON.parse(eventData[1])
+                 switch (data.status){
+                     case 'queueing':
+                     case 'generating':
+                         cht.edit(data.msg, _key)
+                     break
+                     case 'success':
+                       const audio = {
+                         text: data.result.lyrics,
+                         contextInfo: { 
+                             externalAdReply: {
+                                 title: prompt,
+                                 body: data.result.tags,
+                                 thumbnailUrl: data.result.imageUrl,
+                                 sourceUrl: "https://github.com/Rifza123",
+                                 mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
+                                 renderLargerThumbnail: true,
+                                 showAdAttribution: true,
+                                 mediaType: 1,
+                             },
+                             forwardingScore: 999,
+                             isForwarded: true,
+                             forwardedNewsletterMessageInfo: {
+                                 newsletterJid: "120363301254798220@newsletter",
+                                 serverMessageId: 152
+                             }
+                         }
+                       }
+                       await Exp.sendMessage(id, audio, { quoted: cht })
+                       await Exp.sendMessage(id, { audio: { url: data.result.audioUrl }, mimetype:"audio/mp4" }, { quoted: cht })
+                       response.data.destroy()
+                     break
+                     case 'failed':
+                         cht.edit('Failed❗️:', _key)
+                         response.data.destroy() 
+                     break
+                 }
+             }
+           })
+         })
+         .catch(error => {
+             console.log(error)
+             cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
+         })
+    })
 }

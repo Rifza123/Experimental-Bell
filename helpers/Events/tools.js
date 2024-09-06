@@ -3,7 +3,6 @@ const fs = "fs".import()
 const { generateWAMessageFromContent } = "baileys".import()
 
 /*!-======[ Functions Imports ]======-!*/
-const { TelegraPh } = await (fol[0] + 'telegraph.js').r()
 const { musixSearch } = await (fol[2] + 'musixsearch.js').r()
 const { transcribe } = await (fol[2] + 'transcribe.js').r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
@@ -28,27 +27,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async({ media }) => {
        const _key = keys[sender]
          await cht.edit("Bntr...", _key)
-       let tph = await TelegraPh(media)
+       let tph = await tmpFiles(media)
          await cht.edit('Processing...', _key)
        let res = (await fetch(api.xterm.url + "/api/tools/remini?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
          await Exp.sendMessage(id, { image: { url: res.url }, caption: `Response Time: ${res.run_Time}`}, { quoted: cht })
          cht.edit("Nih", _key)
     })
      
-    ev.on({ 
-        cmd: ['tph','telegraph'],
-        listmenu: ['telegraph'],
-        tag: 'tools',
-        energy: 5,
-        media: { 
-           type: ["image"],
-           msg: "Mana gambarnya?",
-           save: false
-        }
-    }, async({ media }) => {
-        let tph = await TelegraPh(media)
-            await cht.edit(tph, keys[sender])
-	})
 	ev.on({ 
         cmd: ['tourl','tmpfile','tmpfiles'],
         listmenu: ['tourl'],
@@ -75,7 +60,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
     }, async({ media }) => {
         await cht.edit("Bntr...", keys[sender])
-        let tph = await TelegraPh(media)
+        let tph = await tmpFiles(media)
             await fs.unlinkSync(media)
         let dsc = await fetch(`${api.xterm.url}/api/img2txt/instant-describe?url=${tph}&key=${api.xterm.key}`)
         .then(response => response.json())
@@ -97,7 +82,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(cht.q == "list") return cht.reply(infos.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
         await cht.edit("Uploading image...", _key)
-        let imgurl = await TelegraPh(media)
+        let imgurl = await tmpFiles(media)
         await fs.unlinkSync(media)
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
         .then(response => response.json())
@@ -262,4 +247,56 @@ export default async function on({ cht, Exp, store, ev, is }) {
         Exp.sendMessage(cht.id, { document: Buffer.from(res.data), mimetype:"application/javascript", fileName:"encrypt.js" }, { quoted:cht })
 	})
 	
+	ev.on({ 
+        cmd: ['removebg'], 
+        listmenu: ['removebg'],
+        tag: "tools",
+        energy: 15,
+        media: { 
+           type: ["image"],
+           msg: "Mana fotonya?",
+           save: true
+        }
+    }, async({ media }) => {
+       const _key = keys[sender]
+         await cht.edit("Bntr...", _key)
+       let tph = await tmpFiles(media)
+         await cht.edit('Processing...', _key)
+       let res = (await fetch(api.xterm.url + "/api/tools/image-removebg?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
+         await Exp.sendMessage(id, { image: { url: res.url } }, { quoted: cht })
+         cht.edit("Nih", _key)
+    })
+   
+    ev.on({ 
+        cmd: ['objectdetection'], 
+        listmenu: ['objectdetection'],
+        tag: "tools",
+        energy: 15,
+        media: { 
+           type: ["image"],
+           msg: "Mana fotonya?",
+           save: true
+        }
+    }, async({ media }) => {
+       const _key = keys[sender]
+         await cht.edit("Bntr...", _key)
+       let tph = await tmpFiles(media)
+         await cht.edit('Processing...', _key)
+       let res = await fetch(api.xterm.url + "/api/tools/object-detection?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())
+       let result = `Status: ${res.status}\n`;
+           result += `Image URL: ${res.url}\n\n`;
+
+           res.DetectedObjects.forEach((object, index) => {
+              result += `Object ${index + 1}:\n`
+              result += `  Label  : ${object.Label}\n`
+              result += `  Score  : ${(object.Score * 100).toFixed(2)}%\n`
+              result += `  Bounds :\n`
+              result += `    X     : ${object.Bounds.X}\n`
+              result += `    Y     : ${object.Bounds.Y}\n`
+              result += `    Width : ${object.Bounds.Width}\n`
+              result += `    Height: ${object.Bounds.Height}\n\n`
+           })
+         await Exp.sendMessage(id, { image: { url: res.url }, caption: result }, { quoted: cht })
+         cht.edit("Nih", _key)
+    })
 }
