@@ -90,6 +90,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           try{
             let s = await fetch(`${api.xterm.url}/api/tools/enhance/taskStatus?id=${ai.id}`)
             .then(response => response.json())
+            if(!s.status) return cht.edit(`Status: ${s?.status}\nMessage: Failed!`, _key)
             await cht.edit(`Status: ${s?.status}\nProgress: ${s?.progress}%`, _key)
             if (s.task_status == "failed") {
                 return cht.reply(s.task_status)
