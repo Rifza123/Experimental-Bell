@@ -90,7 +90,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
         const _key = keys[sender]
@@ -107,7 +107,6 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         await cht.edit("Bntr...", _key)
         let tph = await tmpFiles(media)
         try{
-          fs.unlinkSync(media)
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
             console.log(ai)
             if(!ai.status) return cht.reply(ai?.msg || "Error!")

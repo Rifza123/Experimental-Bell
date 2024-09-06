@@ -22,7 +22,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
        const _key = keys[sender]
@@ -56,12 +56,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         media: { 
            type: ["image"],
            msg: "Mana gambarnya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
         await cht.edit("Bntr...", keys[sender])
         let tph = await tmpFiles(media)
-            await fs.unlinkSync(media)
         let dsc = await fetch(`${api.xterm.url}/api/img2txt/instant-describe?url=${tph}&key=${api.xterm.key}`)
         .then(response => response.json())
         cht.reply(dsc.prompt)
@@ -74,7 +73,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
         const _key = keys[sender]
@@ -83,7 +82,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
         await cht.edit("Uploading image...", _key)
         let imgurl = await tmpFiles(media)
-        await fs.unlinkSync(media)
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
         .then(response => response.json())
 
@@ -255,7 +253,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
        const _key = keys[sender]
@@ -275,7 +273,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         media: { 
            type: ["image"],
            msg: "Mana fotonya?",
-           save: true
+           save: false
         }
     }, async({ media }) => {
        const _key = keys[sender]
