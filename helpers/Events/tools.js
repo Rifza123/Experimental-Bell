@@ -6,6 +6,7 @@ const { generateWAMessageFromContent } = "baileys".import()
 const { musixSearch } = await (fol[2] + 'musixsearch.js').r()
 const { transcribe } = await (fol[2] + 'transcribe.js').r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
+const { catbox } = await (fol[0] + 'catbox.js').r()
 const { EncryptJs } = await (fol[2] + 'encrypt.js').r()
 
 /*!-======[ Configurations ]======-!*/
@@ -35,8 +36,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
      
 	ev.on({ 
-        cmd: ['tourl','tmpfile','tmpfiles'],
-        listmenu: ['tourl'],
+        cmd: ['tmpfile','tmpfiles'],
+        listmenu: ['tmpfiles'],
         tag: 'tools',
         energy: 5,
         media: { 
@@ -45,6 +46,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
     }, async({ media }) => {
         let tmp = await tmpFiles(media)
+            await cht.edit(tmp, keys[sender])
+	})
+	
+	ev.on({ 
+        cmd: ['tourl','catbox'],
+        listmenu: ['tourl','catbox'],
+        tag: 'tools',
+        energy: 5,
+        media: { 
+           type: ["image","sticker","audio","video"],
+           save: false
+        }
+    }, async({ media }) => {
+        let tmp = await catbox(media)
             await cht.edit(tmp, keys[sender])
 	})
 

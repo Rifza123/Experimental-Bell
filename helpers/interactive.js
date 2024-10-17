@@ -173,7 +173,7 @@ async function In({ cht, Exp, store, is, ev }) {
                         await cht.reply("Berhasil mengubah mode menjadi self!")
                     case 'voice':
                         await Exp.sendPresenceUpdate('recording', cht?.id)
-                        return Exp.sendMessage(cht?.id, { audio: { url: `${api.xterm.url}/api/text2speech/bella?key=${api.xterm.key}&text=${config?.msg}`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
+                        return Exp.sendMessage(cht?.id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=bella&speed=0.9`}, mimetype: "audio/mpeg", ptt: true }, { quoted: cht })
                     case 'tiktok':
                     case 'pinterestdl':
                     case 'menu':
