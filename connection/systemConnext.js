@@ -37,7 +37,8 @@ const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }
                 setTimeout(() => launch(), 5000);
                 break;
             default:
-                Exp.end(`Alasan: ${statusCode}|${connection}`);
+                console.log("Terjadi kesalahan, menghubungkan kembali🔄");
+                setTimeout(() => launch(), 5000);
         }
     }
 

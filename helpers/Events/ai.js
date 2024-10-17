@@ -586,4 +586,57 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
              cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
          })
     })
+    
+    ev.on({ 
+        cmd: ['faceswap','reface'],
+        listmenu: ['faceswap'],
+        tag: 'ai',
+        energy: 25,
+        premium: true,
+        args: "Sertakan url gambar(target)!",
+        media: { 
+           type: ["image"],
+           msg: "Mana fotonya?",
+           save: false
+        }
+    }, async({ media }) => {
+        const _key = keys[sender]
+        const target = cht.q
+        let face = await tmpFiles(media)
+        await cht.edit('```Wait...```', _key)
+        axios({
+                method: 'post',
+                url: `${api.xterm.url}/api/img2img/faceswap`,
+                params: { face, target, key:api.xterm.key },
+                responseType: 'stream'
+            })
+         .then(response => {
+           response.data.on('data', async chunk => {
+             const eventString = chunk.toString()
+             const eventData = eventString.match(/data: (.+)/)
+        
+             if (eventData) {
+                 const data = JSON.parse(eventData[1])
+                 switch (data.status){
+                     case 'queueing':
+                     case 'generating':
+                         cht.edit(data.msg, _key)
+                     break
+                     case 'success':
+                       await Exp.sendMessage(id, { image: { url: data.result } }, { quoted: cht })
+                       response.data.destroy()
+                     break
+                     case 'failed':
+                         cht.edit('Failed❗️:', _key)
+                         response.data.destroy() 
+                     break
+                 }
+             }
+           })
+         })
+         .catch(error => {
+             console.log(error)
+             cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
+         })
+    })
 }

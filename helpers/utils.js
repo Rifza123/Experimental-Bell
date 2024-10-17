@@ -58,7 +58,7 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.type = Object.keys(cht.quoted)[0]
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
             cht.quoted.text = cht?.quoted?.extendedTextMessage?.text || cht?.quoted?.conversation || false
-            cht.quoted.url = cht.quoted.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g) : null
+            cht.quoted.url = cht?.quoted?.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [] : null
             cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type]
             cht.quoted.download = async () => Exp.func.download(cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type], Exp.func['getType'](cht.quoted.type))
             cht.quoted.stanzaId = cht?.message?.extendedTextMessage?.contextInfo?.stanzaId
@@ -90,7 +90,7 @@ async function utils({ Exp, cht, is, store }) {
         is.image = cht.type === "image"
         is.video = cht.type === "video"
         is.document = cht.type === "document"
-        is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g) || null
+        is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? []
         if(is.me && is.baileys) return
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
