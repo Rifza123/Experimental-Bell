@@ -75,10 +75,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-    console.log({ text1, text2 })
      if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
         await cht.edit("Bntr...", keys[sender])
-        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key } }, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.lora_models[parseInt(text1) - 1]}, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -139,7 +138,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     if (!cht.q) return cht.reply(infos.txt2img)
     let [model, prompt, negative] = cht.q.split("|")
     if (!model.includes("[")) {
-        return cht.reply(txt)
+        return cht.reply(infos.txt2img)
     }
 
     let ckpt = model.split("[")[0]

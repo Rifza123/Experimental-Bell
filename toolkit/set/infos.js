@@ -2,6 +2,27 @@ let infos = Data.infos
 let monospace = "```" 
 let dark = "`"
 /*!-======[ Lora Info ]======-!*/
+infos.lora_models = [
+  'Donghua#01',
+  'YunXi - PerfectWorld',
+  'Sea God(Tang San) - Douluo Dalu',
+  'XiaoYiXian - Battle Throught The Heavens',
+  'Angel God(Xian Renxue) - Douluo Dalu',
+  "Sheng Cai'er - Throne Of Seal",
+  'HuTao - Genshin Impact',
+  'TangWutong - The Unrivaled Tang Sect',
+  'CaiLin(Medusa) -BattleThroughtTheHeavens',
+  'Elaina-MajoNoTabiTabi',
+  'Jiang Nanan - TheUnrivaledTangSect',
+  'Cailin(Queen Medusa) - BTTH [4KUltraHD]',
+  'MaXiaoTao-TheUnrivaledTangSect',
+  'YorForger-Spy x Family',
+  'Boboiboy Galaxy',
+  'Hisoka morow',
+  'Ling Luochen ▪︎ The Unrivaled Tang Sect',
+  'Tang Wutong ▪︎ The Unrivaled Tang Sect',
+  'Huo Yuhao ▪︎ The Unrivaled Tang Sect'
+]
 infos.lora = `
 *Perhatikan petunjuk berikut!*
  ${monospace}[ StableDiffusion - Lora++ ]${monospace}
@@ -14,26 +35,10 @@ Contoh: #lora 3|beautyfull cat with aesthetic jellyfish, sea god themes
 _*silahkan lihat list model yang tersedia:*_
 
 *[ID] [NAME]*
-
-[1] [Donghua#01]
-[2] [YunXi - PerfectWorld]
-[3] [Sea God(Tang San) - Douluo Dalu]
-[4] [XiaoYiXian - Battle Throught The Heavens]
-[5] [Angel God(Xian Renxue) - Douluo Dalu]
-[6] [Sheng Cai'er - Throne Of Seal]
-[7] [HuTao - Genshin Impact]
-[8] [TangWutong - The Unrivaled Tang Sect]
-[9] [CaiLin(Medusa) -BattleThroughtTheHeavens]
-[10] [Elaina-MajoNoTabiTabi]
-[11] [Jiang Nanan - TheUnrivaledTangSect]
-[12] [Cailin(Queen Medusa) - BTTH [4KUltraHD]]
-[13] [MaXiaoTao-TheUnrivaledTangSect]
-[14] [YorForger-Spy x Family]
-[15] [Boboiboy Galaxy]
-[16] [Hisoka morow]
-[17] [Ling Luochen ▪︎ The Unrivaled Tang Sect]
-[18] [Tang Wutong ▪︎ The Unrivaled Tang Sect]
-[19] [Huo Yuhao ▪︎ The Unrivaled Tang Sect]`,
+`
+for(let _=0;_<infos.lora_models.length;_++){
+  infos.lora += `\n[${_+1}] [${infos.lora_models[_]}]`
+}
 
 /*!-======[ Enhance Info ]======-!*/
 infos.enhance = `

@@ -99,7 +99,8 @@ global["Data"] = {
       "jokowi",
       "boboiboy",
       "keqing",
-      "yanami_anna"
+      "yanami_anna",
+      "MasKhanID"
     ]
 }
 
