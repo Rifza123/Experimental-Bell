@@ -57,11 +57,11 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.sender = await Exp.func['getSender'](quotedParticipant)
             cht.quoted.type = Object.keys(cht.quoted)[0]
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
-            cht.quoted.text = cht?.quoted?.extendedTextMessage?.text || cht?.quoted?.conversation || false
+            cht.quoted.text = cht?.quoted?.[type]?.text || cht?.quoted?.conversation || false
             cht.quoted.url = cht?.quoted?.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [] : null
-            cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type]
-            cht.quoted.download = async () => Exp.func.download(cht?.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[cht.quoted.type], Exp.func['getType'](cht.quoted.type))
-            cht.quoted.stanzaId = cht?.message?.extendedTextMessage?.contextInfo?.stanzaId
+            cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.message?.[type]?.contextInfo?.quotedMessage?.[cht.quoted.type]
+            cht.quoted.download = async () => Exp.func.download(cht?.message?.[type]?.contextInfo?.quotedMessage?.[cht.quoted.type], Exp.func['getType'](cht.quoted.type))
+            cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
             cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
             
         }
