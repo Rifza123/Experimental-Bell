@@ -2,7 +2,7 @@
 const chalk = "chalk".import()
 
 /*!-======[ Function Imports ]======-!*/
-const { EventEmitter } = await "./toolkit/events.js".r()
+const { EventEmitter } = await "./helpers/events.js".r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default
