@@ -3,14 +3,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
     let { sender, id } = cht
     ev.on({ 
-        cmd: Data.voices, //tambah voice di global.js
+        cmd: Data.voices.map(a => a.toLowerCase()), //tambah voice di global.js
         listmenu: Data.voices,
         energy: 15,
         args: "Harap sertakan teks untuk diucapkan!",
         tag: "tts"
     }, async() => {
         await Exp.sendPresenceUpdate('recording', cht.id);
-        let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd
+        let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd == "maskhanid" ? "MasKhanID" : cht.cmd
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
    

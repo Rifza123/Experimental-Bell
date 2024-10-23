@@ -2,7 +2,7 @@ const chokidar = "chokidar".import();
 const chalk = "chalk".import()
 const path = "path".import()
 
-const { EventEmitter } = await "./toolkit/events.js".r();
+const { EventEmitter } = await "./helpers/events.js".r();
 
 let onreload = false;
 

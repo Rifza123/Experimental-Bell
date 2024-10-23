@@ -154,6 +154,44 @@ export class ArchiveMemories {
         return chargeAmount;
     }
     
+    static getItem(userJid, item) {
+        const userId = userJid.split("@")[0];
+        let userData = Data.users[userId]
+        let items = {
+          chat: 0,
+          role: 0,
+          energy: cfg.first.energy,
+          chargingSpeed: cfg.first.chargingSpeed,
+          chargeRate: cfg.first.chargeRate,
+          maxCharge: cfg.first.maxCharge,
+          flow: cfg.first.flow,
+          coins: cfg.first.coins,
+          fswaps: { list: [] }
+        }
+        if(!(item in userData)) {
+            if(!(item in items)) return false
+            userData[item] = items[item]
+        }
+        Data.users[userId] = userData;
+        return userData[item]
+    }
+    
+    static setItem(userJid, item, value) {
+        const userId = userJid.split("@")[0];
+        let userData = Data.users[userId]
+            userData[item] = value
+        Data.users[userId] = userData;
+        return userData;
+    }
+    
+    static delItem(userJid, item) {
+        const userId = userJid.split("@")[0];
+        let userData = Data.users[userId]
+            delete userData[item]
+        Data.users[userId] = userData;
+        return userData;
+    }
+    
     static async combineAllUserFiles() {
         try {
             let files = await fs.readdir(fol[6]);

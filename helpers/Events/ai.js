@@ -587,21 +587,57 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     })
     
     ev.on({ 
-        cmd: ['faceswap','reface'],
+        cmd: ['faceswap'],
         listmenu: ['faceswap'],
         tag: 'ai',
         energy: 25,
         premium: true,
-        args: "Sertakan url gambar(target)!",
         media: { 
            type: ["image"],
-           msg: "Mana fotonya?",
+           msg: infos.faceSwap(cht),
            save: false
         }
-    }, async({ media }) => {
+    }, async({ media }) => { 
         const _key = keys[sender]
-        const target = cht.q
-        let face = await tmpFiles(media)
+        let face;
+        let target;
+        if (!cht.q && ((is.image && !is.quoted?.image) || (is.quoted?.image && !is.image) || !cht.cmd )){
+            let usr = cht.sender.split("@")[0]
+            let swps = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+            if(swps.list.length < 1){
+               swps.list.push(await tmpFiles(media))
+               swps.last = Date.now()
+               Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
+               console.log(swps)
+               Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+               return cht.reply(`Sesi berhasil dibuat. silahkan kirim gambar wajah.
+Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar berikutnya
+
+- *Untuk mereset dan menghapus sesi faceswap*
+    - .faceswap reset
+     ~ Mereset sesi akan memulai ulang face swap
+
+- *Untuk mengganti gambar target*
+    - .faceswap change
+     ~ _Gambar terakhir yang anda kirimkan 
+       akan menjadi gambar target_
+
+_Sesi akan otomatis terhapus setelah 10 menit_
+`)
+            }
+            if(swps.list.length >= 1){
+               swps.list[1] = await tmpFiles(media)
+               swps.last = Date.now()
+               Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
+            }
+            Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+          
+          target = swps?.list?.[0]
+          face = swps?.list?.[1]
+        } else {
+          target = await tmpFiles(media)
+          face = is.url?.[0] ? is.url[0] : is?.image ? await tmpFiles(await cht.download()) : false
+        }
         await cht.edit('```Wait...```', _key)
         axios({
                 method: 'post',
@@ -637,5 +673,29 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
              console.log(error)
              cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
          })
+    })
+    
+    ev.on({ 
+        cmd: [
+          'faceswap-reset',
+          'faceswap-change',
+        ],
+        listmenu: ['faceswap-reset', 'faceswap-change'],
+        tag: 'ai',
+        premium: true,
+    }, async() => { 
+        let usr = cht.sender.split("@")[0]
+        let swps = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+        let opts = cht.cmd.split("-")[1]
+        if(opts == "reset") {
+          if(swps.list.length < 1) return cht.reply("Tidak ada sesi faceswap")
+          Exp.func.archiveMemories.delItem(cht.sender, "fswaps")
+          cht.reply("Berhasil mereset session faceswap!")
+        } else {
+          if(swps.list.length == 1) return cht.reply("Tidak dapat merubah, hanya ada 1 gambar dalam sesi swap!")
+          swps.list = [swps.list[1]]
+          Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)          
+          cht.reply("Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!")
+        }
     })
 }

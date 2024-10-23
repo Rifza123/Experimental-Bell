@@ -8,7 +8,7 @@ const { EventEmitter } = await "./helpers/events.js".r()
 export default
 
 async function client({ Exp, store, cht, is }) {
-   // if(cht.id == "120363203820002181@g.us") return
+    if(cht.id == "120363203820002181@g.us") return
     try {
         
         if (!(cht.id in Data.preferences)) {

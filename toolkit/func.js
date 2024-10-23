@@ -480,5 +480,17 @@ export class func {
        }
    }
    
+  static handleSessionExpiry = ({ usr, cht, session, time }) => {
+    setTimeout(() => {
+      if(session == "faceswap") {
+        let swps = Data.users[usr]?.fswaps || { list: [], last: Date.now() };
+        let expiredSwap = (Date.now() - swps.last) >= time;
+          if (expiredSwap) {
+            delete Data.users[usr].fswaps;
+            cht.reply("Sesi faceswap telah berakhir");
+          }
+      }
+    }, parseInt(time) + 10000);
+  }
 
 }
