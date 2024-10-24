@@ -601,14 +601,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         const _key = keys[sender]
         let face;
         let target;
-        if (!cht.q && ((is.image && !is.quoted?.image) || (is.quoted?.image && !is.image) || !cht.cmd )){
+        if ((is.image && !is.quoted?.image) || (is.quoted?.image && !is.image) || !Boolean(cht.cmd) ){
             let usr = cht.sender.split("@")[0]
             let swps = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
             if(swps.list.length < 1){
                swps.list.push(await tmpFiles(media))
                swps.last = Date.now()
                Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
-               console.log(swps)
                Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
                return cht.reply(`Sesi berhasil dibuat. silahkan kirim gambar wajah.
 Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar berikutnya
@@ -628,6 +627,7 @@ _Sesi akan otomatis terhapus setelah 10 menit_
             if(swps.list.length >= 1){
                swps.list[1] = await tmpFiles(media)
                swps.last = Date.now()
+               console.log(swps.list[1])
                Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
             }
             Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
