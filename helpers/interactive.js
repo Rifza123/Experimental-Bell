@@ -113,6 +113,7 @@ async function In({ cht, Exp, store, is, ev }) {
 			}
 			cht.reply(txt)
 		} else if(isSwap){
+		  is?.quoted?.image && delete is.quoted.image
 		  ev.emit("faceswap")
 		} else if (isBella) {
 			let usr = cht.sender.split("@")[0]
