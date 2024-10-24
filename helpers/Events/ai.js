@@ -609,7 +609,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                swps.last = Date.now()
                Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
                Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
-               return cht.reply(`Sesi berhasil dibuat. silahkan kirim gambar wajah.
+               return cht.reply(`Sesi berhasil dibuat. silahkan reply chatbot dengan gambar wajah.
 Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar berikutnya
 
 - *Untuk mereset dan menghapus sesi faceswap*
