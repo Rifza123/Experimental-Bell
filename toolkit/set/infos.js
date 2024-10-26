@@ -255,15 +255,15 @@ _Gambar target akan diganti dengan wajah pafa gambar kedua_
 > (Menggunakan sesi)
 
 - Kirim gambar dengan caption *${cht.prefix + cht.cmd}* akan otomatis membuat sesi dan tersimpan sebagai gambar *target*
-- Selanjutnya anda bisa me-reply pesan bot dengan gambar untuk mengganti wajah pada gambar target dengan gambar yang baru anda kirimkan dengan caption *${cht.prefix + cht.cmd}* atau tanpa caption(reply chatbot dengan gambar)
+- Selanjutnya anda bisa mengirimkan gambar untuk mengganti wajah pada gambar target dengan gambar yang baru anda kirimkan dengan caption *${cht.prefix + cht.cmd}* atau tanpa caption(reply chatbot dengan gambar)
 
  ${dark}Kami juga menambahkan beberapa command yang dapat membantu anda untuk mengatur proses swapping${dark}
 - *Untuk mereset dan menghapus sesi faceswap*
-    - .faceswap reset
+    - .faceswap-reset
      ~ Mereset sesi akan memulai ulang face swap
 
 - *Untuk mengganti gambar target*
-    - .faceswap change
+    - .faceswap-change
      ~ _Gambar terakhir yang anda kirimkan 
        akan menjadi gambar target_
 
