@@ -191,7 +191,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
            try {
              await Exp.sendMessage(id, { [i.type]: { url: i.url } }, { quoted: cht })
            } catch(e) {
-             cht.reply(`*Cannot download link: ${i.url}*❗️\n\nTypeError: ${e.message}`)
+             console.log(e)
            }
         }
     })
