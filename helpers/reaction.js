@@ -32,7 +32,8 @@ async function react({ cht, Exp, store, is, ev }) {
 		   case "📥":
 		   case "⬇️":
 		       if(!urltype) return cht.reply(`Saat ini kami belum bisa mengunduh url ${_url}\nList yang didukung:\n- ${[...new Set(Object.values(urls))].join("\n -")}`)
-		       is.url = _url
+		       is.url = url
+		       cht.q = _url
 		       let cmd = urltype == "youtube" ? "play" : urltype + "dl"
 		       return ev.emit(cmd)
 		   
