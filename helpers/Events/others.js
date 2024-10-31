@@ -1,6 +1,7 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
 const { downloadContentFromMessage } = "baileys".import()
+let infos = Data.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -35,6 +36,14 @@ export default async function on({ cht, Exp, store, ev, is }) {
             }
         }
         Exp.sendMessage(id, menu, { quoted: cht })
+    })
+    
+    ev.on({ 
+        cmd: ['reaction','menureaction','reactionmenu'],
+        listmenu: ['reactionmenu'],
+        tag: 'other' 
+    }, () => {
+        cht.reply(infos.reaction)
     })
     
     ev.on({ 

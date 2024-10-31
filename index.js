@@ -21,10 +21,13 @@ const pino = "pino".import()
 let { Boom } = "boom".import();
 
 /*!-======[ Functions Imports ]======-!*/
-Data.helper = (await "./helpers/client.js".r()).default
-Data.utils = (await "./helpers/utils.js".r()).default
-Data.In = (await "./helpers/interactive.js".r()).default
-let { Connecting } = await "./connection/systemConnext.js".r()
+Data.helper = (await `${fol[1]}client.js`.r()).default
+Data.utils = (await `${fol[1]}utils.js`.r()).default
+Data.In = (await `${fol[1]}interactive.js`.r()).default
+Data.reaction = (await `${fol[1]}reaction.js`.r()).default
+Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
+
+let { Connecting } = await `${fol[8]}systemConnext.js`.r()
 
 let {
     makeWASocket,

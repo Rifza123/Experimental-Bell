@@ -82,7 +82,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
 
     ev.on({ 
-      cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
+      cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4', 'playvn'],
       listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       tag: 'downloader',
       badword: true,
@@ -103,7 +103,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 [cht.cmd === "ytmp4" ? "video" : cht.cmd === "ytmp3" ? "document" : "audio"]: { url: data.dlink },
                 mimetype: cht.cmd === "ytmp4" ? "video/mp4" : cht.cmd === "ytmp3" ? "audio/mp3" : "audio/mpeg",
                 fileName: item.title + (cht.cmd === "ytmp4" ? ".mp4" : ".mp3"),
-                ptt: cht.cmd === "play",
+                ptt: cht.cmd === "playvn",
                 contextInfo: {
                     externalAdReply: {
                         title: "Title: " + item.title,
@@ -188,7 +188,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await Exp.sendMessage(id, info, { quoted: cht })
         let { content } = f
         for(let i of content){
-            await Exp.sendMessage(id, { [i.type]: { url: i.url } }, { quoted: cht })
+           try {
+             await Exp.sendMessage(id, { [i.type]: { url: i.url } }, { quoted: cht })
+           } catch(e) {
+             cht.reply(`*Cannot download link: ${i.url}*❗️\n\nTypeError: ${e.message}`)
+           }
         }
     })
 }

@@ -255,18 +255,60 @@ _Gambar target akan diganti dengan wajah pafa gambar kedua_
 > (Menggunakan sesi)
 
 - Kirim gambar dengan caption *${cht.prefix + cht.cmd}* akan otomatis membuat sesi dan tersimpan sebagai gambar *target*
-- Selanjutnya anda bisa mengirimkan gambar untuk mengganti wajah pada gambar target dengan gambar yang baru anda kirimkan dengan caption *${cht.prefix + cht.cmd}* atau tanpa caption(reply chatbot dengan gambar)
+- Selanjutnya anda bisa me-reply pesan bot dengan gambar untuk mengganti wajah pada gambar target dengan gambar yang baru anda kirimkan dengan caption *${cht.prefix + cht.cmd}* atau tanpa caption(reply chatbot dengan gambar)
 
  ${dark}Kami juga menambahkan beberapa command yang dapat membantu anda untuk mengatur proses swapping${dark}
 - *Untuk mereset dan menghapus sesi faceswap*
-    - .faceswap-reset
+    - .faceswap reset
      ~ Mereset sesi akan memulai ulang face swap
 
 - *Untuk mengganti gambar target*
-    - .faceswap-change
+    - .faceswap change
      ~ _Gambar terakhir yang anda kirimkan 
        akan menjadi gambar target_
 
 _Sesi akan otomatis terhapus jika lebih dari 10 menit tidak ada interaksi swap_
 `
 }
+
+infos.reaction = ` *[ LIST REACTION CMD ]*
+
+- *Membuat sticker*
+    |🖨️||🖼️||🤳|
+> _Mengubah media yang diberi react menjadi sticker atau sebaliknya_
+
+- *Menghapus Pesan*
+    |❌||🗑|
+> _Menghapus pesan yang diberi react._
+
+- *Youtube Play Audio*
+    |🎵||🎶||🎧||▶️|
+> _ .play youtube audio dengan judul dari pesan._
+
+- *Media Downloader*
+    |⬇️||📥|
+> _Mengunduh media berdasarkan url yang terdapat pada pesan._
+
+- *Screenshot Web*
+    |📸||📷|
+> _Melakukan tangkapan layar pada url yang terdapat dalam pesan._
+
+- *Ai*
+    |🔍||🔎|
+> _Tanyakan kepada ai dengan memberi reaksi ke dalam pesan._
+
+- *Mendengarkan pesan*
+    |🔈||🔉||🔊||🎙️||🎤|
+> _Ai akan membacakan pesan teks yang diberi reaksi_
+
+- *Menerjemahkan pesan*
+    |🆔||🌐|
+> _Menerjemahkan pesan yang diberi react ke bahasa indonesia._
+
+- *Media uploader*
+    |🔗||📎||🏷️|
+> _Mengupload media ke cdn dan merubahnya menjadi link._
+
+*Guide:*
+_*Beri reaksi ke pesan target dengan salah satu emoji di atas*_
+`

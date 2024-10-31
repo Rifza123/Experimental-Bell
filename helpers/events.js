@@ -1,8 +1,3 @@
-
-
-
-
-
 /*!-======[ Module Imports ]======-!*/
 const { readdirSync } = "fs".import();
 const path = "path".import()
@@ -23,6 +18,7 @@ const timestamp = () => {
     }).format(new Date())
 }
 
+export default 
 class EventEmitter {
     constructor({ Exp, store, cht, ai, is }) {
         this.Exp = Exp;
@@ -35,17 +31,9 @@ class EventEmitter {
     }
 
     getMediaType() {
-       return this.is.quoted?.image ? { quoted: true, type: "image" } 
-          : this.is.image ? { quoted: false, type: "image" }
-          : this.is.quoted?.audio ? { quoted: true, type: "audio" }
-          : this.is.audio ? { quoted: false, type: "audio" }
-          : this.is.quoted?.video ? { quoted: true, type: "video" }
-          : this.is.video ? { quoted: false, type: "video" }
-          : this.is.quoted?.sticker ? { quoted: true, type: "sticker" }
-          : this.is.sticker ? { quoted: false, type: "sticker" }
-          : this.is.quoted?.document ? { quoted: true, type: "document" }
-          : this.is.document ? { quoted: false, type: "document" }
-          : { quoted: false, type: "text" };
+       return this.is.quoted ? { quoted: true, type: this.is.quoted.type }
+          : this.is.reaction ? { quoted: false, type: this.is.reaction.mtype }
+          : { quoted: false, type: this.cht.type };
     }
 
     on(eventMap, resolve) {
@@ -197,8 +185,8 @@ ${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk me
                     }
                 }
 
-                let download = isQuotedMedia ? this.is.quoted.download : this.cht.download;
-                let save = this.is.quoted ? this.is.quoted[mediaType] : this.cht[mediaType];
+                let download = isQuotedMedia ? this.is.quoted.download : this.is?.reaction ? this.is.reaction.download : this.cht.download;
+                let save = this.is.quoted ? this.is.quoted[mediaType] : this.is?.reaction ? this.is.reaction[mediaType] : this.cht[mediaType];
                 media = ev.media.save
                     ? await this.Exp.func.downloadSave(save, mediaType)
                     : await download();
@@ -229,5 +217,3 @@ ${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk me
         }
     }
 }
-
-export { EventEmitter };

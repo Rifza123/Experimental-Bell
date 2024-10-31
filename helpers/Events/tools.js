@@ -243,7 +243,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
 	    energy: 4,
         media: { 
-           type: "sticker",
+           type: ["sticker"],
            save: false
         }
     }, async({ media }) => {

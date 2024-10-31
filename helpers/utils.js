@@ -52,18 +52,40 @@ async function utils({ Exp, cht, is, store }) {
 
         cht[Exp.func['getType'](cht.type)] = cht?.message?.[type]
 
+		if(cht.type == "reactionMessage"){
+		  let react = await store.loadMessage(cht.id, cht[cht.type].key.id)
+		  let rtype = getContentType(react?.message)
+		  let mtype = Exp.func['getType'](rtype)
+		  let rtext = rtype == "conversation" ? react.message[rtype]
+              : rtype === 'extendedTextMessage' ? react.message[rtype]?.text
+              : (rtype === 'imageMessage' || rtype === 'videoMessage') ? react.message[rtype]?.caption 
+              : (type === "interactiveResponseMessage") ? JSON.parse(react?.message?.[rtype]?.nativeFlowResponseMessage?.paramsJson)?.id : null
+		  cht.reaction = {
+		    key: cht[cht.type]?.key,
+		    emoji: cht[cht.type]?.text,
+		    mtype,
+		    text: rtext,
+		    url: rtext?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [],
+		    mention: await Exp.func['getSender'](react?.participant || react?.key?.participant || react?.key?.remoteJid ),
+            download: async () => Exp.func.download(react?.message?.[rtype], mtype),
+            delete: async () => Exp.sendMessage(cht.id, { delete: cht[cht.type]?.key }),
+		  }
+		  cht.reaction[mtype] = react?.message?.[rtype]
+		}
+		
         if (cht.quoted) {
             const quotedParticipant = cht?.message?.[type]?.contextInfo?.participant
             cht.quoted.sender = await Exp.func['getSender'](quotedParticipant)
-            cht.quoted.type = Object.keys(cht.quoted)[0]
+            cht.quoted.mtype = Object.keys(cht.quoted)[0]
+            cht.quoted.type = Exp.func['getType'](cht.quoted.mtype)
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
             cht.quoted.text = cht?.quoted?.[type]?.text || cht?.quoted?.conversation || false
             cht.quoted.url = cht?.quoted?.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [] : null
-            cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.message?.[type]?.contextInfo?.quotedMessage?.[cht.quoted.type]
-            cht.quoted.download = async () => Exp.func.download(cht?.message?.[type]?.contextInfo?.quotedMessage?.[cht.quoted.type], Exp.func['getType'](cht.quoted.type))
+            cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.quoted?.[cht.quoted.mtype]
+            cht.quoted.download = async () => Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type)
             cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
             cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
-            
+           
         }
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
@@ -104,6 +126,7 @@ async function utils({ Exp, cht, is, store }) {
 
         is.memories = cht.memories
         is.quoted = cht.quoted
+        is.reaction = cht.reaction
         
         Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
             jid = jidNormalizedUser(jid)
@@ -147,7 +170,17 @@ async function utils({ Exp, cht, is, store }) {
         }
 
         cht.reply = async function (text) {
-            const { key } = await Exp.sendMessage(cht.id, { text }, { quoted: cht })
+            let quoted = cht?.reaction ? {
+               key: {
+                 fromMe: cht.key.fromMe,
+                 participant: cht.sender
+               },
+               message: {
+                conversation: cht.reaction.emoji,
+               }				
+	   		  } : cht
+              
+            const { key } = await Exp.sendMessage(cht.id, { text }, { quoted: quoted })
             keys[cht.sender] = key
             return { key }
         }
@@ -159,4 +192,5 @@ async function utils({ Exp, cht, is, store }) {
     } catch (error) {
         console.error("Error in utils:", error)
     }
+    return
 }

@@ -1,14 +1,11 @@
 /*!-======[ Module Imports ]======-!*/
 const chalk = "chalk".import()
 
-/*!-======[ Function Imports ]======-!*/
-const { EventEmitter } = await "./helpers/events.js".r()
-
 /*!-======[ Default Export Function ]======-!*/
 export default
 
 async function client({ Exp, store, cht, is }) {
-    if(cht.id == "120363203820002181@g.us") return
+   // if(cht.id == "120363203820002181@g.us") return
     try {
         
         if (!(cht.id in Data.preferences)) {
@@ -39,21 +36,22 @@ async function client({ Exp, store, cht, is }) {
         if (global.cfg.public === false && !is.owner && !is.me) return
         if(is.baileys) return
         let exps = { Exp, store, cht, is }
-        let ev = Data.ev = new EventEmitter(exps)
-
+        let ev = new Data.EventEmitter(exps)
+        if(!Data.ev) Data.ev = ev
         if(cht.cmd){
-           await ev.emit(cht.cmd)
+            ev.emit(cht.cmd)
+        } else if(cht.reaction){
+            Data.reaction({ ev, ...exps })
         } else {
-            await Data.In({ ev, ...exps })
+            Data.In({ ev, ...exps })
         }
 
         /*!-======[ Chat Interactions Add ]======-!*/
-        if (!cht.cmd || is.botMention) {
+        if (!cht.cmd && is.botMention) {
             await Exp.func.archiveMemories.addChat(cht.sender)
         }
-        return
     } catch (error) {
         console.error('Error in client.js:', error)
-        return
     }
+    return
 }

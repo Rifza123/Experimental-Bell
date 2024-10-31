@@ -11,7 +11,7 @@ const {
 } = await (fol[2] + 'transcribe.js').r()
 const {
 	ai
-} = await "./machine/reasoner.js".r()
+} = await `${fol[2]}reasoner.js`.r()
 
 export default
 
@@ -63,8 +63,8 @@ async function In({ cht, Exp, store, is, ev }) {
 		let usr = cht.sender.split("@")[0]
         let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
         let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
-
-		if (isEvalSync) {
+        
+        if (isEvalSync) {
 			if (!is?.owner) return
 			if (isDangerous) {
 				Exp.func.archiveMemories.setItem(cht.sender, "command", cht.msg)
@@ -138,8 +138,7 @@ async function In({ cht, Exp, store, is, ev }) {
 				}
 			}
 
-			let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : (cht?.msg || false)
-			if (chat) {
+			let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : (cht?.msg || "")
 				let isImage = is?.image ? true : is.quoted?.image ? cht.quoted.sender !== Exp.number : false
 				if (cht?.type === "audio") {
 					try {
@@ -152,7 +151,6 @@ async function In({ cht, Exp, store, is, ev }) {
 				if (isImage) {
 					let download = is.image ? cht?.download : cht?.quoted?.download
 					isImage = await download()
-					console.log(isImage)
 				}
 				chat = Exp.func.clearNumbers(chat)
 				try {
@@ -176,7 +174,6 @@ async function In({ cht, Exp, store, is, ev }) {
 						image: isImage
 					})
 					let config = _ai?.data ?? {}
-					console.log(config)
 					await Exp.func.addAiResponse()
 					let noreply = false
 					switch (config?.cmd) {
@@ -255,8 +252,7 @@ async function In({ cht, Exp, store, is, ev }) {
 				} catch (error) {
 					console.error("Error parsing AI response:", error)
 				}
-			}
-		}
+		} 
 		
 	} catch (error) {
 		console.error("Error in Interactive:", error)

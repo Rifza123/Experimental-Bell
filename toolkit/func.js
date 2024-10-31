@@ -7,7 +7,7 @@ const os = await "os".import()
 const process = await "process".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
-const { color, bgcolor } = await './toolkit/color.js'.r()
+const { color, bgcolor } = await `${fol[0]}color.js`.r()
 const Jimp = (await "jimp".import()).default
 const cache = {}
 const CACHE_DURATION = 1 * 60 * 1000
@@ -129,12 +129,12 @@ export class func {
 	
    static addCmd = () => {
 		Data.use.cmds.total += 1
-		fs.writeFileSync('./toolkit/db/cmd.json', JSON.stringify(Data.use.cmds, null, 2))
+		fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 	}
    
    static addAiResponse = () => {
 		Data.use.cmds.ai_response += 1
-		fs.writeFileSync('./toolkit/db/cmd.json', JSON.stringify(Data.use.cmds, null, 2))
+		fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 	}
 	
    static addCMDForTop = async(NAMEQ) => {
@@ -145,14 +145,14 @@ export class func {
 				var ussd = Data.use.cmds.cmd.indexOf(cemed)
 				Data.use.cmds.cmd[ussd].use += 1
 				Data.use.cmds.cmd[ussd].times = time
-				fs.writeFileSync('./toolkit/db/cmd.json', JSON.stringify(Data.use.cmds, null, 2))
+				fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 			} else {
 				Data.use.cmds.cmd.push({
 					name: NAMEQ,
 					use: 1,
 					times: time
 				})
-				await fs.writeFileSync('./toolkit/db/cmd.json', JSON.stringify(Data.use.cmds, null, 2))
+				await fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 			}
 		} catch (e) {
 			console.error(e)

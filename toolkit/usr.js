@@ -1,5 +1,5 @@
 const fs = "fs".import().promises;
-const { role } = await './toolkit/role.js'.r()
+const { role } = await `${fol[0]}role.js`.r()
 
 export class ArchiveMemories {
     static add(userJid) {
