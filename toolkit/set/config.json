@@ -1,21 +1,21 @@
 {
   "owner": [
-    "xxxxxxx@s.whatsapp.net"
+    "6283135198445@s.whatsapp.net"
   ],
-  "botname": "(Experimental) -▪︎ Bella-AI",
-  "botfullname": "Experimental-Bell",
-  "botnickname": "bella",
-  "ownername": "rifza",
+  "botname": "JARR",
+  "botfullname": "JarrVISS",
+  "botnickname": "JARR",
+  "ownername": "Muhammad jarris naufal",
   "locale": "id",
   "cfg": {
     "public": true,
     "ai_interactive": {
-      "group": false,
+      "group": true,
       "private": true,
       "energy": false
     },
-    "autotyping": false,
-    "autoreadpc": false,
+    "autotyping": true,
+    "autoreadpc": true,
     "autoreadgc": true,
     "welcome": "linkpreview",
     "first": {
