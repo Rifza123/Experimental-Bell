@@ -12,7 +12,7 @@
     "ai_interactive": {
       "group": false,
       "private": true,
-      "energy": true
+      "energy": false
     },
     "autotyping": false,
     "autoreadpc": false,
