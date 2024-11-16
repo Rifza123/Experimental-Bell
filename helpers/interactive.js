@@ -53,12 +53,12 @@ async function In({
 			">/dev/null"
 		]
 
-		const groupDb = is.group ? Data.preferences[cht.id] : {}
+		const chatDb = Data.preferences[cht.id] || {}
 		const isDangerous = dangerous.some(pattern => sanitized.includes(pattern)) && !isPendingCmd
 
 		/*!-======[ Automatic Ai ]======-!*/
 		let isBella = isMsg &&
-			(groupDb?.ai_interactive || is.owner) &&
+			(chatDb?.ai_interactive || is.owner) &&
 			!is?.document &&
 			!is.baileys &&
 			!is?.sticker &&
@@ -73,8 +73,8 @@ async function In({
 		let usr = cht.sender.split("@")[0]
 		let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
 		let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
-        let isAntiLink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b)))
-        let isAntiTagall = groupDb?.antitagall && (cht.mention?.length >= 5)
+        let isAntiLink = chatDb?.antilink && (is.url.length > 0) && is.url.some(a => chatDb?.links.some(b => a.includes(b)))
+        let isAntiTagall = chatDb?.antitagall && (cht.mention?.length >= 5)
         if(isAntiLink){
             cht.delete()
         } else if(isAntiTagall){
@@ -143,7 +143,6 @@ async function In({
 			is?.quoted?.image && delete is.quoted.image
 			ev.emit("faceswap")
 		} else if (isBella) {
-		    console.log({ isBella })
 			let usr = cht.sender.split("@")[0]
 			let user = Data.users[usr]
 			let premium = user.premium ? Date.now() < user.premium.time : false
@@ -325,7 +324,6 @@ async function In({
 					case 'menu':
 					case "ig":
 						noreply = true
-						console.log(config)
 						is.url = [config?.cfg?.url || ""]
 						await cht.reply(config?.msg || "ok")
 						return ev.emit(config?.cmd)
