@@ -1,7 +1,4 @@
-import jimp from "jimp";
-
-const { func } = await "./toolkit/func.js".r()
-const { getBinaryNodeChild, jidNormalizedUser, getContentType } = "baileys".import()
+const { getContentType } = "baileys".import()
 
 export default 
 async function utils({ Exp, cht, is, store }) {
@@ -23,23 +20,27 @@ async function utils({ Exp, cht, is, store }) {
             quoted: null,
         })
         
-        Exp.func = func
-
-        const type = getContentType(cht?.message)
-        const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.extendedTextMessage) : type
-        cht.type = Exp.func['getType'](msgType)
-
         const sender = cht?.participant || cht?.key?.participant || cht?.key?.remoteJid || Exp?.user?.id || ''
         cht.sender = await Exp.func['getSender'](sender)
+        cht.delete = async () => Exp.sendMessage(cht.id, { delete: cht.key }).then(a => undefined)
+        
+        const type = getContentType(cht?.message)
+        const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.extendedTextMessage) : type
+        cht.type = Exp.func['getType'](msgType) || type
 
         cht.quoted = cht?.message?.[type]?.contextInfo?.quotedMessage || false
 
-        cht.msg = (cht.id == "status@broadcast") ? null :
-            (type === 'conversation' && cht?.message?.conversation) ? cht.message.conversation :
-            (type === 'extendedTextMessage') ? cht?.message?.extendedTextMessage?.text :
-            (type === 'imageMessage' && cht?.message?.imageMessage?.caption) ? cht.message.imageMessage.caption :
-            (type === 'videoMessage' && cht?.message?.videoMessage?.caption) ? cht.message.videoMessage.caption :
-            (type === "interactiveResponseMessage") ? JSON.parse(cht?.message?.[type]?.nativeFlowResponseMessage?.paramsJson)?.id : null
+        cht.msg = (cht.id === "status@broadcast") 
+            ? null 
+            : ([
+               { type: 'conversation', msg: cht?.message?.conversation },
+               { type: 'extendedTextMessage', msg: cht?.message?.extendedTextMessage?.text },
+               { type: 'imageMessage', msg: cht?.message?.imageMessage?.caption },
+               { type: 'videoMessage', msg: cht?.message?.videoMessage?.caption },
+               { type: "interactiveResponseMessage", msg: cht?.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson 
+                    ? JSON.parse(cht.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id 
+                    : null }
+            ].find(entry => type === entry.type)?.msg) || null
 
         cht.prefix = /^[.#‽٪]/.test(cht.msg) ? cht?.msg?.match(/^[.#‽٪]/gi) : '#'
         global.prefix = cht.prefix
@@ -50,7 +51,7 @@ async function utils({ Exp, cht, is, store }) {
 
         cht.download = async () => Exp.func.download(cht?.message?.[type], cht.type)
 
-        cht[Exp.func['getType'](cht.type)] = cht?.message?.[type]
+        cht[cht.type] = cht?.message?.[type]
 
 		if(cht.type == "reactionMessage"){
 		  let react = await store.loadMessage(cht.id, cht[cht.type].key.id)
@@ -81,7 +82,7 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
             cht.quoted.text = cht?.quoted?.[type]?.text || cht?.quoted?.conversation || false
             cht.quoted.url = cht?.quoted?.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [] : null
-            cht.quoted[await Exp.func['getType'](cht.quoted.type)] = cht?.quoted?.[cht.quoted.mtype]
+            cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
             cht.quoted.download = async () => Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type)
             cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
             cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
@@ -90,7 +91,8 @@ async function utils({ Exp, cht, is, store }) {
 
         const args = cht?.msg?.trim()?.split(/ +/)?.slice(1)
         let q = args?.join(' ')
-        cht.q = q || cht?.quoted?.text
+        cht.args = q
+        cht.q = (String(q || cht?.quoted?.text || '')).trim()
         cht.mention = q && (cht.q.extractMentions()).length > 0
            ? cht.q.extractMentions()
               : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
@@ -103,8 +105,9 @@ async function utils({ Exp, cht, is, store }) {
 
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
-        is.owner = [Exp.number, ...global.owner].map(jid => jid.replace(/[^0-9]/g, '') + from.sender).includes(cht.sender) || is.me
-        is.baileys = cht?.key?.id?.startsWith('3EB') || cht?.key?.id?.startsWith('BAE5') || cht?.key?.id?.startsWith('BELL409')
+        is.owner =  global.owner.some(a => { const jid = a?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
+
+        is.baileys = ["3EB","BAE5","BELL409","B1E"].some(a => cht?.key?.id.startsWith(a))
         is.botMention = cht?.mention?.includes(Exp.number)
         is.cmd = cht.cmd
         is.sticker = cht.type === "sticker"
@@ -113,7 +116,7 @@ async function utils({ Exp, cht, is, store }) {
         is.video = cht.type === "video"
         is.document = cht.type === "document"
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? []
-        if(is.me && is.baileys) return
+        if(is.baileys) return
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
             Exp.groupMetdata = groupMetadata
@@ -128,65 +131,44 @@ async function utils({ Exp, cht, is, store }) {
         is.quoted = cht.quoted
         is.reaction = cht.reaction
         
-        Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
-            jid = jidNormalizedUser(jid)
-            const result = await Exp.query({
-                tag: 'iq',
-                attrs: {
-                    target: jid,
-                    to: "@s.whatsapp.net",
-                    type: 'get',
-                    xmlns: 'w:profile:picture'
-                },
-                content: [
-                    { tag: 'picture', attrs: { type, query: 'url' } }
-                ]
-            }, timeoutMs)
-
-            const child = getBinaryNodeChild(result, 'picture')
-            return child?.attrs?.url
-        }
-
-        Exp.setProfilePicture = async (buffer) => {
-          try{
-            const jimpread = await jimp.read(buffer);
-            const result = jimpread.getWidth() > jimpread.getHeight() ? jimpread.resize(550, jimp.AUTO) : jimpread.resize(jimp.AUTO, 650)
-            let buff = await result.getBufferAsync(jimp.MIME_JPEG)
-            return await Exp.query({ tag: 'iq', 
-                 attrs: { to: Exp.number, type:'set', xmlns: 'w:profile:picture' },
-                 content: [
-                   { 
-                     tag: 'picture', 
-                     attrs: { 
-                       type: 'image' 
-                     }, 
-                     content: buff
-                   }
-                 ]
-            })
-          } catch (e) {
-              throw new Error(e)
-          }
-        }
-
-        cht.reply = async function (text) {
-            let quoted = cht?.reaction ? {
+        cht.reply = async function (text, etc={},quoted={ quoted: true }) {
+          try {
+            if(quoted?.quoted){
+              quoted.quoted = cht?.reaction ? {
                key: {
                  fromMe: cht.key.fromMe,
                  participant: cht.sender
                },
                message: {
                 conversation: cht.reaction.emoji,
-               }				
+               }
 	   		  } : cht
+	   		}
               
-            const { key } = await Exp.sendMessage(cht.id, { text }, { quoted: quoted })
+            const { key } = await Exp.sendMessage(cht.id, { text, ...etc }, quoted)
             keys[cht.sender] = key
             return { key }
+          } catch (e) {
+            console.error("Error in 'cht.reply'\n"+e)
+          }
+        }
+        
+        cht.replyWithTag = async function (text, tag) {
+          try {
+            const { key } = await Exp.sendMessage(cht.id, { text: Exp.func.tagReplacer(text, tag) }, { quoted: cht })
+            keys[cht.sender] = key
+            return { key }
+          } catch (e) {
+            console.error("Error in 'cht.replyWithTag'\n"+e)
+          }
         }
 
         cht.edit = async function (text, key) {
-            await Exp.sendMessage(cht.id, { text, edit: key }, { quoted: cht })
+          try {
+            await Exp.sendMessage(cht.id, { text:text||"...", edit: key }, { quoted: cht })
+          } catch (e) {
+            console.error("Error in 'cht.edit'\n"+e)
+          }
         }
 
     } catch (error) {

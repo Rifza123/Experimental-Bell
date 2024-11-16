@@ -14,7 +14,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}`}, mimetype: "audio/mpeg" }, { quoted: cht })
 	})
    
-     let txtreply = `List voice models:\n${Data.voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
+    let txtreply = `List voice models:\n${Data.voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
 	ev.on({ 
         cmd: ['elevenlabs'],
         listmenu: ['elevenlabs'],

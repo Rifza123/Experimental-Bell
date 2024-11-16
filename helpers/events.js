@@ -1,9 +1,11 @@
+/*!-======[ Messages ]======-!*/
+let { messages } = Data.infos
+
 /*!-======[ Module Imports ]======-!*/
 const { readdirSync } = "fs".import();
 const path = "path".import()
 let isLoad = false
 /*!-======[ Fubctions Imports ]======-!*/
-const { func } = await (fol[0]+"func.js").r();
 const { ArchiveMemories } = await (fol[0] + "usr.js").r();
 const { bgcolor } = await (fol[0]+"color.js").r();
 const timestamp = () => {
@@ -59,42 +61,39 @@ class EventEmitter {
 
     async loadEventHandler(file) {
         try {
-            if (Data.Events.has(file)) {
-                const on = Data.Events.get(file);
-                await on({ ...this, ev: this });
-                return on;
+            let on = Data.Events.get(file);
+            if (!on) {
+                const module = (await `${fol[7] + file}`.r()).default
+                on = module;
+                Data.Events.set(file, on);
             }
-
-            const { default: on } = await `${fol[7] + file}`.r()
             await on({ ...this, ev: this });
-            Data.Events.set(file, on);
-            return on;
+            return
         } catch (error) {
-            console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error loading event handler for file: ${fol[7] + file}\nDetails: ${error.stack}`)
-            return null;
+            console.error(`[ERROR] ${error.stack}`);
+            return
         }
     }
 
+
     async loadEventHandlers() {
-        if(isLoad) return
+        if (isLoad) return;
         try {
             isLoad = true;
-            this.eventFiles = readdirSync(fol[7]).filter(file => file.endsWith('.js'));
+            if (this.eventFiles.length === 0) {
+                this.eventFiles = readdirSync(fol[7]).filter(file => file.endsWith('.js'));
+            }
             for (const file of this.eventFiles) {
                 await this.loadEventHandler(file);
             }
         } catch (error) {
-            console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error loading event handlers:\nDetails: ${error.stack}`);
+            console.error(`[ERROR] ${error.stack}`);
         }
     }
 
     sendPremiumMsg(trial=true) {
         const imageMessage = {
-            text: `Maaf, fitur ini hanya bisa digunakan oleh user premium\nKetik *.premium* untuk info lebih lanjut atau bisa klik gambar preview url di atas untuk menghubungi owner
-
-*Belum mengklaim Free Trial🤷🏻‍♀️?*
- ͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏͏
-${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk mengclaim trial 1hari" : "Kamu sudah claim bonus ini🙅🏻‍♀️"}`,
+            text: messages.onlyPremium(trial),
             contextInfo: {
                 externalAdReply: {
                     title: "🔒Only Premium",
@@ -123,65 +122,85 @@ ${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk me
         }
     }
 
-    async emit(event) {
+    async emit(event, opts) {
         try {
             !isLoad && await this.loadEventHandlers()
             const eventFile = Data.events[event]?.eventFile;
             if (!eventFile) return;
-            
             await this.loadEventHandler(eventFile);
             const ev = Data.events[event];
             if (!ev) return;
-            let urls = (this.is.quoted?.url || this.is.url)?.length < 1 ? null : (this.is.quoted?.url || this.is.url)
+            let urls = this.cht.quoted?.url?.length > 0
+              ? this.cht.quoted?.url
+              : this.cht.url?.length > 0
+              ? this.cht.url
+              : this.is.quoted?.url?.length > 0
+              ? this.is.quoted?.url
+              : this.is.url?.length > 0
+              ? this.is.url
+              : []
+            
             let args = this.cht?.q
-            let cht = this.cht
-            let sender = cht.sender
+            let sender = this.cht.sender
             let user = sender.split("@")[0]
             let isPremium = Data.users[user]?.premium?.time ? (Data.users[user]?.premium?.time >= Date.now()) : false
             let media = null;
             if(!isPremium && Data.users[user]?.premium?.time) Data.users[user].premium = { time:0 };
             let trial = Data.users[user]?.claimPremTrial
+            const checks = [
+              { condition: ev.isOwner && !this.is.owner, message: ev.isOwner || messages.isOwner },
+              { condition: ev.isGroup && !this.is.group, message: ev.isGroup || messages.isGroup },
+              { condition: ev.isAdmin && !(this.is.groupAdmins || this.is.owner), message: ev.isAdmin || messages.isAdmin },
+              { condition: ev.isBotAdmin && !this.is.botAdmin, message: ev.isBotAdmin || messages.isBotAdmin },
+              { condition: ev.isQuoted && !this.cht.quoted, message: ev.isQuoted || messages.isQuoted }
+            ];
+
+            for (const { condition, message } of checks) {
+              if (condition) return this.cht.reply(message);
+            }
             if (cfg.premium_mode && ev.premium && !isPremium) return this.sendPremiumMsg(trial);
 
             if (ev.energy && !isNaN(ev.energy) && this.cht.memories.energy < ev.energy) {
-                return this.cht.reply(`Males😞\n⚡️Energy: ${this.cht.memories.energy}\nMembutuhkan: ${ev.energy}⚡\n\n${this.cht.memories.charging ? " Status: 🟢Charging" : "Untuk mengisi energy:* Ketik .charge atau .cas" }`);
+                return this.cht.reply(messages.isEnergy({ uEnergy: this.cht.memories.energy, energy:ev.energy, charging:this.cht.memories.charging }));
             }
 
             if (ev.args){
-                if(!this.cht.q) return this.cht.reply(ev.args);
+                if(!this.cht.q) return this.cht.reply(ev.args !== true ? ev.args : ev.isArgs);
                 const badword = Data.badwords.filter(a => this.cht.q.includes(a))
                 this.is.badword = badword.length > 0
-                if(ev.badword && this.is.badword) return this.cht.reply(`Kata *${badword.join(", ")}* Tidak diizinkan!`)
+                if(ev.badword && this.is.badword) return this.cht.reply(this.Exp.func.tagReplacer(messages.isBadword, { badword: badword.join(", ") }))
             }
             
+            if(ev.isMention && this.cht.mention.length < 1) return this.cht.reply(ev.isMention !== true ? ev.isMention : messages.isMention)
+
             if (ev.media) {
                 const { type, msg, etc } = ev.media;
                 let { type: mediaType, quoted: isQuotedMedia } = this.getMediaType();
                 if (!type.includes(mediaType)) {
-                    return this.cht.reply(msg || `Reply atau kirim ${type.join("/")} dengan caption: ${cht.msg}!`);
+                    return this.cht.reply(msg || this.Exp.func.tagReplacer(messages.isMedia, { type:type.join("/"), caption: this.cht.msg} ));
                 }
 
                 if (mediaType === "audio") {
                     if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
-                        return this.cht.reply(`Audio tidak boleh lebih dari ${etc.seconds}detik`);
+                        return this.cht.reply(this.Exp.func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds }))
                     }
                 }
                 
                 if (mediaType === "video") {
                     if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
-                        return this.cht.reply(`Video tidak boleh lebih dari ${etc.seconds}detik`);
+                        return this.cht.reply(this.Exp.func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds }))
                     }
                 }
                 
                 if (mediaType === "sticker") {
                     if (etc && etc.isNoAnimated && this.is.quoted?.sticker?.isAnimated) {
-                        return this.cht.reply("Sticker harus tipe Image!");
+                        return this.cht.reply(etc.isNoAnimated !== true ? etc.isNoAnimated : messages.isNoAnimatedSticker)
                     }
                     if (etc && etc.isAnimated && !this.is.quoted?.sticker?.isAnimated) {
-                        return this.cht.reply("Sticker harus tipe Video!");
+                        return this.cht.reply(etc.isAnimated !== true ? etc.isAnimated : messages.isAnimatedSticker)
                     }
                     if (etc && etc.isAvatar && !this.is.quoted?.sticker?.isAvatar) {
-                        return this.cht.reply("Sticker harus tipe Avatar!");
+                        return this.cht.reply(etc.avatar !== true ? etc.avatar : messages.isAvatarSticker );
                     }
                 }
 
@@ -193,12 +212,12 @@ ${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk me
             }
             
             if (ev.urls) {
-               if(!urls) return this.cht.reply(ev.urls.msg);
+               if(!urls) return this.cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl)
                if(ev.urls.formats){
                    let isFormatsUrl = urls.some(url => 
                        ev.urls.formats.some(keyword => url.toLowerCase().includes(keyword.toLowerCase()))
                    )
-                   if(!isFormatsUrl) return this.cht.reply(`Url yang diberikan harus berupa url seperti:\n- ${ev.urls.formats.join("\n- ")}`)
+                   if(!isFormatsUrl) return this.cht.reply(this.Exp.func.tagReplacer(messages.isFormatsUrl, { formats:ev.urls.formats.join("\n- ") }))
                }
             }
 
@@ -207,10 +226,10 @@ ${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk me
                 await this.cht.reply(`-${ev.energy} Energy⚡`);
             }
             
-            const resolves = { media, urls, args, cht }
+            const resolves = { media, urls, args, cht:this.cht }
             await ev.resolve(resolves);
-            await func.addCmd();
-            await func.addCMDForTop(event);
+            await this.Exp.func.addCmd();
+            await this.Exp.func.addCMDForTop(event);
             return
         } catch (error) {
             return console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${event}"`, error.stack);

@@ -7,12 +7,11 @@ const { gpt } = await (fol[2] + "gpt3.js").r()
 const { GeminiImage } = await (fol[2] + "gemini.js").r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
 
-/*!-======[ Configurations ]======-!*/
-let infos = Data.infos
-
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
+    let infos = Data.infos
     let { sender, id } = cht
+    const { func } = Exp
     ev.on({ 
         cmd: ['cover','covers'],
         listmenu: ['covers'],
@@ -22,14 +21,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         args: "Sertakan modelnya!",
         media: { 
            type: ["audio"],
-           msg: "Reply audionya?",
            etc: {
                 seconds: 360
            }
         }
     }, async({ media }) => {
         const _key = keys[sender]
-        await cht.edit('```Wait...```', _key)
+        await cht.edit(infos.messages.wait, _key)
         axios.post(`${api.xterm.url}/api/audioProcessing/voice-covers?model=${cht.q}&key=${api.xterm.key}`, media, {
             headers: {
                 'Content-Type': 'application/octet-stream'
@@ -56,7 +54,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                          response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit('Failed❗️:', _key)
+                         cht.edit(infos.messages.failed, _key)
                          response.data.destroy() 
                      break
                  }
@@ -75,9 +73,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-     if (!text1 || !text2) return cht.reply(`*Perhatikan petunjuk berikut!*\n ${infos.lora}`)
-        await cht.edit("Bntr...", keys[sender])
-        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.lora_models[parseInt(text1) - 1]}, { quoted: cht })
+     if (!text1 || !text2) return cht.reply(`${infos.ai.payInstruction}\n ${infos.ai.lora}`)
+        await cht.edit(infos.messages.wait, keys[sender])
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.ai.lora_models[parseInt(text1) - 1]}, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -88,7 +86,6 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 50,
         media: { 
            type: ["image"],
-           msg: "Mana fotonya?",
            save: false
         }
     }, async({ media }) => {
@@ -96,14 +93,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let tryng = 0
         let type = "anime2d"
         if(["filter","filters"].includes(cht.cmd)){
-            if(!cht.q) return cht.reply(infos.filters)
+            if(!cht.q) return cht.reply(infos.ai.filters)
            type = cht.q
         } else if(["jadinyata","toreal"].includes(cht.cmd)){
            type = "anime2real"
         } else if(['imglarger','enlarger','enlarge'].includes(cht.cmd)){
            type = "enlarger"
         }
-        await cht.edit("Bntr...", _key)
+        await cht.edit(infos.messages.wait, _key)
         let tph = await tmpFiles(media)
         try{
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
@@ -116,7 +113,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                   return Exp.sendMessage(id, { image: { url: s.url } }, { quoted: cht })                
                }
                if(s.status == 4){
-                  return cht.reply("Maaf terjadi kesalhan. coba gunakan gambar lain!")
+                  return cht.reply(infos.ai.failTryImage)
                }
                await new Promise(resolve => setTimeout(resolve, 2000))
             }
@@ -135,17 +132,17 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         premium: false
     }, async () => {
     const _key = keys[sender]
-    if (!cht.q) return cht.reply(infos.txt2img)
+    if (!cht.q) return cht.reply(infos.ai.txt2img)
     let [model, prompt, negative] = cht.q.split("|")
     if (!model.includes("[")) {
-        return cht.reply(infos.txt2img)
+        return cht.reply(infos.ai.txt2img)
     }
 
     let ckpt = model.split("[")[0]
     let loraPart = model.split("[")[1]?.replace("]", "")
     let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
 
-    await cht.edit('```Bntr..```', _key)
+    await cht.edit(infos.messages.wait, _key)
 
       try {
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -196,7 +193,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
         if (!ai.status) {
             console.log(ai)
-            return cht.reply("Gagal!")
+            return cht.reply(infos.messages.failed)
         }
 
         let tryng = 0
@@ -218,7 +215,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             } else if (s.taskStatus === 2) {
                 return Exp.sendMessage(id, { image: { url: s.result.url } }, { quoted: cht })
             } else if (s.taskStatus === 3) {
-                return cht.reply("Maaf terjadi kesalahan. Coba gunakan gambar lain!")
+                return cht.reply(infos.ai.failTryImage)
             }
 
             await new Promise(resolve => setTimeout(resolve, 2500))
@@ -239,7 +236,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         fetch(`${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == "lorasearch" ? "loras" : "checkpoints"}?key=${api.xterm.key}`)
             .then(async a => {
                 let data = (await a.json())
-                Exp.func.searchSimilarStrings(cht.q.toLowerCase(),data.map(b=> b.model), 0.3)
+                func.searchSimilarStrings(cht.q.toLowerCase(),data.map(b=> b.model), 0.3)
                     .then(async c => {
                         let txt = "*[ "+ (cht.cmd == "lorasearch" ? "LORAS" : "CHECKPOINTS") +" ]*\n"
                         txt += "- Find: `"+c.length+ "`\n"
@@ -259,7 +256,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: 'stablediffusion',
 	    energy: 3
     }, async() => {
-        if(!cht.q) return cht.reply("Harap masukan id nya?")
+        if(!cht.q) return cht.reply("Harap masukan id nya!")
         if(isNaN(cht.q)) return cht.reply("Id harus berupa angka!")
         fetch(`${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == "getlora" ? "loras" : "checkpoints"}?key=${api.xterm.key}`)
             .then(async a => {
@@ -268,7 +265,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                     Exp.sendMessage(id, { image: { url: `${data[cht.q].preview}&key=${api.xterm.key}` }, caption: data[cht.q].model }, { quoted: cht })
                 } catch (e){
                     console.log(e)
-                    cht.reply("Tidak ditemukan!")
+                    cht.reply(infos.ai.notfound)
                 }
             })
 	})
@@ -280,8 +277,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 185,
         premium: true,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?"
+           type: ["image"]
         }
     }, async({ media }) => {
         const _key = keys[sender]
@@ -332,7 +328,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     ev.on({ 
         cmd: ['bard','ai'],
         tag: "ai",
-        args: "Mau tanya apa?",
+        args: infos.ai.isQuery,
         listmenu: ["bard"],
         energy: 7
     }, async() => {
@@ -345,7 +341,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	ev.on({ 
         cmd: ['gpt','gpt3'],
         tag: "ai",
-        args: "Mau tanya apa?",
+        args: infos.ai.isQuery,
         listmenu: ["gpt3"],
         energy: 7
     }, async() => {
@@ -360,7 +356,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async () => {
         function sendAiInfo(){
           Exp.sendMessage(id, {
-            text: infos.bell,
+            text: infos.ai.bell,
             contextInfo: { 
                 externalAdReply: {
                     title: cht.pushName,
@@ -380,57 +376,57 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let q = cht.q
         let set = {
             "on": {
-                "done": "Berhasil!, ai_interactive telah diaktifkan dalam chat ini!",
+                "done": infos.ai.interactiveOn,
                 "value": true
             },
             "off": {
-                "done": "Berhasil!, ai_interactive telah dimatikan dalam chat ini!",
+                "done": infos.ai.interactiveOff,
                 "value": false
             },
             "on-group": {
-                "done": "Berhasil!, ai_interactive telah diaktifkan di semua grup!",
+                "done": infos.ai.interactiveOnGroup,
                 "owner": true,
                 "for": from.group,
                 "value": true
             },
             "on-private": {
-                "done": "Berhasil!, ai_interactive telah diaktifkan di semua chat private!",
+                "done": infos.ai.interactiveOnPrivate,
                 "owner": true,
                 "for": from.sender,
                 "value": true
             },
             "off-group": {
-                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat group!",
+                "done": infos.ai.interactiveOffGroup,
                 "owner": true,
                 "for": from.group,
                 "value": false
             },
             "off-private": {
-                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat private!",
+                "done": infos.ai.interactiveOffPrivate,
                 "owner": true,
                 "for": from.sender,
                 "value": false
             },
             "on-all": {
-                "done": "Berhasil!, ai_interactive telah diaktifkan di semua chat!",
+                "done": infos.ai.interactiveOnAll,
                 "owner": true,
                 "for": "all",
                 "value": true
             },
             "off-all": {
-                "done": "Berhasil!, ai_interactive telah dimatikan di semua chat!",
+                "done": infos.ai.interactiveOffAll,
                 "owner": true,
                 "for": "all",
                 "value": false
             },
             "on-energy": {
-                "done": "Berhasil!, sekarang energy bisa didapatkan dari interaksi!",
+                "done": infos.ai.interactiveOnEnergy,
                 "owner": true,
                 "type": "energy",
                 "value": true
             },
             "off-energy": {
-                "done": "Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!",
+                "done": infos.ai.interactiveOffEnergy,
                 "owner": true,
                 "type": "energy",
                 "value": false
@@ -439,8 +435,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
         let alls = Object.keys(Data.preferences)
         if (!set) return sendAiInfo()
-        if (set.owner && !is.owner) return cht.reply("Khusus Owner!")
-        if (id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply("Khusus Admin!")
+        if (set.owner && !is.owner) return cht.reply(infos.messages.isOwner)
+        if (id.endsWith(from.group) && !(is.groupAdmins || is.owner)) return cht.reply(infos.messages.isAdmin)
 
         if (set.for) {
             let $config = set.for === from.group ? "group" :
@@ -481,11 +477,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['animediff'],
         listmenu: ['animediff'],
         tag: 'stablediffusion',
-        args: "*Harap beri deskripsi gambarnya!*",
+        args: infos.ai.isPrompt,
         energy: 17
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-        await cht.edit("Bntr...", keys[sender])
+        await cht.edit(infos.messages.wait, keys[sender])
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/animediff?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
 	
@@ -493,12 +489,12 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['dalle3'],
         listmenu: ['dalle3'],
         tag: 'art',
-        args: "*Harap beri deskripsi gambarnya!*",
+        args: infos.ai.isPrompt,
         energy: 17,
         badword: true
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
-        await cht.edit("Bntr...", keys[sender])
+        await cht.edit(infos.messages.wait, keys[sender])
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
 	})
 	
@@ -507,10 +503,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['geminiimage'],
         tag: "ai",
         energy: 20,
-        args: "Mau tanya apa?",
+        args: infos.ai.isQuery,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?"
+           type: ["image"]
         }
     }, async({ media }) => {
         let res = await GeminiImage(media, cht.q)
@@ -523,11 +518,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: 'ai',
         energy: 70,
         premium: true,
-        args: "Sertakan prompt lagu yg ingin dibuat!"
+        args: infos.ai.prompt
     }, async({ media }) => {
         const _key = keys[sender]
         const prompt = cht.q
-        await cht.edit('```Wait...```', _key)
+        await cht.edit(infos.messages.wait, _key)
         axios({
                 method: 'post',
                 url: `${api.xterm.url}/api/audioProcessing/song-generator`,  
@@ -573,7 +568,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                        response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit('Failed❗️:', _key)
+                         cht.edit(infos.messages.failed, _key)
                          response.data.destroy() 
                      break
                  }
@@ -594,7 +589,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         premium: true,
         media: { 
            type: ["image"],
-           msg: infos.faceSwap(cht),
+           msg: infos.ai.faceSwap(cht),
            save: false
         }
     }, async({ media }) => { 
@@ -603,34 +598,21 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let target;
         if ((is.image && !is.quoted?.image) || (is.quoted?.image && !is.image) || !Boolean(cht.cmd) ){
             let usr = cht.sender.split("@")[0]
-            let swps = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+            let swps = func.archiveMemories.getItem(cht.sender, "fswaps")
             if(swps.list.length < 1){
                swps.list.push(await tmpFiles(media))
                swps.last = Date.now()
-               Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
-               Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
-               return cht.reply(`Sesi berhasil dibuat. silahkan reply chatbot dengan gambar wajah.
-Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar berikutnya
-
-- *Untuk mereset dan menghapus sesi faceswap*
-    - .faceswap reset
-     ~ Mereset sesi akan memulai ulang face swap
-
-- *Untuk mengganti gambar target*
-    - .faceswap change
-     ~ _Gambar terakhir yang anda kirimkan 
-       akan menjadi gambar target_
-
-_Sesi akan otomatis terhapus setelah 10 menit_
-`)
+               func.archiveMemories.setItem(cht.sender, "fswaps", swps)
+               func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+               return cht.reply(infos.ai.startedFaceswap)
             }
             if(swps.list.length >= 1){
                swps.list[1] = await tmpFiles(media)
                swps.last = Date.now()
                console.log(swps.list[1])
-               Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)
+               func.archiveMemories.setItem(cht.sender, "fswaps", swps)
             }
-            Exp.func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+            func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
           
           target = swps?.list?.[0]
           face = swps?.list?.[1]
@@ -638,7 +620,7 @@ _Sesi akan otomatis terhapus setelah 10 menit_
           target = await tmpFiles(media)
           face = is.url?.[0] ? is.url[0] : is?.image ? await tmpFiles(await cht.download()) : false
         }
-        await cht.edit('```Wait...```', _key)
+        await cht.edit(infos.messages.wait, _key)
         axios({
                 method: 'post',
                 url: `${api.xterm.url}/api/img2img/faceswap`,
@@ -662,7 +644,7 @@ _Sesi akan otomatis terhapus setelah 10 menit_
                        response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit('Failed❗️:', _key)
+                         cht.edit(infos.messages.failed, _key)
                          response.data.destroy() 
                      break
                  }
@@ -685,17 +667,17 @@ _Sesi akan otomatis terhapus setelah 10 menit_
         premium: true,
     }, async() => { 
         let usr = cht.sender.split("@")[0]
-        let swps = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+        let swps = func.archiveMemories.getItem(cht.sender, "fswaps")
         let opts = cht.cmd.split("-")[1]
+        if(swps.list.length < 1) return cht.reply(infos.ai.noSessionFaceswap)
         if(opts == "reset") {
-          if(swps.list.length < 1) return cht.reply("Tidak ada sesi faceswap")
-          Exp.func.archiveMemories.delItem(cht.sender, "fswaps")
-          cht.reply("Berhasil mereset session faceswap!")
+          func.archiveMemories.delItem(cht.sender, "fswaps")
+          cht.reply(infos.ai.successResetSessionFaceswap)
         } else {
-          if(swps.list.length == 1) return cht.reply("Tidak dapat merubah, hanya ada 1 gambar dalam sesi swap!")
+          if(swps.list.length == 1) return cht.reply(infos.ai.cannotChangeFace)
           swps.list = [swps.list[1]]
-          Exp.func.archiveMemories.setItem(cht.sender, "fswaps", swps)          
-          cht.reply("Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!")
+          func.archiveMemories.setItem(cht.sender, "fswaps", swps)          
+          cht.reply(infos.ai.successChangeFace)
         }
     })
 }

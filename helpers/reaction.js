@@ -7,6 +7,8 @@ let urls = {
   "pin.it": "pinterest",
   "pinterest": "pinterest"
 }
+let infos = Data.infos
+
 export default
 async function react({ cht, Exp, store, is, ev }) {
     let { emoji, mtype, text, url, mention } = cht.reaction
@@ -18,20 +20,20 @@ async function react({ cht, Exp, store, is, ev }) {
 	    switch(emoji){
 	       case "🗑":
 	       case "❌":
-	           if(mention !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply("Manghapus pesan menggunakan react khusus hanya untuk admin jika target bukan pesan yang saya kirimkan")
+	           if(mention !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.reaction.download)
     		   return cht.reaction.delete()
 
 		   case "🎵":
 		   case "🎶":
 		   case "🎧":
 		   case "▶️":
-		       if(!text) return cht.reply("Untuk melakukan play youtube menggunakan react, harao beri react kepada pesan yang berisi teks")
+		       if(!text) return cht.reply(infos.reaction.play)
 		       cht.q = text
 		       return ev.emit("play")
 		   
 		   case "📥":
 		   case "⬇️":
-		       if(!urltype) return cht.reply(`Saat ini kami belum bisa mengunduh url ${_url}\nList yang didukung:\n- ${[...new Set(Object.values(urls))].join("\n -")}`)
+		       if(!urltype) return cht.reply(Exp.func.tagReplacer(infos.reaction.download, { url:_url, listurl:[...new Set(Object.values(urls))].join("\n- ") }))
 		       is.url = url
 		       cht.q = _url
 		       let cmd = urltype == "youtube" ? "play" : urltype + "dl"
@@ -52,7 +54,7 @@ async function react({ cht, Exp, store, is, ev }) {
 		   case "🔊":
 		   case "🎙️":
 		   case "🎤":
-		       cht.cmd = "bella"
+		       cht.cmd = cfg.ai_voice || "bella"
 		       cht.q = text
 		       return ev.emit(cht.cmd)
 		   
@@ -64,7 +66,7 @@ async function react({ cht, Exp, store, is, ev }) {
 		   
 		   case "🌐":
 		   case "🆔":
-		       if(!text) return cht.reply(`Harap beri reaksi ${emoji} ke pesan teks untuk menerjemahkan ke bahasa indonesia`)
+		       if(!text) return cht.reply(Exp.func.tagReplacer(infos.reaction.translate, { emoji }))
 		       cht.q = "Terjemahkan ke bahasa indonesia\n\n" + text
 		       return ev.emit("gpt")
 		   
@@ -72,6 +74,15 @@ async function react({ cht, Exp, store, is, ev }) {
 		   case "📎":
 		   case "🏷️":
 		       return ev.emit("tourl")
+		   
+		   case "📋":
+		       return ev.emit("menu")
+		   case "🦶":
+		   case "🦵":
+		       cht.mention = [mention]
+		       cht.cmd = "kick"
+		       ev.emit("kick")
+		       return 
 	    }
 	} catch (error) {
 		console.error("Error in reaction.js:", error)

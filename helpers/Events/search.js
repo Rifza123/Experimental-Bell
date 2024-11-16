@@ -4,6 +4,7 @@ const fs = "fs".import()
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     let { sender, id } = cht
+    let infos = Data.infos
 
     ev.on({ 
         cmd: ['pin','pinterest','pinterestsearch'],
@@ -25,7 +26,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         energy: 21
     }, async() => {
         try {
-        await cht.edit("Bntr...", keys[sender])
+        await cht.edit(infos.messages.wait, keys[sender])
         let pint = (await fetch(api.xterm.url + "/api/search/pinterest-video?query=" + cht.q + "&key=" + api.xterm.key).then(a => a.json())).data
         if(pint.pins.length < 1) return cht.reply("Video tidak ditemukan!")
         let pin = pint.pins[Math.floor(Math.random() * pint.pins.length)]

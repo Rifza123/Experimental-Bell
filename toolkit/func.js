@@ -1,4 +1,4 @@
-const { jidDecode, downloadContentFromMessage } = 'baileys'.import()
+const { jidDecode, downloadContentFromMessage, generateWAMessageContent } = 'baileys'.import()
 const fs = "fs".import()
 const axios = "axios".import()
 const https = 'https'.import()
@@ -9,11 +9,15 @@ const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
 const { color, bgcolor } = await `${fol[0]}color.js`.r()
 const Jimp = (await "jimp".import()).default
-const cache = {}
-const CACHE_DURATION = 1 * 60 * 1000
+const cache = new Map();
+const CACHE_DURATION = 1 * 60 * 1000;
 
 export class func {
-    static async getSender(jid) {
+    constructor({ Exp, store }) {
+        this.Exp = Exp
+        this.store = store;
+    }
+    async getSender(jid) {
         if (!jid) return jid
         if (/:\d+@/gi.test(jid)) {
             let { user, server } = jidDecode(jid) || {}
@@ -21,7 +25,7 @@ export class func {
         } else return jid
     }
 
-    static getType = (type) => {
+    getType = (type) => {
         return type === 'stickerMessage' ? 'sticker' :
                type === 'videoMessage' ? 'video' :
                type === 'liveLocationMessage' ? 'liveLocation' :
@@ -33,24 +37,28 @@ export class func {
                type
     }
 
-    static getGroupAdmins = (participants) => {
+    getGroupAdmins = (participants) => {
         return participants.filter(participant => participant.admin !== null).map(participant => participant.id)
     }
     
-    static getGroupMetadata = async(chtId, Exp) => {
+    getGroupMetadata = async (chtId, Exp) => {
         const currentTime = Date.now();
-        if (cache[chtId] && (currentTime - cache[chtId].timestamp < CACHE_DURATION)) {
-            return cache[chtId].metadata;
+        if (cache.has(chtId) && (currentTime - cache.get(chtId).timestamp < CACHE_DURATION)) {
+            return cache.get(chtId).metadata;
         }
         const groupMetadata = await Exp.groupMetadata(chtId);
-        cache[chtId] = {
+        cache.set(chtId, {
             metadata: groupMetadata,
             timestamp: currentTime
-        };
+        });
+        if (cache.size > 100) {
+            const keysToRemove = [...cache.keys()].slice(0, cache.size - 100);
+            keysToRemove.forEach(key => cache.delete(key));
+        }
         return groupMetadata;
-    }
+    };
     
-    static async downloadSave(message, filename) {
+    async downloadSave(message, filename) {
         let quoted = message.msg ? message.msg : message
         let mime = (message.msg || message).mimetype || ''
         let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
@@ -66,7 +74,7 @@ export class func {
         return trueFileName
     }
 
-    static async download(message, MessageType) {
+    async download(message, MessageType) {
         const stream = await downloadContentFromMessage(message, MessageType)
         let buffer = Buffer.from([])
         for await (const chunk of stream) {
@@ -75,19 +83,14 @@ export class func {
         return buffer
     }
     
-    static tagReplacer(text, obj) {
-        for (const key in obj) {
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
-                text = this.tagReplacer(text, obj[key])
-            } else if (typeof obj[key] === 'string') {
-                const regex = new RegExp(`\\<${key}\\>`, 'g')
-                text = text.replace(regex, obj[key])
-            }
-        }
-        return text
+    tagReplacer(text, obj) {
+        return text.replace(/<([^>]+)>/g, (_, tag) => {
+            return obj[tag] !== undefined ? obj[tag] : `<${tag}>`;
+        });
     }
+
     
-    static menuFormatter(data, frames, tags) {
+    menuFormatter(data, frames, tags) {
         const normalizedData = {}
         Object.values(data).forEach(item => {
             const tag = item.tag
@@ -123,21 +126,21 @@ export class func {
     }
     
     
-   static getTotalCmd = () => {
+   getTotalCmd = () => {
 		return JSON.parse(JSON.stringify(Data.use.cmds, null, 2))
    }
 	
-   static addCmd = () => {
+   addCmd = () => {
 		Data.use.cmds.total += 1
 		fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 	}
    
-   static addAiResponse = () => {
+   addAiResponse = () => {
 		Data.use.cmds.ai_response += 1
 		fs.writeFileSync(`${fol[5]}cmd.json`, JSON.stringify(Data.use.cmds, null, 2))
 	}
 	
-   static addCMDForTop = async(NAMEQ) => {
+   addCMDForTop = async(NAMEQ) => {
 		try {
 			let cekhN = Data.use.cmds.cmd.find(i => i.name == NAMEQ) || false
 			if (cekhN) {
@@ -159,15 +162,15 @@ export class func {
 		}
 	}
     
-    static cmds = () => {
+    cmds = () => {
 		return Object.entries(Data.use.cmds.cmd).sort((a, b) => b[1].use - a[1].use)
 	}
 	
-	static topCmd = (i = 10) => {
+	topCmd = (i = 10) => {
 		const LIST_TOP = this.cmds().slice(0, i).map(([name, data]) => `${prefix}${data.name}(${data.use}) || ${data.times}`)
 		return LIST_TOP
 	}
-	static getBuffer = async (url, options) => {
+	getBuffer = async (url, options) => {
       return new Promise((resolve, reject) => {
         const chunks = []
 
@@ -192,7 +195,7 @@ export class func {
       })
     }
     
-    static compareTwoStrings(first, second) {
+    compareTwoStrings(first, second) {
         first = first.replace(/\s+/g, '')
         second = second.replace(/\s+/g, '')
 
@@ -225,7 +228,7 @@ export class func {
         return (2.0 * intersectionSize) / (first.length + second.length - 2)
     }
 
-    static areArgsValid(mainString, targetStrings) {
+    areArgsValid(mainString, targetStrings) {
         if (typeof mainString !== 'string') return false
         if (!Array.isArray(targetStrings)) return false
         if (!targetStrings.length) return false
@@ -233,7 +236,7 @@ export class func {
         return true
     }
 
-    static findBestMatch(mainString, targetStrings) {
+    findBestMatch(mainString, targetStrings) {
         if (!this.areArgsValid(mainString, targetStrings)) throw new Error('Bad arguments: First argument should be a string, second should be an array of strings')
 
         const ratings = []
@@ -253,14 +256,16 @@ export class func {
         return { ratings: ratings, bestMatch: bestMatch, bestMatchIndex: bestMatchIndex }
     }
 
-    static searchSimilarStrings = async(query, data, threshold) => {
+    searchSimilarStrings = async(query, data, threshold) => {
         return data.map((item, index) => {
             const similarity = this.compareTwoStrings(query, item.toLowerCase())
             return { item, similarity, index }
         }).filter(result => result.similarity >= threshold)
     }
     
-    static newDate = () => {
+    getTopSimilar = (arr) => arr.reduce((highest, item) => item.similarity > highest.similarity ? item : highest, { similarity: -Infinity })
+    
+    newDate = () => {
         const now = moment.tz('Asia/Jakarta')
         const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
         const indoMonthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
@@ -280,12 +285,12 @@ export class func {
         return combinedResult
     }
     
-    static archiveMemories = ArchiveMemories
-    static toZeroIfInfinity(value) {
+    archiveMemories = ArchiveMemories
+    toZeroIfInfinity(value) {
     return Number.isFinite(value) ? value : 0;
   }
 
-  static parseNumber(milliseconds) {
+  parseNumber(milliseconds) {
     return {
       days: Math.trunc(milliseconds / 86_400_000),
       hours: Math.trunc(milliseconds / 3_600_000 % 24),
@@ -297,7 +302,7 @@ export class func {
     };
   }
 
-  static parseBigint(milliseconds) {
+  parseBigint(milliseconds) {
     return {
       days: milliseconds / 86_400_000n,
       hours: milliseconds / 3_600_000n % 24n,
@@ -309,7 +314,7 @@ export class func {
     };
   }
 
-   static formatDuration = (milliseconds) => {
+   formatDuration = (milliseconds) => {
       switch (typeof milliseconds) {
         case 'number': {
           if (Number.isFinite(milliseconds)) {
@@ -325,9 +330,9 @@ export class func {
 
       throw new TypeError('Expected a finite number or bigint');
    }
-    static getRandomValue = (min, max) => min + Math.random() * (max - min);
+    getRandomValue = (min, max) => min + Math.random() * (max - min);
     
-    static dateFormatter = (time, timezone) => {
+    dateFormatter = (time, timezone) => {
         const validTimezones = ['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura']
         if (!validTimezones.includes(timezone)) {
              return `Timezone invalid!, Look this: ${validTimezones.join(", ")}`
@@ -347,11 +352,11 @@ export class func {
         return formattedDate
     }
 
-    static logMessage = (type, id, pushName, message) => {
+    logMessage = (type, id, pushName, message) => {
         const form = bgcolor(`[ ${type} ]`, type === 'PRIVATE' ? 'orange' : 'gray')
         return `${form} From: ${color(id, 'cyan')} | User: ${color(pushName, 'cyan')} | Msg: ${color(message, 'green')}`
     }
-    static formatBytes = (bytes) => {
+    formatBytes = (bytes) => {
         if (bytes < 1024) return bytes + ' B'
         else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
         
@@ -360,7 +365,7 @@ export class func {
     }
     
 
-    static getSystemStats = async() => {
+    getSystemStats = async() => {
         const cpus = os.cpus()
         const cpuUsage = cpus.map((cpu, index) => {
             const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
@@ -382,7 +387,7 @@ export class func {
             usedMemory: this.formatBytes(totalMemory - freeMemory)
         }
         
-        const uptime = process.uptime();
+        const uptime = process.uptime() * 1000;
         const processStats = {
             pid: process.pid,
             title: process.title,
@@ -393,6 +398,7 @@ export class func {
                 heapUsed: this.formatBytes(process.memoryUsage().heapUsed),
                 external: this.formatBytes(process.memoryUsage().external)
             },
+            speed: (performance.now() - performance.now()).toFixed(6) * -1,
             runtime: this.formatDuration(uptime)
         }
 
@@ -403,7 +409,7 @@ export class func {
         }
     }
     
-    static clearNumbers = (text) => {
+    clearNumbers = (text) => {
         if(!text) return
         [
             /@\u2068\u202e\d+~\u2069/g,
@@ -417,7 +423,7 @@ export class func {
         return text;
     }
     
-   static parseTimeString = (timeStr) => {
+   parseTimeString = (timeStr) => {
         const timeUnits = {
             's': 1000,
             'second': 1000,
@@ -468,7 +474,7 @@ export class func {
         }
         return totalMilliseconds;
    }
-   static getRandomItem = (items) => {
+   getRandomItem = (items) => {
        const random = Math.random()
        let cumulativeProbability = 0
 
@@ -480,7 +486,7 @@ export class func {
        }
    }
    
-  static handleSessionExpiry = ({ usr, cht, session, time }) => {
+  handleSessionExpiry = ({ usr, cht, session, time }) => {
     setTimeout(() => {
       if(session == "faceswap") {
         let swps = Data.users[usr]?.fswaps || { list: [], last: Date.now() };
@@ -491,6 +497,41 @@ export class func {
           }
       }
     }, parseInt(time) + 10000);
+  }
+  
+  rgbaToHex(r, g, b, a = 1) {
+    let hex = '#' + [r, g, b].map(component => {
+      return component.toString(16).padStart(2, '0');
+    }).join('');
+    if (a < 1) {
+      let alphaHex = Math.round(a * 255).toString(16).padStart(2, '0');
+      hex += alphaHex;
+    }
+    return hex;
+  }
+
+  hexToRgba(hex) {
+    hex = hex.replace(/^#/, '');
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+    let a = hex.length === 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
+    return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+  }
+  
+  getName(id) {
+    return (Object.values(this.store.messages).flatMap(a => a.array).filter(a => a.key?.participant == id.extractMentions()?.[0])?.[0]?.pushName || id.split("@")[0])
+  }
+  
+  async uploadToServer(url, type="image") {
+    return Object.values(await generateWAMessageContent({ [type]: { url }, }, { upload: this.Exp.waUploadToServer }))[0]
+  }
+  
+  findValue(searchKey, text) {
+    const formattedText = text.replace(/(\w+):\s*([^\n]+)/g, (match, key, value) => `${key.toLowerCase()}: ${value}`);
+    const regex = new RegExp(`${searchKey.toLowerCase()}:\\s*([\\s\\S]*?)(?=\\n\\w+:|$)`, 'i');
+    const match = formattedText.match(regex);
+    return match ? match[1].trim() : null;
   }
 
 }

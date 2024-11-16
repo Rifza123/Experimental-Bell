@@ -2,13 +2,11 @@
 const fs = "fs".import()
 const { default: ms } = await "ms".import()
 
-/*!-======[ Configurations ]======-!*/
-let infos = Data.infos
-
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     const { id } = cht
-    
+    const { func } = Exp
+    const infos = Data.infos 
     function sendPremInfo({ _text, text }, cust=false, number){
         return Exp.sendMessage(number || id, {
             text:`${_text ? (_text + "\n\n" + text) : text}`,
@@ -32,12 +30,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['profile'],
         tag: 'relationship'
     }, async() => {
-        let user = await Exp.func.archiveMemories.get(cht.sender)
+        let user = await func.archiveMemories.get(cht.sender)
         if (!("premium" in user)) {
             user.premium = { time: 0 };
         }
         let premiumTime = user.premium.time - Date.now()
-        let formatDur = Exp.func.formatDuration(premiumTime)
+        let formatDur = func.formatDuration(premiumTime)
         let speed = ms(user.chargingSpeed)
         let url
         try {
@@ -60,7 +58,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             txt += `\n🔑Premium: ${user.premium.time >= Date.now() ? "yes":"no"}`
             if(user.premium.time >= Date.now()){
               txt += `\n⏱️Expired after: ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms`
-              txt += `\n🗓️Expired on: ${Exp.func.dateFormatter(user.premium.time, "Asia/Jakarta")}`
+              txt += `\n🗓️Expired on: ${func.dateFormatter(user.premium.time, "Asia/Jakarta")}`
             } else {
               txt += `\n⏱️Expired after: false`
               txt += `\n🗓️Expired on: false`
@@ -69,7 +67,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             txt += `\n- Status: ${user.charging ? "🟢Charging" : " ⚫Discharging"}`
             txt += "\n- Charging Speed: ⚡" + (parseFloat(user.chargeRate) + parseFloat(bonus.chargeRate)) + "/" + speed
             txt += "\n- Max Charge: " + (parseFloat(user.maxCharge) + parseFloat(bonus.maxCharge))
-            txt += "\n- Last Charge: " + Exp.func.dateFormatter(user.lastCharge, "Asia/Jakarta")
+            txt += "\n- Last Charge: " + func.dateFormatter(user.lastCharge, "Asia/Jakarta")
         const menu = {
             text: txt,
             contextInfo: { 
@@ -99,7 +97,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['charge'],
         tag: 'relationship'
     }, async() => {
-        let user = await Exp.func.archiveMemories.get(cht.sender)
+        let user = await func.archiveMemories.get(cht.sender)
         
         let bonus = {
             chargeRate: user.premium?.chargeRate || 0,
@@ -114,7 +112,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let charge = (charg / rate) * _speed
         let est = Date.now() + charge
         let estimate = ms(charge)
-        let finish = Exp.func.dateFormatter(est, "Asia/Jakarta")
+        let finish = func.dateFormatter(est, "Asia/Jakarta")
         if(!user.charging){
             if(user.energy < max){
                 user.charging = true
@@ -132,7 +130,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 txt += "\n- Estimate: " + estimate
                 txt += "\n- Finish: " + finish
             } else {
-                txt += "\n- Last Charge: " + Exp.func.dateFormatter(user.lastCharge, "Asia/Jakarta")
+                txt += "\n- Last Charge: " + func.dateFormatter(user.lastCharge, "Asia/Jakarta")
             }
           Data.users[cht.sender.split("@")[0]] = user
         const mess = {
@@ -155,7 +153,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
     
     ev.on({ 
-        cmd: ['mine','mining'],
+        cmd: ['mmmmmmining'],
        // listmenu: ['mining'],
         //tag: 'relationship'
     }, async() => {
@@ -186,9 +184,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let claim = cfg.first.trialPrem
         let claims = Object.keys(claim)
         let prm = user.premium
-        if(user?.claimPremTrial) return cht.reply("Kamu sudah claim trial!")
+        if(user?.claimPremTrial) return cht.reply(infos.messages.hasClaimTrial)
         let txc = "*🎁Bonus `(Berlaku selama premium)`*"
-        if(premium) return cht.reply("Tidak dapat claim trial, kamu sudah premium!")
+        if(premium) return cht.reply(infos.messages.hasPremiumTrial)
             user.premium = { ...claim, ...prm }
             user["energy"] += parseFloat(claim["energy"])            
             for(let i of claims){
@@ -198,12 +196,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
             user.claimPremTrial = true
             user.premium.time = Date.now() + 86400000
         Data.users[usr] = user
-        let formatTimeDur = Exp.func.formatDuration(user.premium.time - Date.now())
+        let formatTimeDur = func.formatDuration(user.premium.time - Date.now())
      
         let txt = "*Successfully claimed Premium free trial ✅️\n\n"
             txt += `🔑Premium: ${user.premium.time >= Date.now() ? "yes":"no"}`
             txt += `\n⏱️Expired after: ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms`
-            txt += `\n🗓️Expired on: ${Exp.func.dateFormatter(user.premium.time, "Asia/Jakarta")}\n\n`
+            txt += `\n🗓️Expired on: ${func.dateFormatter(user.premium.time, "Asia/Jakarta")}\n\n`
             txt += txc
         await sendPremInfo({ text:txt }, true)
     })

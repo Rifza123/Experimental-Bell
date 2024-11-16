@@ -1,7 +1,3 @@
-/*!-≈≈≈≈≈[
-   !- Script ini mengutamakan efisiensi dan penghematan code
-*/
-
 /*!-======[ Modules Imports ]======-!*/
 const { createRequire } = 'module'.import()
 const { fileURLToPath } = 'url'.import()
@@ -20,7 +16,8 @@ global['fol'] = {
     5: './toolkit/db/',
     6: './toolkit/db/user/',
     7: './helpers/Events/',
-    8: './connection/'
+    8: './connection/',
+    9: './toolkit/set/locale/',
 }
 global['session'] = fol[8] + 'session';
 
@@ -36,31 +33,39 @@ if(!(config.cfg.ai_interactive?.group || config.cfg.ai_interactive?.private)){
     }
     config.cfg.ai_interactive.private = true
 }
-//antisipasi jika terhapus/hilang
-if (!fs.existsSync(db + 'cmd.json')) {
-  	fs.writeFileSync(db + 'cmd.json', JSON.stringify({
-  		"total": 0,
-  		"ai_response": 0,
-  		"cmd": []
-  }, null, 2))
-};
-if (!fs.existsSync(db + 'preferences.json')) {
-  	fs.writeFileSync(db + 'preferences.json', JSON.stringify({}))
-};
 
-if (!fs.existsSync(fol[6] + 'users.json')) {
-  	fs.writeFileSync(fol[6]  + 'users.json', JSON.stringify({}, null, 2))
-};
+const files = [
+    { path: db + 'cmd.json', content: { "total": 0, "ai_response": 0, "cmd": [] } },
+    { path: db + 'preferences.json', content: {} },
+    { path: fol[6] + 'users.json', content: {} },
+    { path: db + 'badwords.json', content: [] },
+    { path: db + 'links.json', content: [] },
+    { path: db + 'fquoted.json', content: {} },
+    { path: db + 'audio.json', content: { welcome:[], leave:[] } }
+]
 
-if (!fs.existsSync(db + 'badwords.json')) {
-  	fs.writeFileSync(db + 'badwords.json', JSON.stringify([], null, 2))
-};
-
+files.forEach(file => {
+    if (!fs.existsSync(file.path)) {
+        fs.writeFileSync(file.path, JSON.stringify(file.content, null, 2));
+    }
+})
 
 /*!-======[ Definition of config  ]======-!*/
 for (let i of keys){
   global[i] = config[i]
 }
+
+//Antisipasi jika dalam cfg.clgic tidak di definisikan
+global.cfg.similarCmd = global.cfg.similarCmd || true
+global.cfg.welcome = global.cfg?.welcome || "linkpreview"
+global.cfg.logic = global.cfg.logic || `
+- Nama kamu adalah <botfullname>, lebih suka dipanggil <botnickname>.
+- Kamu berpikir bahwa kamu adalah manusia, bukan AI atau Bot.
+- Responmu singkat dan sama seperti gadis feminim pada umumnya. <botnickname> bisa ngambek dan marah, memiliki sifat yang feminim dan kadang agak dingin, namun tetap hangat dan ramah kepada ${ownername} (owner-mu).
+- Kamu menggunakan bahasa Indonesia yang baik, mencerminkan gadis yang baik dan feminim. Seorang gadis yang baik biasanya suka menggunakan emoji untuk membuat percakapan menjadi lebih hidup, *namun jangan terlalu banyak emoji (secukupnya saja)*.
+- Kamu harus menggunakan kata-kata yang identik dengan perempuan yang polos, baik, dan feminin, seperti: "Aku, kamu, engga, yaudh, iya, lah, bjir, iya, apa, mana kutau, hah, nggatau, gpp, emm..., males, gak mood".
+- Meskipun kadang dingin, kamu tetap bisa menunjukkan perhatian dan kepedulian.
+`
 
 /*!-======[ Global function ]======-!*/
 global['__filename'] = (imp)=> fileURLToPath(imp);
@@ -80,7 +85,10 @@ global["Data"] = {
     Events: new Map(),
     events: {},
     badwords: JSON.parse(fs.readFileSync(db + 'badwords.json')),
+    links: JSON.parse(fs.readFileSync(db + 'links.json')),
     users: JSON.parse(fs.readFileSync(fol[6] + 'users.json')),
+    audio: JSON.parse(fs.readFileSync(db + 'audio.json')),
+    fquoted: JSON.parse(fs.readFileSync(db + 'fquoted.json')),
     preferences: JSON.parse(fs.readFileSync(db + 'preferences.json')),
     use: { 
         cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
@@ -105,7 +113,8 @@ global["Data"] = {
 }
 
 /*!-======[ Definition of Infos ]======-!*/
-await (fol[3] + "infos.js").r()
+await fs.readdirSync(fol[9] + locale+"/")
+  .filter(file => file.endsWith('.js')).forEach(async file => await (fol[9] + locale + "/" + file).r())
 
 /*!-======[ Auto Update ]======-!*/
 await (fol[0] + "detector.js").r();
@@ -117,6 +126,9 @@ setInterval(async() => {
     await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
     await fs.writeFileSync(db + 'preferences.json', JSON.stringify(Data.preferences, null, 2))
     await fs.writeFileSync(db + 'badwords.json', JSON.stringify(Data.badwords, null, 2))
+    await fs.writeFileSync(db + 'links.json', JSON.stringify(Data.links, null, 2))
+    await fs.writeFileSync(db + 'audio.json', JSON.stringify(Data.audio, null, 2))
+    await fs.writeFileSync(db + 'fquoted.json', JSON.stringify(Data.fquoted, null, 2))
 }, 15000);
 
 

@@ -7,11 +7,14 @@ export default
 async function client({ Exp, store, cht, is }) {
    // if(cht.id == "120363203820002181@g.us") return
     try {
-        
-        if (!(cht.id in Data.preferences)) {
+        if(cht.memories?.banned){
+          if((cht.memories.banned * 1) > Date.now()) return
+          Exp.func.archiveMemories.delItem(cht.sender, "banned")
+        }
+        if (Data.preferences[cht.id] === undefined) {
             Data.preferences[cht.id] = {}
         }
-        if (!("ai_interactive" in Data.preferences[cht.id])) {
+        if (Data.preferences[cht.id]?.ai_interactive === undefined) {
             if (is.group) {
                 Data.preferences[cht.id].ai_interactive = cfg.ai_interactive.group
             } else {
@@ -33,12 +36,28 @@ async function client({ Exp, store, cht, is }) {
         }
 
         /*!-======[ Block Chat ]======-!*/
+		const groupDb = is.group ? Data.preferences[cht.id] : {}
+	    let isMute = groupDb?.mute && !is.owner
+
         if (global.cfg.public === false && !is.owner && !is.me) return
-        if(is.baileys) return
+        if(is.baileys||isMute) return
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
         if(!Data.ev) Data.ev = ev
         if(cht.cmd){
+            if(cfg.similarCmd && Data.events[cht.cmd] === undefined){
+              let events = Object.keys(Data.events).filter(a => a.length == cht.cmd.length)
+              let similar = calcMinThreshold(cht.cmd)
+              function calcMinThreshold(text) {
+                const length = text.length;
+                if (length <= 4) return 0.3;
+                  else if (length <= 7) return 0.4;
+                  else if (length <= 10) return 0.5;
+                  else return 0.6;
+                }
+                
+              cht.cmd = (Exp.func.getTopSimilar(await Exp.func.searchSimilarStrings(cht.cmd, events, similar))).item
+            }
             ev.emit(cht.cmd)
         } else if(cht.reaction){
             Data.reaction({ ev, ...exps })

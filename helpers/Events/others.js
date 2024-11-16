@@ -1,21 +1,56 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
 const { downloadContentFromMessage } = "baileys".import()
-let infos = Data.infos
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     const { id } = cht
+    const { func } = Exp
+    let infos = Data.infos
+
     ev.on({ 
         cmd: ['menu'],
         listmenu: ['menu'],
         tag: 'other' 
-    }, () => {
-        let hit = Exp.func.getTotalCmd()
-        let topcmd =  Exp.func.topCmd(2)
-        let head = `*[ INFO ]*\n- *${hit.total}* Hit Emitter\n- *${hit.ai_response}* Ai response\n\n*[ Relationship ]*\n- Status: *${cht.memories.role}*\n- Mood: ${cht.memories.energy}${cht.memories.energy < 10 ? "😪":"⚡"}\n\n ▪︎ 『 Top Cmd 』\n> ${"`"}${topcmd.join("`\n> `")}${"`"}\n\n`
-        const menu = {
-            text: head + Exp.func.menuFormatter(Data.events, { ...cfg.menu, ...cht }),
+    }, async () => {
+        let hit = func.getTotalCmd()
+        let topcmd =  func.topCmd(2)
+        let totalCmd = Object.keys(Data.events).length
+        let head = `*[ INFO ]*\n- *${hit.total}* Hit Emitter\n- *${hit.ai_response}* Ai response\n\n*[ Relationship ]*\n- Status: *${cht.memories.role}*\n- Mood: ${cht.memories.energy}${cht.memories.energy < 10 ? "😪":"⚡"}\n\n ▪︎ 『 \`Events On\` 』\n- Total: ${totalCmd}\n\n ▪︎ 『 \`Top Cmd \`』\n> ${"`"}${topcmd.join("`\n> `")}${"`"}\n\n`
+        let text = head + func.menuFormatter(Data.events, { ...cfg.menu, ...cht })
+        let menu = {}
+        if(cfg?.menu_type == "text"){
+          menu.text = text
+          Exp.sendMessage(id, menu, { quoted: cht })
+        } else if(cfg?.menu_type == "image" ){
+          menu.image = fs.readFileSync(fol[3] + "bell.jpg")
+          menu.caption = text
+          Exp.sendMessage(id, menu, { quoted: cht })
+        } else if(cfg?.menu_type == "liveLocation"){
+           Exp.relayMessage(cht.id, {
+	         liveLocationMessage: {
+	            degreesLatitude: -76.01801,
+	            degreesLongitude: 22.662851,
+	            caption: text,
+                contextInfo: { participant: cht.sender, quotedMessage: cht.message }
+	         }
+	       }, {})
+        } else if(cfg?.menu_type == "order"){
+          Exp.relayMessage(cht.id, {
+           "orderMessage": {
+             "orderId": "530240676665078",
+             "status": "INQUIRY",
+             "surface": "CATALOG",
+             "ItemCount": 0,
+             "message": text,
+             "sellerJid": "6281374955605@s.whatsapp.net",
+             "token": "AR6oiV5cQjZsGfjvfDwl0DXfnAE+OPRkWAQtFDaB9wxPlQ==",
+             "thumbnail": (await fs.readFileSync(fol[3] + "bell.jpg")).toString("base64"),
+           }
+         },{})
+        } else {
+          menu = {
+            text,
             contextInfo: { 
                 externalAdReply: {
                     title: cht.pushName,
@@ -34,8 +69,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     serverMessageId: 152
                 }
             }
+          }
+          Exp.sendMessage(id, menu, { quoted: cht })
         }
-        Exp.sendMessage(id, menu, { quoted: cht })
     })
     
     ev.on({ 
@@ -43,7 +79,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['reactionmenu'],
         tag: 'other' 
     }, () => {
-        cht.reply(infos.reaction)
+        cht.reply(infos.reaction.menu)
     })
     
     ev.on({ 
@@ -51,12 +87,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['getviewonce'],
         tag: 'baileys',
         premium: true,
+        isAdmin: true,
+        isMention: true,
         energy: 25
     }, async() => {
-       if (!(is?.owner || is?.admin)) return cht.reply("Maaf, males nanggepin. ini khusus owner/admin kalo di grup")
-         if(cht.mention.length < 1) return cht.reply("Reply/tag orangnya!")
-        let ab = store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
-        if(ab.length == 0) return cht.reply("Org itu tak pernah mengirimkan foto/video 1xlihat!")
+      try {
+        let ab = cht.quoted.type.includes("viewOnce") ? [(await store.loadMessage(id, cht.quoted.stanzaId))] : store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
+        if(ab.length == 0) return cht.reply(infos.others.noDetectViewOnce)
         for(let aa of ab){
             let thay = {
                 msg: aa.message.viewOnceMessageV2?.message?.imageMessage || aa.message.viewOnceMessageV2?.message?.videoMessage || aa.message.viewOnceMessageV2Extension?.message?.audioMessage,
@@ -71,19 +108,23 @@ export default async function on({ cht, Exp, store, ev, is }) {
             thay.type == "audio" && (mssg.ptt = true)
             await Exp.sendMessage(id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
         }
+      } catch (e) { 
+        console.error(e)
+        cht.reply(infos.others.noDetectViewOnce)
+      }
     })
     
     ev.on({ 
         cmd: ['d','del','delete'],
         listmenu: ['delete'],
-        tag: 'other'
+        tag: 'other',
+        isQuoted: true
     }, async() => {
-        if(!cht.quoted) return cht.reply("Reply pesan nya!")
-        if(cht.quoted.sender !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply("Khusus admin!")
+        if(cht.quoted.sender !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.messages.isAdmin)
         try{
            cht.quoted.delete()
         } catch {
-           cht.reply("Gagal!, mungkin aku bukan admin :)")
+           cht.reply(infos.messages.failed)
         }
     })
     
@@ -92,7 +133,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['stats'],
         tag: 'other'
     }, async() => {
-    const { cpuUsage, memoryUsage, processStats } = await Exp.func.getSystemStats()
+    const { cpuUsage, memoryUsage, processStats } = await func.getSystemStats()
     const runtimeText = processStats.runtime;
         
     const txt = cpuUsage.map(cpu => 
@@ -109,6 +150,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         + `   Heap Total: ${processStats.memoryUsage.heapTotal}\n` 
         + `   Heap Used: ${processStats.memoryUsage.heapUsed}\n` 
         + `   External: ${processStats.memoryUsage.external}\n` 
+        + `🚀 *Speed*: ${processStats.speed}\n` 
         + `🕒 *Runtime*\n` 
         + `   ${runtimeText.days}d ${runtimeText.hours}h ${runtimeText.minutes}m ${runtimeText.seconds}s ${runtimeText.milliseconds}ms\n` 
         + `🔧 *Process Info*\n` 

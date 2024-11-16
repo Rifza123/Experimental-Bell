@@ -20,13 +20,13 @@ export class ArchiveMemories {
             autoai: { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false },
             lastCharge: Date.now()
         };
-        Data.users[userId] = userData;
+        global.Data.users[userId] = userData;
         return userData;
     }
 
     static async get(userJid) {
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId];
+        let userData = global.Data.users[userId];
         let aut = cfg.first.autoai
         if (!userData) {
             userData = this.add(userJid)
@@ -70,7 +70,7 @@ export class ArchiveMemories {
                     userData.charging = false
                 }
             }
-            Data.users[userId] = userData;
+            global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error processing user data:', error);
@@ -80,7 +80,7 @@ export class ArchiveMemories {
 
     static addEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId];
+        let userData = global.Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -90,7 +90,7 @@ export class ArchiveMemories {
         try {
             userData.energy += parseFloat(amount);
             userData.role = role(userData.chat); 
-            Data.users[userId] = userData;
+            global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error adding energy:', error);
@@ -100,7 +100,7 @@ export class ArchiveMemories {
 
     static reduceEnergy(userJid, amount) {
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId];
+        let userData = global.Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -111,7 +111,7 @@ export class ArchiveMemories {
             userData.role = role(userData.chat); 
             let newEnergy = userData.energy - parseFloat(amount);
             userData.energy = newEnergy < 0 ? 0 : newEnergy;
-            Data.users[userId] = userData;
+            global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error reducing energy:', error);
@@ -121,7 +121,7 @@ export class ArchiveMemories {
 
     static addChat(userJid) {
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId];
+        let userData = global.Data.users[userId];
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`);
@@ -131,7 +131,7 @@ export class ArchiveMemories {
         try {
             userData.chat += 1;
             userData.role = role(userData.chat); 
-            Data.users[userId] = userData;
+            global.Data.users[userId] = userData;
             return userData;
         } catch (error) {
             console.error('Error updating chat count:', error);
@@ -154,9 +154,10 @@ export class ArchiveMemories {
         return chargeAmount;
     }
     
-    static getItem(userJid, item) {
+    static getItem(usr, item) {
+        const userJid = String(usr)
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId]
+        let userData = global.Data.users[userId]
         let items = {
           chat: 0,
           role: 0,
@@ -172,24 +173,22 @@ export class ArchiveMemories {
             if(!(item in items)) return false
             userData[item] = items[item]
         }
-        Data.users[userId] = userData;
+        global.Data.users[userId] = userData;
         return userData[item]
     }
     
-    static setItem(userJid, item, value) {
+    static setItem(usr, item, value) {
+        const userJid = String(usr)
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId]
-            userData[item] = value
-        Data.users[userId] = userData;
-        return userData;
+        global.Data.users[userId][item] = value;
+        return global.Data.users[userId];
     }
     
-    static delItem(userJid, item) {
+    static delItem(usr, item) {
+        const userJid = String(usr)
         const userId = userJid.split("@")[0];
-        let userData = Data.users[userId]
-            delete userData[item]
-        Data.users[userId] = userData;
-        return userData;
+            delete global.Data.users[userId][item]
+        return global.Data.users[userId];
     }
     
     static async combineAllUserFiles() {

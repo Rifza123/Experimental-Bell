@@ -9,21 +9,19 @@ const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
 const { catbox } = await (fol[0] + 'catbox.js').r()
 const { EncryptJs } = await (fol[2] + 'encrypt.js').r()
 
-/*!-======[ Configurations ]======-!*/
-let infos = Data.infos
-
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
+    let infos = Data.infos
     let { sender, id } = cht
+    const { func } = Exp
+
     ev.on({ 
         cmd: ['remini'], 
         listmenu: ['remini'],
         tag: "tools",
         energy: 30,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?",
-           save: false
+           type: ["image"]
         }
     }, async({ media }) => {
        const _key = keys[sender]
@@ -41,8 +39,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 5,
         media: { 
-           type: ["image","sticker","audio","video"],
-           save: false
+           type: ["image","sticker","audio","video"]
         }
     }, async({ media }) => {
         let tmp = await tmpFiles(media)
@@ -55,8 +52,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 5,
         media: { 
-           type: ["image","sticker","audio","video"],
-           save: false
+           type: ["image","sticker","audio","video","document"]
         }
     }, async({ media }) => {
         let tmp = await catbox(media)
@@ -69,9 +65,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 28,
         media: { 
-           type: ["image"],
-           msg: "Mana gambarnya?",
-           save: false
+           type: ["image"]
         }
     }, async({ media }) => {
         await cht.edit("Bntr...", keys[sender])
@@ -86,15 +80,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         energy: 35,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?",
-           save: false
+           type: ["image"]
         }
     }, async({ media }) => {
         const _key = keys[sender]
         let type = cht.q ? cht.q : "stdx4"
-        if(cht.q == "list") return cht.reply(infos.enhance)
-        if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.enhance)
+        if(cht.q == "list") return cht.reply(infos.tools.enhance)
+        if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.tools.enhance)
         await cht.edit("Uploading image...", _key)
         let imgurl = await catbox(media)
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
@@ -126,10 +118,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cmd: ['ss','ssweb'],
         listmenu: ['ssweb'],
         tag: 'tools',
-        energy: 7.5
+        energy: 7.5,
+        urls: {
+          msg: true
+        }
     }, async() => {
         let q = is.quoted?.url || is.url 
-        if(!q) return cht.reply("Mana linknya?")
         Exp.sendMessage(id, { image: { url : 'https://image.thum.io/get/width/1900/crop/1000/fullpage/' + q[0] }, caption: `Result✔️`}, { quoted: cht } )
 	})
 	
@@ -139,8 +133,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
 	    energy: 10,
         media: { 
-           type: "audio",
-           msg: "Mana audionya?"
+           type: ["audio"]
         }
     }, async({ media }) => {
          await cht.edit("Bntar tak dengerin dulu...", keys[sender])
@@ -154,8 +147,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
 	    energy: 25,
         media: { 
-           type: "audio",
-           msg: "Mana audionya?"
+           type: ["audio"]
         }
     }, async({ media }) => {
          transcribe(media)
@@ -167,9 +159,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['getchid'],
         tag: 'tools',
 	    energy: 10,
+	    isQuoted: "Reply pesan yang diteruskan dari saluran!"
     }, async() => {
       try {
-         if(!cht.quoted) return cht.reply("Reply pesan yang diteruskan dari saluran!")
          let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message.extendedTextMessage.contextInfo.forwardedNewsletterMessageInfo
          if(!res) return cht.reply("Gagal, id saluran mungkin tidak tersedia")
          cht.edit(`[ *📡ID SALURAN/CH* ]`
@@ -220,7 +212,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
 	    energy: 50,
         media: { 
-           type: "audio",
+           type: ["audio"],
            msg: "Mana audionya?"
         }
     }, async({ media }) => {
@@ -244,7 +236,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	    energy: 4,
         media: { 
            type: ["sticker"],
-           save: false
+           etc: {
+             //isNoAnimated:true
+           }
         }
     }, async({ media }) => {
          Exp.sendMessage(id, { image: media }, { quoted: cht })
@@ -267,9 +261,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: "tools",
         energy: 15,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?",
-           save: false
+           type: ["image"]
         }
     }, async({ media }) => {
        const _key = keys[sender]
@@ -287,9 +279,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: "tools",
         energy: 15,
         media: { 
-           type: ["image"],
-           msg: "Mana fotonya?",
-           save: false
+           type: ["image"]
         }
     }, async({ media }) => {
        const _key = keys[sender]
@@ -313,4 +303,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
          await Exp.sendMessage(id, { image: { url: res.url }, caption: result }, { quoted: cht })
          cht.edit("Nih", _key)
     })
+    
+    ev.on({ 
+        cmd: ['hextorgba','rgbatohex','change'],
+        listmenu: ['hextorgba','rgbatohex'],
+        tag: 'tools',
+        args: "Sertakan rgba atau hex untuk di konversi?",
+        energy: 2
+    }, async() => {
+        if(cht.q.startsWith("rgb")) return cht.reply(func.rgbaToHex(cht.q))
+         cht.reply(func.hexToRgba(cht.q))
+	})
 }

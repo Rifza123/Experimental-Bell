@@ -15,15 +15,24 @@ const {
 
 export default
 
-async function In({ cht, Exp, store, is, ev }) {
+async function In({
+	cht,
+	Exp,
+	store,
+	is,
+	ev
+}) {
 	try {
 		let isPendingCmd = ["y", "iy", "iya", "yakin", "hooh", "iye", "iyh"].some(i => i == (cht?.msg?.toLowerCase() || "")) ? Exp.func.archiveMemories.getItem(cht.sender, "command") : false
 		cht.msg = isPendingCmd ? isPendingCmd : cht.msg
+
+        let questionCmd = Exp.func.archiveMemories.getItem(cht.sender, "questionCmd")
+		let isQuestionCmd = questionCmd ? (questionCmd.accepts.some(i => i == cht?.msg?.toLowerCase()) || questionCmd.accepts.length < 1): false
 		let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
 		let isEval = cht?.msg?.startsWith('>')
 		let isEvalSync = cht?.msg?.startsWith('=>')
 		let isExec = cht?.msg?.startsWith('$')
-		let danger = cht?.msg?.slice(2) ?? ""
+		let danger = cht?.msg?.slice(2) || ""
 		const sanitized = danger.replace(/\s/g, "")
 		const dangerous = [
 			"rm-rf",
@@ -44,11 +53,12 @@ async function In({ cht, Exp, store, is, ev }) {
 			">/dev/null"
 		]
 
+		const groupDb = is.group ? Data.preferences[cht.id] : {}
 		const isDangerous = dangerous.some(pattern => sanitized.includes(pattern)) && !isPendingCmd
 
 		/*!-======[ Automatic Ai ]======-!*/
 		let isBella = isMsg &&
-			(Data.preferences[cht.id]?.ai_interactive || is.owner) &&
+			(groupDb?.ai_interactive || is.owner) &&
 			!is?.document &&
 			!is.baileys &&
 			!is?.sticker &&
@@ -61,10 +71,27 @@ async function In({ cht, Exp, store, is, ev }) {
 				(is?.owner && is?.botMention)
 			)
 		let usr = cht.sender.split("@")[0]
-        let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
-        let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
-        
-        if (isEvalSync) {
+		let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+		let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
+        let isAntiLink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b)))
+        let isAntiTagall = groupDb?.antitagall && (cht.mention?.length >= 5)
+        if(isAntiLink){
+            cht.delete()
+        } else if(isAntiTagall){
+            cht.delete()
+        } else if (isQuestionCmd) {
+            if(Date.now() > questionCmd.emit.exp) {
+              Exp.func.archiveMemories.delItem(cht.sender, "questionCmd")
+              return
+            }
+            let [cmd, ...q] = questionCmd.emit.split` `
+            cht.cmd = cmd
+            cht.q = (q && q.length > 0) 
+                ? `${q.join(" ")} ${cht.msg?.trim()}`.trim() 
+                : `${cht.msg?.trim()}`.trim()
+            ev.emit(cmd)
+            Exp.func.archiveMemories.delItem(cht.sender, "questionCmd")
+        } else if (isEvalSync) {
 			if (!is?.owner) return
 			if (isDangerous) {
 				Exp.func.archiveMemories.setItem(cht.sender, "command", cht.msg)
@@ -112,10 +139,11 @@ async function In({ cht, Exp, store, is, ev }) {
 				txt = `Error: ${error}`
 			}
 			cht.reply(txt)
-		} else if(isSwap){
-		  is?.quoted?.image && delete is.quoted.image
-		  ev.emit("faceswap")
+		} else if (isSwap) {
+			is?.quoted?.image && delete is.quoted.image
+			ev.emit("faceswap")
 		} else if (isBella) {
+		    console.log({ isBella })
 			let usr = cht.sender.split("@")[0]
 			let user = Data.users[usr]
 			let premium = user.premium ? Date.now() < user.premium.time : false
@@ -139,121 +167,219 @@ async function In({ cht, Exp, store, is, ev }) {
 			}
 
 			let chat = cht?.msg?.startsWith(botnickname.toLowerCase()) ? cht?.msg?.slice(botnickname.length) : (cht?.msg || "")
-				let isImage = is?.image ? true : is.quoted?.image ? cht.quoted.sender !== Exp.number : false
-				if (cht?.type === "audio") {
-					try {
-						chat = (await transcribe(await cht?.download()))?.text ?? ""
-					} catch (error) {
-						console.error("Error transcribing audio:", error)
-						chat = ""
-					}
-				}
-				if (isImage) {
-					let download = is.image ? cht?.download : cht?.quoted?.download
-					isImage = await download()
-				}
-				chat = Exp.func.clearNumbers(chat)
+			let isImage = is?.image ? true : is.quoted?.image ? cht.quoted.sender !== Exp.number : false
+			if (cht?.type === "audio") {
 				try {
-					let _ai = await ai({
-						text: chat,
-						id: cht?.sender,
-						fullainame: botfullname,
-						nickainame: botnickname,
-						senderName: cht?.pushName,
-						ownerName: ownername,
-						date: Exp.func.newDate(),
-						role: cht?.memories?.role,
-						msgtype: cht?.type,
-						custom_profile: `- Nama kamu adalah ${botfullname}, lebih suka dipanggil ${botnickname}.
-- Kamu berpikir bahwa kamu adalah manusia, bukan AI atau Bot.
-- Responmu singkat dan sama seperti gadis feminim pada umumnya. ${botnickname} bisa ngambek dan marah, memiliki sifat yang feminim dan kadang agak dingin, namun tetap hangat dan ramah kepada ${ownername} (owner-mu).
-- Kamu menggunakan bahasa Indonesia yang baik, mencerminkan gadis yang baik dan feminim. Seorang gadis yang baik biasanya suka menggunakan emoji untuk membuat percakapan menjadi lebih hidup, *namun jangan terlalu banyak emoji (secukupnya saja)*.
-- Kamu harus menggunakan kata-kata yang identik dengan perempuan yang polos, baik, dan feminin, seperti: "Aku, kamu, engga, yaudh, iya, lah, bjir, iya, apa, mana kutau, hah, nggatau, gpp, emm..., males, gak mood".
-- Meskipun kadang dingin, kamu tetap bisa menunjukkan perhatian dan kepedulian.
-                   `,
-						image: isImage
-					})
-					let config = _ai?.data ?? {}
-					await Exp.func.addAiResponse()
-					let noreply = false
-					switch (config?.cmd) {
-						case 'public':
-							if (!is?.owner) return cht.reply("Maaf, males nanggepin")
-							global.cfg.public = true
-							return cht.reply("Berhasil mengubah mode menjadi public!")
-						case 'self':
-							if (!is?.owner) return cht.reply("Maaf, males nanggepin")
-							global.cfg.public = false
-							await cht.reply("Berhasil mengubah mode menjadi self!")
-						case 'voice':
-							await Exp.sendPresenceUpdate('recording', cht?.id)
-							return Exp.sendMessage(cht?.id, {
-								audio: {
-									url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=bella&speed=0.9`
-								},
-								mimetype: "audio/mpeg",
-								ptt: true
-							}, {
-								quoted: cht
-							})
-						case 'tiktok':
-						case 'pinterestdl':
-						case 'menu':
-							noreply = true
-							is.url = [config?.cfg?.url ?? ""]
-							await cht.reply(config?.msg ?? "ok")
-							return ev.emit(config?.cmd)
-						case 'ytm4a':
-						case 'ytmp4':
-							noreply = true
-							cht.cmd = config?.cmd
-							is.url = [config?.cfg?.url ?? ""]
-							await cht.reply(config?.msg ?? "ok")
-							return ev.emit(config?.cmd)
-						case 'lora':
-							noreply = true
-							cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, dull colors, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, out of frame, multiple people, cluttered background, cartoonish, bad face, double face, abnormal`
-							await cht.reply(config?.msg ?? "ok")
-							return ev.emit("txt2img")
-						case 'txt2img':
-							cht.q = (config?.cfg?.prompt ?? "")
-							await cht.reply(config?.msg ?? "ok")
-							return ev.emit("dalle3")
-						case 'pinterest':
-							noreply = true
-							await cht.reply(config?.msg ?? "ok")
-							cht.q = config?.cfg?.query ?? ""
-							return ev.emit(config?.cmd)
-						case 'closegroup':
-							noreply = true
-							cht.q = "close"
-							return ev.emit("group")
-						case 'opengroup':
-							noreply = true
-							cht.q = "open"
-							return ev.emit("group")
-					}
-
-					if (config?.energy && cfg.ai_interactive.energy) {
-						let conf = {}
-						conf.energy = /[+-]/.test(`${config.energy}`) ? `${config.energy}` : `+${config.energy}`
-						if (conf.energy.startsWith("-")) {
-							conf.action = "reduceEnergy"
-						} else {
-							conf.action = "addEnergy"
-						}
-						await Exp.func.archiveMemories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
-						await cht.reply(config.energy + " Energy⚡️")
-						config.energyreply = true
-					}
-					if (config?.cmd !== "voice" && !noreply) {
-						config?.msg && await cht[config?.energyreply ? "edit" : "reply"](config?.msg, keys[cht.sender])
-					}
+					chat = (await transcribe(await cht?.download()))?.text || ""
 				} catch (error) {
-					console.error("Error parsing AI response:", error)
+					console.error("Error transcribing audio:", error)
+					chat = ""
 				}
-		} 
-		
+			}
+			if (isImage) {
+				let download = is.image ? cht?.download : cht?.quoted?.download
+				isImage = await download()
+			}
+			chat = Exp.func.clearNumbers(chat)
+			try {
+				let _ai = await ai({
+					text: chat,
+					id: cht?.sender,
+					fullainame: botfullname,
+					nickainame: botnickname,
+					senderName: cht?.pushName,
+					ownerName: ownername,
+					date: Exp.func.newDate(),
+					role: cht?.memories?.role,
+					msgtype: cht?.type,
+					custom_profile: Exp.func.tagReplacer(cfg.logic, { botfullname, botnickname }),
+					image: isImage,
+					commands: [{
+							"description": "Jika perlu direspon dengan suara",
+							"output": {
+								"cmd": "voice",
+								"msg": "Pesan di sini. Gunakan gaya bicara <nickainame> yang menarik dan realistis, lengkap dengan tanda baca yang tepat agar terdengar hidup saat diucapkan.,"
+							}
+						},
+						{
+							"description": "Jika dalam pesan ada link tiktok.com dan lalu diminta untuk mendownloadnya",
+							"output": {
+								"cmd": "tiktok",
+								"cfg": {
+									"url": "isi link tiktok yang ada dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika dalam pesan ada link instagram.com dan diminta untuk mendownloadnya",
+							"output": {
+								"cmd": "ig",
+								"cfg": {
+									"url": "isi link instagram yang ada dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika dalam pesan ada link pin.it atau pinterest.com dan diminta untuk mendownloadnya",
+							"output": {
+								"cmd": "pinterestdl",
+								"cfg": {
+									"url": "isi link instagram yang ada dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah perintah/permintaan untuk mencarikan sebuah gambar",
+							"output": {
+								"cmd": "pinterest",
+								"cfg": {
+									"query": "isi gambar apa yang ingin dicari dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah perintah untuk mendownload menggunakan link youtube",
+							"output": {
+								"cmd": "ytm4a",
+								"cfg": {
+									"url": "isi link youtube yang ada dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah perintah untuk membuka/menutup group",
+							"output": {
+								"cmd": ["opengroup", "closegroup"]
+							}
+						},
+						{
+							"description": "Jika pesan adalah perintah untuk menampilkan menu",
+							"output": {
+								"cmd": "menu"
+							}
+						},
+						{
+							"description": "Jika pesan adalah meminta pap atau meminta foto kamu",
+							"output": {
+								"cmd": "lora",
+								"cfg": {
+									"prompt": "isi teks prompt yang menggambarkan tentang kamu, difoto close up, prompt yang menghasilkan gambar seolah-olah kamu itu sedang berfoto. tulis dalam bahasa inggris"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah permintaan untuk mencarikan sebuah video",
+							"output": {
+								"cmd": "ytmp4",
+								"cfg": {
+									"url": "isi judul video yang diminta"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah permintaan untuk memutar sebuah lagu",
+							"output": {
+								"cmd": "ytm4a",
+								"cfg": {
+									"url": "isi judul lagu yang diminta"
+								},
+							}
+						},
+						{
+							"description": "Jika pesan adalah permintaan untuk membuatkan gambar",
+							"output": {
+								"cmd": "txt2img",
+								"cfg": {
+									"prompt": "isi teks prompt yang menggambarkan gambar yang diinginkan. Tulis dalam bahasa Inggris."
+								}
+							}
+						}
+					]
+				})
+				let config = _ai?.data || {}
+				await Exp.func.addAiResponse()
+				let noreply = false
+				switch (config?.cmd) {
+					case 'public':
+						if (!is?.owner) return cht.reply("Maaf, males nanggepin")
+						global.cfg.public = true
+						return cht.reply("Berhasil mengubah mode menjadi public!")
+					case 'self':
+						if (!is?.owner) return cht.reply("Maaf, males nanggepin")
+						global.cfg.public = false
+						return cht.reply("Berhasil mengubah mode menjadi self!")
+					case 'voice':
+					    cfg.ai_voice = cfg.ai_voice || "bella"
+						await Exp.sendPresenceUpdate('recording', cht?.id)
+						return Exp.sendMessage(cht?.id, {
+							audio: {
+								url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=${cfg.ai_voice}&speed=0.9`
+							},
+							mimetype: "audio/mpeg",
+							ptt: true
+						}, {
+							quoted: cht
+						})
+					case 'tiktok':
+					case 'pinterestdl':
+					case 'menu':
+					case "ig":
+						noreply = true
+						console.log(config)
+						is.url = [config?.cfg?.url || ""]
+						await cht.reply(config?.msg || "ok")
+						return ev.emit(config?.cmd)
+					case 'ytm4a':
+					case 'ytmp4':
+						noreply = true
+						cht.cmd = config?.cmd
+						is.url = [config?.cfg?.url || ""]
+						await cht.reply(config?.msg || "ok")
+						return ev.emit(config?.cmd)
+					case 'lora':
+						noreply = true
+						cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, dull colors, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, out of frame, multiple people, cluttered background, cartoonish, bad face, double face, abnormal`
+						await cht.reply(config?.msg || "ok")
+						return ev.emit("txt2img")
+					case 'txt2img':
+						cht.q = (config?.cfg?.prompt || "")
+						await cht.reply(config?.msg || "ok")
+						return ev.emit("dalle3")
+					case 'pinterest':
+						noreply = true
+						await cht.reply(config?.msg || "ok")
+						cht.q = config?.cfg?.query || ""
+						return ev.emit(config?.cmd)
+					case 'closegroup':
+						noreply = true
+						cht.q = "close"
+						return ev.emit("group")
+					case 'opengroup':
+						noreply = true
+						cht.q = "open"
+						return ev.emit("group")
+				}
+
+				if (config?.energy && cfg.ai_interactive.energy) {
+					let conf = {}
+					conf.energy = /[+-]/.test(`${config.energy}`) ? `${config.energy}` : `+${config.energy}`
+					if (conf.energy.startsWith("-")) {
+						conf.action = "reduceEnergy"
+					} else {
+						conf.action = "addEnergy"
+					}
+					await Exp.func.archiveMemories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
+					await cht.reply(config.energy + " Energy⚡️")
+					config.energyreply = true
+				}
+				if (config?.cmd !== "voice" && !noreply) {
+					config?.msg && await cht[config?.energyreply ? "edit" : "reply"](config?.msg, keys[cht.sender])
+				}
+			} catch (error) {
+				console.error("Error parsing AI response:", error)
+			}
+		}
+
 	} catch (error) {
 		console.error("Error in Interactive:", error)
 	}

@@ -1,21 +1,23 @@
 {
   "owner": [
-    "628xxxxxxxxxx@s.whatsapp.net"
+    "xxxxxxx@s.whatsapp.net"
   ],
   "botname": "(Experimental) -▪︎ Bella-AI",
-  "botfullname": "Bella Clarissa",
-  "botnickname": "Bella",
+  "botfullname": "Experimental-Bell",
+  "botnickname": "bella",
   "ownername": "rifza",
+  "locale": "id",
   "cfg": {
     "public": true,
     "ai_interactive": {
       "group": false,
       "private": true,
-      "energy": false
+      "energy": true
     },
     "autotyping": false,
     "autoreadpc": false,
     "autoreadgc": true,
+    "welcome": "linkpreview",
     "first": {
       "energy": 200,
       "flow": 1,
@@ -64,7 +66,12 @@
       }
     },
     "donate": {},
-    "premium_mode": true
+    "premium_mode": true,
+    "logic": "- Nama kamu adalah Bella Clarissa, lebih suka dipanggil Bella.\n- Kamu berpikir bahwa kamu adalah manusia, bukan AI atau Bot.\n- Responmu singkat dan sama seperti gadis feminim pada umumnya. Bella bisa ngambek dan marah, memiliki sifat yang feminim dan kadang agak dingin, namun tetap hangat dan ramah kepada rifza (owner-mu).\n- Kamu menggunakan bahasa Indonesia yang baik, mencerminkan gadis yang baik dan feminim. Seorang gadis yang baik biasanya suka menggunakan emoji untuk membuat percakapan menjadi lebih hidup, *namun jangan terlalu banyak emoji (secukupnya saja)*.\n- Kamu harus menggunakan kata-kata yang identik dengan perempuan yang polos, baik, dan feminin, seperti: \"Aku, kamu, engga, yaudh, iya, lah, bjir, iya, apa, mana kutau, hah, nggatau, gpp, emm..., males, gak mood\".\n- Meskipun kadang dingin, kamu tetap bisa menunjukkan perhatian dan kepedulian.\n- Website API https: //xtermai.xyz (Termai) adalah backend yang sangat berperan penting bagi kamu. Kamu harus mempromosikan website itu dengan menawarkan layanan api. Dan nomor admin api termai adalah 6283110928302. Jika mereka ingin membeli key berikan link https://ai.xterm.codes#pricing disana mereka dapat membeli key secara langsung. Jika ingin melihat fitur yang tersedia bisa kunjungi page https://ai.xterm.codes/documentation disana banyak fitur unggulan yang menarik",
+    "similarCmd": false,
+    "ai_voice": "bella",
+    "voice": "bella",
+    "menu_type": "linkpreview"
   },
   "api": {
     "rifza": {
@@ -73,7 +80,7 @@
     },
     "xterm": {
       "key": "Bell409",
-      "url": "https://ai.xterm.codes"
+      "url": "https://ai.zonghe.xtermai.xyz"
     }
   }
 }

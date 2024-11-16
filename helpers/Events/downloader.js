@@ -4,11 +4,9 @@ const axios = "axios".import()
 /*!-======[ Function Imports ]======-!*/
 const { mediafireDl } = await (fol[0] + 'mediafire.js').r()
 
-/*!-======[ Configurations ]======-!*/
-let infos = Data.infos
-
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
+    let infos = Data.infos
     let { sender, id } = cht
     
     ev.on({ 
@@ -16,8 +14,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['pinterestdl'], 
       tag: 'downloader',
       urls: {
-        msg: "Harap berikan link!",
-        formats: ["pinterest","pin"]
+        formats: ["pinterest","pin"],
+        msg: true
       },
       energy: 7
     }, async ({ urls }) => {
@@ -31,10 +29,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['mediafire', 'mediafiredl'], 
       listmenu: ['mediafire'], 
       tag: 'downloader',
-      args: "Mana linknya?",
       urls: {
-        msg: "Harap berikan link!",
-        formats: ["mediafire"]
+        formats: ["mediafire"],
+        msg: true
       },
       energy: 75
     }, async ({ urls }) => {
@@ -58,17 +55,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['tiktok', 'tiktokdl', 'tt'], 
       listmenu: ['tiktok', 'ttdl'], 
       tag: 'downloader',
-      args: "Mana linknya?",
       urls: {
-        msg: "Harap berikan link!",
-        formats: ["tiktok"]
+        formats: ["tiktok"],
+        msg: true
       },
       energy: 5
     }, async ({ urls }) => {
         const _key = keys[sender]
-        await cht.edit("Bntr..", _key)
+        await cht.edit(infos.messages.wait, _key)
         let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" +urls[0]).then(a => a.json())).data
-        await cht.edit("Lagi dikirim...", _key)
+        await cht.edit(infos.messages.sending, _key)
         let type = data.type
         if (type == 'image') {
             for (let image of data.media) {
@@ -90,14 +86,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
       energy: 5
     }, async ({ args, urls }) => {
         const _key = keys[sender]
-        let q = urls || args || null
+        let q = urls?.[0] || args || null
         if (!q) return cht.reply('Harap sertakan url/judul videonya!')
         try {
             await cht.edit("Searching...", _key)
+            console.log(q,args)
             let search = (await fetch(`${api.xterm.url}/api/search/youtube?query=${q}&key=${api.xterm.key}`).then(a => a.json())).data
             await cht.edit("Downloading...", _key)
             let item = search.items[0]
-            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?url=https://www.youtube.com/watch?v=" + item.id  + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
+            let data = (await fetch(api.xterm.url + "/api/downloader/youtube?key="+api.xterm.key+"&url=https://www.youtube.com/watch?v=" + item.id  + "&type=" + (cht.cmd === "ytmp4" ? "mp4" : "mp3")).then(a => a.json())).data
             
             let audio = {
                 [cht.cmd === "ytmp4" ? "video" : cht.cmd === "ytmp3" ? "document" : "audio"]: { url: data.dlink },
@@ -129,9 +126,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['facebookdl','fb','fbdl','facebook'], 
       listmenu: ['facebookdl'], 
       tag: 'downloader',
-      args: "Mana linknya?",
       urls: {
-        msg: "Harap berikan link!",
+        msg: true,
         formats: ["facebook","fb"]
       },
       energy: 5
@@ -147,9 +143,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['instagramdl','ig','igdl','instagram'], 
       listmenu: ['instagramdl'], 
       tag: 'downloader',
-      args: "Mana linknya?",
       urls: {
-        msg: "Harap berikan link!",
+        msg: true,
         formats: ["instagram"]
       },
       energy: 5

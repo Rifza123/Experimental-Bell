@@ -24,6 +24,7 @@ let onreload = false;
                     Data.utils = (await `${fol[1]}utils.js`.r()).default;
                     Data.reaction = (await `${fol[1]}reaction.js`.r()).default;
                     Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
+                    Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
                 console.log(chalk.green(`Helper ${fileName} reloaded successfully!`));
             } catch (error) {
                 console.error(chalk.red(`Error reloading ${fileName}:`, error));
@@ -65,24 +66,21 @@ let onreload = false;
             let fileEv = eventFile.includes("?") ? eventFile.split("?")[0] : eventFile
             if(fileName == fileEv) {
               delete Data.events[i]
-              console.log(chalk.red(`[ EVENT DELETED ] => ${i}`))
+              console.log(chalk.red(`[ EVENT RELOAD ] => ${i}`))
             }
         }
     });
     
-    const watcherSet = chokidar.watch(fol[3] + '**/*.js', {
+    const watcherLocale = chokidar.watch(fol[9] + locale + '/**/*.js', {
         ignored: /(^|[\/\\])\../,
         persistent: true
     });
 
-    watcherSet.on('change', async(filePath) => {
+    watcherLocale.on('change', async(filePath) => {
         const fileName = path.basename(filePath);
-        if(fileName == "infos.js"){
-            console.log(chalk.yellow(`File changed: ${fol[3] + fileName}`));
-            await (fol[3] + fileName).r()
+            console.log(chalk.yellow(`File changed: ${fol[9] +locale+ "/" + fileName}`));
+            await (fol[9] + locale + "/" + fileName).r()
             return
-        }
-        
     })
 
 })();
