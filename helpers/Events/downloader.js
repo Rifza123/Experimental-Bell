@@ -20,7 +20,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       energy: 7
     }, async ({ urls }) => {
         await cht.reply('```Processing...```')
-        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + urls[0]).then(a => a.json())).data
+        let p = (await fetch(api.xterm.url + "/api/downloader/pinterest?url=" + urls[0] +"&key="+ api.xterm.key).then(a => a.json())).data
         let pin = Object.values(p.videos)[0].url
         Exp.sendMessage(id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
     })
@@ -63,7 +63,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async ({ urls }) => {
         const _key = keys[sender]
         await cht.edit(infos.messages.wait, _key)
-        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" +urls[0]).then(a => a.json())).data
+        let data = (await fetch(api.xterm.url + "/api/downloader/tiktok?url=" +urls[0] +"&key="+ api.xterm.key).then(a => a.json())).data
         await cht.edit(infos.messages.sending, _key)
         let type = data.type
         if (type == 'image') {
@@ -134,7 +134,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async ({ urls }) => {
         const _key = keys[sender]
         await cht.edit('```Processing...```', _key)
-        let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + urls[0]).then(a => a.json())).data
+        let f = (await fetch(api.xterm.url + "/api/downloader/facebook?url=" + urls[0] +"&key="+ api.xterm.key).then(a => a.json())).data
         await cht.edit("Sending...", _key)
         Exp.sendMessage(id, { video: { url: f.urls.sd }, mimetype: "video/mp4", caption: f.title }, { quoted: cht })
     })
@@ -151,7 +151,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async ({ urls }) => {
         const _key = keys[sender]
         await cht.edit('```Processing...```', _key)
-        let f = (await fetch(api.xterm.url + "/api/downloader/instagram?url=" + urls[0]).then(a => a.json())).data
+        let f = (await fetch(api.xterm.url + "/api/downloader/instagram?url=" + urls[0] +"&key="+ api.xterm.key).then(a => a.json())).data
         let text = "*!-======[ Instagram ]======-!*\n"
             text += `\nTitle: ${f.title}`
             text += `\nAccount: ${f.accountName}`
