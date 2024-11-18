@@ -162,7 +162,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	    isQuoted: "Reply pesan yang diteruskan dari saluran!"
     }, async() => {
       try {
-         let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message.extendedTextMessage.contextInfo.forwardedNewsletterMessageInfo
+         let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message[cht.quoted.type].contextInfo.forwardedNewsletterMessageInfo
          if(!res) return cht.reply("Gagal, id saluran mungkin tidak tersedia")
          cht.edit(`[ *📡ID SALURAN/CH* ]`
              + `\nID Saluran: ${res.newsletterJid}`
