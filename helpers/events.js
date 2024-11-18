@@ -148,12 +148,27 @@ class EventEmitter {
             if(!isPremium && Data.users[user]?.premium?.time) Data.users[user].premium = { time:0 };
             let trial = Data.users[user]?.claimPremTrial
             const checks = [
-              { condition: ev.isOwner && !this.is.owner, message: ev.isOwner || messages.isOwner },
-              { condition: ev.isGroup && !this.is.group, message: ev.isGroup || messages.isGroup },
-              { condition: ev.isAdmin && !(this.is.groupAdmins || this.is.owner), message: ev.isAdmin || messages.isAdmin },
-              { condition: ev.isBotAdmin && !this.is.botAdmin, message: ev.isBotAdmin || messages.isBotAdmin },
-              { condition: ev.isQuoted && !this.cht.quoted, message: ev.isQuoted || messages.isQuoted }
-            ];
+              {
+                condition: ev.isOwner && !this.is.owner,
+                message: typeof ev.isOwner === "boolean" ? messages.isOwner : ev.isOwner,
+              },
+              {
+                condition: ev.isGroup && !this.is.group,
+                message: typeof ev.isGroup === "boolean" ? messages.isGroup : ev.isGroup,
+              },
+              {
+                condition: ev.isAdmin && !(this.is.groupAdmins || this.is.owner),
+                message: typeof ev.isAdmin === "boolean" ? messages.isAdmin : ev.isAdmin,
+              },
+              {
+                condition: ev.isBotAdmin && !this.is.botAdmin,
+                message: typeof ev.isBotAdmin === "boolean" ? messages.isBotAdmin : ev.isBotAdmin,
+              },
+              {
+                condition: ev.isQuoted && !this.cht.quoted,
+                message: typeof ev.isQuoted === "boolean" ? messages.isQuoted : ev.isQuoted,
+              }
+            ]
 
             for (const { condition, message } of checks) {
               if (condition) return this.cht.reply(message);
