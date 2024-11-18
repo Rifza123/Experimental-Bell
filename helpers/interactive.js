@@ -219,29 +219,11 @@ async function In({
 							}
 						},
 						{
-							"description": "Jika dalam pesan ada link pin.it atau pinterest.com dan diminta untuk mendownloadnya",
-							"output": {
-								"cmd": "pinterestdl",
-								"cfg": {
-									"url": "isi link instagram yang ada dalam pesan"
-								}
-							}
-						},
-						{
 							"description": "Jika pesan adalah perintah/permintaan untuk mencarikan sebuah gambar",
 							"output": {
 								"cmd": "pinterest",
 								"cfg": {
 									"query": "isi gambar apa yang ingin dicari dalam pesan"
-								}
-							}
-						},
-						{
-							"description": "Jika pesan adalah perintah untuk mendownload menggunakan link youtube",
-							"output": {
-								"cmd": "ytm4a",
-								"cfg": {
-									"url": "isi link youtube yang ada dalam pesan"
 								}
 							}
 						},
@@ -290,6 +272,24 @@ async function In({
 								"cmd": "txt2img",
 								"cfg": {
 									"prompt": "isi teks prompt yang menggambarkan gambar yang diinginkan. Tulis dalam bahasa Inggris."
+								}
+							}
+						},
+						{
+							"description": "Jika dalam pesan ada link pin.it atau pinterest.com dan diminta untuk mendownloadnya",
+							"output": {
+								"cmd": "pinterestdl",
+								"cfg": {
+									"url": "isi link instagram yang ada dalam pesan"
+								}
+							}
+						},
+						{
+							"description": "Jika pesan adalah perintah untuk mendownload menggunakan link youtube",
+							"output": {
+								"cmd": "ytm4a",
+								"cfg": {
+									"url": "isi link youtube yang ada dalam pesan"
 								}
 							}
 						}

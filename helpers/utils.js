@@ -106,6 +106,7 @@ async function utils({ Exp, cht, is, store }) {
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
         is.owner =  global.owner.some(a => { const jid = a?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
+		const groupDb = is.group ? Data.preferences[cht.id] : {}
 
         is.baileys = ["3EB","BAE5","BELL409","B1E"].some(a => cht?.key?.id.startsWith(a))
         is.botMention = cht?.mention?.includes(Exp.number)
@@ -116,7 +117,8 @@ async function utils({ Exp, cht, is, store }) {
         is.video = cht.type === "video"
         is.document = cht.type === "document"
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? []
-        if(is.baileys) return
+        is.mute = groupDb?.mute && !is.owner
+
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
             Exp.groupMetdata = groupMetadata
@@ -126,6 +128,7 @@ async function utils({ Exp, cht, is, store }) {
             is.botAdmin = Exp.groupAdmins.includes(Exp.number)
             is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
         }
+	    is.antibot = groupDb.antibot && !is.owner && !is.admin && is.baileys && is.botAdmin
 
         is.memories = cht.memories
         is.quoted = cht.quoted

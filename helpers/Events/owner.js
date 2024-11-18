@@ -469,7 +469,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
     ev.on({ 
         cmd: ['banned','unbanned'],
         listmenu: ['banned','unbanned'],
-        args: infos.owner.banned,
         tag: 'owner',
         isMention: infos.owner.banned,
         isOwner: true

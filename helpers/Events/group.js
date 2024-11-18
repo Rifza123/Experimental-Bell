@@ -113,7 +113,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isAdmin: true
     }, async() => {
         let input = cht.q?.trim().toLowerCase()
-        let actions = ["welcome","antilink","antitagall","mute"]
+        let actions = ["welcome","antilink","antitagall","mute","antibot"]
         let text = `Opsi yang tersedia:\n\n- ${actions.join("\n- ")}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`
         if(!actions.includes(input)){
           func.archiveMemories.setItem(cht.sender, "questionCmd", { 

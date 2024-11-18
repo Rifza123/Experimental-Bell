@@ -47,7 +47,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                      case 'starting':
                      case 'processing':
                      case 'mixing':
-                         cht.edit(data.msg, _key)
+                         data.msg && cht.edit(data.msg, _key)
                      break
                      case 'success':
                          await Exp.sendMessage(id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
