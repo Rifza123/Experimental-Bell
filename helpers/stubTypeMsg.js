@@ -128,7 +128,7 @@ ${group.desc}`:"")
           
         }
         
-        Data.audio?.welcome.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.welcome.getRandom() } }, { quoted: Data.fquoted?.welcome })
+        Data.audio?.welcome.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.welcome.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
        }
       break
       
@@ -154,7 +154,6 @@ Selamat tinggal ${members}`
         } else if(cfg.welcome == "linkpreview"){
           let welcome = {
             text,
-            mentions: oldMember,
             contextInfo: { 
                 externalAdReply: {
                     title: "Byee "+ oldMember.map(a => Exp.func.getName(a)).join(", "),
@@ -171,7 +170,8 @@ Selamat tinggal ${members}`
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: "120363301254798220@newsletter",
                     serverMessageId: 152
-                }
+                },
+                mentionedJid: oldMember
             }
           }
           await Exp.sendMessage(cht.id, welcome, { quoted: Data.fquoted?.welcome })
@@ -249,7 +249,7 @@ Selamat tinggal ${members}`
           
         }
         
-        Data.audio?.leave.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.leave.getRandom() } }, { quoted: Data.fquoted?.welcome })
+        Data.audio?.leave.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.leave.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
        }
       break
   }
