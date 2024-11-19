@@ -128,7 +128,7 @@ ${group.desc}`:"")
           
         }
         
-        Data.audio?.welcome.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.welcome.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
+        Data.audio?.welcome?.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.welcome.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
        }
       break
       
@@ -249,7 +249,7 @@ Selamat tinggal ${members}`
           
         }
         
-        Data.audio?.leave.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.leave.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
+        Data.audio?.leave?.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.leave.getRandom() }, mimetype: "audio/mpeg" }, { quoted: Data.fquoted?.welcome })
        }
       break
   }
