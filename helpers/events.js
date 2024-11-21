@@ -33,8 +33,9 @@ class EventEmitter {
     }
 
     getMediaType() {
-       return this.is.quoted ? { quoted: true, type: this.is.quoted.type }
-          : this.is.reaction ? { quoted: false, type: this.is.reaction.mtype }
+       let notmedia = ["conversation","extendedTextMessage"]
+       return (this.is.quoted && !notmedia.includes(this.is.quoted.type)) ? { quoted: true, type: this.is.quoted.type }
+          : (this.is.reaction && !notmedia.includes(this.is.reaction.mtype)) ? { quoted: false, type: this.is.reaction.mtype }
           : { quoted: false, type: this.cht.type };
     }
 

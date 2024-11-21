@@ -317,6 +317,7 @@ async function In({ cht,Exp,store,is,ev }) {
 							global.cfg.public = false
 							return cht.reply("Berhasil mengubah mode menjadi self!")
 						case 'voice':
+						  try{
 							cfg.ai_voice = cfg.ai_voice || "bella"
 							await Exp.sendPresenceUpdate('recording', cht?.id)
 							return Exp.sendMessage(cht?.id, {
@@ -328,6 +329,9 @@ async function In({ cht,Exp,store,is,ev }) {
 							}, {
 								quoted: cht
 							})
+						  } catch (e) {
+						     console.log(e.response)
+						  }
 						case 'tiktok':
 						case 'pinterestdl':
 						case 'menu':
