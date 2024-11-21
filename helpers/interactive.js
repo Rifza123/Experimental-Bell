@@ -144,6 +144,7 @@ async function In({ cht,Exp,store,is,ev }) {
 
 			case isSwap:
 				is?.quoted?.image && delete is.quoted.image
+				cht.cmd = "faceswap"
 				ev.emit("faceswap")
 				break
 
@@ -252,7 +253,7 @@ async function In({ cht,Exp,store,is,ev }) {
 								"output": {
 									"cmd": "lora",
 									"cfg": {
-										"prompt": "isi teks prompt yang menggambarkan tentang kamu, difoto close up, prompt yang menghasilkan gambar seolah-olah kamu itu sedang berfoto. tulis dalam bahasa inggris"
+										"prompt": "isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang berfoto ((tulis prompt dalam bahasa inggris))"
 									}
 								}
 							},
@@ -344,7 +345,7 @@ async function In({ cht,Exp,store,is,ev }) {
 							return ev.emit(config?.cmd)
 						case 'lora':
 							noreply = true
-							cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, dull colors, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, out of frame, multiple people, cluttered background, cartoonish, bad face, double face, abnormal`
+							cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
 							await cht.reply(config?.msg || "ok")
 							return ev.emit("txt2img")
 						case 'txt2img':
