@@ -55,7 +55,7 @@ for (let i of keys){
   global[i] = config[i]
 }
 
-//Antisipasi jika dalam cfg.clgic tidak di definisikan 
+//Antisipasi jika dalam cfg.clgic tidak di definisikan
 global.cfg.similarCmd = "similarCmd" in global.cfg ? global.cfg.similarCmd : true
 global.cfg.welcome = global.cfg?.welcome || "linkpreview"
 global.cfg.logic = global.cfg.logic || `

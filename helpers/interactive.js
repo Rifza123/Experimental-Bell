@@ -11,7 +11,7 @@ const {
 } = await (fol[2] + 'transcribe.js').r()
 const {
 	ai
-} = await `${fol[2]}reasoner.js`.r() 
+} = await `${fol[2]}reasoner.js`.r()
 
 const maxCommandExpired = 7000
 
