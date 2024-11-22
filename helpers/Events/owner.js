@@ -160,7 +160,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             func.archiveMemories.setItem(cht.sender, "questionCmd", { 
                 emit: `${cht.cmd} ${t1}`,
                 exp: Date.now() + 60000,
-                accepts: ["on","of","true","false"]
+                accepts: ["on","off","true","false"]
             })
           }
         }
