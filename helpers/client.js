@@ -37,22 +37,11 @@ async function client({ Exp, store, cht, is }) {
 
         /*!-======[ Block Chat ]======-!*/
 		const groupDb = is.group ? Data.preferences[cht.id] : {}
-		let maxWarn = 3
 	    
         if (global.cfg.public === false && !is.owner && !is.me) return
         
-        if(is.antibot) {
-            groupDb.warn = groupDb.warn || {}
-            groupDb.warn[cht.sender] = groupDb.warn[cht.sender] || 1
-            await cht.reply(`*Peringatan ke ${groupDb.warn[cht.sender]}⚠️*\n\nBot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!\n\n_Jika sudah di beri peringatan ${maxWarn} kali maka akan otomatis dikeluarkan!`)
-            groupDb.warn[cht.sender]++
-            if(groupDb.warn[cht.sender] > maxWarn){
-              await cht.reply("Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!")
-              delete groupDb.warn[cht.sender]
-              Exp.groupParticipantsUpdate(cht.id, [cht.sender], "remove")
-            }
-        }
-        if(is.baileys||is.mute) return
+        let except = is.antiTagall || is.antibot
+        if((is.baileys||is.mute) && !except) return
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
         if(!Data.ev) Data.ev = ev

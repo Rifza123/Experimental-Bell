@@ -63,14 +63,17 @@ async function In({ cht,Exp,store,is,ev }) {
 		let usr = cht.sender.split("@")[0]
 		let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
 		let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
-		let isAntiLink = chatDb?.antilink && (is.url.length > 0) && is.url.some(a => chatDb?.links.some(b => a.includes(b)))
-		let isAntiTagall = chatDb?.antitagall && (cht.mention?.length >= 5)
 		switch (!0) {
-			case isAntiLink:
+		    case is.antibot:
+                cht.warnGc({ type: "antibot", warn: "Bot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!", kick:"Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!", max: 5 })
+                break
+			case is.antilink:
+                await cht.warnGc({ type: "antilink", warn: "Anda terdeteksi mengirimkan link!. Harap ikuti peraturan disini untuk tidak mengirim link!", kick:"Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak mengirim link hingga peringatan terakhir!", max: 3})
 				cht.delete()
 				break
 
-			case isAntiTagall:
+			case is.antiTagall:
+                await cht.warnGc({ type: "antitagall", warn: "Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!", kick:"Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!", max: 3})
 				cht.delete()
 				break
 

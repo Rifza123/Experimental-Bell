@@ -45,6 +45,7 @@ Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
 let store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
 async function launch() {
+  try {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -173,8 +174,9 @@ async function launch() {
                  }
              }
 	    });
-
-	    
 	    store.bind(Exp.ev);
+	} catch (error) {
+	  console.error(error)
+	}
 }
 launch()

@@ -95,6 +95,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isGroup: true,
         isAdmin: true
     }, async() => {
+         if(Data.preferences[cht.id]["antitagall"]) return cht.reply("Tagall tidak di izinkan disini!")
          let mentions = Exp.groupMembers.map(a => a.id)
          let text = cht.cmd == "tagall" ? `\`${cht?.q ?? 'TAG ALL'}\`\n` : (cht.q||"")
          if(cht.cmd == "tagall"){

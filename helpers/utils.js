@@ -117,7 +117,8 @@ async function utils({ Exp, cht, is, store }) {
         is.video = cht.type === "video"
         is.document = cht.type === "document"
         is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? []
-        is.mute = groupDb?.mute && !is.owner
+        is.mute = groupDb?.mute && !is.owner && !is.me
+        is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner
 
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
@@ -129,6 +130,7 @@ async function utils({ Exp, cht, is, store }) {
             is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
         }
 	    is.antibot = groupDb.antibot && !is.owner && !is.admin && is.baileys && is.botAdmin
+        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b))) && !is.me && !is.owner && !is.admin && is.botAdmin
 
         is.memories = cht.memories
         is.quoted = cht.quoted
@@ -172,6 +174,25 @@ async function utils({ Exp, cht, is, store }) {
           } catch (e) {
             console.error("Error in 'cht.edit'\n"+e)
           }
+        }
+        
+        cht.warnGc = async({ type, warn, kick, max }) => {
+          let t = type||"antibot"
+          groupDb.warn = groupDb.warn || {}
+          groupDb.warn[cht.sender] = groupDb.warn[cht.sender] || {}
+          groupDb.warn[cht.sender][t] = groupDb.warn[cht.sender][t] || { value:1, reset: Date.now() + 3600000 }
+          if(groupDb.warn[cht.sender][t].reset < Date.now()) {
+            groupDb.warn[cht.sender][t] = { value:1, reset: Date.now() + 3600000 }
+          }
+          if(groupDb.warn[cht.sender][t].value >= max){
+              await cht.reply(kick)
+              delete groupDb.warn[cht.sender][t]
+              await Exp.groupParticipantsUpdate(cht.id, [cht.sender], "remove")
+          } else {
+              await cht.reply(`*Peringatan ke ${groupDb.warn[cht.sender][t].value}⚠️*\n\n${warn}\n\n_Jika sudah di beri peringatan ${max} kali maka akan otomatis dikeluarkan!_`)
+              groupDb.warn[cht.sender][t].value++
+          }
+          Data.preferences[cht.id] = groupDb
         }
 
     } catch (error) {
