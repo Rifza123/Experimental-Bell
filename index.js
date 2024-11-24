@@ -30,8 +30,7 @@ let {
   	makeInMemoryStore,
   	getBinaryNodeChild, 
   	jidNormalizedUser,
-  	Browsers,
-  	fetchLatestBaileysVersion
+  	Browsers
 } = baileys;
 
 /*!-======[ Functions Imports ]======-!*/
@@ -68,12 +67,10 @@ async function launch() {
   	}
   	
   	let { state, saveCreds } = await useMultiFileAuthState(session);
-        const { version } = await fetchLatestBaileysVersion();
         const Exp = makeWASocket({
             logger: pino({ level: 'silent' }),
             printQRInTerminal: !global.pairingCode,
             browser: Browsers.ubuntu('Chrome'),
-		    version,
             auth: state,
             getMessage: async (key) => {
               let jid = jidNormalizedUser(key.remoteJid)
