@@ -53,8 +53,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         args: infos.owner.set
     }, async () => {
         let fquotedKeys = Object.keys(Data.fquoted)
-        const [t1, t2, t3] = cht.q.split(" ")
-        
+        let [t1, t2, t3] = cht.q.split(" ")
+        if(!options[t1] && t1.includes("\n")){
+          t1 = t1.split("\n")[0]
+        }
 
         const mode = options[t1] || (t1 == "fquoted" 
            ? `Success ${fquotedKeys.includes(t2) ? "change" : "add"} fake quoted ${t2}\n\nList fake quoted:\n\n- ${!fquotedKeys.includes(t2) ? [...fquotedKeys, t2].join("\n- ") : fquotedKeys.join("\n- ")}`

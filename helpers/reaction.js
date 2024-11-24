@@ -32,7 +32,6 @@ async function react({ cht, Exp, store, is, ev }) {
 		       return ev.emit("play")
 		   
 		   case "📥":
-		   case "⬇️":
 		       if(!urltype) return cht.reply(Exp.func.tagReplacer(infos.reaction.download, { url:_url, listurl:[...new Set(Object.values(urls))].join("\n- ") }))
 		       is.url = url
 		       cht.q = _url
@@ -79,6 +78,16 @@ async function react({ cht, Exp, store, is, ev }) {
 		       return ev.emit("menu")
 		   case "🦶":
 		   case "🦵":
+		   case "🦵🏻":
+		   case "🦵🏼":
+		   case "🦵🏽":
+		   case "🦵🏾":
+		   case "🦵🏿":
+		   case "🦿":
+		   case "🦶🏼":
+		   case "🦶🏽":
+		   case "🦶🏾":
+		   case "🦶🏿":
 		       cht.mention = [mention]
 		       cht.cmd = "kick"
 		       ev.emit("kick")
