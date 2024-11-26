@@ -1,20 +1,27 @@
-const axios = "axios".import()
 const cheerio = "cheerio".import()
 
 export const mediafireDl = async (url) => {
-const res = await axios.get(url) 
-const $ = cheerio.load(res.data)
-const hasil = {}
-const link = $('a#downloadButton').attr('href')
-const size = $('a#downloadButton').text().replace('Download', '').replace('(', '').replace(')', '').replace('\n', '').replace('\n', '').replace('                         ', '')
-const seplit = link.split('/')
-const nama = seplit[5]
-let mime;
-mime = nama.split('.')
-mime = mime[1]
-hasil.title = nama 
-hasil.size = size
-hasil.link = link
-return hasil
-}
+  try {
+    const res = await fetch(url, { headers: { "upgrade-insecure-requests": "1" } });
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const dlButton = $('a#dlButton');
+    if (!dlButton.length) throw new Error("Download button not found.");
+    const link = dlButton.attr('href');
+    if (!link) throw new Error("Download link not found.");
+    const sizeText = dlButton.text().trim();
+    const size = sizeText.match(/\((.*?)\)/)?.[1] || "Unknown size";
+    const name = link.split('/').pop();
+    const mime = name.split('.').pop();
+    return {
+      title: name,
+      size: size,
+      link: link,
+      mime: mime,
+    };
+  } catch (error) {
+    console.error("Error in mediafireDl:", error.message);
+    return null;
+  }
+};
 

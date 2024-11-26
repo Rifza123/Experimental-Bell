@@ -142,7 +142,7 @@ async function launch() {
             await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });
         });
 
-        Exp.ev.on('creds.update', saveCreds);
+        !fs.existsSync(session + "/creds.json") && Exp.ev.on('creds.update', saveCreds);
         
         Exp.ev.on('messages.upsert', async ({
   			messages

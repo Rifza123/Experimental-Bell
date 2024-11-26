@@ -3,13 +3,18 @@ const fs = "fs".import()
 const axios = "axios".import()
 const https = 'https'.import()
 const moment = "timezone".import()
+const path = "path".import()
+const zlib = await "zlib".import()
+const stream = await "stream".import()
+const { pipeline } = stream
+const { exec } = "child".import()
 const os = await "os".import()
 const process = await "process".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
 const { color, bgcolor } = await `${fol[0]}color.js`.r()
 const Jimp = (await "jimp".import()).default
-const cache = new Map();
+const cache = new Map()
 const CACHE_DURATION = 1 * 60 * 1000;
 
 export class func {
@@ -42,18 +47,18 @@ export class func {
     }
     
     getGroupMetadata = async (chtId, Exp) => {
-        const currentTime = Date.now();
+        const currentTime = Date.now()
         if (cache.has(chtId) && (currentTime - cache.get(chtId).timestamp < CACHE_DURATION)) {
             return cache.get(chtId).metadata;
         }
-        const groupMetadata = await Exp.groupMetadata(chtId);
+        const groupMetadata = await Exp.groupMetadata(chtId)
         cache.set(chtId, {
             metadata: groupMetadata,
             timestamp: currentTime
-        });
+        })
         if (cache.size > 100) {
-            const keysToRemove = [...cache.keys()].slice(0, cache.size - 100);
-            keysToRemove.forEach(key => cache.delete(key));
+            const keysToRemove = [...cache.keys()].slice(0, cache.size - 100)
+            keysToRemove.forEach(key => cache.delete(key))
         }
         return groupMetadata;
     };
@@ -86,7 +91,7 @@ export class func {
     tagReplacer(text, obj) {
         return text.replace(/<([^>]+)>/g, (_, tag) => {
             return obj[tag] !== undefined ? obj[tag] : `<${tag}>`;
-        });
+        })
     }
 
     
@@ -318,19 +323,19 @@ export class func {
       switch (typeof milliseconds) {
         case 'number': {
           if (Number.isFinite(milliseconds)) {
-            return this.parseNumber(milliseconds);
+            return this.parseNumber(milliseconds)
           }
           break;
         }
 
         case 'bigint': {
-          return this.parseBigint(milliseconds);
+          return this.parseBigint(milliseconds)
         }
       }
 
-      throw new TypeError('Expected a finite number or bigint');
+      throw new TypeError('Expected a finite number or bigint')
    }
-    getRandomValue = (min, max) => min + Math.random() * (max - min);
+    getRandomValue = (min, max) => min + Math.random() * (max - min)
     
     dateFormatter = (time, timezone) => {
         const validTimezones = ['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura']
@@ -459,11 +464,11 @@ export class func {
         let matchFound = false;
         while ((matches = regex.exec(timeStr)) !== null) {
             matchFound = true;
-            const value = parseInt(matches[1]);
+            const value = parseInt(matches[1])
             if (isNaN(value)) {
                 return false;
             }
-            const unit = matches[2].toLowerCase();
+            const unit = matches[2].toLowerCase()
             if (!timeUnits[unit]) {
                 return false;
             }
@@ -493,28 +498,28 @@ export class func {
         let expiredSwap = (Date.now() - swps.last) >= time;
           if (expiredSwap) {
             delete Data.users[usr].fswaps;
-            cht.reply("Sesi faceswap telah berakhir");
+            cht.reply("Sesi faceswap telah berakhir")
           }
       }
-    }, parseInt(time) + 10000);
+    }, parseInt(time) + 10000)
   }
   
   rgbaToHex(r, g, b, a = 1) {
     let hex = '#' + [r, g, b].map(component => {
-      return component.toString(16).padStart(2, '0');
-    }).join('');
+      return component.toString(16).padStart(2, '0')
+    }).join('')
     if (a < 1) {
-      let alphaHex = Math.round(a * 255).toString(16).padStart(2, '0');
+      let alphaHex = Math.round(a * 255).toString(16).padStart(2, '0')
       hex += alphaHex;
     }
     return hex;
   }
 
   hexToRgba(hex) {
-    hex = hex.replace(/^#/, '');
-    let r = parseInt(hex.substring(0, 2), 16);
-    let g = parseInt(hex.substring(2, 4), 16);
-    let b = parseInt(hex.substring(4, 6), 16);
+    hex = hex.replace(/^#/, '')
+    let r = parseInt(hex.substring(0, 2), 16)
+    let g = parseInt(hex.substring(2, 4), 16)
+    let b = parseInt(hex.substring(4, 6), 16)
     let a = hex.length === 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
     return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
   }
@@ -528,10 +533,40 @@ export class func {
   }
   
   findValue(searchKey, text) {
-    const formattedText = text.replace(/(\w+):\s*([^\n]+)/g, (match, key, value) => `${key.toLowerCase()}: ${value}`);
-    const regex = new RegExp(`${searchKey.toLowerCase()}:\\s*([\\s\\S]*?)(?=\\n\\w+:|$)`, 'i');
-    const match = formattedText.match(regex);
+    const formattedText = text.replace(/(\w+):\s*([^\n]+)/g, (match, key, value) => `${key.toLowerCase()}: ${value}`)
+    const regex = new RegExp(`${searchKey.toLowerCase()}:\\s*([\\s\\S]*?)(?=\\n\\w+:|$)`, 'i')
+    const match = formattedText.match(regex)
     return match ? match[1].trim() : null;
   }
+  
+  async createTarGz(source, output) {
+    return new Promise((resolve, reject) => {
+      let sourceFolder = path.resolve(source)
+      let outputPath = path.resolve(output)
+      const tarFilePath = outputPath.replace('.gz', '')
+
+      exec(`tar --exclude='node_modules' --exclude='.git' -cf ${tarFilePath} -C ${path.dirname(sourceFolder)} ${path.basename(sourceFolder)}`, (err, stdout, stderr) => {
+        if (err) {
+          return reject({ status: false, msg: `Terjadi kesalahan saat membuat file tar: ${stderr}` })
+        }
+
+        const input = fs.createReadStream(tarFilePath)
+        const output = fs.createWriteStream(outputPath)
+        const gzip = zlib.createGzip()
+
+        input.pipe(gzip).pipe(output)
+
+        output.on('finish', () => {
+          fs.unlinkSync(tarFilePath)
+          resolve({ status: true, msg: `Backup selesai! File tar.gz: ${outputPath}` })
+        })
+
+        output.on('error', (err) => {
+          reject({ status: false, msg:`Terjadi kesalahan saat membuat file gzip: ${err.message}` })
+        })
+      })
+    })
+  }
+
 
 }

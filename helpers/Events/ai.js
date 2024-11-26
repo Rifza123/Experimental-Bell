@@ -70,6 +70,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['lora','sdlora'],
         listmenu: ['lora'],
         tag: 'stablediffusion',
+        premium: true,
         energy: 10
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
@@ -129,7 +130,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         listmenu: ['text2img'],
         tag: 'stablediffusion',
         energy: 35,
-        premium: false
+        premium: true
     }, async () => {
     const _key = keys[sender]
     if (!cht.q) return cht.reply(infos.ai.txt2img)

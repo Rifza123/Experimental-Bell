@@ -190,4 +190,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
            }
         }
     })
+    
+    ev.on({ 
+        cmd: ['gitclone'],
+        listmenu: ['gitclone'],
+        tag: 'downloader',
+        urls: {
+          formats: ["github.com"],
+          msg: true
+        },
+        energy: 2
+    }, async() => {
+      const repo = cht.q.split('https://github.com/')[1]?.replace('.git', '')
+      const repoName = repo?.split("/")[1]
+      const { default_branch } = await fetch(`https://api.github.com/repos/${repo}`).then(res => res.json())
+      const zipUrl = `https://github.com/${repo}/archive/refs/heads/${default_branch}.zip`
+      Exp.sendMessage(cht.id, { document: { url: zipUrl }, mimetype: 'application/zip', fileName: `${repoName}.zip` }, { quoted: cht })
+      .catch(e => cht.reply(`[❗LINK ERROR ❗]\n\nExample : ${cht.prefix}${cht.cmd} https://github.com/adiwajshing/baileys.git`))
+	})
 }

@@ -1,5 +1,6 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
+const path = "path".import()
 const { getContentType } = "baileys".import()
 
 /*!-======[ Function Imports ]======-!*/
@@ -529,5 +530,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
         cht.reply(`✅ **Status API Key**: ${isExpired ? "⛔ Kedaluwarsa" : "✅ Aktif"}\n🔒 **Batas Harian**: ${limit} hit\n📊 **Penggunaan Saat Ini**: ${usage} hit\n📈 **Total Hit**: ${totalHit} hit\n🟢 **Sisa Hit**: ${remaining} hit\n\n⏳ **Reset Limit**:\n   - **Waktu Reset**: ${reset}\n   - **Interval Reset**: ${resetTime.days} hari ${resetTime.hours} jam ${resetTime.minutes} menit ${resetTime.seconds} detik\n📅 **Masa Berlaku**:\n   - **Berakhir Pada**: ${expired}\n   - **Status Kedaluwarsa**: ${isExpired ? "✅ Sudah Kedaluwarsa" : "❌ Belum Kedaluwarsa"}\n\n✨ **Fitur yang Tersedia**:\n${featuresList}\n📌 **Catatan**: Gunakan API secara bijak dan sesuai dengan batas penggunaan.\n  `)
     })
-
+    
+    ev.on({ 
+        cmd: ['backup'], 
+        listmenu: ['backup'],
+        isOwner: true,
+        tag: "owner"
+    }, async ({ args }) => {
+      await cht.reply("Proses backup dimulai...")
+      let b = "./backup.tar.gz"
+      let s = await Exp.func.createTarGz("./",b)
+      if(!s.status) return cht.reply(s.msg)
+      await cht.edit(`File backup sedang dikirim${is.group ? " melalui private chat..." : "..."}`, keys[cht.sender])
+      await Exp.sendMessage(cht.sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz` }, { quoted: cht })
+      await cht.reply(`*Proses backup selesai✅️*${is.group ? "\nFile telah dikirimkan melalui chat pribadi" : "" }`)
+      fs.unlinkSync(b)
+    })
 }
