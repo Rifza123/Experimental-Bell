@@ -546,7 +546,7 @@ export class func {
       let outputPath = path.resolve(output)
       const tarFilePath = outputPath.replace('.gz', '')
 
-      exec(`tar --exclude='node_modules' --exclude='.git' -cf ${tarFilePath} -C ${path.dirname(sourceFolder)} ${path.basename(sourceFolder)}`, (err, stdout, stderr) => {
+      exec(`tar --exclude='node_modules' --exclude='.git' --exclude='.npm' -cf ${tarFilePath} -C ${path.dirname(sourceFolder)} ${path.basename(sourceFolder)}`, (err, stdout, stderr) => {
         if (err) {
           return reject({ status: false, msg: `Terjadi kesalahan saat membuat file tar: ${stderr}` })
         }
