@@ -397,7 +397,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if (!isOwnerAccess) return sendPremInfo({ text:infos.messages.premium(trial) });
         if (!is.owner) return cht.reply("Maaf, males nanggepin")
         if (cht.mention.length < 1) return sendPremInfo({ text });
-        if(!cht.quoted && !cht.q.includes("|")) return sendPremInfo({ _text: infos.owner.wrongFormat });
+        if(!cht.quoted && !cht.q.includes("|")) return sendPremInfo({ _text: infos.owner.wrongFormat, text });
         let time = (cht.q ? cht.q.split("|")[1] : false) || cht.q || false;
         if (!time) return sendPremInfo({ text });
         let sender = cht.mention[0].split("@")[0];
