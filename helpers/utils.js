@@ -20,6 +20,10 @@ async function utils({ Exp, cht, is, store }) {
             quoted: null,
         })
         
+        if (Data.preferences[cht.id] === undefined) {
+            Data.preferences[cht.id] = {}
+        }
+        
         const sender = cht?.participant || cht?.key?.participant || cht?.key?.remoteJid || Exp?.user?.id || ''
         cht.sender = await Exp.func['getSender'](sender)
         cht.delete = async () => Exp.sendMessage(cht.id, { delete: cht.key }).then(a => undefined)

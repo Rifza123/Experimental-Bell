@@ -11,9 +11,7 @@ async function client({ Exp, store, cht, is }) {
           if((cht.memories.banned * 1) > Date.now()) return
           Exp.func.archiveMemories.delItem(cht.sender, "banned")
         }
-        if (Data.preferences[cht.id] === undefined) {
-            Data.preferences[cht.id] = {}
-        }
+        
         if (Data.preferences[cht.id]?.ai_interactive === undefined) {
             if (is.group) {
                 Data.preferences[cht.id].ai_interactive = cfg.ai_interactive.group
