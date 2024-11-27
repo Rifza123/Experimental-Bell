@@ -18,6 +18,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	})
 	
 	ev.on({ 
+        cmd: ['gis','image','gimage','googleimage','gimg','googleimg'],
+        listmenu: ['googleimage'],
+        tag: 'search',
+        args: `Contoh: ${cht.msg} Xun'er`,
+        energy: 5
+    }, async() => {
+        let url = await await fetch(api.xterm.url + "/api/search/google-image?query=rule34 "+cht.q).then(async a => (await a.json()).data.getRandom())
+        Exp.sendMessage(id, { image: { url, }, caption: `Google image search: \`${cht.q}\`` }, { quoted: cht })
+        .catch(()=> cht.reply(`Failed downloading url: ${url}`))
+	})
+	
+	ev.on({ 
         cmd: ['pinvid','pinterestvid','pinterestvideo'],
         listmenu: ['pinterestvideo'],
         tag: 'search',
