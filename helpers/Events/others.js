@@ -92,7 +92,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
         energy: 25
     }, async() => {
       try {
-        let ab = cht.quoted.type.includes("viewOnce") ? [(await store.loadMessage(id, cht.quoted.stanzaId))] : store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
+        let ab = cht.quoted.type.includes("viewOnce") ? [
+          {
+            message: cht.quoted, 
+            key: {
+              remoteJid: cht.id,
+              fromMe: cht.quoted.sender == cht.id,
+              id: cht.quoted.stanzaId,
+              participant: cht.quoted.sender
+            } 
+          }
+        ] : store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
         if(ab.length == 0) return cht.reply(infos.others.noDetectViewOnce)
         for(let aa of ab){
             let thay = {

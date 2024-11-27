@@ -39,6 +39,7 @@ export class func {
                type === 'audioMessage' ? 'audio' :
                type === 'imageMessage' ? 'image' :
                type === 'viewOnceMessage' ? 'viewOnce' :
+               type === 'viewOnceMessageV2' ? 'viewOnce' :
                type
     }
 
