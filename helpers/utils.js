@@ -133,8 +133,8 @@ async function utils({ Exp, cht, is, store }) {
             is.botAdmin = Exp.groupAdmins.includes(Exp.number)
             is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
         }
-	    is.antibot = groupDb?.antibot && !is.owner && !is.admin && is.baileys && is.botAdmin
-        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b))) && !is.me && !is.owner && !is.admin && is.botAdmin
+	    is.antibot = groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin
+        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
 
         is.memories = cht.memories
         is.quoted = cht.quoted
