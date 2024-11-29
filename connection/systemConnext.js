@@ -1,21 +1,23 @@
 const chalk = "chalk".import()
 const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }) => {
-    const { connection, lastDisconnect } = update;
-  
-        console.log(chalk.yellow.bold('【 CONNECTION 】') +' -> ', chalk.cyan.bold(connection));
+    const { connection, lastDisconnect, receivedPendingNotifications } = update;
+    if (receivedPendingNotifications && !Exp.authState?.creds?.myAppStateKeyId) {
+        Exp.ev.flush()
+    }
+        connection && console.log(chalk.yellow.bold('【 CONNECTION 】') +' -> ', chalk.cyan.bold(connection));
     
 
     if (connection == 'close') {
         let statusCode = new Boom(lastDisconnect?.error)?.output.statusCode;
 
         switch (statusCode) {
-            case DisconnectReason.badSession:
+            case 405:
                 console.log(`Maaf, file sesi dinonaktifkan. Silakan melakukan pemindaian ulang🙏`);
                 Exp.logout();
                 console.log('Menghubungkan kembali dalam 5 detik....');
                 setTimeout(() => launch(), 5000);
                 break;
-            case DisconnectReason.connectionClosed:
+            case 418:
                 console.log("Koneksi terputus, mencoba menghubungkan kembali🔄");
                 setTimeout(() => launch(), 5000);
                 break;
@@ -23,16 +25,16 @@ const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }
                 console.log("Koneksi lain telah menggantikan, silakan tutup koneksi ini terlebih dahulu");
                 process.exit();
                 break;
-            case DisconnectReason.restartRequired:
-            case DisconnectReason.connectionLost:
+            case 502:
+            case 503:
                 console.log("Terjadi kesalahan, menghubungkan kembali🔄");
                 setTimeout(() => launch(), 5000);
                 break;
-            case DisconnectReason.loggedOut:
+            case 401:
                 console.log(`Perangkat keluar, silakan lakukan pemindaian ulang🔄`);
                 process.exit();
                 break;
-            case DisconnectReason.timedOut:
+            case 515:
                 console.log("Koneksi mencapai batas, harap muat ulang🔄");
                 setTimeout(() => launch(), 5000);
                 break;

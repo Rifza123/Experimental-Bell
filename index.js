@@ -30,6 +30,8 @@ let {
   	makeInMemoryStore,
   	getBinaryNodeChild, 
   	jidNormalizedUser,
+  	makeCacheableSignalKeyStore,
+  	fetchLatestBaileysVersion,
   	Browsers
 } = baileys;
 
@@ -41,7 +43,8 @@ Data.reaction = (await `${fol[1]}reaction.js`.r()).default
 Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
 Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
 
-let store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
+let logger = pino({ level: 'silent' })
+let store = makeInMemoryStore({ logger });
 
 async function launch() {
   try {
@@ -67,11 +70,19 @@ async function launch() {
   	}
   	
   	let { state, saveCreds } = await useMultiFileAuthState(session);
+  	   let { version } = await fetchLatestBaileysVersion()
         const Exp = makeWASocket({
-            logger: pino({ level: 'silent' }),
+            logger,
+            version,
             printQRInTerminal: !global.pairingCode,
             browser: Browsers.ubuntu('Chrome'),
             auth: state,
+            retryRequestDelayMs: 10,
+            transactionOpts: { 
+              maxCommitRetries: 10, 
+              delayBetweenTriesMs: 10
+            },
+            maxMsgRetryCount: 15,
             getMessage: async (key) => {
               let jid = jidNormalizedUser(key.remoteJid)
               let msg = await store.loadMessage(jid, key.id)
@@ -120,7 +131,7 @@ async function launch() {
             return await Exp.query({
 				tag: 'iq',
 				attrs: {
-				    to: id,
+				    to: "@s.whatsapp.net",
 					type:'set',
 					xmlns: 'w:profile:picture'
 				},
@@ -142,7 +153,7 @@ async function launch() {
             await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });
         });
 
-        !fs.existsSync(session + "/creds.json") && Exp.ev.on('creds.update', saveCreds);
+        Exp.ev.on('creds.update', saveCreds);
         
         Exp.ev.on('messages.upsert', async ({
   			messages
