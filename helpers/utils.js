@@ -134,7 +134,7 @@ async function utils({ Exp, cht, is, store }) {
             is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
         }
 	    is.antibot = groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin
-        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
+        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
 
         is.memories = cht.memories
         is.quoted = cht.quoted
@@ -172,9 +172,12 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
 
-        cht.edit = async function (text, key) {
+        cht.edit = async function (text, key, force) {
+          if(!("editmsg" in cfg)) cfg.editmsg = true
+          let msg = { text:text||"..." }
+          if(cfg.editmsg||force) msg.edit = key
           try {
-            await Exp.sendMessage(cht.id, { text:text||"...", edit: key }, { quoted: cht })
+            await Exp.sendMessage(cht.id, msg, { quoted: cht })
           } catch (e) {
             console.error("Error in 'cht.edit'\n"+e)
           }

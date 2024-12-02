@@ -6,6 +6,7 @@ export default
 
 async function client({ Exp, store, cht, is }) {
    // if(cht.id == "120363203820002181@g.us") return
+
     try {
         if(cht.memories?.banned){
           if((cht.memories.banned * 1) > Date.now()) return

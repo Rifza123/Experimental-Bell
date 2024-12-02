@@ -24,7 +24,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let pin = Object.values(p.videos)[0].url
         Exp.sendMessage(id, { video: { url: pin }, mimetype: "video/mp4" }, { quoted: cht })
     })
-    
+  
     ev.on({ 
       cmd: ['mediafire', 'mediafiredl'], 
       listmenu: ['mediafire'], 
@@ -40,12 +40,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await cht.edit('```Processing...```', _key)
         try {
             let m = await mediafireDl(urls[0])
-            await cht.edit("Checking media type...", _key)
             let { headers } = await axios.get(m.link)
             let type = headers["content-type"]
             await cht.edit("Sending...", _key )
             await Exp.sendMessage(id, { document: { url: m.link }, mimetype: type, fileName: m.title }, { quoted: cht })
-            await cht.edit("Success", _key )
         } catch (e) {
             await cht.edit("TypeErr: " + e, _key )
         }
@@ -74,7 +72,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
             await Exp.sendMessage(id, { video: { url: data.media[1].url } }, { quoted: cht })
         }
          await Exp.sendMessage(id, { audio: { url: data.audio.url }, mimetype: "audio/mpeg"}, { quoted: cht })
-        await cht.edit("Dah tuh", _key)
     })
 
     ev.on({ 
@@ -90,7 +87,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if (!q) return cht.reply('Harap sertakan url/judul videonya!')
         try {
             await cht.edit("Searching...", _key)
-            console.log(q,args)
             let search = (await fetch(`${api.xterm.url}/api/search/youtube?query=${q}&key=${api.xterm.key}`).then(a => a.json())).data
             await cht.edit("Downloading...", _key)
             let item = search.items[0]

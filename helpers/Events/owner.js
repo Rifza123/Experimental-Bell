@@ -24,6 +24,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         autoreadpc: 'auto read pc',
         autoreadgc: 'auto read group',
         premium_mode: 'premium mode',
+        editmsg: 'edit message',
         similarCmd: 'similarity command'
     }
 
@@ -225,7 +226,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                  list += `\n - ${i}`
              }
              cht.reply(list)
-         } else cht.replyWithTag(infos.owner.badwordActionNotfound, { cmd: cht.prefix + cht.cmd })
+         } else cht.replyWithTag(infos.owner.badwordAddNotfound, { cmd: cht.prefix + cht.cmd })
          
     })
     
@@ -545,5 +546,27 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await Exp.sendMessage(cht.sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz` }, { quoted: cht })
       await cht.reply(`*Proses backup selesai✅️*${is.group ? "\nFile telah dikirimkan melalui chat pribadi" : "" }`)
       fs.unlinkSync(b)
+    })
+    
+    ev.on({ 
+        cmd: ['csesi','clearsesi','clearsession','clearsessi'], 
+        listmenu: ['clearsesi'],
+        isOwner: true,
+        tag: "owner"
+    }, async ({ args }) => {
+      await cht.reply("Clearing session...")
+      let sessions = fs.readdirSync(session).filter(a => a !== "creds.json")
+      //const perStep = Math.ceil(sessions.length / 5)
+      for(let i = 0; i < sessions.length; i++){
+        await sleep(250)
+        fs.unlinkSync(session +"/"+ sessions[i])
+        /*
+        if ((i + 1) % perStep === 0 || i + 1 === sessions.length) {
+          const progress = Math.round(((i + 1) / sessions.length) * 100)
+          cht.edit(`Progress: ${progress}%`, keys[cht.sender], true)
+         }
+         */
+      }
+      cht.reply("Success clearing session✅️")
     })
 }

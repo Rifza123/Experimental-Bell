@@ -27,14 +27,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
     }, async({ media }) => {
         const _key = keys[sender]
-        await cht.edit(infos.messages.wait, _key)
+        await cht.edit(infos.messages.wait, _key, true)
         axios.post(`${api.xterm.url}/api/audioProcessing/voice-covers?model=${cht.q}&key=${api.xterm.key}`, media, {
             headers: {
                 'Content-Type': 'application/octet-stream'
             },
             responseType: 'stream'
         })
-         .then(response => {
+         .then(async response => {
            response.data.on('data', async chunk => {
              const eventString = chunk.toString()
              const eventData = eventString.match(/data: (.+)/)
@@ -47,14 +47,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                      case 'starting':
                      case 'processing':
                      case 'mixing':
-                         data.msg && cht.edit(data.msg, _key)
+                         data.msg && cht.edit(data.msg, _key, true)
                      break
                      case 'success':
                          await Exp.sendMessage(id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
                          response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit(infos.messages.failed, _key)
+                         await cht.reply(infos.messages.failed)
                          response.data.destroy() 
                      break
                  }
@@ -101,7 +101,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         } else if(['imglarger','enlarger','enlarge'].includes(cht.cmd)){
            type = "enlarger"
         }
-        await cht.edit(infos.messages.wait, _key)
+        await cht.edit(infos.messages.wait, _key, true)
         let tph = await tmpFiles(media)
         try{
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
@@ -109,7 +109,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             if(!ai.status) return cht.reply(ai?.msg || "Error!")
             while(tryng < 50){
                let s = await fetch(api.xterm.url + "/api/img2img/filters/batchProgress?id="+ai.id).then(a => a.json())
-               cht.edit(s?.progress || "Prepare... ", _key)
+               await cht.edit(s?.progress || "Prepare... ", _key, true)
                if(s.status == 3){
                   return Exp.sendMessage(id, { image: { url: s.url } }, { quoted: cht })                
                }
@@ -143,7 +143,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let loraPart = model.split("[")[1]?.replace("]", "")
     let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
 
-    await cht.edit(infos.messages.wait, _key)
+    await cht.edit(infos.messages.wait, _key, true)
 
       try {
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -210,9 +210,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             let s = await sResponse.json()
 
             if (s.taskStatus === 0) {
-                await cht.edit('```Starting..```', _key)
+                await cht.edit('```Starting..```', _key, true)
             } else if (s.taskStatus === 1) {
-                await cht.edit("Processing.... " + s.progress + "%", _key)
+                await cht.edit("Processing.... " + s.progress + "%", _key, true)
             } else if (s.taskStatus === 2) {
                 return Exp.sendMessage(id, { image: { url: s.result.url } }, { quoted: cht })
             } else if (s.taskStatus === 3) {
@@ -289,7 +289,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 responseType: 'stream'
             })
              let rsp = "rfz"
-            response.data.on('data', (chunk) => {
+            response.data.on('data', async (chunk) => {
                 try {
                     const eventString = chunk.toString()
                     const eventData = eventString.match(/data: (.+)/)
@@ -304,14 +304,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                         console.log(data)
                         switch (data.status) {
                             case "processing":
-                                cht.edit(("Processing.... " + data.progress + "%"), _key)
+                                cht.edit(("Processing.... " + data.progress + "%"), _key, true)
                             break
                             case "failed":
-                                cht.reply(data.status)
+                                await cht.reply(data.status)
                                 response.data.destroy()
                                 break
                             case "completed":
-                                Exp.sendMessage(id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
+                                await Exp.sendMessage(id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
                                 response.data.destroy()
                                 break
                             default:
@@ -523,7 +523,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async({ media }) => {
         const _key = keys[sender]
         const prompt = cht.q
-        await cht.edit(infos.messages.wait, _key)
+        await cht.edit(infos.messages.wait, _key, true)
         axios({
                 method: 'post',
                 url: `${api.xterm.url}/api/audioProcessing/song-generator`,  
@@ -540,7 +540,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                  switch (data.status){
                      case 'queueing':
                      case 'generating':
-                         cht.edit(data.msg, _key)
+                         cht.edit(data.msg, _key, true)
                      break
                      case 'success':
                        const audio = {
@@ -569,7 +569,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                        response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit(infos.messages.failed, _key)
+                         cht.reply(infos.messages.failed)
                          response.data.destroy() 
                      break
                  }
@@ -621,7 +621,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           target = await tmpFiles(media)
           face = is.url?.[0] ? is.url[0] : is?.image ? await tmpFiles(await cht.download()) : false
         }
-        await cht.edit(infos.messages.wait, _key)
+        await cht.edit(infos.messages.wait, _key, true)
         axios({
                 method: 'post',
                 url: `${api.xterm.url}/api/img2img/faceswap`,
@@ -638,14 +638,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                  switch (data.status){
                      case 'queueing':
                      case 'generating':
-                         cht.edit(data.msg, _key)
+                         cht.edit(data.msg, _key, true)
                      break
                      case 'success':
                        await Exp.sendMessage(id, { image: { url: data.result } }, { quoted: cht })
                        response.data.destroy()
                      break
                      case 'failed':
-                         cht.edit(infos.messages.failed, _key)
+                         cht.reply(infos.messages.failed)
                          response.data.destroy() 
                      break
                  }

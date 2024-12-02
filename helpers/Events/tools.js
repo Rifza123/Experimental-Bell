@@ -30,7 +30,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
          await cht.edit('Processing...', _key)
        let res = (await fetch(api.xterm.url + "/api/tools/remini?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
          await Exp.sendMessage(id, { image: { url: res.url }, caption: `Response Time: ${res.run_Time}`}, { quoted: cht })
-         cht.edit("Nih", _key)
     })
      
 	ev.on({ 
@@ -87,7 +86,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let type = cht.q ? cht.q : "stdx4"
         if(cht.q == "list") return cht.reply(infos.tools.enhance)
         if(cht.q && !(["phox2","phox4","anix2","anix4","stdx2","stdx4","cf","text"].includes(cht.q))) return cht.reply("Type tidak ada! mungkin salah ketik!\n\n" +infos.tools.enhance)
-        await cht.edit("Uploading image...", _key)
+        await cht.edit("Uploading image...", _key, true)
         let imgurl = await catbox(media)
         let ai = await fetch(`${api.xterm.url}/api/tools/enhance/createTask?url=${imgurl}&type=${type}&key=${api.xterm.key}`)
         .then(response => response.json())
@@ -97,8 +96,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
           try{
             let s = await fetch(`${api.xterm.url}/api/tools/enhance/taskStatus?id=${ai.id}`)
             .then(response => response.json())
-            if(!s.status) return cht.edit(`Status: ${s?.status}\nMessage: Failed!`, _key)
-            await cht.edit(`Status: ${s?.status}\nProgress: ${s?.progress}%`, _key)
+            if(!s.status) return cht.reply(`Status: ${s?.status}\nMessage: Failed!`)
+            await cht.edit(`Status: ${s?.status}\nProgress: ${s?.progress}%`, _key, true)
             if (s.task_status == "failed") {
                 return cht.reply(s.task_status)
             }
@@ -197,10 +196,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
          }, async({ cht }) => {
              ${evaled.replace("cht.sender","cht.id")}
          })`)
+         console.log(random)
          await sleep(3000)
-         await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
+        // await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
          await sleep(3000)
-         await Exp.sendMessage(cht.sender, { text: evaled }, { quoted: cht })
+         await Exp.sendMessage(owner[0], { text: evaled }, { quoted: cht })
        } catch(e) {
            console.log(cht.quoted)
        }
@@ -270,7 +270,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
          await cht.edit('Processing...', _key)
        let res = (await fetch(api.xterm.url + "/api/tools/image-removebg?url=" + tph + "&key=" + api.xterm.key).then(a => a.json())).data
          await Exp.sendMessage(id, { image: { url: res.url } }, { quoted: cht })
-         cht.edit("Nih", _key)
     })
    
     ev.on({ 
@@ -301,7 +300,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
               result += `    Height: ${object.Bounds.Height}\n\n`
            })
          await Exp.sendMessage(id, { image: { url: res.url }, caption: result }, { quoted: cht })
-         cht.edit("Nih", _key)
     })
     
     ev.on({ 

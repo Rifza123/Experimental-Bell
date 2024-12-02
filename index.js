@@ -31,7 +31,6 @@ let {
   	getBinaryNodeChild, 
   	jidNormalizedUser,
   	makeCacheableSignalKeyStore,
-  	fetchLatestBaileysVersion,
   	Browsers
 } = baileys;
 
@@ -70,19 +69,11 @@ async function launch() {
   	}
   	
   	let { state, saveCreds } = await useMultiFileAuthState(session);
-  	   let { version } = await fetchLatestBaileysVersion()
         const Exp = makeWASocket({
             logger,
-            version,
             printQRInTerminal: !global.pairingCode,
             browser: Browsers.ubuntu('Chrome'),
             auth: state,
-            retryRequestDelayMs: 10,
-            transactionOpts: { 
-              maxCommitRetries: 10, 
-              delayBetweenTriesMs: 10
-            },
-            maxMsgRetryCount: 15,
             getMessage: async (key) => {
               let jid = jidNormalizedUser(key.remoteJid)
               let msg = await store.loadMessage(jid, key.id)

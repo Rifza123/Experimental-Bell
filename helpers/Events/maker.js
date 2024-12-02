@@ -188,6 +188,24 @@ export default async function on({
 			})
 		});
 	})
-
-
+	
+	ev.on({
+		cmd: ['brat', 'bart', 'bratgenerator'],
+		listmenu: ['brat'],
+		tag: "maker",
+		args: `Example: ${cht.msg} halo`
+	}, async () => {
+        let buff = await func.getBuffer(`https://siputzx-bart.hf.space/?q=${encodeURIComponent(cht.q)}`)
+		let res = await exif["writeExifImg"](buff, {
+			packname: 'My brat sticker',
+			author: 'Ⓒ' + cht.pushName
+		})
+		Exp.sendMessage(id, {
+			sticker: {
+				url: res
+			}
+		}, {
+			quoted: cht
+		})
+	})
 }

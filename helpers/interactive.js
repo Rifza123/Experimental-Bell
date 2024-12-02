@@ -213,6 +213,13 @@ async function In({ cht,Exp,store,is,ev }) {
 								}
 							},
 							{
+								"description": "Jika dalam pesan ada yang ingin memberikan donasi atau donate",
+								"output": {
+									"cmd": "donasi",
+									"msg": "Isi pesan kamu seperti sedang memberikan metode pembayaran qris untuk donasi"
+								}
+							},
+							{
 								"description": "Jika dalam pesan ada link tiktok.com dan lalu diminta untuk mendownloadnya",
 								"output": {
 									"cmd": "tiktok",
@@ -335,6 +342,9 @@ async function In({ cht,Exp,store,is,ev }) {
 						  } catch (e) {
 						     console.log(e.response)
 						  }
+						case "donasi": 
+						  noreply = true
+						  return Exp.sendMessage(cht.id, { image: { url: "https://files.catbox.moe/7wqoq2.jpg" }, caption: config?.msg }, { quoted: cht })
 						case 'tiktok':
 						case 'pinterestdl':
 						case 'menu':
@@ -387,7 +397,11 @@ async function In({ cht,Exp,store,is,ev }) {
 						config.energyreply = true
 					}
 					if (config?.cmd !== "voice" && !noreply) {
-						config?.msg && await cht[config?.energyreply ? "edit" : "reply"](config?.msg, keys[cht.sender])
+						const method = cfg.editmsg && config?.energyreply ? "edit" : "reply";
+						if (config?.msg) {
+				          await cht[method](config.msg, keys[cht.sender]);
+				        }
+
 					}
 				} catch (error) {
 					console.error("Error parsing AI response:", error)

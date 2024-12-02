@@ -71,7 +71,7 @@ class EventEmitter {
             await on({ ...this, ev: this });
             return
         } catch (error) {
-            console.error(`[ERROR] ${error.stack}`);
+            console.error(`[ERROR] load file: ${file}\n\nStack: ${error.stack}`);
             return
         }
     }
@@ -88,7 +88,7 @@ class EventEmitter {
                 await this.loadEventHandler(file);
             }
         } catch (error) {
-            console.error(`[ERROR] ${error.stack}`);
+            console.error(`[ERROR] Loading Event Handlers:\n${error.stack}`);
         }
     }
 

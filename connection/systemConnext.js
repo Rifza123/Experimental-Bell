@@ -1,3 +1,4 @@
+const fs = "fs".import()
 const chalk = "chalk".import()
 const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }) => {
     const { connection, lastDisconnect, receivedPendingNotifications } = update;
@@ -14,6 +15,7 @@ const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }
             case 405:
                 console.log(`Maaf, file sesi dinonaktifkan. Silakan melakukan pemindaian ulang🙏`);
                 Exp.logout();
+                fs.unlinkSync(session + "/creds.json")
                 console.log('Menghubungkan kembali dalam 5 detik....');
                 setTimeout(() => launch(), 5000);
                 break;
@@ -32,6 +34,7 @@ const Connecting = async ({ update, Exp, Boom, DisconnectReason, sleep, launch }
                 break;
             case 401:
                 console.log(`Perangkat keluar, silakan lakukan pemindaian ulang🔄`);
+                fs.unlinkSync(session + "/creds.json")
                 process.exit();
                 break;
             case 515:

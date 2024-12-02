@@ -124,7 +124,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
           })
           return cht.reply(text)
         }
-        console.log(cht.cmd)
         let sets = Data.preferences[cht.id]
             sets[input] = sets[input] || false
         if(cht.cmd == "on" && sets[input]) return cht.reply(`*${input}* sudah aktif disini!`)

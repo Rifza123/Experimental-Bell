@@ -22,6 +22,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['googleimage'],
         tag: 'search',
         args: `Contoh: ${cht.msg} Xun'er`,
+        badword: true,
         energy: 5
     }, async() => {
         let url = await await fetch(api.xterm.url + "/api/search/google-image?query=rule34 "+cht.q).then(async a => (await a.json()).data.getRandom())

@@ -46,7 +46,9 @@ infos.set = `
 - autoreadsw <on/off>
 - autoreadpc <on/off>
 - autoreadgc <on/of>
+- similarCmd <on/off>
 - premium_mode <on/of>
+- editmsg <on/off>
 - fquoted <name> <object or quoted>
 - welcome <type>
 - logic <logic>
