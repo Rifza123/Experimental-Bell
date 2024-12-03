@@ -179,3 +179,6 @@ async function launch() {
 	}
 }
 launch()
+process.on("uncaughtException", e => {
+  console.error(e)
+})

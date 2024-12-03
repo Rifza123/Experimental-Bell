@@ -1,4 +1,5 @@
 async function GeminiImage(image, query) {
+  try {
     const response = await fetch(`${api.xterm.url}/api/img2txt/gemini-image?key=${api.xterm.key}`, {
         method: 'POST',
         headers: {
@@ -13,5 +14,9 @@ async function GeminiImage(image, query) {
 
     const data = await response.json();
     return data.response
+  } catch(e) {
+     console.error("Error in gemini.js :"+ e.message)
+     return {}
+  }
 };
 export { GeminiImage }

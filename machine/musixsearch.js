@@ -12,7 +12,7 @@ async function musixSearch(buffer) {
 
     return title
   } catch (error) {
-    console.error('Error uploading audio buffer:', error)
+    console.error('Error in musixsearch: ', error)
     return "gagal!"
   }
 }

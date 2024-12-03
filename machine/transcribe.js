@@ -10,7 +10,7 @@ async function transcribe(buffer) {
     let result = await response.json()
     return result.data
   } catch (error) {
-    console.error('Error uploading audio buffer:', error)
+    console.error('Error in transcribe.js :', error)
     return "gagal!"
   }
 }
