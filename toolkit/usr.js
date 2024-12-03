@@ -157,6 +157,7 @@ export class ArchiveMemories {
     static getItem(usr, item) {
         const userJid = String(usr)
         const userId = userJid.split("@")[0];
+        if(!(userId in global.Data.users)) return false
         let userData = global.Data.users[userId]
         let items = {
           chat: 0,
@@ -180,6 +181,7 @@ export class ArchiveMemories {
     static setItem(usr, item, value) {
         const userJid = String(usr)
         const userId = userJid.split("@")[0];
+        if(!(userId in global.Data.users)) return false
         global.Data.users[userId][item] = value;
         return global.Data.users[userId];
     }
@@ -187,6 +189,7 @@ export class ArchiveMemories {
     static delItem(usr, item) {
         const userJid = String(usr)
         const userId = userJid.split("@")[0];
+        if(!(userId in global.Data.users)) return false
             delete global.Data.users[userId][item]
         return global.Data.users[userId];
     }

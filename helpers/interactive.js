@@ -17,18 +17,19 @@ const maxCommandExpired = 7000
 
 export default
 async function In({ cht,Exp,store,is,ev }) {
+    const { func } = Exp
 	try {
-		const commandExpired = Exp.func.archiveMemories.getItem(cht.sender, "commandExpired")
+		const commandExpired = func.archiveMemories.getItem(cht.sender, "commandExpired")
 		let isPendingCmd = (["y", "iy", "iya", "yakin", "hooh", "iye", "iyh"].includes(cht?.msg?.toLowerCase()) && Date.now() < commandExpired) ?
-			Exp.func.archiveMemories.getItem(cht.sender, "command") :
+			func.archiveMemories.getItem(cht.sender, "command") :
 			false
 		cht.msg = isPendingCmd ? isPendingCmd : cht.msg
 		if (isPendingCmd) {
-			await Exp.func.archiveMemories.delItem(cht.sender, "command")
-			await Exp.func.archiveMemories.delItem(cht.sender, "commandExpired")
+			await func.archiveMemories.delItem(cht.sender, "command")
+			await func.archiveMemories.delItem(cht.sender, "commandExpired")
 		}
 
-		let questionCmd = Exp.func.archiveMemories.getItem(cht.sender, "questionCmd")
+		let questionCmd = func.archiveMemories.getItem(cht.sender, "questionCmd")
 		let isQuestionCmd = questionCmd ? (questionCmd.accepts.some(i => i == cht?.msg?.toLowerCase()) || questionCmd.accepts.length < 1) : false
 		let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
 		let isEval = cht?.msg?.startsWith('>')
@@ -61,9 +62,45 @@ async function In({ cht,Exp,store,is,ev }) {
 				(is?.owner && is?.botMention)
 			)
 		let usr = cht.sender.split("@")[0]
-		let usr_swap = Exp.func.archiveMemories.getItem(cht.sender, "fswaps")
+		let usr_swap = func.archiveMemories.getItem(cht.sender, "fswaps")
 		let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
+		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => func.archiveMemories.getItem(a, "afk") && a !== cht.sender) && !is.me && is.group
+		let userAfk = is.group && func.archiveMemories.getItem(cht.sender, "afk")
+		let isAfk = Boolean(userAfk)
+
 		switch (!0) {
+		    case isTagAfk:
+		        let maxTag = 10
+		        let tagAfk = func.archiveMemories.getItem(cht.mention[0], "afk")
+		        let userData = await Exp.func.archiveMemories.get(cht.sender)
+		        tagAfk.taggedBy = tagAfk.taggedBy||{}
+		        if(!(cht.sender in tagAfk.taggedBy)) tagAfk.taggedBy[cht.sender] = 0
+		        tagAfk.taggedBy[cht.sender]++
+		        if(tagAfk.taggedBy[cht.sender] >= maxTag){
+		          await cht.reply(`Kamu telah di banned dari bot selama 1 hari karena melakukan tag hingga ${maxTag}x`)
+		          delete tagAfk.taggedBy[cht.sender]
+		          let tme = "1 Hari"
+		          let _time = func.parseTimeString(tme)
+                    if (!("banned" in userData)) {
+                      userData.banned = 0
+                    }
+		          let date = (userData.banned && (userData.banned > Date.now())) ? userData.banned:Date.now() 
+                  let bantime = (date +_time)
+                  await Exp.sendMessage(cht.sender, { text: `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️` })
+		          return func.archiveMemories.setItem(cht.sender, "banned", bantime)
+		        }
+		        if(is.botAdmin) await cht.delete()
+		        
+		        let rsn = `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, "Asia/Jakarta")}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[cht.sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`
+		        await cht.reply(rsn)
+		        func.archiveMemories.setItem(cht.mention[0], "afk", tagAfk)
+		        break
+		    case isAfk:
+		        let dur = func.formatDuration(Date.now() - userAfk.time)
+		        let text = `@${cht.sender.split("@")[0]} *Telah kembali dari AFK!*\nSetelah ${userAfk.reason} selama ${dur.days > 0 ? dur.days+"hari ":''}${dur.hours > 0 ? dur.hours+"jam ":''}${dur.minutes > 0 ? dur.minutes+"menit ":''}${dur.seconds > 0 ? dur.seconds+"detik ":''}${dur.milisecondss > 0 ? dur.milisecondss+"ms ":''}`
+		        await cht.reply(text, { mentions: [cht.sender] })
+		        func.archiveMemories.delItem(cht.sender, "afk")
+		        break
 		    case is.antibot:
                 cht.warnGc({ type: "antibot", warn: "Bot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!", kick:"Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!", max: 5 })
                 break
@@ -71,15 +108,13 @@ async function In({ cht,Exp,store,is,ev }) {
                 await cht.warnGc({ type: "antilink", warn: "Anda terdeteksi mengirimkan link!. Harap ikuti peraturan disini untuk tidak mengirim link!", kick:"Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak mengirim link hingga peringatan terakhir!", max: 3})
 				cht.delete()
 				break
-
 			case is.antiTagall:
                 await cht.warnGc({ type: "antitagall", warn: "Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!", kick:"Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!", max: 3})
 				cht.delete()
 				break
-
 			case isQuestionCmd:
 				if (Date.now() > questionCmd.emit.exp) {
-					Exp.func.archiveMemories.delItem(cht.sender, "questionCmd")
+					func.archiveMemories.delItem(cht.sender, "questionCmd")
 					return
 				}
 				let [cmd, ...q] = questionCmd.emit.split` `
@@ -88,14 +123,13 @@ async function In({ cht,Exp,store,is,ev }) {
 					`${q.join(" ")} ${cht.msg?.trim()}`.trim() :
 					`${cht.msg?.trim()}`.trim()
 				ev.emit(cmd)
-				Exp.func.archiveMemories.delItem(cht.sender, "questionCmd")
+				func.archiveMemories.delItem(cht.sender, "questionCmd")
 				break
-
 			case isEvalSync:
 				if (!is?.owner) return
 				if (isDangerous) {
-					Exp.func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					Exp.func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
+					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				try {
@@ -110,8 +144,8 @@ async function In({ cht,Exp,store,is,ev }) {
 			case isEval:
 				if (!is?.owner) return
 				if (isDangerous) {
-					Exp.func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					Exp.func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
+					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				try {
@@ -128,8 +162,8 @@ async function In({ cht,Exp,store,is,ev }) {
 			case isExec:
 				if (!is?.owner) return
 				if (isDangerous) {
-					Exp.func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					Exp.func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
+					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				let txt
@@ -162,8 +196,8 @@ async function In({ cht,Exp,store,is,ev }) {
 					user.autoai.response = false
 				}
 				if (user.autoai.use > user.autoai.max && !premium) {
-					let formatTimeDur = Exp.func.formatDuration(user.autoai.reset - Date.now())
-					let resetOn = Exp.func.dateFormatter(user.autoai.reset, "Asia/Jakarta")
+					let formatTimeDur = func.formatDuration(user.autoai.reset - Date.now())
+					let resetOn = func.dateFormatter(user.autoai.reset, "Asia/Jakarta")
 					let txt = `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`
 					if (!user.autoai.response) {
 						user.autoai.response = true
@@ -188,7 +222,7 @@ async function In({ cht,Exp,store,is,ev }) {
 					let download = is.image ? cht?.download : cht?.quoted?.download
 					isImage = await download()
 				}
-				chat = Exp.func.clearNumbers(chat)
+				chat = func.clearNumbers(chat)
 				try {
 					let _ai = await ai({
 						text: chat,
@@ -197,10 +231,10 @@ async function In({ cht,Exp,store,is,ev }) {
 						nickainame: botnickname,
 						senderName: cht?.pushName,
 						ownerName: ownername,
-						date: Exp.func.newDate(),
+						date: func.newDate(),
 						role: cht?.memories?.role,
 						msgtype: cht?.type,
-						custom_profile: Exp.func.tagReplacer(cfg.logic, {
+						custom_profile: func.tagReplacer(cfg.logic, {
 							botfullname,
 							botnickname
 						}),
@@ -315,7 +349,7 @@ async function In({ cht,Exp,store,is,ev }) {
 						]
 					})
 					let config = _ai?.data || {}
-					await Exp.func.addAiResponse()
+					await func.addAiResponse()
 					let noreply = false
 					switch (config?.cmd) {
 						case 'public':
@@ -392,7 +426,7 @@ async function In({ cht,Exp,store,is,ev }) {
 						} else {
 							conf.action = "addEnergy"
 						}
-						await Exp.func.archiveMemories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
+						await func.archiveMemories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
 						await cht.reply(config.energy + " Energy⚡️")
 						config.energyreply = true
 					}

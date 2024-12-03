@@ -169,4 +169,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
        }
     })
     
+    ev.on({ 
+        cmd: ['afk'],
+        listmenu: ['afk'],
+        tag: 'group',
+        isGroup: true,
+    }, async({ args }) => {
+      let alasan = args || "Tidak diketahui"
+      if(alasan.length > 100) return cht.reply("Alasan tidak boleh lebih dari 100 karakter!")
+      func.archiveMemories.setItem(cht.sender, "afk", { 
+        time: Date.now(),
+        reason: alasan
+      })
+      cht.reply(`@${cht.sender.split("@")[0]} Sekarang *AFK!*\n\n- Dengan alasan: ${alasan}\n- Waktu: ${func.dateFormatter(Date.now(), "Asia/Jakarta")}`, { mentions: [cht.sender] })
+    })
 }

@@ -6,11 +6,11 @@ export default
 
 async function client({ Exp, store, cht, is }) {
    // if(cht.id == "120363203820002181@g.us") return
-
+   let { func } = Exp
     try {
-        if(cht.memories?.banned){
+        if(cht.memories?.banned && !is.owner){
           if((cht.memories.banned * 1) > Date.now()) return
-          Exp.func.archiveMemories.delItem(cht.sender, "banned")
+          func.archiveMemories.delItem(cht.sender, "banned")
         }
         
         if (Data.preferences[cht.id]?.ai_interactive === undefined) {
@@ -25,13 +25,13 @@ async function client({ Exp, store, cht, is }) {
         if (!is.group && cht.msg) {
             global.cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id)
             global.cfg["autoreadpc"] && await Exp.readMessages([cht.key])
-            console.log(Exp.func.logMessage('PRIVATE', cht.id, cht.pushName, frmtEdMsg))
+            console.log(func.logMessage('PRIVATE', cht.id, cht.pushName, frmtEdMsg))
         }
 
         if (is.group && cht.msg) {
             global.cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id)
             global.cfg["autoreadgc"] && await Exp.readMessages([cht.key])
-            console.log(Exp.func.logMessage('GROUP', cht.id, cht.pushName, frmtEdMsg))
+            console.log(func.logMessage('GROUP', cht.id, cht.pushName, frmtEdMsg))
         }
 
         /*!-======[ Block Chat ]======-!*/
@@ -56,7 +56,7 @@ async function client({ Exp, store, cht, is }) {
                   else return 0.6;
                 }
                 
-              cht.cmd = (Exp.func.getTopSimilar(await Exp.func.searchSimilarStrings(cht.cmd, events, similar))).item
+              cht.cmd = (func.getTopSimilar(await func.searchSimilarStrings(cht.cmd, events, similar))).item
             }
             ev.emit(cht.cmd)
         } else if(cht.reaction){
@@ -67,8 +67,10 @@ async function client({ Exp, store, cht, is }) {
 
         /*!-======[ Chat Interactions Add ]======-!*/
         if (!cht.cmd && is.botMention) {
-            await Exp.func.archiveMemories.addChat(cht.sender)
+            await func.archiveMemories.addChat(cht.sender)
         }
+        await func.archiveMemories.setItem(cht.sender, "name", cht.pushName)
+        func.archiveMemories.setItem(cht.sender, "lastChat", Date.now())
     } catch (error) {
         console.error('Error in client.js:', error)
     }

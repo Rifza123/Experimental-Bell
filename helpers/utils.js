@@ -191,7 +191,7 @@ async function utils({ Exp, cht, is, store }) {
           if(groupDb.warn[cht.sender][t].reset < Date.now()) {
             groupDb.warn[cht.sender][t] = { value:1, reset: Date.now() + 3600000 }
           }
-          if(groupDb.warn[cht.sender][t].value >= max){
+          if(groupDb.warn[cht.sender][t].value > max){
               await cht.reply(kick)
               delete groupDb.warn[cht.sender][t]
               await Exp.groupParticipantsUpdate(cht.id, [cht.sender], "remove")
