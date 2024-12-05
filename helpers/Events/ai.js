@@ -101,6 +101,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         } else if(['imglarger','enlarger','enlarge'].includes(cht.cmd)){
            type = "enlarger"
         }
+        let i = 0
         await cht.edit(infos.messages.wait, _key, true)
         let tph = await tmpFiles(media)
         try{
@@ -108,15 +109,16 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             console.log(ai)
             if(!ai.status) return cht.reply(ai?.msg || "Error!")
             while(tryng < 50){
+               if (i === Data.spinner.length) i = 0
                let s = await fetch(api.xterm.url + "/api/img2img/filters/batchProgress?id="+ai.id).then(a => a.json())
-               await cht.edit(s?.progress || "Prepare... ", _key, true)
+               await cht.edit(`${Data.spinner[i++]} ${s?.progress || "Prepare..."}`, _key, true)
                if(s.status == 3){
                   return Exp.sendMessage(id, { image: { url: s.url } }, { quoted: cht })                
                }
                if(s.status == 4){
                   return cht.reply(infos.ai.failTryImage)
                }
-               await new Promise(resolve => setTimeout(resolve, 2000))
+               await new Promise(resolve => setTimeout(resolve, 1200))
             }
      } catch(e) {
         console.error(e)
@@ -198,6 +200,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
 
         let tryng = 0
+        let i = 0
         while (tryng < 50) {
             tryng += 1
 
@@ -208,11 +211,11 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             }
 
             let s = await sResponse.json()
-
+            if (i === Data.spinner.length) i = 0
             if (s.taskStatus === 0) {
-                await cht.edit('```Starting..```', _key, true)
+                await cht.edit(`${Data.spinner[i++]} \`\`\`Starting..\`\`\``, _key, true)
             } else if (s.taskStatus === 1) {
-                await cht.edit("Processing.... " + s.progress + "%", _key, true)
+                await cht.edit(`${Data.spinner[i++]} Processing.... ${s.progress}%`, _key, true)
             } else if (s.taskStatus === 2) {
                 return Exp.sendMessage(id, { image: { url: s.result.url } }, { quoted: cht })
             } else if (s.taskStatus === 3) {
@@ -289,6 +292,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 responseType: 'stream'
             })
              let rsp = "rfz"
+             let i = 0
             response.data.on('data', async (chunk) => {
                 try {
                     const eventString = chunk.toString()
@@ -302,9 +306,12 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                               data = {}
                             }
                         console.log(data)
+                        if (i === Data.spinner.length) i = 0
                         switch (data.status) {
+                            case "queueing": 
+                            case "generating":
                             case "processing":
-                                cht.edit(("Processing.... " + data.progress + "%"), _key, true)
+                                cht.edit(`${Data.spinner[i++]} ${data.msg||"Processing...."} ${data.progress ? data.progress +"%":"" }`, _key, true)
                             break
                             case "failed":
                                 await cht.reply(data.status)

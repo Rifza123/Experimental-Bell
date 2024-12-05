@@ -120,7 +120,7 @@ async function utils({ Exp, cht, is, store }) {
         is.image = cht.type === "image"
         is.video = cht.type === "video"
         is.document = cht.type === "document"
-        is.url = cht?.msg?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? []
+        is.url = cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka)(\/[^\s]*)?/gi)?.map(a => !a?.startsWith('http') ?  'https://'+a:a) || []
         is.mute = groupDb?.mute && !is.owner && !is.me
         is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner
 
