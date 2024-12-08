@@ -29,6 +29,9 @@ async function utils({ Exp, cht, is, store }) {
         cht.delete = async () => Exp.sendMessage(cht.id, { delete: cht.key }).then(a => undefined)
         
         const type = getContentType(cht?.message)
+
+        if(/^(protocolMessage)/.test(type)) return
+        
         const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.extendedTextMessage) : type
         cht.type = Exp.func['getType'](msgType) || type
 
@@ -112,7 +115,7 @@ async function utils({ Exp, cht, is, store }) {
         is.owner =  global.owner.some(a => { const jid = a?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
 		const groupDb = is.group ? Data.preferences[cht.id] : {}
 
-        is.baileys = ["3EB","BAE5","BELL409","B1E"].some(a => cht?.key?.id.startsWith(a))
+        is.baileys = /^(3EB|BAE5|BELL409|B1E)/.test(cht.key.id)
         is.botMention = cht?.mention?.includes(Exp.number)
         is.cmd = cht.cmd
         is.sticker = cht.type === "sticker"
