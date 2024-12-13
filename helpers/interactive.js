@@ -63,7 +63,7 @@ async function In({ cht,Exp,store,is,ev }) {
 			)
 		let usr = cht.sender.split("@")[0]
 		let usr_swap = func.archiveMemories.getItem(cht.sender, "fswaps")
-		let isSwap = usr_swap.list.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
+		let isSwap = usr_swap && usr_swap?.list?.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
 		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => func.archiveMemories.getItem(a, "afk") && a !== cht.sender) && !is.me && is.group
 		let userAfk = is.group && func.archiveMemories.getItem(cht.sender, "afk")
 		let isAfk = Boolean(userAfk)
@@ -276,7 +276,7 @@ async function In({ cht,Exp,store,is,ev }) {
 								"output": {
 									"cmd": "pinterest",
 									"cfg": {
-										"query": "isi gambar apa yang ingin dicari dalam pesan"
+										"query": "isi gambar apa yang ingin dicari dalam pesan (tambahkan '--geser <jumlah>' di ujung query jika gambar yang diminta lebih dari satu!, contoh: ayam --geser 5)"
 									}
 								}
 							},
@@ -345,6 +345,21 @@ async function In({ cht,Exp,store,is,ev }) {
 										"url": "isi link youtube yang ada dalam pesan"
 									}
 								}
+							},
+							{
+								"description": "Jika pesan adalah permintaan untuk membuat sticker atau mengubah sebuah gambar menjadi sticker. (Abaikan isi konten pada gambar!)",
+								"output": {
+									"cmd": "sticker"
+								}
+							},
+							{
+								"description": "Jika dalam pesan berisi pernyataan bahwa ingin AFK atau mau off dan tak ingin diganggu",
+								"output": {
+									"cmd": "afk",
+									"cfg": {
+									  "reason": "Isi alasan mengapa dia ingin afk"
+									}
+								}
 							}
 						]
 					})
@@ -352,6 +367,13 @@ async function In({ cht,Exp,store,is,ev }) {
 					await func.addAiResponse()
 					let noreply = false
 					switch (config?.cmd) {
+					    case "sticker":
+					        await cht.reply(config?.msg || "ok")
+					        return ev.emit("s")
+					    case "afk":
+					        await cht.reply(config?.msg || "ok")
+					        cht.q = config?.cfg?.reason
+					        return ev.emit("afk")
 						case 'public':
 							if (!is?.owner) return cht.reply("Maaf, males nanggepin")
 							global.cfg.public = true

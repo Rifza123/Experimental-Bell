@@ -73,12 +73,7 @@ async function launch() {
             logger,
             printQRInTerminal: !global.pairingCode,
             browser: Browsers.ubuntu('Chrome'),
-            auth: state,
-            getMessage: async (key) => {
-              let jid = jidNormalizedUser(key.remoteJid)
-              let msg = await store.loadMessage(jid, key.id)
-              return msg?.message || ""
-            }
+            auth: state
         });
         
         if (global.pairingCode && !Exp.authState.creds.registered) {
