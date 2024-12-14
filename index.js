@@ -121,12 +121,14 @@ async function launch() {
 	    });
 	    
 	    Exp.ev.on('call', async([c])=>{
-	      console.log(c)
 	      let { from, id, status } = c
 	      if(status !== 'offer') return
 	      cfg.call = cfg.call || { block: false, reject: false }
 	      let { block, reject } = cfg.call
-	      reject && await Exp.rejectCall(id, from) && Exp.sendMessage(from, { text: "⚠️JANGAN TELFON❗" })
+	      if(reject){
+	        await Exp.rejectCall(id, from)
+	        await Exp.sendMessage(from, { text: "⚠️JANGAN TELFON❗" })
+	      }
 	      if(block){
 	        let text = `\`⚠️KAMU TELAH DI BLOKIR!⚠️\``
 	          + "\n- *Menelfon tidak diizinkan karena sangat mengganggu aktivitas kami*"
