@@ -143,7 +143,7 @@ async function utils({ Exp, cht, is, store }) {
         is.quoted = cht.quoted
         is.reaction = cht.reaction
         
-        cht.reply = async function (text, etc={},quoted={ quoted: true }) {
+        if(!cht.reply) cht.reply = async function (text, etc={},quoted={ quoted: true }) {
           try {
             if(quoted?.quoted){
               quoted.quoted = cht?.reaction ? {
@@ -165,7 +165,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
         
-        cht.replyWithTag = async function (text, tag) {
+        if(!cht.replyWithTag) cht.replyWithTag = async function (text, tag) {
           try {
             const { key } = await Exp.sendMessage(cht.id, { text: Exp.func.tagReplacer(text, tag) }, { quoted: cht })
             keys[cht.sender] = key
@@ -175,7 +175,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
 
-        cht.edit = async function (text, key, force) {
+        if(!cht.edit) cht.edit = async function (text, key, force) {
           if(!("editmsg" in cfg)) cfg.editmsg = true
           let msg = { text:text||"..." }
           if(cfg.editmsg||force) msg.edit = key
@@ -186,7 +186,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
         
-        cht.warnGc = async({ type, warn, kick, max }) => {
+        if(!cht.warnGc) cht.warnGc = async({ type, warn, kick, max }) => {
           let t = type||"antibot"
           groupDb.warn = groupDb.warn || {}
           groupDb.warn[cht.sender] = groupDb.warn[cht.sender] || {}
@@ -204,6 +204,7 @@ async function utils({ Exp, cht, is, store }) {
           }
           Data.preferences[cht.id] = groupDb
         }
+        
 
     } catch (error) {
         console.error("Error in utils:", error)

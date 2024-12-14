@@ -72,6 +72,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
            ? infos.owner.successSetMenu
            : t1 == "lang" 
            ? true
+           : t1 == "call"
+           ? infos.owner.setCall
            : false)
 
         if (!mode) return cht.reply(infos.owner.set)
@@ -150,6 +152,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
             if(!Data.voices.includes(t2.trim())) return cht.reply("*[ VOICE NOTFOUND❗️ ]*\n\n`LIST VOICES`\n- "+Data.voices.join("\n- "))
             global.cfg.ai_voice = t2.trim()
             cht.replyWithTag(mode, { voice: global.cfg.ai_voice })
+        } else if(t1 == "call"){
+            if(!t2) return cht.reply(mode)
+            cfg.call = cfg.call || { block: false, reject: false }
+            let listaction = Object.keys(cfg.call)
+            let actions = t2.split("+")
+            let off = ["off","false"]
+            let isOff = actions.find(a => off.includes(a))
+            let notfound = actions.find(a => ![...off,...listaction].includes(a))
+            if(notfound) return cht.reply(`Action \`${notfound}\` tidak ada dalam list!\n\n${mode}`)
+            for(let i of listaction){
+              global.cfg.call[i] = actions.includes(i)
+            }
+            cht.replyWithTag(infos.owner[isOff ? "successOffCall":"successSetCall"], { action: t2 })
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })
@@ -510,17 +525,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         listmenu: ['cekapikey'],
         isOwner: true,
         tag: "owner"
-    }, async ({ args }) => {
-        if(!args) {
-            await cht.reply("Please input key!")
-            func.archiveMemories.setItem(cht.sender, "questionCmd", { 
-                emit: `${cht.cmd}`,
-                exp: Date.now() + 60000,
-                accepts: []
-            })
-            return
-        }
-        let res = await fetch(api.xterm.url + "/api/tools/key-checker?key="+cht.q).then(a => a.json())
+    }, async ({ args: arg }) => {
+        let args = arg||api.xterm.key
+        let res = await fetch(api.xterm.url + "/api/tools/key-checker?key="+args).then(a => a.json())
         const { limit, usage, totalHit, remaining, resetEvery, reset, expired, isExpired, features } = res.data;
         const resetTime = resetEvery.format
         const featuresList = Object.entries(features)

@@ -10,7 +10,6 @@
   */
 /*!-======[ Preparing Configuration ]======-!*/
 import "./toolkit/set/string.prototype.js";
-import jimp from "jimp"
 await "./toolkit/set/global.js".r()
 
 /*!-======[ Mudules Imports ]======-!*/
@@ -21,26 +20,23 @@ const baileys = "baileys".import()
 const pino = "pino".import()
 const { Boom } = "boom".import();
 const { Connecting } = await `${fol[8]}systemConnext.js`.r()
-const { func } = await `${fol[0]}func.js`.r()
 let {
     makeWASocket,
     useMultiFileAuthState,
   	DisconnectReason,
   	getContentType,
   	makeInMemoryStore,
-  	getBinaryNodeChild, 
-  	jidNormalizedUser,
-  	makeCacheableSignalKeyStore,
   	Browsers
 } = baileys;
-
 /*!-======[ Functions Imports ]======-!*/
+let detector = (await (fol[0] + "detector.js").r()).default
 Data.utils = (await `${fol[1]}utils.js`.r()).default
 Data.helper = (await `${fol[1]}client.js`.r()).default
 Data.In = (await `${fol[1]}interactive.js`.r()).default
 Data.reaction = (await `${fol[1]}reaction.js`.r()).default
 Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
 Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
+Data.initialize = (await `${fol[1]}initialize.js`.r()).default
 
 let logger = pino({ level: 'silent' })
 let store = makeInMemoryStore({ logger });
@@ -76,6 +72,9 @@ async function launch() {
             auth: state
         });
         
+        /*!-======[ Detect File Update ]======-!*/
+        detector({ Exp, store })
+        
         if (global.pairingCode && !Exp.authState.creds.registered) {
            const phoneNumber = await question(chalk.yellow('Please type your WhatsApp number : '));
            let code = await Exp.requestPairingCode(phoneNumber.replace(/[+ -]/g, ""));
@@ -84,55 +83,7 @@ async function launch() {
         }
         
         /*!-======[ INITIALIZE Exp Functions ]======-!*/
-        Exp.func = new func({ Exp, store })
-        
-        Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
-            jid = jidNormalizedUser(jid)
-            const result = await Exp.query({
-                tag: 'iq',
-                attrs: {
-                    target: jid,
-                    to: "@s.whatsapp.net",
-                    type: 'get',
-                    xmlns: 'w:profile:picture'
-                },
-                content: [
-                    { tag: 'picture', attrs: { type, query: 'url' } }
-                ]
-            }, timeoutMs)
-
-            const child = getBinaryNodeChild(result, 'picture')
-            return child?.attrs?.url
-        }
-
-        Exp.setProfilePicture = async (id,buffer) => {
-          try{
-            id = jidNormalizedUser(id)
-            const jimpread = await jimp.read(buffer);
-            const min = jimpread.getWidth()
-         	const max = jimpread.getHeight()
-        	const cropped = jimpread.crop(0, 0, min, max)
-
-            let buff = await cropped.scaleToFit(720, 720).getBufferAsync(jimp.MIME_JPEG)
-            return await Exp.query({
-				tag: 'iq',
-				attrs: {
-				    to: "@s.whatsapp.net",
-					type:'set',
-					xmlns: 'w:profile:picture'
-				},
-				content: [
-					{
-						tag: 'picture',
-						attrs: { type: 'image' },
-						content: buff
-					}
-				]
-			})
-          } catch (e) {
-              throw new Error(e)
-          }
-        }
+        Data.initialize({ Exp, store })
 
         /*!-======[ EVENTS Exp ]======-!*/
         Exp.ev.on('connection.update', async (update) => {
@@ -168,6 +119,24 @@ async function launch() {
                  }
              }
 	    });
+	    
+	    Exp.ev.on('call', async([c])=>{
+	      console.log(c)
+	      let { from, id, status } = c
+	      if(status !== 'offer') return
+	      cfg.call = cfg.call || { block: false, reject: false }
+	      let { block, reject } = cfg.call
+	      reject && await Exp.rejectCall(id, from) && Exp.sendMessage(from, { text: "⚠️JANGAN TELFON❗" })
+	      if(block){
+	        let text = `\`⚠️KAMU TELAH DI BLOKIR!⚠️\``
+	          + "\n- *Menelfon tidak diizinkan karena sangat mengganggu aktivitas kami*"
+	          + "\n> _Untuk membuka blokir, silahkan hubungi owner!_"
+	        await Exp.sendMessage(from, { text })
+	        await Exp.sendContacts({ id: from }, owner)
+	        await sleep(2000)
+	        await Exp.updateBlockStatus(from, "block")
+	      }
+	    })
 	    store.bind(Exp.ev);
 	} catch (error) {
 	  console.error(error)

@@ -18,11 +18,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let [ query, geser ] = cht?.q?.split("--geser")
         let amount = parseInt(geser?.split(" ")?.[1]||5)
             amount = amount > 15 ? 15 : amount < 1 ? 1 : amount
+        let res = await fetch(`${api.xterm.url}/api/search/pinterest-image?query=${query}&key=${api.xterm.key}`).then(a => a.json())
+        let { data } = res||{}
+        if(data.length < 1) return cht.reply("Tidak ditemukan!")
         if(typeof geser == "string"){
-          let res = await fetch(`${api.xterm.url}/api/search/pinterest-image?query=${query}&key=${api.xterm.key}`).then(a => a.json())
-          let { data } = res||{}
           let cards = []
-          if(data){
             data = data.slice(0, amount)
  
             for(let i of data){
@@ -64,9 +64,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             Exp.relayMessage(msg.key.remoteJid, msg.message, {
               messageId: msg.key.id,
             })
-          }
         } else {
-          Exp.sendMessage(id, { image: { url: api.rifza.url + "/api/pinterest-v2?query="+query } }, { quoted: cht })
+          Exp.sendMessage(id, { image: { url: data.slice(0, 10).getRandom() } }, { quoted: cht })
         }
 	})
 	

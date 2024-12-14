@@ -55,7 +55,7 @@ infos.set = `
 - lang <Country Code>
 - voice <modelname>
 - menu <type>
-- call <off or action>
+- call <action>
 
 _Example: .set public on_`
 
@@ -115,7 +115,7 @@ Example:
 
 infos.setCall = `
 \`Cara Penggunaan:\`
- ▪︎ .set call <off or action>
+ ▪︎ .set call <action>
 - Contoh: .set call reject
 
 _Anda juga bisa menambahkan action lain dengan cara memberi tanda *+*_

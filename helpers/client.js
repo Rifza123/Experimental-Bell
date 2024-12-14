@@ -41,6 +41,7 @@ async function client({ Exp, store, cht, is }) {
         
         let except = is.antiTagall || is.antibot
         if((is.baileys||is.mute) && !except) return
+
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
         if(!Data.ev) Data.ev = ev

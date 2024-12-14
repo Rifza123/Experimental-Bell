@@ -58,6 +58,22 @@ infos.set = `
 
 _Example: .set public on_`
 
+infos.setCall = `
+\`How to Use:\`
+ ▪︎ .set call <off or action>
+- Example: .set call reject
+
+_You can also add another action by using the *+* sign_
+
+Example: .set call reject+block
+
+\`LIST ACTION\`
+- reject (decline the call)
+- block (block the caller)
+`
+infos.successSetCall = "Successfully set anti call!\nAction: <action>"
+infos.successOffCall = "Successfully turned off anti call!"
+
 infos.premium_add = `
 *Guide to Adding/Removing Premium Time (Owner-Only Feature)*
 

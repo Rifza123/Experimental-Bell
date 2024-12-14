@@ -1,10 +1,17 @@
 const chokidar = "chokidar".import();
 const chalk = "chalk".import()
 const path = "path".import()
+const fs = "fs".import()
+
+const conf = fol[3] + 'config.json'
+const db = fol[5]
+let config = JSON.parse(fs.readFileSync(conf))
+let keys = Object.keys(config)
 
 let onreload = false;
 
-(async () => {
+export default 
+async function detector({ Exp, store }) {
     /*!-======[ Helpers Update detector ]======-!*/
     const watcherHelpers = chokidar.watch(fol[1] + '**/*.js', {
         ignored: /(^|[\/\\])\../,
@@ -25,6 +32,8 @@ let onreload = false;
                     Data.reaction = (await `${fol[1]}reaction.js`.r()).default;
                     Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
                     Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
+                    Data.initialize = (await `${fol[1]}initialize.js`.r()).default
+                    Data.initialize({ Exp, store })
                 console.log(chalk.green(`Helper ${fileName} reloaded successfully!`));
             } catch (error) {
                 console.error(chalk.red(`Error reloading ${fileName}:`, error));
@@ -82,5 +91,19 @@ let onreload = false;
             await (fol[9] + locale + "/" + fileName).r()
             return
     })
+    
+    /*!-======[ Auto Update ]======-!*/
+    setInterval(async() => {
+      for(let i of keys){
+        config[i] = global[i]
+      }
+      await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
+      await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
+      await fs.writeFileSync(db + 'preferences.json', JSON.stringify(Data.preferences, null, 2))
+      await fs.writeFileSync(db + 'badwords.json', JSON.stringify(Data.badwords, null, 2))
+      await fs.writeFileSync(db + 'links.json', JSON.stringify(Data.links, null, 2))
+      await fs.writeFileSync(db + 'audio.json', JSON.stringify(Data.audio, null, 2))
+      await fs.writeFileSync(db + 'fquoted.json', JSON.stringify(Data.fquoted, null, 2))
+    }, 15000)
 
-})();
+}

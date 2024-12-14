@@ -119,22 +119,6 @@ global["Data"] = {
 await fs.readdirSync(fol[9] + locale+"/")
   .filter(file => file.endsWith('.js')).forEach(async file => await (fol[9] + locale + "/" + file).r())
 
-/*!-======[ Auto Update ]======-!*/
-await (fol[0] + "detector.js").r();
-setInterval(async() => {
-    for(let i of keys){
-      config[i] = global[i]
-    }
-    await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
-    await fs.writeFileSync(fol[6] + 'users.json', JSON.stringify(Data.users, null, 2))
-    await fs.writeFileSync(db + 'preferences.json', JSON.stringify(Data.preferences, null, 2))
-    await fs.writeFileSync(db + 'badwords.json', JSON.stringify(Data.badwords, null, 2))
-    await fs.writeFileSync(db + 'links.json', JSON.stringify(Data.links, null, 2))
-    await fs.writeFileSync(db + 'audio.json', JSON.stringify(Data.audio, null, 2))
-    await fs.writeFileSync(db + 'fquoted.json', JSON.stringify(Data.fquoted, null, 2))
-}, 15000);
-
-
 const originalConsoleError = console.error;
 const originalConsoleLog = console.log;
 

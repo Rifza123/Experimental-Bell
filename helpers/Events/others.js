@@ -66,6 +66,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: "120363301254798220@newsletter",
+                    newslettedName: "Termai",
                     serverMessageId: 152
                 }
             }

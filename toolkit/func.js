@@ -526,7 +526,7 @@ export class func {
   }
   
   getName(id) {
-    return (Object.values(this.store.messages).flatMap(a => a.array).filter(a => a.key?.participant == id.extractMentions()?.[0])?.[0]?.pushName || id.split("@")[0])
+    return (Object.values(this.store.messages).flatMap(a => a.array).filter(a => a.key?.participant == id.extractMentions()?.[0])?.[0]?.pushName || ArchiveMemories.getItem(id, "name") || id.split("@")[0])
   }
   
   async uploadToServer(url, type="image") {
