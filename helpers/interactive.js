@@ -351,15 +351,6 @@ async function In({ cht,Exp,store,is,ev }) {
 								"output": {
 									"cmd": "sticker"
 								}
-							},
-							{
-								"description": "Jika dalam pesan berisi pernyataan bahwa ingin AFK atau mau off dan tak ingin diganggu",
-								"output": {
-									"cmd": "afk",
-									"cfg": {
-									  "reason": "Isi alasan mengapa dia ingin afk"
-									}
-								}
 							}
 						]
 					})
