@@ -76,7 +76,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
      if (!text1 || !text2) return cht.reply(`${infos.ai.payInstruction}\n ${infos.ai.lora}`)
         await cht.edit(infos.messages.wait, keys[sender])
-        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.ai.lora_models[parseInt(text1) - 1]}, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.ai.lora_models[parseInt(text1) - 1], ai:true }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -113,7 +113,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                let s = await fetch(api.xterm.url + "/api/img2img/filters/batchProgress?id="+ai.id).then(a => a.json())
                await cht.edit(`${Data.spinner[i++]} ${s?.progress || "Prepare..."}`, _key, true)
                if(s.status == 3){
-                  return Exp.sendMessage(id, { image: { url: s.url } }, { quoted: cht })                
+                  return Exp.sendMessage(id, { image: { url: s.url }, ai: true }, { quoted: cht })                
                }
                if(s.status == 4){
                   return cht.reply(infos.ai.failTryImage)
@@ -128,7 +128,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	})
 	
 	ev.on({
-        cmd: ['txt2img', 'text2img'],
+        cmd: ['txt2img', 'text2img','stablediffusion'],
         listmenu: ['text2img'],
         tag: 'stablediffusion',
         energy: 35,
@@ -217,7 +217,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             } else if (s.taskStatus === 1) {
                 await cht.edit(`${Data.spinner[i++]} Processing.... ${s.progress}%`, _key, true)
             } else if (s.taskStatus === 2) {
-                return Exp.sendMessage(id, { image: { url: s.result.url } }, { quoted: cht })
+                return Exp.sendMessage(id, { image: { url: s.result.url }, ai: true }, { quoted: cht })
             } else if (s.taskStatus === 3) {
                 return cht.reply(infos.ai.failTryImage)
             }
@@ -318,7 +318,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                                 response.data.destroy()
                                 break
                             case "completed":
-                                await Exp.sendMessage(id, { video: { url: data.video.url }, mimetype: "video/mp4" }, { quoted: cht })
+                                await Exp.sendMessage(id, { video: { url: data.video.url }, mimetype: "video/mp4", ai: true }, { quoted: cht })
                                 response.data.destroy()
                                 break
                             default:
@@ -343,7 +343,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let ai = await fetch(`${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`)
         .then(response => response.json())
        
-        cht.reply("[ BARD GOOGLE ]\n"+ai.chatUi)
+        cht.reply("[ BARD GOOGLE ]\n"+ai.chatUi, { ai: true })
 	})
 	
 	ev.on({ 
@@ -354,7 +354,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         energy: 7
     }, async() => {
         let res = await gpt(cht.q)
-        cht.reply("[ GPT-3 ]\n"+res.response)
+        cht.reply("[ GPT-3 ]\n"+res.response, { ai: true })
 	})
 	
     ev.on({ 
@@ -478,7 +478,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async() => {
         let ai = await fetch(`${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`)
         .then(response => response.json())
-        cht.reply(ai.msg)
+        cht.reply(ai.msg, { ai: true })
 	})
 	
 	ev.on({ 
@@ -490,7 +490,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
         await cht.edit(infos.messages.wait, keys[sender])
-        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/animediff?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/animediff?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") }, ai: true }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -503,7 +503,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async() => {
     let [text1, text2] = cht.q ? cht.q.split("|") : []
         await cht.edit(infos.messages.wait, keys[sender])
-        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") } }, { quoted: cht })
+        await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/dalle3?prompt="+text1 + "&key=" + api.xterm.key + ( text2 ? "&prompt="+text2 : "") }, ai: true }, { quoted: cht })
 	})
 	
 	ev.on({ 
@@ -517,7 +517,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
     }, async({ media }) => {
         let res = await GeminiImage(media, cht.q)
-        cht.reply(res)
+        cht.reply(res, { ai: true })
     })
 	
 	ev.on({ 
@@ -552,6 +552,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                      case 'success':
                        const audio = {
                          text: data.result.lyrics,
+                         ai: true,
                          contextInfo: { 
                              externalAdReply: {
                                  title: prompt,
@@ -648,7 +649,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                          cht.edit(data.msg, _key, true)
                      break
                      case 'success':
-                       await Exp.sendMessage(id, { image: { url: data.result } }, { quoted: cht })
+                       await Exp.sendMessage(id, { image: { url: data.result }, ai: true }, { quoted: cht })
                        response.data.destroy()
                      break
                      case 'failed':
