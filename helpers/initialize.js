@@ -132,7 +132,7 @@ async function initialize({ Exp, store }) {
 
 
       } else {
-        return await sendMessage(id, config, etc)
+        return sendMessage(id, config, etc)
       }
       return { 
         key: { 
