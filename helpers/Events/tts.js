@@ -73,7 +73,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }, async() => {
         await Exp.sendPresenceUpdate('recording', cht.id);
         let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd == "myka" ? "Myka" : cht.cmd
-        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}&${config}`}, mimetype: "audio/mpeg" }, { quoted: cht })
+        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}&${config}`}, mimetype: "audio/mpeg", ai: true }, { quoted: cht })
 	})
    
 	ev.on({ 
@@ -87,7 +87,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         if(!Data.voices.includes(voice)) return cht.reply(txtreply)
         if(!text) return cht.reply(txtreply)
         await Exp.sendPresenceUpdate('recording', cht.id);
-        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`}, mimetype: "audio/mpeg" }, { quoted: cht })
+        Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`}, mimetype: "audio/mpeg", ai: true }, { quoted: cht })
 	})
 	
 	ev.on({ 
