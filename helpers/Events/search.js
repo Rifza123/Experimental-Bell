@@ -1,6 +1,9 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
 const { generateWAMessageFromContent } = "baileys".import()
+const {
+	catbox
+} = await (fol[0] + 'catbox.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -77,7 +80,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         badword: true,
         energy: 5
     }, async() => {
-        let url = await await fetch(api.xterm.url + "/api/search/google-image?query=rule34 "+cht.q).then(async a => (await a.json()).data.getRandom())
+        let url = await await fetch(api.xterm.url + "/api/search/google-image?query="+cht.q).then(async a => (await a.json()).data.getRandom())
         Exp.sendMessage(id, { image: { url, }, caption: `Google image search: \`${cht.q}\`` }, { quoted: cht })
         .catch(()=> cht.reply(`Failed downloading url: ${url}`))
 	})
@@ -161,5 +164,46 @@ export default async function on({ cht, Exp, store, ev, is }) {
            return cht.reply("TypeErr:" + e.message)
         }
 	})
+	
+
+    ev.on({
+        cmd: ["animesearch"],
+        listmenu: ["animesearch"],
+        tag: "search",
+        media: {
+			type: ["image", "sticker"],
+			msg: `Reply gambar/sticker dengan caption ${cht.prefix}animesearch untuk mencari anime!`,
+			save: false
+		},
+		energy: 5
+    }, async ({ media }) => {
+        try {
+          let link = await catbox(media)
+          const apiUrl = `https://api.trace.moe/search?url=${encodeURIComponent(link)}`
+
+            const res = await fetch(apiUrl)
+            const { result }  = await res.json()
+
+            if (!res.ok || !result || result.length < 1) {
+                return cht.reply("❌ Tidak ditemukan informasi anime untuk gambar yang diberikan.")
+            }
+
+            const anime = result[0]
+            const { anilist, filename, episode, similarity, video, image } = anime
+
+            const caption = `🎥 *Anime Found!* 🎥\n\n`
+               + `📄 *Episode*: ${episode || "Unknown"}\n`
+               + `🔗 *Similarity*: ${(similarity * 100).toFixed(2)}%\n`
+               + `🖼️ *Filename*: ${filename || "Unknown"}\n\n`
+               + `📺 \`Preview Video\`: ${video}\n`
+               + `🌟 \`Anilist Link\`: https://anilist.co/anime/${anilist}`
+
+            await Exp.sendMessage(cht.id, { image: { url: image }, caption }, { quoted: cht })
+            Exp.sendMessage(cht.id, { video: { url: video }, caption: `📺 \`Preview Video\`: ${filename}` }, { quoted: cht })
+        } catch (error) {
+            console.error(error)
+            cht.reply("❌ Terjadi kesalahan saat menghubungi API. Silakan coba lagi nanti.")
+        }
+    })
 
 }

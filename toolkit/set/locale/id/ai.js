@@ -186,7 +186,13 @@ _List setting:_
 
 - off-all
     \`Nonaktif di semua chat\`
+
+- on-energy
+    \`Interaksi dapat menambah/mengurangi energy berdasarkan mood ai\`
     
+- off-energy
+    \`AI tidak dapat menambah/mengurangi energy\`
+
 *Contoh:*
 > .bell on
 `

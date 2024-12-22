@@ -185,6 +185,12 @@ _List of settings:_
 - off-all
     \`Inactive in all chats\`
 
+- on-energy
+    \`Interactions can increase/decrease energy based on AI's mood. \`
+
+- off-energy
+    \`Interactions can increase/decrease energy based on AI's mood. \`
+
 *Example:*
 > .bell on
 `

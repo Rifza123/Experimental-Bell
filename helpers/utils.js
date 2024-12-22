@@ -32,7 +32,7 @@ async function utils({ Exp, cht, is, store }) {
 
         if(/^(protocolMessage)/.test(type)) return
         
-        const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.extendedTextMessage) : type
+        const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.[type]) : type
         cht.type = Exp.func['getType'](msgType) || type
 
         cht.quoted = cht?.message?.[type]?.contextInfo?.quotedMessage || false
@@ -40,12 +40,14 @@ async function utils({ Exp, cht, is, store }) {
         cht.msg = (cht.id === "status@broadcast") 
             ? null 
             : ([
-               { type: 'conversation', msg: cht?.message?.conversation },
-               { type: 'extendedTextMessage', msg: cht?.message?.extendedTextMessage?.text },
-               { type: 'imageMessage', msg: cht?.message?.imageMessage?.caption },
-               { type: 'videoMessage', msg: cht?.message?.videoMessage?.caption },
-               { type: "interactiveResponseMessage", msg: cht?.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson 
-                    ? JSON.parse(cht.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id 
+               { type: 'conversation', msg: cht?.message?.[type] },
+               { type: 'extendedTextMessage', msg: cht?.message?.[type]?.text },
+               { type: 'imageMessage', msg: cht?.message?.[type]?.caption },
+               { type: 'videoMessage', msg: cht?.message?.[type]?.caption },
+               { type: 'pollCreationMessageV3', msg: cht?.message?.[type]?.name },
+               { type: 'eventMessage', msg: cht?.message?.[type]?.description },
+               { type: "interactiveResponseMessage", msg: cht?.message?.[type]?.nativeFlowResponseMessage?.paramsJson 
+                    ? JSON.parse(cht.message?.[type].nativeFlowResponseMessage?.paramsJson)?.id
                     : null }
             ].find(entry => type === entry.type)?.msg) || null
 
@@ -73,8 +75,12 @@ async function utils({ Exp, cht, is, store }) {
 		    emoji: cht[cht.type]?.text,
 		    mtype,
 		    text: rtext,
-		    url: rtext?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [],
-		    mention: await Exp.func['getSender'](react?.participant || react?.key?.participant || react?.key?.remoteJid ),
+		    url: rtext ? ( 
+              rtext?.match(/https?:\/\/[^\s)]+/g)
+              || rtext?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
+              || []
+            ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,'')) : [],
+            mention: await Exp.func['getSender'](react?.participant || react?.key?.participant || react?.key?.remoteJid ),
             download: async () => Exp.func.download(react?.message?.[rtype], mtype),
             delete: async () => Exp.sendMessage(cht.id, { delete: cht[cht.type]?.key }),
 		  }
@@ -88,7 +94,12 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.type = Exp.func['getType'](cht.quoted.mtype)
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
             cht.quoted.text = cht?.quoted?.[type]?.text || cht?.quoted?.conversation || false
-            cht.quoted.url = cht?.quoted?.text ? cht?.quoted?.text?.match(/https?:\/\/[^\s]+/g)?.flatMap(url => url.match(/https?:\/\/[^\s)]+/g) || []) ?? [] : null
+            cht.quoted.url = cht.quoted.text ? (
+                cht?.quoted?.text?.match(/https?:\/\/[^\s)]+/g)
+                || cht?.quoted?.text?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
+                || []
+              ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
+            : []
             cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
             cht.quoted.download = async () => Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type)
             cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
@@ -123,7 +134,12 @@ async function utils({ Exp, cht, is, store }) {
         is.image = cht.type === "image"
         is.video = cht.type === "video"
         is.document = cht.type === "document"
-        is.url = cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka)(\/[^\s]*)?/gi)?.map(a => !a?.startsWith('http') ?  'https://'+a:a) || []
+        is.url = cht?.msg ? (
+            cht?.msg?.match(/https?:\/\/[^\s)]+/g)
+            || cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
+            || []
+          ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
+        : []
         is.mute = groupDb?.mute && !is.owner && !is.me
         is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner
 
