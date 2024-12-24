@@ -195,7 +195,7 @@ export default async function on({
 		tag: "maker",
 		args: `Example: ${cht.msg} halo`
 	}, async () => {
-        let buff = await func.getBuffer(`https://siputzx-bart.hf.space/?q=${encodeURIComponent(cht.q)}`)
+        let buff = await func.getBuffer(`https://termai-brat.hf.space/?q=${encodeURIComponent(cht.q)}`)
 		let res = await exif["writeExifImg"](buff, {
 			packname: 'My brat sticker',
 			author: 'Ⓒ' + cht.pushName
@@ -203,7 +203,7 @@ export default async function on({
 		Exp.sendMessage(id, {
 			sticker: {
 				url: res
-			}
+			}, ai:true
 		}, {
 			quoted: cht
 		})
