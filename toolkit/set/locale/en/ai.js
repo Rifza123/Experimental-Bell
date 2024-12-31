@@ -20,6 +20,9 @@ infos.interactiveOnAll = "Success! ai_interactive has been enabled in all chats!
 infos.interactiveOffAll = "Success! ai_interactive has been disabled in all chats!";
 infos.interactiveOnEnergy = "Success! energy can now be earned from interactions!";
 infos.interactiveOffEnergy = "Success! energy can no longer be earned from interactions!";
+infos.interactiveOffPartResponse = "Successfully disabled partResponse ai!"
+infos.interactiveOnPartResponse = "Successfully activated part-response ai!, now AI can give responses in stages, creating a more realistic impression."
+
 infos.failTryImage = "Sorry, there was an error. Please try using another image!"
 infos.payInstruction = "*Please pay attention to the following instructions!*"
 

@@ -440,13 +440,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 "value": false
             },
             "on-partResponse": {
-                "done": "done",
+                "done": infos.ai.interactiveOnPartResponse,
                 "owner": true,
                 "type": "partResponse",
                 "value": true
             },
             "off-partResponse": {
-                "done": "done",
+                "done": infos.ai.interactiveOffPartResponse,
                 "owner": true,
                 "type": "partResponse",
                 "value": false

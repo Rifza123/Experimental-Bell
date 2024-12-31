@@ -5,7 +5,6 @@ const chalk = "chalk".import()
 export default
 
 async function client({ Exp, store, cht, is }) {
-   // if(cht.id == "120363203820002181@g.us") return
    let { func } = Exp
     try {
         if(cht.memories?.banned && !is.owner){

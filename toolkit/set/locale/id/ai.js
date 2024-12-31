@@ -20,6 +20,8 @@ infos.interactiveOnAll = "Berhasil!, ai_interactive telah diaktifkan di semua ch
 infos.interactiveOffAll = "Berhasil!, ai_interactive telah dimatikan di semua chat!"
 infos.interactiveOnEnergy = "Berhasil!, sekarang energy bisa didapatkan dari interaksi!"
 infos.interactiveOffEnergy = "Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!"
+infos.interactiveOffPartResponse = "Berhasil menonaktifkan partResponse ai!"
+infos.interactiveOnPartResponse = "Berhasil mengaktifkan part-response ai!, sekarang AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis."
 infos.failTryImage = "Maaf terjadi kesalhan. coba gunakan gambar lain!"
 infos.payInstruction = "*Perhatikan petunjuk berikut!*"
 
