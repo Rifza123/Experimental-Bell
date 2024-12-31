@@ -193,13 +193,6 @@ _List setting:_
 - off-energy
     \`AI tidak dapat menambah/mengurangi energy\`
 
-- on-partResponse
-    \`AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis.\`
-> Tidak disarankan untuk bot dengan jumlah pengguna, grup, atau interaksi yang tinggi.
-
-- off-partResponse 
-    \`Respon ai default\`
-
 *Contoh:*
 > .bell on
 `

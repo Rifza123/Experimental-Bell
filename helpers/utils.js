@@ -112,7 +112,10 @@ async function utils({ Exp, cht, is, store }) {
         cht.args = q
         cht.q = (String(q || cht?.quoted?.text || '')).trim()
         cht.mention = q && (cht.q.extractMentions()).length > 0
-           ? cht.q.extractMentions()
+           ? cht.q.extractMentions().filter(a => {
+             const n = a?.split("@")[0]
+             return n && n.length > 5 && n.length <= 15
+           })
               : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
                  ? cht.message[type].contextInfo.mentionedJid
                     : cht?.message?.[type]?.contextInfo?.participant
@@ -141,7 +144,7 @@ async function utils({ Exp, cht, is, store }) {
           ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
         : []
         is.mute = groupDb?.mute && !is.owner && !is.me
-        is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner
+        is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner && !is.admin && (is.url?.length < 1)
 
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)

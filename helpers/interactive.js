@@ -445,9 +445,42 @@ async function In({ cht,Exp,store,is,ev }) {
 					}
 					if (config?.cmd !== "voice" && !noreply) {
 						const method = cfg.editmsg && config?.energyreply ? "edit" : "reply";
+
+						function isFormatMsg(lines) {
+						  const listRegex = /^[\d\w$&-]+\.\s?.+$/m
+						  const symbolListRegex = /^[$\-&]\s?.+$/m
+						  return lines.split("\n").some(a => listRegex.test(a.trim())|| symbolListRegex.test(a.trim()))
+						}
+
 						if (config?.msg) {
-				          await cht[method](config.msg, keys[cht.sender]);
-				        }
+						  if(cfg.ai_interactive?.partResponse){
+						    let sp = config.msg.split("\n\n");
+						    for (let line of sp) {
+						        if(!line) return
+						        let isFormat = isFormatMsg(line)
+						        console.log({ isFormat })
+				    		    if (!isFormat) {
+						            let parts = line.split(". ");
+						            console.log({ parts })
+						            for (let part of parts) {
+						                let typing = part.length * 50;
+						                await Exp.sendPresenceUpdate("composing", cht.id);
+						                await sleep(typing);
+						                await cht.reply(part.trim());
+						                await sleep(2000)
+						            }
+						        } else {
+						          let typing = line.length * 50;
+						           await Exp.sendPresenceUpdate("composing", cht.id);
+						           await sleep(typing);
+						           await cht.reply(line.trim());
+			                       await sleep(2000);
+						        }
+						    }
+						  } else {
+						    await cht[method](config.msg, keys[cht.sender])
+						  }
+						}
 
 					}
 				} catch (error) {

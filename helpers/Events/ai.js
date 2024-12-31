@@ -438,6 +438,18 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                 "owner": true,
                 "type": "energy",
                 "value": false
+            },
+            "on-partResponse": {
+                "done": "done",
+                "owner": true,
+                "type": "partResponse",
+                "value": true
+            },
+            "off-partResponse": {
+                "done": "done",
+                "owner": true,
+                "type": "partResponse",
+                "value": false
             }
         }[q]
 
@@ -464,6 +476,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             }
         } else if(set.type == "energy"){
             cfg.ai_interactive.energy = set.value
+        } else if(set.type == "partResponse"){
+            cfg.ai_interactive.partResponse = set.value
         } else {
             Data.preferences[id].ai_interactive = set.value
         }

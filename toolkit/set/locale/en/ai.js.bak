@@ -191,13 +191,6 @@ _List of settings:_
 - off-energy
     \`Interactions can increase/decrease energy based on AI's mood. \`
 
-- on-partResponse
-    \`AI can provide responses in stages, creating a more realistic impression.\`
-> Not recommended for bots with a high number of users, groups, or interactions.
-
-- off-partResponse 
-    \`Default ai response\`
-    
 *Example:*
 > .bell on
 `
