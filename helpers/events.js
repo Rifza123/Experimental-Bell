@@ -148,6 +148,9 @@ class EventEmitter {
             let media = null;
             if(!isPremium && Data.users[user]?.premium?.time) Data.users[user].premium = { time:0 };
             let trial = Data.users[user]?.claimPremTrial
+            let metadata = Data.preferences[this.cht?.id]
+                let notAllowPlayGame = Data.infos?.group?.nallowPlayGame
+                
             const checks = [
               {
                 condition: ev.isOwner && !this.is.owner,
@@ -168,6 +171,10 @@ class EventEmitter {
               {
                 condition: ev.isQuoted && !this.cht.quoted,
                 message: typeof ev.isQuoted === "boolean" ? messages.isQuoted : ev.isQuoted,
+              },
+              {
+                condition: ev.tag == "game" && !metadata.playgame && this.is.group,
+                message: notAllowPlayGame
               }
             ]
 

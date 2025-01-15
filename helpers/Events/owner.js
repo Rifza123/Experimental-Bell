@@ -2,6 +2,7 @@
 const fs = "fs".import()
 const path = "path".import()
 const { getContentType } = "baileys".import()
+const { war } = await (fol[2] + "classwarr.js").r()
 
 /*!-======[ Function Imports ]======-!*/
 const { catbox } = await (fol[0] + 'catbox.js').r()
@@ -55,7 +56,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         args: infos.owner.set
     }, async () => {
         let fquotedKeys = Object.keys(Data.fquoted)
-        let [t1, t2, t3] = cht.q.split(" ")
+        let [t1, t2, t3, t4] = cht.q.split(" ")
         if(!options[t1] && t1.includes("\n")){
           t1 = t1.split("\n")[0]
         }
@@ -74,6 +75,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
            ? true
            : t1 == "call"
            ? infos.owner.setCall
+           : t1 == "hadiah"
+           ? infos.owner.setHadiah
            : false)
 
         if (!mode) return cht.reply(infos.owner.set)
@@ -165,6 +168,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
               global.cfg.call[i] = actions.includes(i)
             }
             cht.replyWithTag(infos.owner[isOff ? "successOffCall":"successSetCall"], { action: t2 })
+        } else if(t1 == "hadiah"){
+            if(!t2) return cht.replyWithTag(mode, { game: `- ${Object.keys(cfg.hadiah).join("\n- ")}` })
+            if(!Object.keys(cfg.hadiah).includes(t2)) return cht.replyWithTag(`*Game \`${t2}\` tidak tersedia!*\n\n${mode}`, { game: `- ${Object.keys(cfg.hadiah).join("\n- ")}` })
+            if(!t3) return cht.replyWithTag("*Harap sertakan jumlah energy!*\n\n"+mode, { game: `- ${Object.keys(cfg.hadiah).join("\n- ")}` })
+            if(isNaN(t3)) return cht.replyWithTag(infos.messages.onlyNumber, { value: "Energy" })
+            cfg.hadiah[t2] = parseInt(t3)
+            cht.reply(`Success set hadiah energy *${t2}* to ${parseInt(t3)} Energy⚡`)
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })
@@ -550,7 +560,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let s = await Exp.func.createTarGz("./",b)
       if(!s.status) return cht.reply(s.msg)
       await cht.edit(`File backup sedang dikirim${is.group ? " melalui private chat..." : "..."}`, keys[cht.sender])
-      await Exp.sendMessage(cht.sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz` }, { quoted: cht })
+      await Exp.sendMessage(cht.sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz`, ai: true }, { quoted: cht })
       await cht.reply(`*Proses backup selesai✅️*${is.group ? "\nFile telah dikirimkan melalui chat pribadi" : "" }`)
       fs.unlinkSync(b)
     })
@@ -576,4 +586,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
       }
       cht.reply("Success clearing session✅️")
     })
+    
+    ev.on({
+      cmd: ["war","claswar","warclan","clanwar"],
+      listmenu: ["warclan"],
+      isOwner: true,
+      tag: "owner",
+    }, async({ args })=>{
+       let { status, msg, url, text: caption } = await war.current(args||"2J8GV0UUY")
+       if(!status) return cht.reply(msg)
+       Exp.sendMessage(cht.id, { image: { url }, caption }, { quoted: cht })
+    })
+      
 }

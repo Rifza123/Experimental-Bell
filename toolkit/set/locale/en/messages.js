@@ -28,6 +28,9 @@ infos.wait = '```Wait...```'
 infos.sending = "Sending..."
 infos.failed = '```Failed❗️```'
 
+infos.onlyNumber = "<value> must be a number!"
+
+
 infos.hasClaimTrial = "You've claimed the trial!"
 infos.hasPremiumTrial = "Can't claim trial, you are already premium!"
 

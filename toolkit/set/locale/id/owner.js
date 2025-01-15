@@ -129,6 +129,15 @@ Contoh: .set call reject+block
 infos.successSetCall = "Berhasil mengatur anti call!\nAction: <action>"
 infos.successOffCall = "Berhasil menonaktifkan anti call!"
 
+infos.setHadiah = `
+\`Cara Penggunaan:\`
+ ▪︎ .set hadiah <Game> <Energy>
+- Contoh: .set hadiah tebakgambar 60
+
+\`LIST GAME\`
+<game>
+`
+
 infos.setFquoted = `
 \`Contoh penggunaan:\`
 

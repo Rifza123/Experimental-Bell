@@ -67,9 +67,11 @@ async function In({ cht,Exp,store,is,ev }) {
 		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => func.archiveMemories.getItem(a, "afk") && a !== cht.sender) && !is.me && is.group
 		let userAfk = is.group && func.archiveMemories.getItem(cht.sender, "afk")
 		let isAfk = Boolean(userAfk)
+		
+		let isGame = "game" in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId)
 
 		switch (!0) {
-		    case isTagAfk:
+		    case isTagAfk: 
 		        let maxTag = 10
 		        let tagAfk = func.archiveMemories.getItem(cht.mention[0], "afk")
 		        let userData = await Exp.func.archiveMemories.get(cht.sender)
@@ -89,7 +91,7 @@ async function In({ cht,Exp,store,is,ev }) {
                   await Exp.sendMessage(cht.sender, { text: `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️` })
 		          return func.archiveMemories.setItem(cht.sender, "banned", bantime)
 		        }
-		        if(is.botAdmin) await cht.delete()
+		        //if(is.botAdmin) await cht.delete()
 		        
 		        let rsn = `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, "Asia/Jakarta")}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[cht.sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`
 		        await cht.reply(rsn)
@@ -178,6 +180,10 @@ async function In({ cht,Exp,store,is,ev }) {
 				}
 				cht.reply(txt)
 				break
+			
+			case isGame:
+			  Data.eventGame({ cht,Exp,store,is,ev,chatDb })
+			  break
 
 			case isSwap:
 				is?.quoted?.image && delete is.quoted.image
@@ -188,18 +194,18 @@ async function In({ cht,Exp,store,is,ev }) {
 			case isBella:
 				let usr = cht.sender.split("@")[0]
 				let user = Data.users[usr]
-				let premium = user.premium ? Date.now() < user.premium.time : false
+				let premium = user?.premium ? Date.now() < user.premium.time : false
 				user.autoai.use += 1
-				if (Date.now() >= user.autoai.reset && !premium) {
+				if (Date.now() >= user?.autoai?.reset && !premium) {
 					user.autoai.use = 0
-					user.autoai.reset = Date.now() + parseInt(user.autoai.delay)
+					user.autoai.reset = Date.now() + parseInt(user?.autoai?.delay)
 					user.autoai.response = false
 				}
-				if (user.autoai.use > user.autoai.max && !premium) {
-					let formatTimeDur = func.formatDuration(user.autoai.reset - Date.now())
-					let resetOn = func.dateFormatter(user.autoai.reset, "Asia/Jakarta")
+				if (user?.autoai?.use > user?.autoai?.max && !premium) {
+					let formatTimeDur = func.formatDuration(user?.autoai?.reset - Date.now())
+					let resetOn = func.dateFormatter(user?.autoai?.reset, "Asia/Jakarta")
 					let txt = `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`
-					if (!user.autoai.response) {
+					if (!user?.autoai?.response) {
 						user.autoai.response = true
 						cht.reply(txt)
 						return
@@ -351,12 +357,22 @@ async function In({ cht,Exp,store,is,ev }) {
 								"output": {
 									"cmd": "sticker"
 								}
+							},
+							{
+							    "description": "Jika berisi pesan yang membutuhkan jawaban dari internet atau search engine",
+							    "output": {
+							        "cmd": "bard",
+							         "cfg": {
+							             "query": "isi pertanyaan yg dimaksud dalam pesan"
+							         }
+							    }
 							}
 						]
 					})
 					let config = _ai?.data || {}
 					await func.addAiResponse()
 					let noreply = false
+					console.log(config)
 					switch (config?.cmd) {
 					    case "sticker":
 					        await cht.reply(config?.msg || "ok")
@@ -365,6 +381,10 @@ async function In({ cht,Exp,store,is,ev }) {
 					        await cht.reply(config?.msg || "ok")
 					        cht.q = config?.cfg?.reason
 					        return ev.emit("afk")
+					     case "bard":
+					        await cht.reply(config?.msg || "ok")
+					        cht.q = config.cfg?.query
+					        return ev.emit("bard")
 						case 'public':
 							if (!is?.owner) return cht.reply("Maaf, males nanggepin")
 							global.cfg.public = true
@@ -453,7 +473,7 @@ async function In({ cht,Exp,store,is,ev }) {
 						}
 
 						if (config?.msg) {
-						  if(cfg.ai_interactive?.partResponse){
+						  if(cfg.ai_interactive?.partResponse && !config.msg.split('\n').some(a => a.trim().startsWith("**"))){
 						    let sp = config.msg.split("\n\n");
 						    for (let line of sp) {
 						        if(!line) return

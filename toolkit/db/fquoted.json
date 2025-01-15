@@ -1,1 +1,106 @@
-{}
+{
+  "freply": {
+    "key": {
+      "remoteJid": "120363028409375604@g.us",
+      "fromMe": false,
+      "id": "2B08008185C4BA74D72A175121848C69",
+      "participant": "6283110928302@s.whatsapp.net"
+    },
+    "message": {
+      "conversation": "P"
+    }
+  },
+  "fdoc": {
+    "key": {
+      "remoteJid": "17785528145-1506808266@g.us",
+      "fromMe": false,
+      "id": "A5CFB054FE69EDAE0C7AB41A3DD4FD51",
+      "participant": "6283110928302@s.whatsapp.net"
+    },
+    "message": {
+      "documentMessage": {
+        "url": "https://mmg.whatsapp.net/v/t62.7119-24/12160308_1089589985901808_5764115473192800884_n.enc?ccb=11-4&oh=01_Q5AaIMelsXdeiuZNkybN7HdgUoXl9tBXu9oyqFA42XQ9IP8U&oe=674D3919&_nc_sid=5e03e0&mms3=true",
+        "mimetype": "application/pdf",
+        "fileSha256": "hANx6NnYkfGYhTcIFOMsygKskyN/pF/AYXC7yDaj9f4=",
+        "fileLength": "655534",
+        "pageCount": 1,
+        "mediaKey": "Q0ORXUH/wiL+SSIlWteIjn+ZGvp+2MHP/ZGQhxfVozM=",
+        "fileName": "sertifikat_course_83_4407_310720162758.pdf",
+        "fileEncSha256": "LL8Zd4yxAgMPlCPtWZPwUNcZ4Wr7a6bj03500KlqhWQ=",
+        "directPath": "/v/t62.7119-24/12160308_1089589985901808_5764115473192800884_n.enc?ccb=11-4&oh=01_Q5AaIMelsXdeiuZNkybN7HdgUoXl9tBXu9oyqFA42XQ9IP8U&oe=674D3919&_nc_sid=5e03e0",
+        "mediaKeyTimestamp": "1730536167",
+        "thumbnailDirectPath": "/v/t62.36145-24/56260178_1518852075390062_5991898052470865471_n.enc?ccb=11-4&oh=01_Q5AaIATarhbFMsAkTn1t3_0fZE4chAl_0oIMu344DDnUVAEm&oe=674D6AC7&_nc_sid=5e03e0",
+        "thumbnailSha256": "hNJliVmjq0pMwh7WHrBH50VGY4KgV6D4zMuIGvLdhms=",
+        "thumbnailEncSha256": "fXRMu7g429myQtRhfGDGFU/FzNcluXxmOYlfbMdJT/E=",
+        "jpegThumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABERERESERMVFRMaHBkcGiYjICAjJjoqLSotKjpYN0A3N0A3WE5fTUhNX06MbmJiboyiiIGIosWwsMX46/j///8BERERERIRExUVExocGRwaJiMgICMmOiotKi0qOlg3QDc3QDdYTl9NSE1fToxuYmJujKKIgYiixbCwxfjr+P/////CABEIAEQAYAMBIgACEQEDEQH/xAAvAAEAAgMBAAAAAAAAAAAAAAAABQYBAgMEAQEBAQEAAAAAAAAAAAAAAAAAAQID/9oADAMBAAIQAxAAAADtJJfWYhK7SxCxiuLGKfXL9Qd5TsJbDawV+cxeu3Paa2ABFVW10jee8/WbOmZ6Bn83Dpk5OoxkmsVG2eeyL0l4gxMw82cvVy3l6NBnAIqV8ZA+v0+eym9DpzAAAAcw/8QAMxAAAQIFAQQHCQADAAAAAAAAAQACAwQFERIVNVSRkhMhUVNjc4MQFCAjMUFScYEzofH/2gAIAQEAAT8ApNJk5uTMaMX3zIWgUzxloFM8ZaBTPGWgUzxloFM8ZaBTPGWgUzxlUaPIy8pFiw+lzavdXdXzIXOF7uQW5PYQXAdTgT1qp0mTlZER4JflkAqBsz1k5k50rnNiNw+wQhzxe0mK0N+4H/FJsmGNf07y5xd8Na2bMfpe9xyb5DgE2ZjPdDY5wtk37BVvZXqhUDZnrLMdh4IOB7firWzZj9KWkGRw9lw1sNrS9wFyS5TEsIUTA2yhPYMgLZNcq3sr1QqBsz1kbXPzHJr2gWyJQcHfT4aw1zqdMBoJOKhTzobcm3ETEN7Q4IxzHjMYwOcXxAXE/VxVb2V6qoGzPWRY+5tEKwfb/IeCwf3hWD+8PBYP7w8EAQOs39hF1V6GcjGlW/tipNIZKNESKAYxVe2Y7zlQNmesi6IL2h3/AKgSQCRY/E8ONsSnNeeq5/2obYge3rNv6q9sx3nKgbM9ZPLc3fNt/VZnWDHt+k21hY3HtLWutcA2XRw/wC6OH+IVWeZeBDfDs059gN1TpuZizUEPiAguIIACr2zHecqACaafNRaSScXcQsT+LuIQLh9IZ4hZO7s8Qsnd2eIWTu7PELJ3dniFk7uzxCnJUTkNrHB7QDfqsoNKhQY7IzTGLm9pbYqvgimHzQoU5NQG4Qo72N7AVqU/vUXmWpT+9ReZalP71F5lqU/vUXmWpT+9ReZalP71F5lqU/vUXmWpT+9ReZalP71F5lqU/vUXmUWcmozcIsd729hK/8QAGxEAAgIDAQAAAAAAAAAAAAAAAAERMQIQIFH/2gAIAQIBAT8Abckv0lksxkdodvjGh2h2STpOBWO+Va7/AP/EAB4RAQACAQUBAQAAAAAAAAAAAAEAETESICFhkRBR/9oACAEDAQE/AAKlH5KJRGGGc0cbHMMMoQmk79mk79friGNrv//Z",
+        "thumbnailHeight": 339,
+        "thumbnailWidth": 480
+      }
+    }
+  },
+  "fkontak": {
+    "key": {
+      "remoteJid": "120363028409375604@g.us",
+      "fromMe": false,
+      "id": "3EB0018AA58A7357A25CFA",
+      "participant": "62815637773670@s.whatsapp.net"
+    },
+    "message": {
+      "contactMessage": {
+        "displayName": "My Owner",
+        "vcard": "BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN: Louis CPANEL\nitem1.TEL;waid=62815637773670:62815637773670\nitem1.X-ABLabel:\nPlease Don't Spam My Owner\nURL;Email Owner:Louis CPANEL@gmail.com\nORG: INI OWNER\nEND:VCARD",
+        "contextInfo": {
+          "mentionedJid": [
+            "6283110928302@s.whatsapp.net"
+          ]
+        }
+      }
+    }
+  },
+  "fcatalog": {
+    "key": {
+      "remoteJid": "120363028409375604@g.us",
+      "fromMe": false,
+      "id": "73DAAD754994CC09733BAB4D22144EDA",
+      "participant": "6283110928302@s.whatsapp.net"
+    },
+    "message": {
+      "productMessage": {
+        "product": {
+          "productImage": {
+            "url": "https://mmg.whatsapp.net/o1/v/t62.7118-24/f1/m239/up-oil-image-2de7571e-d049-4914-88f8-bfe77f207a20?ccb=9-4&oh=01_Q5AaIHcsbCXp4_a2ctyiMG8B9mmhAxZhKBKydhPLa6cLyZBo&oe=674D7B90&_nc_sid=e6ed6c&mms3=true",
+            "mimetype": "image/jpeg",
+            "fileSha256": "c1aZYAx7QnFVvMdx8XKFDjNWZUsTV3+YriJiT2IhAHw=",
+            "fileLength": "71246",
+            "height": 1000,
+            "width": 752,
+            "mediaKey": "8YLzRZljYAvzdPnuk21g5zRWSlPCJFK43tCAdGAfGLs=",
+            "fileEncSha256": "dFzIk7QhQ7zDBncpYqkrL8fbZ5PTXwu82d5sjvgnN7Q=",
+            "directPath": "/o1/v/t62.7118-24/f1/m239/up-oil-image-2de7571e-d049-4914-88f8-bfe77f207a20?ccb=9-4&oh=01_Q5AaIHcsbCXp4_a2ctyiMG8B9mmhAxZhKBKydhPLa6cLyZBo&oe=674D7B90&_nc_sid=e6ed6c&_nc_hot=1730558714",
+            "mediaKeyTimestamp": "1730548356",
+            "jpegThumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAD4ALwMBIgACEQEDEQH/xAAvAAADAQEBAAAAAAAAAAAAAAACBAUDAQYBAQEBAQEAAAAAAAAAAAAAAAIDAAEE/9oADAMBAAIQAxAAAABqhHa3Z08Rc/QhOthgCTtZqz7KApOvhm5SmgaLMtjyzk2ZGO26e9fP3efmL0Z7eR7/AP/EACYQAAICAgEDBAIDAAAAAAAAAAECAAMEERITITEiQlFhBSMkQXH/2gAIAQEAAT8AvyAtqBfB8yvXn6n5NsfrEgktKrQrgkA/Uxxi3Lz6Yi4q2WWFPSJkD+QnbtMm3pY5Ihrd2+zHrKE7mFfpwJjP2ft7o43YDMxOpUq/cXGZBv3TK5lvUO8FbVhWIImMf0AyrL2dN5gvUkbELnny7ahIbIVj8zOQPSdDxMS0GjXxOLj+pjl7GIPgQqQP8hqDgdu8IcoVJ2IOVLukJsUgGJyRSTEQFATCQogbazM2HDCMFLg6jaKERMnVYr904/rJLbPzKnYpMrk1gE5d4jHRnFbWJHZhOrZopymK3oMv11AZ/8QAHBEBAQACAgMAAAAAAAAAAAAAAQACERBBEiEx/9oACAECAQE/APD5GJOOuB98Al3DJojTd3//xAAbEQADAQADAQAAAAAAAAAAAAAAAQIREiExMv/aAAgBAwEBPwDmOmKtPCknJpqbwzoqVhNOrSGms0fyf//Z",
+            "scansSidecar": "hAu7ZdwylPLAYwQH5d0HIFpf/LpDAtzfaQh4Q3TFI+TzuMaVpkF/RQ==",
+            "scanLengths": [
+              9431,
+              28192,
+              13043,
+              20580
+            ],
+            "midQualityFileSha256": "zJYYz7ZY7f9Fg1LdAko0zgm9upIyXO63JgOlI7Gco+0="
+          },
+          "productId": "8080277038663215",
+          "title": "Tes",
+          "description": "1000",
+          "currencyCode": "IDR",
+          "priceAmount1000": "100000",
+          "productImageCount": 8
+        },
+        "businessOwnerJid": "6281374955605@s.whatsapp.net",
+        "contextInfo": {
+          "forwardingScore": 1,
+          "isForwarded": true
+        }
+      }
+    }
+  }
+}

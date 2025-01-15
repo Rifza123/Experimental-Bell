@@ -30,6 +30,8 @@ infos.wait = '```Bntr...```'
 infos.sending = "Lagi dikirim..."
 infos.failed = '```Gagal❗️```'
 
+infos.onlyNumber = "<value> harus berupa angka!"
+
 infos.isEnergy = ({ uEnergy,energy,charging }) => `
 Males😞\n⚡️Energy: ${uEnergy}\nMembutuhkan: ${energy}⚡\n\n${charging ? " Status: 🟢Charging" : "Untuk mengisi energy: *Ketik .charge atau .cas*" }
 `.trim()

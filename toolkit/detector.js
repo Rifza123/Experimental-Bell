@@ -32,6 +32,7 @@ async function detector({ Exp, store }) {
                     Data.reaction = (await `${fol[1]}reaction.js`.r()).default;
                     Data.EventEmitter = (await `${fol[1]}events.js`.r()).default
                     Data.stubTypeMsg = (await `${fol[1]}stubTypeMsg.js`.r()).default
+                    Data.eventGame = (await `${fol[1]}eventGame.js`.r()).default
                     Data.initialize = (await `${fol[1]}initialize.js`.r()).default
                     Data.initialize({ Exp, store })
                 console.log(chalk.green(`Helper ${fileName} reloaded successfully!`));

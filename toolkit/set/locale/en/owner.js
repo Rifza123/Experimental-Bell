@@ -74,6 +74,15 @@ Example: .set call reject+block
 infos.successSetCall = "Successfully set anti call!\nAction: <action>"
 infos.successOffCall = "Successfully turned off anti call!"
 
+infos.setHadiah = `
+\`How to Use:\`
+▪︎ .set hadiah <Game> <Energy>
+- Example: .set hadiah tebakgambar 60
+
+\`LIST GAME\`
+<game>
+`
+
 infos.premium_add = `
 *Guide to Adding/Removing Premium Time (Owner-Only Feature)*
 

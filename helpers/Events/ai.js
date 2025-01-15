@@ -533,6 +533,26 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let res = await GeminiImage(media, cht.q)
         cht.reply(res, { ai: true })
     })
+
+    ev.on({ 
+        cmd: ['clay','clayfilters','clayfilter','toclay'], 
+        listmenu: ['clayfilters'],
+        tag: "ai",
+        energy: 25,
+        media: { 
+           type: ["image"]
+        }
+    }, async({ media }) => {
+        try {
+          const _key = keys[sender]
+          let url = await tmpFiles(media)
+          await cht.edit(infos.messages.wait, _key)
+          Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/clay-filters?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
+        } catch(e) {
+          await cht.reply("Failed!")
+          throw new Error(e)
+        }
+    })
 	
 	ev.on({ 
         cmd: ['songai','songgenerator'],
@@ -703,4 +723,4 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           cht.reply(infos.ai.successChangeFace)
         }
     })
-}
+} 
