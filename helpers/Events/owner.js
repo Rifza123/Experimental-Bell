@@ -2,7 +2,6 @@
 const fs = "fs".import()
 const path = "path".import()
 const { getContentType } = "baileys".import()
-const { war } = await (fol[2] + "classwarr.js").r()
 
 /*!-======[ Function Imports ]======-!*/
 const { catbox } = await (fol[0] + 'catbox.js').r()
@@ -587,15 +586,4 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cht.reply("Success clearing session✅️")
     })
     
-    ev.on({
-      cmd: ["war","claswar","warclan","clanwar"],
-      listmenu: ["warclan"],
-      isOwner: true,
-      tag: "owner",
-    }, async({ args })=>{
-       let { status, msg, url, text: caption } = await war.current(args||"2J8GV0UUY")
-       if(!status) return cht.reply(msg)
-       Exp.sendMessage(cht.id, { image: { url }, caption }, { quoted: cht })
-    })
-      
 }
