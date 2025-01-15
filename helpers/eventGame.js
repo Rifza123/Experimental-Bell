@@ -52,8 +52,8 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
       }
 
       case "family100": {
-        let _answer = answer.filter(a => cht.msg.length >= a.length && Math.abs(cht.msg.length - a.length) <= 1)
-        cht.msg = (func.getTopSimilar(await func.searchSimilarStrings(cht.msg, _answer, similar))).item || "xtermaixyz"
+        let _answer = answer.filter(a => cht.msg.length >= a.length)
+        cht.msg = (func.getTopSimilar(await func.searchSimilarStrings(cht.msg, answer, similar))).item || "xtermaixyz"
         let userAnswer = cht.msg?.trim()?.toLowerCase()
         let answeredKey = Object.keys(answered)
 
@@ -65,7 +65,7 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
         }
         let { key: key2 } = await cht.reply("Survey membuktikan!...")
         metadata.game.id_message.push(key2.id)
-        let idx = answer.indexOf(userAnswer)
+        let idx = _answer.findIndex(v => v == userAnswer)
         if (idx === -1) {
           let { key:Key } = await cht.reply(`Jawaban tidak valid!`, { edit: key2 })
           metadata.game.id_message.push(Key.id)
