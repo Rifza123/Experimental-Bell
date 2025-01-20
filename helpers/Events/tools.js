@@ -230,21 +230,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	})
 	
 	ev.on({ 
-        cmd: ['toimage','toimg'],
-        listmenu: ['toimg'],
-        tag: 'tools',
-	    energy: 4,
-        media: { 
-           type: ["sticker"],
-           etc: {
-             //isNoAnimated:true
-           }
-        }
-    }, async({ media }) => {
-         Exp.sendMessage(id, { image: media }, { quoted: cht })
-	})
-	
-	ev.on({ 
         cmd: ['enc','encryptjs','encrypt'],
         listmenu: ['encryptjs'],
         tag: 'tools',

@@ -104,13 +104,25 @@ async function launch() {
             let isMessage = cht?.message
             let isStubType = cht?.messageStubType
   			if (!(isMessage || isStubType)) return;
-  			if (cht.key.remoteJid === 'status@broadcast' && cfg.autoreadsw == true) {
-  				await Exp.readMessages([cht.key]);
-  				let typ = getContentType(cht.message);
-  				console.log((/protocolMessage/i.test(typ)) ? `${cht.key.participant.split('@')[0]} Deleted story❗` : 'View user stories : ' + cht.key.participant.split('@')[0]);
+  			if (cht.key.remoteJid === 'status@broadcast') {
+
+  				if(!cfg.reactsw) cfg.reactsw = { on: false, emojis: ["😍","😂","😬","🤢","🤮","🥰","😭"] }
+  				
+  			    if(cfg.reactsw.on){
+  				  let { emojis } = cfg.reactsw
+  				  await Exp.sendMessage(
+                    cht.id,
+                    { react: { key: cht.key, text: emojis.getRandom() } },
+                    { statusJidList: [cht.key.participant, Exp.user.id.split(':')[0] + from.sender] }
+                  )
+  				} 
+  				else if(cfg.autoreadsw == true){
+  				  await Exp.readMessages([cht.key]);
+  			  	  let typ = getContentType(cht.message);
+  		 		  console.log((/protocolMessage/i.test(typ)) ? `${cht.key.participant.split('@')[0]} Deleted story❗` : 'View user stories : ' + cht.key.participant.split('@')[0])
+  		 		}
   				return
-  			}
-  			 if (cht.key.remoteJid !== 'status@broadcast'){
+  			} else {
   			     const exs = { cht, Exp, is: {}, store }
   			     await Data.utils(exs)
   			     

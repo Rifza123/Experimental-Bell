@@ -492,15 +492,15 @@ export class func {
        }
    }
    
-  handleSessionExpiry = ({ usr, cht, session, time }) => {
-    setTimeout(() => {
-      if(session == "faceswap") {
-        let swps = Data.users[usr]?.fswaps || { list: [], last: Date.now() };
-        let expiredSwap = (Date.now() - swps.last) >= time;
-          if (expiredSwap) {
-            delete Data.users[usr].fswaps;
-            cht.reply("Sesi faceswap telah berakhir")
-          }
+  handleSessionExpiry = ({ usr, cht, session, time, key }) => {
+    if(!global.timeouts) global.timeouts = {}
+    if(timeouts[key + usr]) clearTimeout(timeouts[key + usr])
+    timeouts[key + usr] = setTimeout(() => {
+      let swps = Data.users[usr][key] || { last: Date.now() };
+      let expired = (Date.now() - swps.last) >= time;
+      if (expired) {
+          delete Data.users[usr][key];
+          cht.reply(`Sesi ${session} telah berakhir`)
       }
     }, parseInt(time) + 10000)
   }

@@ -63,7 +63,8 @@
         "voice_changer": "*<🎙Voice Changer (AI)>*",
         "other": "*<Others>*",
         "bluearchive": "*<Blue Archive TTS (AI)*",
-        "relationship": "*<💍Relationship>*"
+        "relationship": "*<💍Relationship>*",
+        "converter": "*<🔀 Converter>*"
       }
     },
     "donate": {},

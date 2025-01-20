@@ -55,6 +55,8 @@ infos.set = `
 - lang <Country Code>
 - voice <modelname>
 - menu <type>
+- call <off or action>
+- autoreactsw <off or emojis>
 
 _Example: .set public on_`
 
@@ -73,6 +75,17 @@ Example: .set call reject+block
 `
 infos.successSetCall = "Successfully set anti call!\nAction: <action>"
 infos.successOffCall = "Successfully turned off anti call!"
+
+infos.setAutoreactSw = `
+\`How to use:\`
+
+ ▪︎ .set autoreactsw <off or emojis>
+- Contoh: .set autoreactsw 😀😂🤣😭😘🥰😍🤩🥳🤢🤮
+
+_You can add as many emojis as you like_
+`
+infos.successSetAutoreactSw = "Successfully setup Autoreact SW!\nEmoji: <action>"
+infos.successOffAutoreactSw = "Successfully disabled Autoreact SW!"
 
 infos.setHadiah = `
 \`How to Use:\`
@@ -243,4 +256,25 @@ Examples:
 
 \`Please read this guide carefully to avoid needing further assistance from the admin. Thank you.\`
 `
+
+infos.setRole = `*Panduan untuk mengubah role user (Hanya bisa digunakan oleh owner!)*
+
+*Bagaimana cara menggunakannya?*
+
+_*Sertakan nomor/Reply/tag user target*_
+
+Contoh:
+ - *#1* => _Dengan reply pesan target_
+- .setrole 🎀Soulmate🦋
+
+ - *#2* => _Dengan tag target_
+- .banned @rifza|🎀Soulmate🦋
+
+ - *#3* => _Dengan nomor target_
+- .banned +62 831-xxxx-xxxx|🎀Soulmate🦋
+
+\`LIST ROLE\`
+<role>
+
+\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
 

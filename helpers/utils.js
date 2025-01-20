@@ -209,9 +209,9 @@ async function utils({ Exp, cht, is, store }) {
           let t = type||"antibot"
           groupDb.warn = groupDb.warn || {}
           groupDb.warn[cht.sender] = groupDb.warn[cht.sender] || {}
-          groupDb.warn[cht.sender][t] = groupDb.warn[cht.sender][t] || { value:1, reset: Date.now() + 3600000 }
+          groupDb.warn[cht.sender][t] = groupDb.warn[cht.sender][t] || { value:1, reset: Date.now() + 8640000 }
           if(groupDb.warn[cht.sender][t].reset < Date.now()) {
-            groupDb.warn[cht.sender][t] = { value:1, reset: Date.now() + 3600000 }
+            groupDb.warn[cht.sender][t] = { value:1, reset: Date.now() + 8640000 }
           }
           if(groupDb.warn[cht.sender][t].value > max){
               await cht.reply(kick)

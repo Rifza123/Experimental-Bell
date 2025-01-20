@@ -9,6 +9,7 @@ const Crypto = await "crypto".import()
 const { default: ff } = await 'fluent-ffmpeg'.import()
 const { default: webp } = await "node-webpmux".import()
 const path = "path".import()
+const { spawn } = "child".import()
 
 async function imageToWebp(media) {
     const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
@@ -73,8 +74,8 @@ async function videoToWebp(media) {
     return buff
 }
 
-async function writeExifImg(media, metadata) {
-    let wMedia = await imageToWebp(media)
+async function writeExifImg(media, metadata, converted) {
+    let wMedia = converted ? media : await imageToWebp(media)
     const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     fs.writeFileSync(tmpFileIn, wMedia)
@@ -94,8 +95,8 @@ async function writeExifImg(media, metadata) {
     }
 }
 
-async function writeExifVid(media, metadata) {
-    let wMedia = await videoToWebp(media)
+async function writeExifVid(media, metadata, converted) {
+    let wMedia = converted ? media : await videoToWebp(media)
     const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     fs.writeFileSync(tmpFileIn, wMedia)
@@ -115,4 +116,26 @@ async function writeExifVid(media, metadata) {
     }
 }
 
-export { writeExifImg, writeExifVid }
+async function convert({ url, from, to }) {
+  try {
+    let formats = [
+      "webp","mp4","gif",
+      "jpg","png","AVIF"
+    ]
+    let params = new URLSearchParams({
+      url, 
+      from,
+      to,
+      key: api.xterm.key
+    })
+    if(!formats.some(a => a.includes(from)) && !formats.some(a => a.includes(to))) return null
+    let res = await fetch(`${api.xterm.url}/api/tools/convert?${params}`).then(a => a.json())
+    return res.data
+  } catch (error) {
+    console.error(error.errors)
+    console.error(`convert ${from} to ${to} Error:`, error.message)
+    return { status: false, error: error.message }
+  }
+}
+
+export { writeExifImg, writeExifVid, convert }

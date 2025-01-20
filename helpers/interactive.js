@@ -62,13 +62,20 @@ async function In({ cht,Exp,store,is,ev }) {
 				(is?.owner && is?.botMention)
 			)
 		let usr = cht.sender.split("@")[0]
-		let usr_swap = func.archiveMemories.getItem(cht.sender, "fswaps")
+
+		let usr_swap = func.archiveMemories.getItem(usr, "fswaps")
 		let isSwap = usr_swap && usr_swap?.list?.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
+
+        let usr_babygenerator = func.archiveMemories.getItem(usr, "babygenerator")
+		let isBabyGen = usr_babygenerator && cht.quoted && usr_babygenerator.messages_id.includes(cht.quoted.stanzaId) && !cht.cmd
+  		        
 		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => func.archiveMemories.getItem(a, "afk") && a !== cht.sender) && !is.me && is.group
 		let userAfk = is.group && func.archiveMemories.getItem(cht.sender, "afk")
 		let isAfk = Boolean(userAfk)
 		
 		let isGame = "game" in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId)
+		
+		let isSalam = /^a?s?salamu+?a?laiku?u+?m/i.test(cht.msg?.toLowerCase().replace(/[\s]/g, '').replace(/[^a-z]/g, ''))
 
 		switch (!0) {
 		    case isTagAfk: 
@@ -189,6 +196,11 @@ async function In({ cht,Exp,store,is,ev }) {
 				is?.quoted?.image && delete is.quoted.image
 				cht.cmd = "faceswap"
 				ev.emit("faceswap")
+				break
+			
+			case isBabyGen:
+			    delete cht.q
+				ev.emit("babygenerator")
 				break
 
 			case isBella:
@@ -507,8 +519,10 @@ async function In({ cht,Exp,store,is,ev }) {
 					console.error("Error parsing AI response:", error)
 				}
 				break
+				case isSalam:
+				  cht.reply("Wa'alaikumussalaam...")
+			    break
 		}
-
 	} catch (error) {
 		console.error("Error in Interactive:", error)
 	}

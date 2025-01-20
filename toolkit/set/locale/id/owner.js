@@ -56,6 +56,7 @@ infos.set = `
 - voice <modelname>
 - menu <type>
 - call <off or action>
+- autoreactsw <off or emojis>
 
 _Example: .set public on_`
 
@@ -128,6 +129,17 @@ Contoh: .set call reject+block
 `
 infos.successSetCall = "Berhasil mengatur anti call!\nAction: <action>"
 infos.successOffCall = "Berhasil menonaktifkan anti call!"
+
+infos.setAutoreactSw = `
+\`Cara Penggunaan:\`
+
+ ▪︎ .set autoreactsw <off or emojis>
+- Contoh: .set autoreactsw 😀😂🤣😭😘🥰😍🤩🥳🤢🤮
+
+_Anda bisa menambahkan emoji sebanyak-banyaknya_
+`
+infos.successSetAutoreactSw = "Berhasil mengatur Autoreact SW!\nEmoji: <action>"
+infos.successOffAutoreactSw = "Berhasil menonaktifkan Autoreact SW!"
 
 infos.setHadiah = `
 \`Cara Penggunaan:\`
@@ -239,6 +251,27 @@ Contoh:
     ➡️ Melakukan banned selama 1 minggu 2 hari 3 jam.
 - .banned @rifza|1d 2h 30m 15s 
     ➡️ Melakukan banned selama 1 hari 2 jam 30 menit 15 detik.
+
+\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
+
+infos.setRole = `*Panduan untuk mengubah role user (Hanya bisa digunakan oleh owner!)*
+
+*Bagaimana cara menggunakannya?*
+
+_*Sertakan nomor/Reply/tag user target*_
+
+Contoh:
+ - *#1* => _Dengan reply pesan target_
+- .setrole 🎀Soulmate🦋
+
+ - *#2* => _Dengan tag target_
+- .banned @rifza|🎀Soulmate🦋
+
+ - *#3* => _Dengan nomor target_
+- .banned +62 831-xxxx-xxxx|🎀Soulmate🦋
+
+\`LIST ROLE\`
+<role>
 
 \`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
 

@@ -10,6 +10,30 @@ let Lists = {
   audio: Object.keys(Data.audio),
   fquoted: Object.keys(Data.fquoted)
 }
+
+const roles = {/*
+  Role ini berdasarkan role default dari role.js
+  kalo mau ubah ini wajib ubah role.js terlebih dahulu 
+*/
+  "Gak kenal": 0,
+  "Baru kenal": 10,
+  "Temen biasa": 31,
+  "Temen Ngobrol": 51,
+  "Temen Gosip": 101,
+  "Temen Lama": 151,
+  "Temen Hangout": 301,
+  "Temen Deket": 351,
+  "Temen Akrab": 501,
+  "Temen Baik": 651,
+  "Sahabat": 801,
+  "Sahabat Deket": 1351,
+  "Sahabat Sejati": 3201,
+  "Pacar": 4551,
+  "🎀Soulmate🦋": 10001,
+}
+
+let keyroles = Object.keys(roles)
+
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
 
@@ -76,6 +100,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
            ? infos.owner.setCall
            : t1 == "hadiah"
            ? infos.owner.setHadiah
+           : t1 == "autoreactsw"
+           ? infos.owner.setAutoreactSw
            : false)
 
         if (!mode) return cht.reply(infos.owner.set)
@@ -174,6 +200,21 @@ export default async function on({ cht, Exp, store, ev, is }) {
             if(isNaN(t3)) return cht.replyWithTag(infos.messages.onlyNumber, { value: "Energy" })
             cfg.hadiah[t2] = parseInt(t3)
             cht.reply(`Success set hadiah energy *${t2}* to ${parseInt(t3)} Energy⚡`)
+        } else if(t1 == "autoreactsw"){
+          if(!t2) return cht.reply(mode)
+          let isEmoji = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+$/gu.test(t2)
+          let off = ["off","false"]
+          let isOff = off.includes(t2)
+       	  if(!cfg.reactsw) cfg.reactsw = { on: false, emojis: ["😍","😂","😬","🤢","🤮","🥰","😭"] }
+
+          if(isOff){
+            cfg.reactsw = false
+            return cht.reply(infos.owner[isOff ? "successOffAutoreactSw":"successSetAutoreactSw"])
+          }
+          if(!isEmoji) return cht.reply("`input mengandung karakter yang bukan emoji atau emoji tidak valid`\n\n"+mode)
+          let emojis = [...t2]
+          cfg.reactsw = { on: true, emojis }
+          return cht.reply(infos.owner.successSetAutoreactSw.replace("<action>", "\n- "+emojis.join("\n- ")))
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })
@@ -586,4 +627,24 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cht.reply("Success clearing session✅️")
     })
     
+    ev.on({ 
+        cmd: ['setrole','setroleuser'],
+        listmenu: ['setrole'],
+        tag: 'owner',
+        isMention: func.tagReplacer(infos.owner.setRole, { role: `- ${keyroles.join("\n- ")}` }),
+        isOwner: true
+    }, async() => {
+      if(!cht.quoted && !cht.q.includes("|")) return cht.replyWithTag(infos.owner.setRole, { role: `- ${keyroles.join("\n- ")}` })
+      let sender = cht.mention[0].split("@")[0];
+      let role = cht.quoted ? cht.q : cht.q?.split("|")[1]
+      let frole = keyroles.find(a => a.toLowerCase().includes(role?.toLowerCase().trim()))
+      if(!frole) return cht.replyWithTag("*[ Role tidak valid❗]*\n\n"+infos.owner.setRole, { role: `- ${keyroles.join("\n- ")}` })
+      let memories = await func.archiveMemories.setItem(sender, "chat", roles[frole])
+      await cht.reply("Success✅")
+      cht.memories = memories
+      cht.sender = sender
+      cht.pushName = func.getName(sender)
+      await sleep(100)
+      ev.emit("profile")
+    })
 }

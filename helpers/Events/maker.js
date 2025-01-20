@@ -49,6 +49,37 @@ export default async function on({
 			quoted: cht
 		})
 	})
+	
+	ev.on({
+		cmd: ['swm', 'stickerwm', 'setikerwm', 'stikerwm', 'colongstiker','colongstc','colongsticker'],
+		listmenu: ['stickerwm','swm'],
+		tag: "maker",
+		energy: 15,
+		media: {
+			type: ["image", "video", "sticker"],
+			etc: {
+				seconds: 10
+			},
+			save: false
+		},
+		args: "Sertakan teks sebagai wm pada sticker!"
+	}, async ({
+		media,
+		args: packname
+	}) => {
+		let type = ev.getMediaType()
+		let res = await exif[(type == "image" || !is.quoted?.sticker?.isAnimated) ? "writeExifImg" : "writeExifVid"](media, {
+			packname,
+			author: 'Ⓒ' + cht.pushName
+		}, is.quoted?.sticker)
+		Exp.sendMessage(id, {
+			sticker: {
+				url: res
+			}
+		}, {
+			quoted: cht
+		})
+	})
 
 	ev.on({
 		cmd: ['smeme', 'stickermeme', 'stikermeme'],

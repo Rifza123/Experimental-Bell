@@ -646,7 +646,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                swps.list.push(await tmpFiles(media))
                swps.last = Date.now()
                func.archiveMemories.setItem(cht.sender, "fswaps", swps)
-               func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+               func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000, key: "fswaps" })
                return cht.reply(infos.ai.startedFaceswap)
             }
             if(swps.list.length >= 1){
@@ -655,7 +655,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                console.log(swps.list[1])
                func.archiveMemories.setItem(cht.sender, "fswaps", swps)
             }
-            func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000 })
+            func.handleSessionExpiry({ usr, cht, session:cht.cmd, time: 600000, key: "fswaps" })
           
           target = swps?.list?.[0]
           face = swps?.list?.[1]
@@ -723,4 +723,138 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           cht.reply(infos.ai.successChangeFace)
         }
     })
-} 
+    
+    ev.on({
+        cmd: ["babygenerator", "buatanak"],
+        tag: "ai",
+        listmenu: ["babygenerator"],
+        premium: true,
+      },
+      async () => {
+        const key = "babygenerator"
+        const time = 60000 * 5
+        const usr = cht.sender.split("@")[0]
+        const isdb = func.archiveMemories.getItem(cht.sender, key)
+
+        const list = ["father", "mother"]
+        const gen = ["boy", "girl"]
+        let db = isdb || {
+          father: null,
+          mother: null,
+          gender: 0,
+          last: Date.now(),
+          messages_id: []
+        };
+        
+        if((Date.now() - db.last) >= time) db = {
+          father: null,
+          mother: null,
+          gender: 0,
+          last: Date.now(),
+          messages_id: []
+        };
+
+        const _type = list.find((a) => (cht?.q && cht.q.trim().toLowerCase().includes(a)) ||
+          (cht?.msg && cht.msg.trim().toLowerCase().includes(a))
+        )
+        const gender = gen.find((a) => (cht?.q && cht.q.trim().toLowerCase().includes(a)) ||
+          (cht?.msg && cht.msg.trim().toLowerCase().includes(a))
+        )
+
+        const type = _type || (db.father ? "mother" : "father")
+        const type2 = type === "father" ? "mother" : "father"
+
+        if (!isdb) save(db)
+        db.last = Date.now()
+
+        func.handleSessionExpiry({ usr, cht, session: cht.cmd, time, key })
+
+        const img = is.quoted.image || is.image
+        const media = img
+          ? await (is.image
+            ? cht.download()
+            : is.quoted?.image
+              ? cht.quoted.download()
+              : false)
+          : null
+
+        let link
+        if (media) {
+          try {
+            link = await tmpFiles(media)
+          } catch (err) {
+            let { key: k } = await cht.reply("Gagal mengunggah gambar. Coba lagi.")
+            db.messages_id.push(k.id)
+            await save(db)
+            return
+          }
+        }
+        if (link||db.father||db.mother) {
+
+          if (!db.father && !db.mother) {
+            db[type] = link
+            save(db)
+            let { key: k } = await cht.reply(`Foto berhasil disimpan dalam sesi sebagai ${type} (${type === "father" ? "ayah" : "ibu"}) ✅!\n\n` 
+                +`*Info*:\n- Foto berikutnya yang Anda kirimkan adalah sebagai ${type2} (${type2 === "father" ? "ayah" : "ibu"})\n` 
+                +`- Anda dapat mengganti foto ${type} dengan cara mereply pesan ini dengan gambar ber-caption *${type}*\n\n` 
+                +`Silakan reply pesan ini dengan foto dan beri caption *mother* atau *father*.`
+                +"_Jika tidak memiliki foto lain, bisa reply pesan ini dengan menuliskan *skip*_"
+            );
+            
+            db.messages_id.push(k.id)
+            await save(db)
+            return
+          }
+          if(link) db[type] = link
+          await save(db)
+                    
+          if (!db.father || !db.mother){
+            if(cht?.q && cht.q.toLowerCase().includes("skip") || cht?.msg && cht.msg.toLowerCase().includes("skip")){
+              let { key: k } = await cht.reply("Ok")
+              db.messages_id.push(k.id)
+              if(db.father){
+                db.mother = db.father
+              } else {
+                db.father = db.mother
+              }
+            } else {
+              let { key: k } = await cht.reply("Anda masih belum mengirimkan foto lain!\n\n_Jika tidak punya, bisa reply pesan ini dengan menuliskan *skip*_")
+              db.messages_id.push(k.id)
+              await save(db)
+              return
+            }
+          }
+
+          if (db.gender === 0 && db.father && db.mother) {
+            db.gender = null
+            let { key: k } = await cht.reply("Apa gender bayi yang Anda inginkan?\n- *girl*\n- *boy*")
+            db.messages_id.push(k.id)
+            await save(db)
+            return
+          }
+
+          if (!db.gender && !gender) {
+             db.gender = "random"
+             await cht.reply("Karena gender yang Anda masukkan tidak valid, gender akan diatur menjadi acak.")
+          } else if(gender){
+            db.gender = gender
+          }
+          
+          await cht.reply(`Sedang membuat wajah bayi masa depan Anda...\n\n- Gender: ${gender || db.gender}`)
+          
+          await func.archiveMemories.delItem(cht.sender, key)
+
+          try {
+            await Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/baby-generator?father=${db.father}&mother=${db.mother}&gender=${gender || db.gender}&key=${api.xterm.key}` }, caption: `Ini adalah prediksi wajah bayi Anda di masa depan.\n\n_Untuk menggunakan fitur lagi ini silahkan mulai dari awal dengan mengetik .${cht.cmd}_` }, { quoted: cht })
+          } catch (err) {
+            return cht.reply("Gagal membuat prediksi bayi. Silakan coba lagi nanti.")
+          }
+        } else {
+          let { key: k } = await cht.reply("Silakan reply pesan ini dengan foto dan beri caption *mother* atau *father*.")
+          db.messages_id.push(k.id)
+          await save(db)
+        }
+
+        async function save(_db) { return func.archiveMemories.setItem(usr, key, _db) }
+    })
+}
