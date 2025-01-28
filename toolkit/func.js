@@ -492,15 +492,16 @@ export class func {
        }
    }
    
-  handleSessionExpiry = ({ usr, cht, session, time, key }) => {
+  handleSessionExpiry = ({ usr, cht, session, time, key }, onExpiry = async () => {}) => {
     if(!global.timeouts) global.timeouts = {}
     if(timeouts[key + usr]) clearTimeout(timeouts[key + usr])
-    timeouts[key + usr] = setTimeout(() => {
+    timeouts[key + usr] = setTimeout(async() => {
       let swps = Data.users[usr][key] || { last: Date.now() };
       let expired = (Date.now() - swps.last) >= time;
       if (expired) {
           delete Data.users[usr][key];
-          cht.reply(`Sesi ${session} telah berakhir`)
+          await cht.reply(`Sesi ${session} telah berakhir`)
+          await onExpiry()
       }
     }, parseInt(time) + 10000)
   }
@@ -568,5 +569,21 @@ export class func {
       })
     })
   }
+ 
+  clearSessionConfess = async(_,__) => {
+    let _default = { sent:[], inbox:[], block: [], sess: {} }
+    let a = await ArchiveMemories.getItem(_, "confess") || _default
+    let b = await ArchiveMemories.getItem(__, "confess") || _default
+    a.sess = b.sess = {}
+    await ArchiveMemories.setItem(_, "confess", a)
+    await ArchiveMemories.setItem(__, "confess", b)
+    return { a, b }
+  }
   
+  findSenderCodeConfess = (code, type="sent") => {
+    return Object.keys(Data.users).find((a) => {
+      const item = ArchiveMemories.getItem(a, "confess")
+      return item?.[type]?.some((b) => b.code === code?.trim().toUpperCase());
+    })
+  }
 }

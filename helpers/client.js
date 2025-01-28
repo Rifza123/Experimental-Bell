@@ -45,6 +45,7 @@ async function client({ Exp, store, cht, is }) {
         let ev = new Data.EventEmitter(exps)
         if(!Data.ev) Data.ev = ev
         if(cht.cmd){
+            if("questionCmd" in cht.memories) await func.archiveMemories.delItem(cht.sender, "questionCmd")
             if(cfg.similarCmd && Data.events[cht.cmd] === undefined){
               let events = Object.keys(Data.events).filter(a => cht.cmd.length >= a.length && Math.abs(cht.cmd.length - a.length) <= 2)
               let similar = calcMinThreshold(cht.cmd)

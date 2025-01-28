@@ -140,14 +140,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     if (!model.includes("[")) {
         return cht.reply(infos.ai.txt2img)
     }
-
-    let ckpt = model.split("[")[0]
-    let loraPart = model.split("[")[1]?.replace("]", "")
-    let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
-
-    await cht.edit(infos.messages.wait, _key, true)
-
       try {
+      
+        let ckpt = model.split("[")[0]
+        let loraPart = model.split("[")[1]?.replace("]", "")
+        let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
+        if(!ckpt||!prompt) return cht.reply(infos.ai.txt2img)
+        await cht.edit(infos.messages.wait, _key, true)
+
         let [checkpointsResponse, lorasResponse] = await Promise.all([
             fetch(api.xterm.url + "/api/text2img/stablediffusion/list_checkpoints?key="+api.xterm.key),
             fetch(api.xterm.url + "/api/text2img/stablediffusion/list_loras?key="+api.xterm.key)
@@ -166,6 +166,29 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             model: loraModels[c].model,
             weight: 0.65
         }))
+        
+        let baseType = checkpoints[ckpt].baseType
+        let notSame = []
+        for(let i of loras){
+          if(loraModels[i].baseType !== baseType) notSame.push(i)
+        }
+        
+        if(notSame.length > 0){
+          let notSameLora = notSame.map(a => {
+            return `[ ${a} ] [ ${loraModels[a].model} ] \`${loraModels[a].baseType}\``
+          })
+          let txt = `*Type Base Model tidak cocok❗*
+
+_*checkpoint* dan lora harus menggunakan BaseType sama!_
+
+Base Type: \`${baseType}\`
+
+*List lora dengan base type yang tidak cocok:*
+
+[ ID ] [ Name ] \`Base Type\`
+${notSameLora.join('\n')}`
+          return cht.reply(txt)
+        }
 
         let body = {
             checkpoint: checkpoints[ckpt].model,
@@ -245,9 +268,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                         let txt = "*[ "+ (cht.cmd == "lorasearch" ? "LORAS" : "CHECKPOINTS") +" ]*\n"
                         txt += "- Find: `"+c.length+ "`\n"
                         txt += "_Dari total "+ data.length +" models_\n\n- ketik *.get" + (cht.cmd == "lorasearch" ? "lora" : "CHECKPOINT") + " ID* untuk melihat detail\n"
-                        txt += "--------------------------------------------------------\n[ `ID` ] | `NAME`\n--------------------------------------------------------\n"
+                        txt += "--------------------------------------------------------\n[ ID ] | [ NAME ] | \`Base Type\`\n--------------------------------------------------------\n"
                         c.forEach(d => {
-                            txt += "[ `"+ d.index + "` ] => " + d.item + "\n"
+                            txt += `[ ${d.index} ] [ ${d.item} ] \`${data[d.index].baseType}\`\n`
                         })
                    cht.reply(txt)
                 })

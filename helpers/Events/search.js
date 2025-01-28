@@ -4,10 +4,13 @@ const { generateWAMessageFromContent } = "baileys".import()
 const {
 	catbox
 } = await (fol[0] + 'catbox.js').r()
+let exif = await (fol[0] + 'exif.js').r()
+let { convert } = exif
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     let { sender, id } = cht
+    let { func } = Exp 
     let infos = Data.infos
 
     ev.on({ 
@@ -71,6 +74,41 @@ export default async function on({ cht, Exp, store, ev, is }) {
           Exp.sendMessage(id, { image: { url: data.slice(0, 10).getRandom() } }, { quoted: cht })
         }
 	})
+	
+	ev.on({
+		cmd: ['pinstik','pinstick','pinstiker','pinsticker'],
+		listmenu: ['pinsticker'],
+		tag: "search",
+		energy: 5,
+		args: `Mau cari sticker apa?`
+	}, async ({ args }) => {
+	  try {
+	    let res = await fetch(`${api.xterm.url}/api/search/pinterest-image?query=${args}&key=${api.xterm.key}`).then(a => a.json())
+        let { data } = res||{}
+        if(data.length < 1) return cht.reply("Tidak ditemukan!")
+        let url = await convert({
+           url: data.slice(0, 20).getRandom(),
+           from: "jpg", 
+           to: "webp"
+         })
+        let buff = await func.getBuffer(url)
+		let s = await exif["writeExifImg"](buff, {
+			packname: 'My sticker',
+			author: 'Ⓒ' + cht.pushName
+		}, true)
+		Exp.sendMessage(id, {
+			sticker: {
+				url: s
+			}
+		}, {
+			quoted: cht
+		})
+	  } catch (e) {
+	    await cht.reply("Failed convert image to sticker!")
+	    throw new Error(e)
+	  }
+	})
+	
 	
 	ev.on({ 
         cmd: ['gis','image','gimage','googleimage','gimg','googleimg'],

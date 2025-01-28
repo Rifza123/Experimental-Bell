@@ -29,7 +29,8 @@
       "trialPrem": {
         "energy": 1500,
         "chargeRate": 0.1,
-        "maxCharge": 850
+        "maxCharge": 850,
+        "time": "1hari"
       },
       "autoai": {
         "max": 50,

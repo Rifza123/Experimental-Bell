@@ -18,19 +18,31 @@ const maxCommandExpired = 7000
 export default
 async function In({ cht,Exp,store,is,ev }) {
     const { func } = Exp
+    let { archiveMemories:memories, parseTimeString } = func 
+    let { sender } = cht
 	try {
-		const commandExpired = func.archiveMemories.getItem(cht.sender, "commandExpired")
+		const commandExpired = memories.getItem(sender, "commandExpired")
 		let isPendingCmd = (["y", "iy", "iya", "yakin", "hooh", "iye", "iyh"].includes(cht?.msg?.toLowerCase()) && Date.now() < commandExpired) ?
-			func.archiveMemories.getItem(cht.sender, "command") :
+			memories.getItem(sender, "command") :
 			false
 		cht.msg = isPendingCmd ? isPendingCmd : cht.msg
 		if (isPendingCmd) {
-			await func.archiveMemories.delItem(cht.sender, "command")
-			await func.archiveMemories.delItem(cht.sender, "commandExpired")
+			await memories.delItem(sender, "command")
+			await memories.delItem(sender, "commandExpired")
 		}
-
-		let questionCmd = func.archiveMemories.getItem(cht.sender, "questionCmd")
-		let isQuestionCmd = questionCmd ? (questionCmd.accepts.some(i => i == cht?.msg?.toLowerCase()) || questionCmd.accepts.length < 1) : false
+		let quotedQuestionCmd = memories.getItem(sender, "quotedQuestionCmd") || {}
+		let questionCmd = quotedQuestionCmd[cht?.quoted?.stanzaId] || memories.getItem(sender, "questionCmd")
+		let isQuestionCmd = (questionCmd && cht.quoted && (quotedQuestionCmd[cht?.quoted?.stanzaId] || String(cht.quoted.sender) === String(Exp.number))) ? (questionCmd.accepts.some(i => i == cht?.msg?.toLowerCase()) || questionCmd.accepts.length < 1) : false
+		if(isQuestionCmd){
+		  if (Date.now() > questionCmd.emit.exp) {
+		    if(quotedQuestionCmd?.[cht?.quoted?.stanzaId]){
+		      delete quotedQuestionCmd[cht.quoted.stanzaId]
+		      memories.setItem(sender, "quotedQuestionCmd", quotedQuestionCmd)
+		    } else {
+		      memories.delItem(sender, "questionCmd")
+		    } 
+	      }
+		}
 		let isMsg = !is?.cmd && !is?.me && !is?.baileys && cht.id !== "status@broadcast"
 		let isEval = cht?.msg?.startsWith('>')
 		let isEvalSync = cht?.msg?.startsWith('=>')
@@ -49,7 +61,10 @@ async function In({ cht,Exp,store,is,ev }) {
 
 		/*!-======[ Automatic Ai ]======-!*/
 		let isBella = isMsg &&
-			(chatDb?.ai_interactive || is.owner) &&
+			(
+			  chatDb?.ai_interactive || 
+			  (is.group && is.owner)
+			) &&
 			!is?.document &&
 			!is.baileys &&
 			!is?.sticker &&
@@ -61,54 +76,70 @@ async function In({ cht,Exp,store,is,ev }) {
 				(is?.owner && cht?.msg?.toLowerCase().startsWith(botnickname.toLowerCase().slice(0, botnickname.length - 1)) && !cht?.me) ||
 				(is?.owner && is?.botMention)
 			)
-		let usr = cht.sender.split("@")[0]
+		let usr = sender.split("@")[0]
 
-		let usr_swap = func.archiveMemories.getItem(usr, "fswaps")
+		let usr_swap = memories.getItem(usr, "fswaps")
 		let isSwap = usr_swap && usr_swap?.list?.length > 0 && is.image && cht.quoted && cht.quoted.sender == Exp.number && !cht.msg
 
-        let usr_babygenerator = func.archiveMemories.getItem(usr, "babygenerator")
+        let usr_babygenerator = memories.getItem(usr, "babygenerator")
 		let isBabyGen = usr_babygenerator && cht.quoted && usr_babygenerator.messages_id.includes(cht.quoted.stanzaId) && !cht.cmd
   		        
-		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => func.archiveMemories.getItem(a, "afk") && a !== cht.sender) && !is.me && is.group
-		let userAfk = is.group && func.archiveMemories.getItem(cht.sender, "afk")
+		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => memories.getItem(a, "afk") && a !== sender) && !is.me && is.group
+		let userAfk = is.group && memories.getItem(sender, "afk")
 		let isAfk = Boolean(userAfk)
 		
 		let isGame = "game" in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId)
 		
 		let isSalam = /^a?s?salamu+?a?laiku?u+?m/i.test(cht.msg?.toLowerCase().replace(/[\s]/g, '').replace(/[^a-z]/g, ''))
+		
+		const conff =  !is.group ? await (async(_id) => { 
+		  let s1 = memories.getItem(_id, "confess")?.sess || {};
+		  if (s1.target && s1.acc) { 
+		    let dses = memories.getItem(s1.target, "confess")?.sess || {};
+		    if (s1.last && s1.max && (Date.now() - s1.last <= parseTimeString(s1.max)) && dses.target?.split("@")[0] === _id.split("@")[0]){
+		      return `${String(s1.target)?.split("@")[0] + from.sender}|${s1.code?.toUpperCase()}|${s1.inviter ? "inviter":"participant"}|${s1.max}`
+		    } else {
+		      await func.clearSessionConfess(_id, s1.target)
+		      await cht.reply(`Sessi percakapan \`${s1.code?.toUpperCase()}\` telah berakhir!`)
+		      return false
+		    }
+		  }
+		  return false
+		})(sender) : false
+		let isConfess = Boolean(conff)
 
 		switch (!0) {
 		    case isTagAfk: 
 		        let maxTag = 10
-		        let tagAfk = func.archiveMemories.getItem(cht.mention[0], "afk")
-		        let userData = await Exp.func.archiveMemories.get(cht.sender)
+		        let tagAfk = memories.getItem(cht.mention[0], "afk")
+		        let userData = await Exp.memories.get(sender)
 		        tagAfk.taggedBy = tagAfk.taggedBy||{}
-		        if(!(cht.sender in tagAfk.taggedBy)) tagAfk.taggedBy[cht.sender] = 0
-		        tagAfk.taggedBy[cht.sender]++
-		        if(tagAfk.taggedBy[cht.sender] >= maxTag){
+		        if(!(sender in tagAfk.taggedBy)) tagAfk.taggedBy[sender] = 0
+		        tagAfk.taggedBy[sender]++
+		        if(tagAfk.taggedBy[sender] >= maxTag){
 		          await cht.reply(`Kamu telah di banned dari bot selama 1 hari karena melakukan tag hingga ${maxTag}x`)
-		          delete tagAfk.taggedBy[cht.sender]
+		          delete tagAfk.taggedBy[sender]
 		          let tme = "1 Hari"
-		          let _time = func.parseTimeString(tme)
+		          let _time = parseTimeString(tme)
                     if (!("banned" in userData)) {
                       userData.banned = 0
                     }
 		          let date = (userData.banned && (userData.banned > Date.now())) ? userData.banned:Date.now() 
                   let bantime = (date +_time)
-                  await Exp.sendMessage(cht.sender, { text: `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️` })
-		          return func.archiveMemories.setItem(cht.sender, "banned", bantime)
+                  await Exp.sendMessage(sender, { text: `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️` })
+		          return memories.setItem(sender, "banned", bantime)
 		        }
 		        //if(is.botAdmin) await cht.delete()
 		        
-		        let rsn = `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, "Asia/Jakarta")}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[cht.sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`
+		        let rsn = `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, "Asia/Jakarta")}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`
 		        await cht.reply(rsn)
-		        func.archiveMemories.setItem(cht.mention[0], "afk", tagAfk)
+		        memories.setItem(cht.mention[0], "afk", tagAfk)
 		        break
 		    case isAfk:
 		        let dur = func.formatDuration(Date.now() - userAfk.time)
-		        let text = `@${cht.sender.split("@")[0]} *Telah kembali dari AFK!*\nSetelah ${userAfk.reason} selama ${dur.days > 0 ? dur.days+"hari ":''}${dur.hours > 0 ? dur.hours+"jam ":''}${dur.minutes > 0 ? dur.minutes+"menit ":''}${dur.seconds > 0 ? dur.seconds+"detik ":''}${dur.milisecondss > 0 ? dur.milisecondss+"ms ":''}`
-		        await cht.reply(text, { mentions: [cht.sender] })
-		        func.archiveMemories.delItem(cht.sender, "afk")
+		        let text = `@${sender.split("@")[0]} *Telah kembali dari AFK!*\nSetelah ${userAfk.reason} selama ${dur.days > 0 ? dur.days+"hari ":''}${dur.hours > 0 ? dur.hours+"jam ":''}${dur.minutes > 0 ? dur.minutes+"menit ":''}${dur.seconds > 0 ? dur.seconds+"detik ":''}${dur.milisecondss > 0 ? dur.milisecondss+"ms ":''}`
+		        await cht.reply(text, { mentions: [sender] })
+		        memories.delItem(sender, "afk")
 		        break
 		    case is.antibot:
                 cht.warnGc({ type: "antibot", warn: "Bot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!", kick:"Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!", max: 5 })
@@ -121,24 +152,11 @@ async function In({ cht,Exp,store,is,ev }) {
                 await cht.warnGc({ type: "antitagall", warn: "Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!", kick:"Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!", max: 3})
 				cht.delete()
 				break
-			case isQuestionCmd:
-				if (Date.now() > questionCmd.emit.exp) {
-					func.archiveMemories.delItem(cht.sender, "questionCmd")
-					return
-				}
-				let [cmd, ...q] = questionCmd.emit.split` `
-				cht.cmd = cmd
-				cht.q = (q && q.length > 0) ?
-					`${q.join(" ")} ${cht.msg?.trim()}`.trim() :
-					`${cht.msg?.trim()}`.trim()
-				ev.emit(cmd)
-				func.archiveMemories.delItem(cht.sender, "questionCmd")
-				break
 			case isEvalSync:
 				if (!is?.owner) return
 				if (isDangerous) {
-					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					memories.setItem(sender, "command", cht.msg)
+					memories.setItem(sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				try {
@@ -153,8 +171,8 @@ async function In({ cht,Exp,store,is,ev }) {
 			case isEval:
 				if (!is?.owner) return
 				if (isDangerous) {
-					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					memories.setItem(sender, "command", cht.msg)
+					memories.setItem(sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				try {
@@ -171,8 +189,8 @@ async function In({ cht,Exp,store,is,ev }) {
 			case isExec:
 				if (!is?.owner) return
 				if (isDangerous) {
-					func.archiveMemories.setItem(cht.sender, "command", cht.msg)
-					func.archiveMemories.setItem(cht.sender, "commandExpired", Date.now() + maxCommandExpired)
+					memories.setItem(sender, "command", cht.msg)
+					memories.setItem(sender, "commandExpired", Date.now() + maxCommandExpired)
 					return cht.reply("Yakin?")
 				}
 				let txt
@@ -187,7 +205,22 @@ async function In({ cht,Exp,store,is,ev }) {
 				}
 				cht.reply(txt)
 				break
-			
+			case isQuestionCmd:
+				let [cmd, ...q] = questionCmd.emit.split` `
+				cht.cmd = cmd
+				cht.isQuestionCmd = true
+				cht.q = (q && q.length > 0) ?
+					`${q.join(" ")} ${cht.msg?.trim()}`.trim() :
+					`${cht.msg?.trim()}`.trim()
+				ev.emit(cmd)
+				memories.delItem(sender, "questionCmd")
+				if(quotedQuestionCmd?.[cht?.quoted?.stanzaId]){
+		          delete quotedQuestionCmd[cht.quoted.stanzaId]
+		          memories.setItem(sender, "quotedQuestionCmd", quotedQuestionCmd)
+    		    } else {
+    		      memories.delItem(sender, "questionCmd")
+    		    } 
+		      break
 			case isGame:
 			  Data.eventGame({ cht,Exp,store,is,ev,chatDb })
 			  break
@@ -202,9 +235,39 @@ async function In({ cht,Exp,store,is,ev }) {
 			    delete cht.q
 				ev.emit("babygenerator")
 				break
+				
+			case isConfess: {
+			    let [jid,code,_type,_max] = conff.split("|")
+			    let kcid1 = `confess|${sender.split("@")[0]}`
+			    let kcid2 = `confess|${jid.split("@")[0]}`
+			    			    
+			    let _text = `${cht.msg}` +
+			    `\n\n> ${code}`
+			    let _mess = {
+			      contextInfo: {
+                    isForwarded: true,
+                  }
+			    }
+			    let { type } = ev.getMediaType()
+			    let value;
+                let isText = ["conversation","extendedTextMessage"].includes(type)
+                if(!isText){
+                  value = await cht?.download()
+                  _mess["caption"] = _text
+                } else {
+                  type = "text"
+                  value = _text
+                }
+                _mess[type] = value 
+			    await Exp.sendMessage(jid, _mess, cht.quoted ? keys[kcid2] : false)
+			    await sleep(500)
+			    await Exp.sendMessage(cht.id, { react: { text: "📤", key: cht.key } })
+			    keys[kcid1] = { quoted: { message: cht.message, key: cht.key } }
+			    
+			 }  break
 
 			case isBella:
-				let usr = cht.sender.split("@")[0]
+				let usr = sender.split("@")[0]
 				let user = Data.users[usr]
 				let premium = user?.premium ? Date.now() < user.premium.time : false
 				user.autoai.use += 1
@@ -315,7 +378,7 @@ async function In({ cht,Exp,store,is,ev }) {
 								"output": {
 									"cmd": "lora",
 									"cfg": {
-										"prompt": "isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang berfoto ((tulis prompt dalam bahasa inggris))"
+										"prompt": "isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang selfie ((tulis prompt dalam bahasa inggris))"
 									}
 								}
 							},
@@ -471,7 +534,7 @@ async function In({ cht,Exp,store,is,ev }) {
 						} else {
 							conf.action = "addEnergy"
 						}
-						await func.archiveMemories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
+						await memories[conf.action](cht?.sender, parseInt(conf.energy.slice(1)))
 						await cht.reply(config.energy + " Energy⚡️")
 						config.energyreply = true
 					}
@@ -510,7 +573,7 @@ async function In({ cht,Exp,store,is,ev }) {
 						        }
 						    }
 						  } else {
-						    await cht[method](config.msg, keys[cht.sender])
+						    await cht[method](config.msg, keys[sender])
 						  }
 						}
 

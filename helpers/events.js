@@ -92,9 +92,9 @@ class EventEmitter {
         }
     }
 
-    sendPremiumMsg(trial=true) {
+    sendPremiumMsg(trial=true, trialAvailable=true) {
         const imageMessage = {
-            text: messages.onlyPremium(trial),
+            text: messages.onlyPremium(trial, trialAvailable),
             contextInfo: {
                 externalAdReply: {
                     title: "🔒Only Premium",
@@ -150,7 +150,8 @@ class EventEmitter {
             let trial = Data.users[user]?.claimPremTrial
             let metadata = Data.preferences[this.cht?.id]
                 let notAllowPlayGame = Data.infos?.group?.nallowPlayGame
-                
+             
+            let { func } = this.Exp
             const checks = [
               {
                 condition: ev.isOwner && !this.is.owner,
@@ -181,17 +182,28 @@ class EventEmitter {
             for (const { condition, message } of checks) {
               if (condition) return this.cht.reply(message);
             }
-            if (cfg.premium_mode && ev.premium && !isPremium) return this.sendPremiumMsg(trial);
-
+            if (cfg.premium_mode && ev.premium && !isPremium) return this.sendPremiumMsg(trial, ("trial" in ev) ? ev.trial : true);
+            if (cfg.premium_mode && ev.premium && ev.trial === false){
+              cfg.first.trialPrem.time = cfg.first.trialPrem.time || "1 hari"
+              if((Date.now() - this.cht.memories.claimPremTrial) < func.parseTimeString(cfg.first.trialPrem.time)) return this.cht.reply(messages.isNotAvailableOnTrial)
+            }
+             
             if (ev.energy && !isNaN(ev.energy) && this.cht.memories.energy < ev.energy) {
                 return this.cht.reply(messages.isEnergy({ uEnergy: this.cht.memories.energy, energy:ev.energy, charging:this.cht.memories.charging }));
             }
 
             if (ev.args){
-                if(!this.cht.q) return this.cht.reply(ev.args !== true ? ev.args : ev.isArgs);
+                if(!this.cht.q) {
+                  ArchiveMemories.setItem(sender, "questionCmd", { 
+                    emit: `${this.cht.cmd}`,
+                    exp: Date.now() + 15000,
+                    accepts: []
+                  })
+                  return this.cht.reply(ev.args !== true ? ev.args : ev.isArgs);
+                }
                 const badword = Data.badwords.filter(a => this.cht.q.includes(a))
                 this.is.badword = badword.length > 0
-                if(ev.badword && this.is.badword) return this.cht.reply(this.Exp.func.tagReplacer(messages.isBadword, { badword: badword.join(", ") }))
+                if(ev.badword && this.is.badword) return this.cht.reply(func.tagReplacer(messages.isBadword, { badword: badword.join(", ") }))
             }
             
             if(ev.isMention && this.cht.mention.length < 1) return this.cht.reply(ev.isMention !== true ? ev.isMention : messages.isMention)
@@ -200,18 +212,18 @@ class EventEmitter {
                 const { type, msg, etc } = ev.media;
                 let { type: mediaType, quoted: isQuotedMedia } = this.getMediaType();
                 if (!type.includes(mediaType)) {
-                    return this.cht.reply(msg || this.Exp.func.tagReplacer(messages.isMedia, { type:type.join("/"), caption: this.cht.msg} ));
+                    return this.cht.reply(msg || func.tagReplacer(messages.isMedia, { type:type.join("/"), caption: this.cht.msg} ));
                 }
 
                 if (mediaType === "audio") {
                     if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
-                        return this.cht.reply(this.Exp.func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds }))
+                        return this.cht.reply(func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds }))
                     }
                 }
                 
                 if (mediaType === "video") {
                     if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
-                        return this.cht.reply(this.Exp.func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds }))
+                        return this.cht.reply(func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds }))
                     }
                 }
                 
@@ -230,29 +242,30 @@ class EventEmitter {
                 let download = isQuotedMedia ? this.is.quoted.download : this.is?.reaction ? this.is.reaction.download : this.cht.download;
                 let save = this.is.quoted ? this.is.quoted[mediaType] : this.is?.reaction ? this.is.reaction[mediaType] : this.cht[mediaType];
                 media = ev.media.save
-                    ? await this.Exp.func.downloadSave(save, mediaType)
+                    ? await func.downloadSave(save, mediaType)
                     : await download();
             }
             
             if (ev.urls) {
-               if(!urls) return this.cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl)
+               if(!(urls?.length > 0)) return this.cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl)
                if(ev.urls.formats){
                    let isFormatsUrl = urls.some(url => 
                        ev.urls.formats.some(keyword => url.toLowerCase().includes(keyword.toLowerCase()))
                    )
-                   if(!isFormatsUrl) return this.cht.reply(this.Exp.func.tagReplacer(messages.isFormatsUrl, { formats:ev.urls.formats.join("\n- ") }))
+                   if(!isFormatsUrl) return this.cht.reply(func.tagReplacer(messages.isFormatsUrl, { formats:ev.urls.formats.join("\n- ") }))
                }
             }
 
             if (ev.energy) {
                 await ArchiveMemories.reduceEnergy(this.cht.sender, ev.energy);
                 await this.cht.reply(`-${ev.energy} Energy⚡`);
+                await sleep(100)
             }
             
             const resolves = { media, urls, args, cht:this.cht }
             await ev.resolve(resolves);
-            await this.Exp.func.addCmd();
-            await this.Exp.func.addCMDForTop(event);
+            await func.addCmd();
+            await func.addCMDForTop(event);
             return
         } catch (error) {
             return console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${event}"`, error.stack);

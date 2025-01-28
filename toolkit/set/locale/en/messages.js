@@ -33,6 +33,7 @@ infos.onlyNumber = "<value> must be a number!"
 
 infos.hasClaimTrial = "You've claimed the trial!"
 infos.hasPremiumTrial = "Can't claim trial, you are already premium!"
+infos.isNotAvailableOnTrial = "*Free trial is not allowed to use this feature!*\n_This feature can only be used when you buy premium from the owner!_"
 
 infos.isEnergy = ({ uEnergy, energy, charging }) => `
 Lazy😞\n⚡️Energy: ${uEnergy}\nNeeds: ${energy}⚡\n\n${charging ? " Status: 🟢Charging" : "To charge energy: *Type .charge or .cas*" }
@@ -43,7 +44,7 @@ Sorry, this feature is only available for premium users.\nType *.premium* for mo
 
 *Haven't claimed Free Trial🤷🏻‍♀️?*
 ${Data.infos.others.readMore}
-${!trial ? "*🎁Yay, you can still claim the trial!!*\nType *.freetrial* to claim a 1-day trial" : "You've already claimed this bonus🙅🏻‍♀️"}`.trim()
+${!trial ? `*🎁Yay, you can still claim the trial!!*\nType *.freetrial* to claim a 1-day trial${available ? '': '_This feature cannot be used from the free trial_\n_You still need to purchase premium through the owner to get access to this feature!_'}` : "You have already claimed this bonus🙅🏻‍♀️"}`
 
 /*!-======[ Premium ]======-!*/
 infos.premium = (trial) => `
@@ -71,4 +72,4 @@ infos.premium = (trial) => `
 
 *Haven’t claimed the Free Trial yet🤷🏻‍♀️?*
 ${Data.infos.others.readMore}
-${!trial ? "*🎁Yay, you can still claim the trial!!*\nType *.freetrial* to claim a 1-day trial" : "You’ve already claimed this bonus🙅🏻‍♀️"}`
+${!trial ? `*🎁Yay, you can still claim the trial!!*\nType *.freetrial* to claim a 1-day trial${available ? '': '_This feature cannot be used from the free trial_\n_You still need to purchase premium through the owner to get access to this feature!_'}` : "You have already claimed this bonus🙅🏻‍♀️"}`

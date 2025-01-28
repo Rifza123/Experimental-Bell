@@ -25,6 +25,7 @@ infos.isFormatsUrl = "Url yang diberikan harus berupa url seperti:\n- <formats>"
 
 infos.hasClaimTrial = "Kamu sudah claim trial!"
 infos.hasPremiumTrial = "Tidak dapat claim trial, kamu sudah premium!"
+infos.isNotAvailableOnTrial = "*Free trial tidak diizinkan menggunakan fitur ini!*\n_Fitur ini hanya dapat digunakan ketika anda membeli premium dari owner!_"
 
 infos.wait = '```Bntr...```'
 infos.sending = "Lagi dikirim..."
@@ -36,15 +37,15 @@ infos.isEnergy = ({ uEnergy,energy,charging }) => `
 Males😞\n⚡️Energy: ${uEnergy}\nMembutuhkan: ${energy}⚡\n\n${charging ? " Status: 🟢Charging" : "Untuk mengisi energy: *Ketik .charge atau .cas*" }
 `.trim()
 
-infos.onlyPremium = (trial) => `
+infos.onlyPremium = (trial, available=true) => `
 Maaf, fitur ini hanya bisa digunakan oleh user premium\nKetik *.premium* untuk info lebih lanjut atau bisa klik gambar preview url di atas untuk menghubungi owner
 
 *Belum mengklaim Free Trial🤷🏻‍♀️?*
 ${Data.infos.others.readMore}
-${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk mengclaim trial 1hari" : "Kamu sudah claim bonus ini🙅🏻‍♀️"}`.trim()
+${!trial ? `*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk meng claim trial 1hari${available ? '': '_Fitur ini tidak bisa digunakan dari free trial_\n_Anda tetap perlu membeli premium melalui owner untuk mendapatkan akses fitur ini!_'}` : "Kamu sudah claim bonus ini🙅🏻‍♀️"}`
 
 /*!-======[ Premium ]======-!*/
-infos.premium = (trial) => `
+infos.premium = (trial, available=true) => `
 *Dapatkan akses untuk menggunakan fitur² premium!*
 
 *\`Manfaat premium\`*
@@ -69,5 +70,5 @@ infos.premium = (trial) => `
 
 *Belum mengklaim Free Trial🤷🏻‍♀️?*
 ${Data.infos.others.readMore}
-${!trial ? "*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk meng claim trial 1hari" : "Kamu sudah claim bonus ini🙅🏻‍♀️"}`
+${!trial ? `*🎁Yey kamu masih bisa claim trial!!*\nKetik *.freetrial* untuk meng claim trial 1hari${available ? '': '_Fitur ini tidak bisa digunakan dari free trial_\n_Anda tetap perlu membeli premium melalui owner untuk mendapatkan akses fitur ini!_'}` : "Kamu sudah claim bonus ini🙅🏻‍♀️"}`
 

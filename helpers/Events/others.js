@@ -131,8 +131,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'other',
         isQuoted: true
     }, async() => {
+      try {
         if(cht.quoted.sender !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.messages.isAdmin)
-        try{
+        if(!is.groupAdmins && !is.owner){
+          let qsender = (await store.loadMessage(cht.id,cht.quoted.stanzaId))?.message?.extendedTextMessage?.contextInfo.quotedMessage?.sender
+          if(qsender && qsender !== cht.sender) return cht.reply(`*Anda tidak diizinkan menghapus pesan itu!*
+\`Sebab:\`
+${infos.others.readMore}
+- Quoted pesan tersebut bukan berasal dari anda
+- Anda bukan owner atau admin untuk mendapatkan izin khusus`)
+        }
            cht.quoted.delete()
         } catch {
            cht.reply(infos.messages.failed)

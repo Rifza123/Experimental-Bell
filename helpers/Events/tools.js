@@ -14,7 +14,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     let infos = Data.infos
     let { sender, id } = cht
     const { func } = Exp
-
+ 
     ev.on({ 
         cmd: ['remini'], 
         listmenu: ['remini'],
@@ -120,7 +120,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         energy: 7.5,
         urls: {
           msg: true
-        }
+        },
+        urls: {
+          msg: true
+        },
     }, async() => {
         let q = is.quoted?.url || is.url 
         Exp.sendMessage(id, { image: { url : 'https://image.thum.io/get/width/1900/crop/1000/fullpage/' + q[0] }, caption: `Result✔️`}, { quoted: cht } )

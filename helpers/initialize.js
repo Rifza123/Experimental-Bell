@@ -115,7 +115,6 @@ async function initialize({ Exp, store }) {
              quotedMessage: etc.quoted
            }
         } 
-        console.log(message)
         msg = await Exp.relayMessage(id, 
         message,
         { 

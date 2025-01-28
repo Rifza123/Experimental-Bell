@@ -20,6 +20,9 @@ const baileys = "baileys".import()
 const pino = "pino".import()
 const { Boom } = "boom".import();
 const { Connecting } = await `${fol[8]}systemConnext.js`.r()
+const Event = (await 'events'.import()).default
+Event.defaultMaxListeners = 25 
+
 let {
     makeWASocket,
     useMultiFileAuthState,

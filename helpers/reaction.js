@@ -11,7 +11,7 @@ let infos = Data.infos
 
 export default
 async function react({ cht, Exp, store, is, ev }) {
-    let { emoji, mtype, text, url, mention } = cht.reaction
+    let { emoji, mtype, text, url, mention, key } = cht.reaction
     let _url = url[0]
     let urltype = _url && Object.entries(urls).find(([keyword]) => _url.includes(keyword))
       ? urls[Object.entries(urls).find(([keyword]) => _url.includes(keyword))[0]]
@@ -21,6 +21,14 @@ async function react({ cht, Exp, store, is, ev }) {
 	       case "🗑":
 	       case "❌":
 	           if(mention !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.reaction.download)
+	           if(!is.groupAdmins && !is.owner){
+                 let qsender = (await store.loadMessage(cht.id,key.id))?.message?.extendedTextMessage?.contextInfo.quotedMessage?.sender
+                 if(qsender && qsender !== cht.sender) return cht.reply(`*Anda tidak diizinkan menghapus pesan itu!*
+\`Sebab:\`
+${infos.others.readMore}
+- Quoted pesan tersebut bukan berasal dari anda
+- Anda bukan owner atau admin untuk mendapatkan izin khusus`)
+                  }
     		   return cht.reaction.delete()
 
 		   case "🎵":

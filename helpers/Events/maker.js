@@ -2,6 +2,7 @@
 const fs = "fs".import()
 
 /*!-======[ Function Import ]======-!*/
+
 let exif = await (fol[0] + 'exif.js').r()
 const {
 	catbox
@@ -239,4 +240,29 @@ export default async function on({
 			quoted: cht
 		})
 	})
+	
+	ev.on({
+		cmd: ['bratv','bartvideo','bratvideogenerator','bratvideo','bartv','bartvideogenerator'],
+		listmenu: ['bratvideo'],
+		tag: "maker",
+		energy: 20,
+		args: `Example: ${cht.msg} halo aku bella`
+	}, async () => {
+	    /*
+	      Thanks to caliph/kelip buat api bratvideo nya ♥️
+	    */
+        let buff = await func.getBuffer(`https://brat.caliphdev.com/api/brat/animate?text=${encodeURIComponent(cht.q)}`)
+		let res = await exif["writeExifVid"](buff, {
+			packname: 'My brat sticker',
+			author: 'Ⓒ' + cht.pushName
+		})
+		Exp.sendMessage(id, {
+			sticker: {
+				url: res
+			}, ai:true
+		}, {
+			quoted: cht
+		})
+	})
+	
 }
