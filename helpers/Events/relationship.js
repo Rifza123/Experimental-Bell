@@ -248,7 +248,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let trgt = BC?.replace(/[+ -]/g, "").split("@")[0]
         let _message = CD?.join("")
         let _Sender = findSenderCodeConfess(trgt)
-        let fquoted = "menfess" in Data.fquoted ? { quoted: Data.fquoted.menfess } : false
+        let fquoted = "menfess" in Data.fquoted ? { quoted: Data.fquoted.menfess } : undefined 
         
         switch(_name){
           /*

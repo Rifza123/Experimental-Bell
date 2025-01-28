@@ -259,7 +259,7 @@ async function In({ cht,Exp,store,is,ev }) {
                   value = _text
                 }
                 _mess[type] = value 
-			    await Exp.sendMessage(jid, _mess, cht.quoted ? keys[kcid2] : false)
+			    await Exp.sendMessage(jid, _mess, cht.quoted ? keys[kcid2] : undefined)
 			    await sleep(500)
 			    await Exp.sendMessage(cht.id, { react: { text: "📤", key: cht.key } })
 			    keys[kcid1] = { quoted: { message: cht.message, key: cht.key } }
