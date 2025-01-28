@@ -265,10 +265,10 @@ Contoh:
 - .setrole 🎀Soulmate🦋
 
  - *#2* => _Dengan tag target_
-- .banned @rifza|🎀Soulmate🦋
+- .setrole @rifza|🎀Soulmate🦋
 
  - *#3* => _Dengan nomor target_
-- .banned +62 831-xxxx-xxxx|🎀Soulmate🦋
+- .setrole +62 831-xxxx-xxxx|🎀Soulmate🦋
 
 \`LIST ROLE\`
 <role>
