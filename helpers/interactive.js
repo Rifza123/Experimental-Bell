@@ -112,7 +112,7 @@ async function In({ cht,Exp,store,is,ev }) {
 		    case isTagAfk: 
 		        let maxTag = 10
 		        let tagAfk = memories.getItem(cht.mention[0], "afk")
-		        let userData = await Exp.memories.get(sender)
+		        let userData = await memories.get(sender)
 		        tagAfk.taggedBy = tagAfk.taggedBy||{}
 		        if(!(sender in tagAfk.taggedBy)) tagAfk.taggedBy[sender] = 0
 		        tagAfk.taggedBy[sender]++
