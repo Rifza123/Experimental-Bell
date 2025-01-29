@@ -509,6 +509,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
         if(premiumTime > 315360000000) return cht.reply("Maksimal waktu adalah 10 tahun!")
         user.premium.time = opts[cht.cmd].time
+        user.claimPremTrial = true
         if(cht.cmd.includes("delprem")) user.premium = { time:0 }
         let formatTimeDur = func.formatDuration(user.premium.time - Date.now())
         let claim = cfg.first.trialPrem

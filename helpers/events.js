@@ -185,7 +185,7 @@ class EventEmitter {
             if (cfg.premium_mode && ev.premium && !isPremium) return this.sendPremiumMsg(trial, ("trial" in ev) ? ev.trial : true);
             if (cfg.premium_mode && ev.premium && ev.trial === false){
               cfg.first.trialPrem.time = cfg.first.trialPrem.time || "1 hari"
-              if((Date.now() - this.cht.memories.claimPremTrial) < func.parseTimeString(cfg.first.trialPrem.time)) return this.cht.reply(messages.isNotAvailableOnTrial)
+              if(!isNaN(this.cht.memories.claimPremTrial) && (Date.now() - this.cht.memories.claimPremTrial) < func.parseTimeString(cfg.first.trialPrem.time)) return this.cht.reply(messages.isNotAvailableOnTrial)
             }
              
             if (ev.energy && !isNaN(ev.energy) && this.cht.memories.energy < ev.energy) {
