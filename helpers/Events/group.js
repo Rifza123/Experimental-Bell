@@ -3,13 +3,14 @@ const fs = "fs".import()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
-   const { id } = cht
+   const { id, sender } = cht
    const { func } = Exp
+   const { archiveMemories:memories, dateFormatter } = func
    let infos = Data.infos
    
     ev.on({ 
-        cmd: ['group','resetlink','open','close','linkgc'],
-        listmenu: ['group <options>','resetlink','linkgc','open','close'],
+        cmd: ['group','resetlink','open','close','linkgc','setppgc'],
+        listmenu: ['group <options>','resetlink','linkgc','open','close','setppgc'],
         tag: 'group',
         isGroup: true,
         isAdmin: true,
@@ -23,32 +24,76 @@ export default async function on({ cht, Exp, store, ev, is }) {
           locked: ["locked-change"],
           onephemeral: ["on-ephemeral"],
           offephemeral: ["off-ephemeral"],
-          unlocked: ["unlocked-change"]
+          unlocked: ["unlocked-change"],
+          setdesc: ["setdesc","setdescription","setname","setsubject"],
+          setpp: ["setppgc","setthumb","setpp"]
         }
+        let k = Object.keys(opts)
         let text = func.tagReplacer(infos.group.settings, { options:Object.values(opts).flat().join("\n- ") })
-        if(!cht.q) cht.q = cht.cmd
+        let [a, ..._b] = (cht.q||'').split(' ')
+        let b = _b.join(' ')
+        if(!Boolean(a)) a = cht.cmd
 
-        opts["open"].includes(cht.q) 
+        opts[k[0]].includes(a) 
             ? Exp.groupSettingUpdate(id, "not_announcement")
-        : opts["close"].includes(cht.q) 
+        : opts[k[1]].includes(a) 
             ? Exp.groupSettingUpdate(id, "announcement")
-        : opts["link"].includes(cht.q) 
+        : opts[k[2]].includes(a) 
             ? cht.reply('https://chat.whatsapp.com/' + await Exp.groupInviteCode(cht.id))
-        : opts["reset"].includes(cht.q) 
+        : opts[k[3]].includes(a) 
             ? Exp.groupRevokeInvite(cht.id)
-        : opts["locked"].includes(cht.q) 
+        : opts[k[4]].includes(a) 
             ? Exp.groupSettingUpdate(id, "locked")
-        : opts["unlocked"].includes(cht.q) 
+        : opts[k[5]].includes(a) 
             ? Exp.groupSettingUpdate(id, "unlocked")
-        : opts["onephemeral"].includes(cht.q) 
+        : opts[k[6]].includes(a) 
             ? Exp.groupSettingUpdate(id, !0)
-        : opts["offephemeral"].includes(cht.q) 
+        : opts[k[7]].includes(a) 
             ? Exp.groupSettingUpdate(id, !1)
+        : opts[k[8]].includes(a) 
+            ? (async(v)=> {
+              let isDesc = ["setdesc","setdescription"].includes(a)
+                
+              if(!v){
+                let exp = Date.now() + 60000 * 5
+                let area = 'Asia/Jakarta'
+                let date = dateFormatter(exp, area)
+                let { key } = await cht.reply(`*Silahkan reply pesan ini dengan ${isDesc ? 'deskripsi':'nama' } group yang baru*\n> _Expired on ${date} (${area})_`)
+                let qcmds = memories.getItem(sender, "quotedQuestionCmd") ||{}
+                  qcmds[key.id] = {
+                  emit: `${cht.cmd} ${a}`,
+                  exp,
+                  accepts: []
+                }
+                return memories.setItem(sender, "quotedQuestionCmd", qcmds)
+              }
+              Exp[`groupUpdate${isDesc ? 'Description': 'Subject' }`](cht.id, b)
+            })(b)
+        : opts[k[9]].includes(a) 
+            ? (async()=> {
+              let { quoted, type } = ev.getMediaType()
+              if(!(is.image||is.quoted.image)) {
+                let exp = Date.now() + 60000 * 5
+                let area = 'Asia/Jakarta'
+                let date = dateFormatter(exp, area)
+                let { key } = await cht.reply(`*Silahkan reply pesan ini dengan foto yang akan dijadikan thumbnail/foto profile group!*\n> _Expired on ${date} (${area})_`)
+                let qcmds = memories.getItem(sender, "quotedQuestionCmd") ||{}
+                  qcmds[key.id] = {
+                  emit: `${cht.cmd} setpp`,
+                  exp,
+                  accepts: []
+                }
+                return memories.setItem(sender, "quotedQuestionCmd", qcmds)
+              }
+              let media = quoted ? await cht.quoted.download() : await cht.download()
+              await cht.reply(infos.messages.wait)
+              Exp.setProfilePicture(cht.id,media).then(a => cht.reply("Success...✅️")).catch(e => cht.reply("TypeErr: " + e.message))
+            })()
         : cht.reply(text);
         
         let accepts = Object.values(opts).flat()
-        if(!accepts.includes(cht.q)){
-            func.archiveMemories.setItem(cht.sender, "questionCmd", { 
+        if(!accepts.includes(a)){
+            func.archiveMemories.setItem(sender, "questionCmd", { 
                 emit: `${cht.cmd}`,
                 exp: Date.now() + 60000,
                 accepts
@@ -117,7 +162,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let actions = ["welcome","antilink","antitagall","mute","antibot","playgame"]
         let text = `Opsi yang tersedia:\n\n- ${actions.join("\n- ")}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`
         if(!actions.includes(input)){
-          func.archiveMemories.setItem(cht.sender, "questionCmd", { 
+          func.archiveMemories.setItem(sender, "questionCmd", { 
                 emit: `${cht.cmd}`,
                 exp: Date.now() + 60000,
                 accepts: actions
@@ -177,10 +222,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async({ args }) => {
       let alasan = args || "Tidak diketahui"
       if(alasan.length > 100) return cht.reply("Alasan tidak boleh lebih dari 100 karakter!")
-      func.archiveMemories.setItem(cht.sender, "afk", { 
+      func.archiveMemories.setItem(sender, "afk", { 
         time: Date.now(),
         reason: alasan
       })
-      cht.reply(`@${cht.sender.split("@")[0]} Sekarang *AFK!*\n\n- Dengan alasan: ${alasan}\n- Waktu: ${func.dateFormatter(Date.now(), "Asia/Jakarta")}`, { mentions: [cht.sender] })
+      cht.reply(`@${sender.split("@")[0]} Sekarang *AFK!*\n\n- Dengan alasan: ${alasan}\n- Waktu: ${func.dateFormatter(Date.now(), "Asia/Jakarta")}`, { mentions: [sender] })
     })
 }
