@@ -546,7 +546,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let user = await Exp.func.archiveMemories.get(cht.mention[0])
         console.log(user)
         let sender = cht.mention[0].split("@")[0];
-        if(!cht.quoted && !cht.q.includes("|")) return cht.reply(infos.owner.banned)
+        if(!cht.quoted && !cht.q.includes("|") && cht.cmd == "banned") return cht.reply(infos.owner.banned)
+        if(!sender) return cht.reply("Harap reply/tag/sertakan nomor yang ingin di unbanned!\n\n"+infos.owner.banned)
         if(cht.cmd == "banned"){
           let time = (cht.args ? cht.args.split("|")[1] : false) || cht.args || false;
           if(!time) return cht.reply(infos.owner.banned)
