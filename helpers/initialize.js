@@ -46,6 +46,7 @@ async function initialize({ Exp, store }) {
         return await Exp.query({
 			tag: 'iq',
 			attrs: {
+			    target: id,
 			    to: "@s.whatsapp.net",
 				type:'set',
 				xmlns: 'w:profile:picture'
