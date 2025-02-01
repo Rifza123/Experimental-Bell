@@ -80,6 +80,12 @@
       "block": false,
       "reject": true
     },
+    "models": {
+      "checkpoint": 1552,
+      "loras": [
+        2067
+      ]
+    },
     "hadiah": {
       "tebakgambar": 35,
       "susunkata": 20,

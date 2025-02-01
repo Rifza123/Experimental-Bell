@@ -57,6 +57,8 @@ infos.set = `
 - menu <type>
 - call <off or action>
 - autoreactsw <off or emojis>
+- checkpoint <checkpoint_id>
+- lora <lora_id>
 
 _Example: .set public on_`
 

@@ -504,7 +504,10 @@ async function In({ cht,Exp,store,is,ev }) {
 							return ev.emit(config?.cmd)
 						case 'lora':
 							noreply = true
-							cht.q = `1552[2067]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
+							cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
+							let { checkpoint, loras } = cfg.models
+							cht.q = `${checkpoint}[${JSON.stringify(loras)}]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
+							console.log(cht.q)
 							await cht.reply(config?.msg || "ok")
 							return ev.emit("txt2img")
 						case 'txt2img':

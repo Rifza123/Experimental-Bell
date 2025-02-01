@@ -93,7 +93,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         energy: 25
     }, async() => {
       try {
-        let ab = cht.quoted.type.includes("viewOnce") ? [
+        let isV1 = ["image","audio","video","viewOnce"].includes(cht.quoted.type)
+        let ab = isV1
+          ? [
           {
             message: cht.quoted, 
             key: {
@@ -103,19 +105,26 @@ export default async function on({ cht, Exp, store, ev, is }) {
               participant: cht.quoted.sender
             } 
           }
-        ] : store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
+        ]
+        : store.messages[id].array.filter(a => a.key.participant.includes(cht.mention[0]) && (a.message?.viewOnceMessageV2 || a.message?.viewOnceMessageV2Extension))
         if(ab.length == 0) return cht.reply(infos.others.noDetectViewOnce)
         for(let aa of ab){
             let thay = {
                 msg: aa.message.viewOnceMessageV2?.message?.imageMessage || aa.message.viewOnceMessageV2?.message?.videoMessage || aa.message.viewOnceMessageV2Extension?.message?.audioMessage,
-                type: aa.message.viewOnceMessageV2?.message?.imageMessage ? "image" : aa.message.viewOnceMessageV2?.message?.videoMessage ? "video" : "audio"
+                type: isV1 ? cht.quoted.type : aa.message.viewOnceMessageV2?.message?.imageMessage ? "image" : aa.message.viewOnceMessageV2?.message?.videoMessage ? "video" : "audio"
             }
-            let stream = await downloadContentFromMessage(thay.msg,thay.type)
-            let buffer = Buffer.from([])
-            for await (const chunk of stream) {
+            let buffer;
+            if(isV1){
+              buffer = await cht.quoted.download()
+            } else {
+              let stream = await downloadContentFromMessage(thay.msg,thay.type)
+                buffer = Buffer.from([])
+              for await (const chunk of stream) {
                 buffer = Buffer.concat([buffer, chunk])
+              }
             }
             let mssg = {}
+            if(cht.quoted.text) mssg.caption = cht.quoted.text || undefined 
             thay.type == "audio" && (mssg.ptt = true)
             await Exp.sendMessage(id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
         }

@@ -77,9 +77,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: "owner",
         isOwner: true,
         args: infos.owner.set
-    }, async () => {
+    }, async ({ args }) => {
         let fquotedKeys = Object.keys(Data.fquoted)
-        let [t1, t2, t3, t4] = cht.q.split(" ")
+        let [t1, t2, t3, t4] = args.split(" ")
         if(!options[t1] && t1.includes("\n")){
           t1 = t1.split("\n")[0]
         }
@@ -102,6 +102,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
            ? infos.owner.setHadiah
            : t1 == "autoreactsw"
            ? infos.owner.setAutoreactSw
+           : t1 == "lora"
+           ? `Example: .${cht.cmd} ${t1} 2067`
+           : t1 == "checkpoint"
+           ? `Example: .${cht.cmd} ${t1} 1552`
            : false)
 
         if (!mode) return cht.reply(infos.owner.set)
@@ -215,6 +219,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
           let emojis = [...t2]
           cfg.reactsw = { on: true, emojis }
           return cht.reply(infos.owner.successSetAutoreactSw.replace("<action>", "\n- "+emojis.join("\n- ")))
+        } else if(t1 == "lora"){
+            if(!t2) return cht.reply(mode)
+            let [a,...b] = args.split(" ")
+            if(b.some(v => isNaN(v))) return cht.replyWithTag(infos.messages.onlyNumber, { value: t1 })
+            let lora = b.map(v => parseInt(v))
+            cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
+            cfg.models["loras"] = lora
+            cht.reply("Success ✅")
+        } else if(t1 == "checkpoint"){
+            if(!t2) return cht.reply(mode)
+            if(isNaN(v)) return cht.replyWithTag(infos.messages.onlyNumber, { value: t1 })
+            cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
+            cfg.models["checkpoint"] = parseInt(t2)
+            cht.reply("Success ✅")
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })

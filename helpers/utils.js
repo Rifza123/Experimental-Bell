@@ -93,7 +93,6 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.mtype = Object.keys(cht.quoted)[0]
             cht.quoted.type = Exp.func['getType'](cht.quoted.mtype)
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
-            cht.quoted.text = cht?.quoted?.[type]?.text || cht?.quoted?.conversation || false
             cht.quoted.url = cht.quoted.text ? (
                 cht?.quoted?.text?.match(/https?:\/\/[^\s)]+/g)
                 || cht?.quoted?.text?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
@@ -101,6 +100,7 @@ async function utils({ Exp, cht, is, store }) {
               ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
             : []
             cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
+            cht.quoted.text = cht.quoted?.[cht.quoted.type]?.caption || cht.quoted?.[cht.quoted.type]?.text || cht.quoted?.conversation || false            
             cht.quoted.download = async () => Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type)
             cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
             cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
