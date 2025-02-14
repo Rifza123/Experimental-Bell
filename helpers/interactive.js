@@ -221,6 +221,116 @@ async function In({ cht,Exp,store,is,ev }) {
     		      memories.delItem(sender, "questionCmd")
     		    } 
 		      break
+	        case is.offline: {
+	            global.offresponse = global.offresponse||{}
+	            global.offresponse[sender] = global.offresponse[sender]||0
+	            global.offresponse[sender]++
+	            if(global.offresponse[sender] > cfg.offline.max) return 
+			    let chat = cht.msg ||''
+				let isImage = is?.image ? true : is.quoted?.image ? cht.quoted.sender !== Exp.number : false
+				if (cht?.type === "audio") {
+					try {
+						chat = (await transcribe(await cht?.download()))?.text || ""
+					} catch (error) {
+						console.error("Error transcribing audio:", error)
+						chat = ""
+					}
+				}
+				if (isImage) {
+					let download = is.image ? cht?.download : cht?.quoted?.download
+					isImage = await download()
+				}
+				
+				try {
+					let _ai = await ai({
+						text: chat,
+						id: cht?.sender,
+						fullainame: botfullname,
+						nickainame: botnickname,
+						senderName: cht?.pushName,
+						ownerName: ownername,
+						date: func.newDate(),
+						role: `temennya ${ownername}`,
+						msgtype: cht?.type,
+						custom_profile: func.tagReplacer(`Kamu adalah asisten pemilikmu/ownermu yang bernama ${ownername}. Tugasmu adalah memberitahu siapa pun yang menghubungi bahwa ${ownername} sedang off karena alasan "${cfg.offline.reason}" dan telah offline sejak ${func.dateFormatter(cfg.offline.time,'Asia/Jakarta')} jadi kamu bertugas untuk memberitahukan itu. Jika mereka bertanya tentang alasan ${ownername} offline, ulangi informasi yang sama dengan nada sopan.\n\n**Sifat dan kepribadianmu**:\n${cfg.logic}`, {
+							botfullname,
+							botnickname
+						}),
+						image: isImage,
+						commands: [{
+								"description": "Jika perlu atau kamu sedang ingin membalas dengan suara",
+								"output": {
+									"cmd": "voice",
+									"msg": `Pesan di sini. Gunakan gaya bicara ${botnickname} yang menarik dan realistis, lengkap dengan tanda baca yang tepat agar terdengar hidup saat diucapkan.`
+								}
+							}
+						]
+					})
+					let config = _ai?.data || {}
+					await func.addAiResponse()
+					switch (config?.cmd) {
+						case 'voice':
+						  try{
+							cfg.ai_voice = cfg.ai_voice || "bella"
+							await Exp.sendPresenceUpdate('recording', cht?.id)
+							return Exp.sendMessage(cht?.id, {
+								audio: {
+									url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=${cfg.ai_voice}&speed=0.9`
+								},
+								mimetype: "audio/mpeg",
+								ptt: true
+							}, {
+								quoted: cht
+							})
+						  } catch (e) {
+						     return console.error(e.response)
+						  }
+					}
+
+					if (config?.cmd !== "voice") {
+						const method = cfg.editmsg && config?.energyreply ? "edit" : "reply";
+
+						function isFormatMsg(lines) {
+						  const listRegex = /^[\d\w$&-]+\.\s?.+$/m
+						  const symbolListRegex = /^[$\-&]\s?.+$/m
+						  return lines.split("\n").some(a => listRegex.test(a.trim())|| symbolListRegex.test(a.trim()))
+						}
+
+						if (config?.msg) {
+						  if(cfg.ai_interactive?.partResponse && !config.msg.split('\n').some(a => a.trim().startsWith("**"))){
+						    let sp = config.msg.split("\n\n");
+						    for (let line of sp) {
+						        if(!line) return
+						        let isFormat = isFormatMsg(line)
+						        console.log({ isFormat })
+				    		    if (!isFormat) {
+						            let parts = line.split(". ");
+						            console.log({ parts })
+						            for (let part of parts) {
+						                let typing = part.length * 50;
+						                await Exp.sendPresenceUpdate("composing", cht.id);
+						                await sleep(typing);
+						                await cht.reply(part.trim(), { ai:true });
+						                await sleep(2000)
+						            }
+						        } else {
+						          let typing = line.length * 50;
+						           await Exp.sendPresenceUpdate("composing", cht.id);
+						           await sleep(typing);
+						           await cht.reply(line.trim(), { ai:true });
+			                       await sleep(2000);
+						        }
+						    }
+						  } else {
+						    await cht['reply'](config.msg, { ai:true })
+						  }
+						}
+
+					}
+				} catch (error) {
+					console.error("Offline: Error parsing AI response:", error)
+				}
+		    }  break
 			case isGame:
 			  Data.eventGame({ cht,Exp,store,is,ev,chatDb })
 			  break
@@ -266,11 +376,11 @@ async function In({ cht,Exp,store,is,ev }) {
 			    
 			 }  break
 
-			case isBella:
+			case isBella: {
 				let usr = sender.split("@")[0]
-				let user = Data.users[usr]
+				let user = Data.users[usr] || {}
 				let premium = user?.premium ? Date.now() < user.premium.time : false
-				user.autoai.use += 1
+				if(user?.autoai?.use) user.autoai.use++
 				if (Date.now() >= user?.autoai?.reset && !premium) {
 					user.autoai.use = 0
 					user.autoai.reset = Date.now() + parseInt(user?.autoai?.delay)
@@ -324,7 +434,7 @@ async function In({ cht,Exp,store,is,ev }) {
 								"description": "Jika perlu direspon dengan suara",
 								"output": {
 									"cmd": "voice",
-									"msg": "Pesan di sini. Gunakan gaya bicara <nickainame> yang menarik dan realistis, lengkap dengan tanda baca yang tepat agar terdengar hidup saat diucapkan.,"
+									"msg": `Pesan di sini. Gunakan gaya bicara ${botnickname} yang menarik dan realistis, lengkap dengan tanda baca yang tepat agar terdengar hidup saat diucapkan.`
 								}
 							},
 							{
@@ -506,7 +616,7 @@ async function In({ cht,Exp,store,is,ev }) {
 							noreply = true
 							cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
 							let { checkpoint, loras } = cfg.models
-							cht.q = `${checkpoint}[${JSON.stringify(loras)}]|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
+							cht.q = `${checkpoint}${JSON.stringify(loras)}|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
 							console.log(cht.q)
 							await cht.reply(config?.msg || "ok")
 							return ev.emit("txt2img")
@@ -584,10 +694,10 @@ async function In({ cht,Exp,store,is,ev }) {
 				} catch (error) {
 					console.error("Error parsing AI response:", error)
 				}
-				break
-				case isSalam:
-				  cht.reply("Wa'alaikumussalaam...")
-			    break
+			}  break
+		    case isSalam:
+			    cht.reply("Wa'alaikumussalaam...")
+			   break
 		}
 	} catch (error) {
 		console.error("Error in Interactive:", error)

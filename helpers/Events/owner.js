@@ -1,7 +1,7 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
 const path = "path".import()
-const { getContentType } = "baileys".import()
+const { getContentType, generateWAMessage, STORIES_JID, generateWAMessageFromContent } = "baileys".import()
 
 /*!-======[ Function Imports ]======-!*/
 const { catbox } = await (fol[0] + 'catbox.js').r()
@@ -39,8 +39,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
    let infos = Data.infos
    const { func } = Exp
-
-   const { id } = cht
+   const { getDirectoriesRecursive } = func
+   const { id, sender } = cht
     const options = {
         public: 'mode public',
         autotyping: 'auto typing',
@@ -83,8 +83,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(!options[t1] && t1.includes("\n")){
           t1 = t1.split("\n")[0]
         }
-
-        const mode = options[t1] || (t1 == "fquoted" 
+        let isOn = ["on","true"].includes(t2)
+        let isOff = ["off","false"].includes(t2)
+        let isOnly = ["onlypc","onlygc"].includes(t2)
+            
+        let mode = options[t1] || (t1 == "fquoted" 
            ? `Success ${fquotedKeys.includes(t2) ? "change" : "add"} fake quoted ${t2}\n\nList fake quoted:\n\n- ${!fquotedKeys.includes(t2) ? [...fquotedKeys, t2].join("\n- ") : fquotedKeys.join("\n- ")}`
            : t1 == "welcome"
            ? `Successfully set welcome with type ${t2}`
@@ -174,7 +177,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else if(t1 == "voice"){
             let listv = "`LIST VOICES`\n- "+Data.voices.join("\n- ")
             if(!t2){
-              func.archiveMemories.setItem(cht.sender, "questionCmd", { 
+              func.archiveMemories.setItem(sender, "questionCmd", { 
                 emit: `${cht.cmd} ${t1}`,
                 exp: Date.now() + 60000,
                 accepts: Data.voices
@@ -229,10 +232,28 @@ export default async function on({ cht, Exp, store, ev, is }) {
             cht.reply("Success ✅")
         } else if(t1 == "checkpoint"){
             if(!t2) return cht.reply(mode)
-            if(isNaN(v)) return cht.replyWithTag(infos.messages.onlyNumber, { value: t1 })
+            if(isNaN(t2)) return cht.replyWithTag(infos.messages.onlyNumber, { value: t1 })
             cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
             cfg.models["checkpoint"] = parseInt(t2)
             cht.reply("Success ✅")
+        } else if(t1 == "public"){
+            if(isOn){
+              global.cfg[t1] = true
+            } else if(isOff){
+              global.cfg[t1] = false
+            } else if(isOnly){
+              let vv = t2.trim().toLowerCase()
+              mode = `mode ${vv}`
+              global.cfg[t1] = vv
+            } else {
+              await cht.reply("on/off/onlygc/onlypc ?")
+              return func.archiveMemories.setItem(sender, "questionCmd", { 
+                emit: `${cht.cmd} ${t1}`,
+                exp: Date.now() + 60000,
+                accepts: ["on","off","true","false","onlygc","onlypc"]
+              })
+            }
+            return cht.replyWithTag(isOff ? infos.owner.isModeOffSuccess : infos.owner.isModeOnSuccess, { mode })
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })
@@ -241,10 +262,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
           } else if (t2 === "off" || t2 === "false") {
             if (!global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOff, { mode })
             global.cfg[t1] = false
-            return cht.replyWithTag(infos.owner.isModeOffSuccess, { mode })
+            return cht.replyWithTag(isOff ? infos.owner.isModeOffSuccess : infos.owner.isModeOnSuccess, { mode })
           } else {
             await cht.reply("on/off ?")
-            func.archiveMemories.setItem(cht.sender, "questionCmd", { 
+            func.archiveMemories.setItem(sender, "questionCmd", { 
                 emit: `${cht.cmd} ${t1}`,
                 exp: Date.now() + 60000,
                 accepts: ["on","off","true","false"]
@@ -484,8 +505,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if(!cht.quoted && !cht.q.includes("|")) return sendPremInfo({ _text: infos.owner.wrongFormat, text });
         let time = (cht.q ? cht.q.split("|")[1] : false) || cht.q || false;
         if (!time) return sendPremInfo({ text });
-        let sender = cht.mention[0].split("@")[0];
-        if (!(sender in Data.users)) return cht.reply(infos.owner.userNotfound);
+        let Sender = cht.mention[0].split("@")[0];
+        if (!(Sender in Data.users)) return cht.reply(infos.owner.userNotfound);
         let user = await func.archiveMemories.get(cht.mention[0])
         if (["kurangprem","kurangpremium","delprem","delpremium"].includes(cht.cmd) && user.premium.time < Date.now()) {
             return cht.reply("Maaf, target bukan user premium!");
@@ -502,27 +523,27 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let opts = {
             addpremium: {
                 time: parseFloat(date) + parseFloat(premiumTime),
-                msg:  `*Successfully increased premium duration! ✅️*\n ▪︎ User:\n- @${sender}\n ▪︎ Waktu ditambahkan: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
+                msg:  `*Successfully increased premium duration! ✅️*\n ▪︎ User:\n- @${Sender}\n ▪︎ Waktu ditambahkan: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
             },
             addprem: {
                 time: parseFloat(date) + parseFloat(premiumTime),
-                msg:  `*Successfully increased premium duration✅️*\n ▪︎ User:\n- @${sender}\n ▪︎ Waktu ditambahkan: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
+                msg:  `*Successfully increased premium duration✅️*\n ▪︎ User:\n- @${Sender}\n ▪︎ Waktu ditambahkan: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
             },
             kurangpremium: {
                 time: parseFloat(date) - parseFloat(premiumTime),
-                msg:  `*Successfully reduced premium duration✅️*\n ▪︎ User:\n- @${sender}\n ▪︎ Waktu dikurangi: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
+                msg:  `*Successfully reduced premium duration✅️*\n ▪︎ User:\n- @${Sender}\n ▪︎ Waktu dikurangi: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
             },
             kurangprem: {
                 time: parseFloat(date) - parseFloat(premiumTime),
-                msg:  `*Successfully reduced premium duration!✅️*\n ▪︎ User:\n- @${sender}\n ▪︎ Waktu dikurangi: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
+                msg:  `*Successfully reduced premium duration!✅️*\n ▪︎ User:\n- @${Sender}\n ▪︎ Waktu dikurangi: \n- ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms\n\n`
             },
             delpremium: { 
                 time:0,
-                msg: `*Successfully delete user @${sender} from premium✅️*\n\n`
+                msg: `*Successfully delete user @${Sender} from premium✅️*\n\n`
             },
             delprem: {
                 time:0,
-                msg: `*Successfully delete user @${sender} from premium✅️\n\n`
+                msg: `*Successfully delete user @${Sender} from premium✅️\n\n`
             }
         }
         if(premiumTime > 315360000000) return cht.reply("Maksimal waktu adalah 10 tahun!")
@@ -549,7 +570,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               txt += `\n⏱️Expired after: false`
               txt += `\n🗓️Expired on: false`
             }
-        Data.users[sender] = user
+        Data.users[Sender] = user
         await sendPremInfo({ text:txt }, true)
         //sendPremInfo({ text:txt }, true, cht.mention[0])
     })
@@ -563,13 +584,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async() => {
         let user = await Exp.func.archiveMemories.get(cht.mention[0])
         console.log(user)
-        let sender = cht.mention[0].split("@")[0];
+        let Sender = cht.mention[0].split("@")[0];
         if(!cht.quoted && !cht.q.includes("|") && cht.cmd == "banned") return cht.reply(infos.owner.banned)
-        if(!sender) return cht.reply("Harap reply/tag/sertakan nomor yang ingin di unbanned!\n\n"+infos.owner.banned)
+        if(!Sender) return cht.reply("Harap reply/tag/sertakan nomor yang ingin di unbanned!\n\n"+infos.owner.banned)
         if(cht.cmd == "banned"){
           let time = (cht.args ? cht.args.split("|")[1] : false) || cht.args || false;
           if(!time) return cht.reply(infos.owner.banned)
-          if (!(sender in Data.users)) return cht.reply("Nomor salah atau user tidak terdaftar!");
+          if (!(Sender in Data.users)) return cht.reply("Nomor salah atau user tidak terdaftar!");
           let _time = func.parseTimeString(time)
            if (!("banned" in user)) {
             user.banned = 0
@@ -580,12 +601,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
           let formatDur = func.formatDuration(_time|| 0)
           let ban = func.formatDuration(bantime - Date.now())
           await Exp.sendMessage(cht.mention[0], { text: func.tagReplacer(infos.owner.addBanned, { ...ban }) })
-          await cht.reply(func.tagReplacer(infos.owner.bannedSuccess, { ...formatDur,sender }),  {mentions: cht.mention})
-          await func.archiveMemories.setItem(sender, "banned", bantime)
+          await cht.reply(func.tagReplacer(infos.owner.bannedSuccess, { ...formatDur,sender:Sender }),  {mentions: cht.mention})
+          await func.archiveMemories.setItem(Sender, "banned", bantime)
         } else {
           await Exp.sendMessage(cht.mention[0], { text: infos.owner.delBanned })
-          await cht.reply(func.tagReplacer(infos.owner.unBannedSuccess, { sender }), {mentions: cht.mention})
-          func.archiveMemories.delItem(sender, "banned")
+          await cht.reply(func.tagReplacer(infos.owner.unBannedSuccess, { sender:Sender }), {mentions: cht.mention})
+          func.archiveMemories.delItem(Sender, "banned")
         }
         
     })
@@ -619,8 +640,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let b = "./backup.tar.gz"
       let s = await Exp.func.createTarGz("./",b)
       if(!s.status) return cht.reply(s.msg)
-      await cht.edit(`File backup sedang dikirim${is.group ? " melalui private chat..." : "..."}`, keys[cht.sender])
-      await Exp.sendMessage(cht.sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz`, ai: true }, { quoted: cht })
+      await cht.edit(`File backup sedang dikirim${is.group ? " melalui private chat..." : "..."}`, keys[sender])
+      await Exp.sendMessage(sender, { document: { url: b }, mimetype: "application/zip", fileName: `${path.basename(path.resolve("./"))} || ${Exp.func.dateFormatter(Date.now(), "Asia/Jakarta")}.tar.gz`, ai: true }, { quoted: cht })
       await cht.reply(`*Proses backup selesai✅️*${is.group ? "\nFile telah dikirimkan melalui chat pribadi" : "" }`)
       fs.unlinkSync(b)
     })
@@ -640,7 +661,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         /*
         if ((i + 1) % perStep === 0 || i + 1 === sessions.length) {
           const progress = Math.round(((i + 1) / sessions.length) * 100)
-          cht.edit(`Progress: ${progress}%`, keys[cht.sender], true)
+          cht.edit(`Progress: ${progress}%`, keys[sender], true)
          }
          */
       }
@@ -655,16 +676,195 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isOwner: true
     }, async() => {
       if(!cht.quoted && !cht.q.includes("|")) return cht.replyWithTag(infos.owner.setRole, { role: `- ${keyroles.join("\n- ")}` })
-      let sender = cht.mention[0].split("@")[0];
+      let Sender = cht.mention[0].split("@")[0];
       let role = cht.quoted ? cht.q : cht.q?.split("|")[1]
       let frole = keyroles.find(a => a.toLowerCase().includes(role?.toLowerCase().trim()))
       if(!frole) return cht.replyWithTag("*[ Role tidak valid❗]*\n\n"+infos.owner.setRole, { role: `- ${keyroles.join("\n- ")}` })
-      let memories = await func.archiveMemories.setItem(sender, "chat", roles[frole])
+      let memories = await func.archiveMemories.setItem(Sender, "chat", roles[frole])
       await cht.reply("Success✅")
       cht.memories = memories
-      cht.sender = sender
-      cht.pushName = func.getName(sender)
+      cht.pushName = func.getName(Sender)
       await sleep(100)
       ev.emit("profile")
     })
+    
+    ev.on({ 
+        cmd: ['offline','online'],
+        listmenu: ['offline <alasan>','online'],
+        tag: 'owner',
+        isOwner: true,
+    }, async({ args }) => {
+      let reason = args || "Tidak diketahui"
+      if(cht.cmd == "offline"){
+        global.offresponse = {}
+        cfg.offline = {
+          reason,
+          time: Date.now(),
+          max: 10
+        }
+        cht.reply(`@${sender.split("@")[0]} Sekarang *OFFLINE!*\n\n- Dengan alasan: ${reason}\n- Waktu: ${func.dateFormatter(Date.now(), "Asia/Jakarta")}`, { mentions: [sender] })
+      } else {
+        delete cfg.offline
+        delete global.offresponse
+        cht.reply(`@${sender.split("@")[0]} Telah kembali online ✅`,  { mentions: [sender] })
+      }
+    })
+ 
+    ev.on({ 
+        cmd: ['update'],
+        listmenu: ['update'],
+        tag: 'owner',
+        isOwner: true,
+        urls: {
+          formats: ["https://cdn.xtermai.xyz","https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/"],
+          msg: true
+        },
+    }, async({ urls }) => {
+      let fols = await getDirectoriesRecursive()
+      await cht.reply("Updating...")
+      let changed = `*📂File Changed:*`
+      let modifed = ''
+      let newfile = ''
+      let failed = '\n*❗Failed:*'
+      let urlPath = urls.map(link => {
+        const { pathname, host } = new URL(link);
+        let isValidHost = ['cdn.xtermai.xyz','raw.githubusercontent.com'].includes(host)
+        if(!isValidHost){
+          failed += `\n- ${url}\n> Invalid host url`
+          return null
+        }
+        let f = (host === "raw.githubusercontent.com" ? pathname.split("heads/")[1] : pathname)?.split('/')?.slice(1)?.join('/')?.split('/');
+        const filename = f.slice(-1)[0];
+
+        if (!filename){
+          failed += `\n- ${url}\n> File empty`
+          return null;
+        }
+
+        const _path = f.slice(0, -1).join('/');
+    
+        for (const folder of fols) {
+          const folderPath = folder.split('./')[1].slice(0, -1);
+
+          if (folderPath.includes(_path) && _path) {
+            return [link, `${folder}${filename}`];
+          }
+      
+          if (filename === 'index.js') {
+            return [link, `./${filename}`];
+          }
+        }
+        failed += `\n- Unknown error`
+        return null;
+      }).filter(Boolean)
+      
+      for(let [url, fpath] of urlPath){
+        let res = await fetch(url)
+        if(!res.ok) {
+          failed += `\n- ${url}\n> Failed to fetch url`
+          continue 
+        }
+        let isExists = fs.existsSync(fpath)
+        if(isExists){
+          modifed += `\n- \`modifed\`: ${fpath}`
+        } else {
+          newfile += `\n- \`new\`: ${fpath}`
+        }
+        let buff = await res.text()
+        await fs.writeFileSync(fpath, buff)
+      }
+      
+      let text = `*[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`
+      if(failed.length > 12) text += failed
+      cht.edit(text, keys[sender])
+    })
+    
+    ev.on({
+        cmd: ['upswgc'], 
+        listmenu: ['upswgc'],
+        isOwner: true,
+        tag: "owner"
+    }, async ({ args }) => {
+      let [txt,_type] = cht.q.split("--")
+      
+      let text = txt||cht.quoted.text||""
+      let { quoted, type } = ev.getMediaType()
+      let isText = ["conversation","extendedTextMessage"].includes(type)
+      let message = { }
+
+      let value;
+      
+      if(!isText){
+        value = quoted ? await cht.quoted.download() : await cht.download()
+        message["caption"] = text
+      } else {
+        type = "text"
+        value = text
+      }
+      message[type] = value 
+      let msg = await generateWAMessage(STORIES_JID, message, {
+          upload: Exp.waUploadToServer,
+      })
+      
+      let { message:_msg, key } = msg
+
+      let groups = []
+      if(txt.endsWith(from.group)) _type = txt
+      if(_type == "all"){
+        groups = new Set([store.chats.all().map(a => a.id).filter(a => a.endsWith(from.group)), Object.keys(Data.preferences).filter(a => a.endsWith(from.group))].flat())
+      } else if(_type?.endsWith(from.group)) groups.push(_type)
+      else if(is.group){
+        groups.push(cht.id)
+      } else {
+        return cht.reply("Sertakan id groupnya!")
+      }
+      
+      await cht.reply("Uploading to stories..")
+      for(let ID of groups){
+        await Exp.relayMessage(STORIES_JID, _msg, {
+          messageId: key.id,
+          statusJidList: (await func.getGroupMetadata(ID, Exp)).participants.map((a) =>a.id),
+          additionalNodes: [
+            {
+              tag: "meta",
+              attrs: {},
+              content: [
+                {
+                  tag: "mentioned_users",
+                  attrs: {},
+                  content: [{
+                    tag: "to",
+                    attrs: { jid: ID },
+                    content: undefined,
+                  }],
+                },
+              ],
+            },
+          ]
+        }) 
+      
+        //await Exp.sendMessage(ID, { text: 'Success' }, { quoted: msg })
+        /*await Exp.relayMessage(ID, {
+            [ID.endsWith(from.group) ? "groupStatusMentionMessage":"statusMentionMessage"]: {
+              message: {
+                protocolMessage: {
+                  key,
+                  type: 25,
+                },
+              },
+            },
+          }, {
+          additionalNodes: [
+            {
+              tag: "meta",
+              attrs: { is_status_mention: "true" },
+              content: undefined,
+            },
+          ],
+        })
+        */
+      }
+      
+    })
+    
 }

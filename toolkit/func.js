@@ -17,6 +17,19 @@ const Jimp = (await "jimp".import()).default
 const cache = new Map()
 const CACHE_DURATION = 1 * 60 * 1000;
 
+async function getDirectoriesRecursive(dir='./', ignoredDirs = ['node_modules','.git','.config','.npm','.pm2']) {
+  const items = await fs.promises.readdir(dir, { withFileTypes: true });
+
+  return (await Promise.all(
+    items
+      .filter(item => item.isDirectory() && !ignoredDirs.includes(item.name))
+      .map(async item => {
+        const folderPath = `./${path.join(dir, item.name)}/`;
+        return [folderPath, ...await getDirectoriesRecursive(path.join(dir, item.name), ignoredDirs)];
+      })
+  )).flat();
+}
+    
 export class func {
     constructor({ Exp, store }) {
         this.Exp = Exp
@@ -586,4 +599,6 @@ export class func {
       return item?.[type]?.some((b) => b.code === code?.trim().toUpperCase());
     })
   }
+  
+  getDirectoriesRecursive = getDirectoriesRecursive
 }

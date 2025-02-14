@@ -21,13 +21,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let menu = {}
         if(cfg?.menu_type == "text"){
           menu.text = text
-          Exp.sendMessage(id, menu, { quoted: cht })
+          await Exp.sendMessage(id, menu, { quoted: cht })
         } else if(cfg?.menu_type == "image" ){
           menu.image = fs.readFileSync(fol[3] + "bell.jpg")
           menu.caption = text
-          Exp.sendMessage(id, menu, { quoted: cht })
+          await Exp.sendMessage(id, menu, { quoted: cht })
         } else if(cfg?.menu_type == "liveLocation"){
-           Exp.relayMessage(cht.id, {
+           await Exp.relayMessage(cht.id, {
 	         liveLocationMessage: {
 	            degreesLatitude: -76.01801,
 	            degreesLongitude: 22.662851,
@@ -36,7 +36,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 	         }
 	       }, {})
         } else if(cfg?.menu_type == "order"){
-          Exp.relayMessage(cht.id, {
+          await Exp.relayMessage(cht.id, {
            "orderMessage": {
              "orderId": "530240676665078",
              "status": "INQUIRY",
@@ -71,8 +71,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 }
             }
           }
-          Exp.sendMessage(id, menu, { quoted: cht })
+          await Exp.sendMessage(id, menu, { quoted: cht })
         }
+        Data.audio?.menu?.length > 0 && Exp.sendMessage(cht.id, { audio: { url: Data.audio.menu.getRandom() }, mimetype: "audio/mpeg" }, { quoted: cht })
     })
     
     ev.on({ 

@@ -1,0 +1,117 @@
+const fs = 'fs'.import()
+const cheerio = await 'cheerio'.import()
+
+/** 
+ * !-======[ Experimentall ▪︎ Bell🦋 ]======-!
+ * Coding by @rifza.p.p (code ini dibuat seluruhnya oleh Azfir/rifza.p.p)
+ * ⚠️ *Dilarang menghapus credit ini!*  
+ * Pembuat kode pasti mengenali ciri khas karyanya.
+ *
+ * 🩵 Follow me on:
+ * ▪︎ YouTube  : https://youtube.com/@rifza  
+ * ▪︎ GitHub   : https://github.com/Rifza123
+ * ▪︎ Instagram: https://instagram.com/rifza.p.p
+ * ▪︎ Threads  : https://www.threads.net/@rifza.p.p
+ * ▪︎ Website  : https://xterm.tech
+ *
+ * Silakan pakai function ini agar member kalian tidak lupa beribadah.
+ * Semoga bermanfaat!
+ */
+  
+let _git = JSON.parse(fs.readFileSync('package.json')).homepage.split('/').slice(0,4).join('/')
+let git = { raw: _git+ '/lib/raw/refs/heads/main' }
+git.daerah = git.raw + '/db/daerah.json'
+Data.audio = {
+  ...Data.audio,
+  adzan: 'adzan.'.repeat(4).split('.').map((a, i) => git.raw + '/db/audio/' + a + (i+1) + '.mp3').slice(0,-1),
+  adzan_subuh: 'adzan_subuh.'.repeat(4).split('.').map((a, i) => git.raw + '/db/audio/' + a + (i+1) + '.mp3').slice(0,-1)
+}
+
+export class JadwalSholat {
+   constructor(groups={}){
+     this.groups = groups
+     this.url = 'https://www.kompas.com/jadwal-sholat/'
+   }
+
+   async init(id, v='kab-bungo',opts={}){
+    Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
+    if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
+    let res = await fetch(this.url+v)
+    if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
+
+    let html = await res.text()
+    const $ = cheerio.load(html)
+
+    let list = []
+    $('#jadwal-ramadhan table tbody tr').each((index, element) => {
+      const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
+      if (row.length > 0) {
+        list.push(row)
+      }
+    })
+
+    list = list.map(row => {
+      return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
+    })
+    let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
+    if(id=='no') return { status: true, data: list, timeZone }
+    if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }
+    return { status: true, data: list, db: this.groups[id] }
+  }
+  
+  async now(id){     
+    Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
+    if(!id||!(id in this.groups)) return { status: false, msg: "id tidak ada dalam data, silahkan lakukan init terlebih dahulu" }
+    let { timeZone, v, ramadhan } = this.groups[id]
+    if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
+    
+    if(!timeZone){
+      timeZone = this.groups[id].timezone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
+    }
+
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+
+    const parts = formatter.formatToParts(new Date())
+    const h = parts.find(p => p.type === 'hour').value
+    const min = parts.find(p => p.type === 'minute').value
+    const d = parts.find(p => p.type === 'day').value
+    const m = parts.find(p => p.type === 'month').value
+
+    let c = { hm: `${h}:${min}`, dm: `${d}/${m}` }
+    this.groups[id].jadwal = this.groups[id].jadwal || await this.init(id, v).then(a => a.data)
+    this.groups[id].today = this.groups[id].today || this.groups[id].jadwal.find(a => a.tanggal == c.dm)
+    if(!this.groups[id].today) {
+      await this.init(id, this.groups[id].v)
+      this.groups[id].today = this.groups[id].jadwal.find(a => a.tanggal == c.dm)
+    }
+    let except = ['hari','tanggal','terbit','notice','imsak']
+    if(ramadhan) except = except.filter(a => a !== 'imsak')
+    let ktoday = Object.keys(this.groups[id].today).filter(a => !except.some(b => a.includes(b)) )
+   
+    let waktu = ktoday.find(a => {
+      let [sh, sm] = this.groups[id].today[a].split(':').map(Number)
+      return sh == h && (parseInt(min)-sm) <= 10 && parseInt(min) >= sm
+    })
+
+    let hasNotice = Boolean(this.groups[id].today['notice-'+waktu])
+    if(waktu) this.groups[id].today['notice-'+waktu] = true
+    return { 
+      status: true, 
+      data: {
+        today: this.groups[id].today,
+        now: waktu||false,
+        adzan: waktu == 'subuh' ? Data.audio.adzan_subuh.getRandom() : waktu ? Data.audio.adzan.getRandom() : null,
+        hasNotice
+      },
+      db: this.groups[id]
+    }
+  }
+
+};

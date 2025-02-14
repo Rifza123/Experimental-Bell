@@ -102,6 +102,11 @@ Param: \`.txt2img <checkpoint>[<lora>]|<prompt>\`
 
  ▪︎ \`More than 1 lora\`
 - .txt2img <checkpoint>[<lora>,<lora>,...more lora]|<prompt>
+
+ ▪︎ \`How to custom aspect ratio\`
+-  .txt2img <checkpoint>[<lora>]<aspect:ratio>|<prompt>
+> Ex: txt2img 1233[9380]3:4|1girl, beautiful, futuristic, armored mecha*
+
 --------------------------------------------------
  ▪︎ \`Example\`: 
 - *.txt2img 1233[9380]|1girl, beautiful, futuristic, armored mecha*

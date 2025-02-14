@@ -114,10 +114,35 @@ ev.on({
             msg: "Audio tidak boleh lebih dari 360 detik!" // Respon jika lebih dari 360 detik
         },
         save: false // Jika true maka media akan disimpan dalam bentuk file audio.mp3
-    }
+    },
+    urls: { //Membutuhkan url
+        formats: ["pinterest.com","pin.it"], //Format url
+        msg: true//respon message or msg: 'isi pesan balasan'
+    },
+    isMention: true, //Membutuhkan mention (tag/reply/input nomor)
+    isQuoted: false, //membutuhkan quoted
 }, ({ media }) => {
     // media adalah kembalian dari media yang di-download, 
     // jika save false maka media adalah buffer,
     // jika save true maka media adalah nama file yang tersimpan
 });
 ```
+
+## 🙌 Thanks to All Contributors
+
+Terima kasih kepada semua yang telah berkontribusi dan mendukung pengembangan project ini.  
+Setiap masukan, ide, dan bantuan sangat berarti!
+
+[![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)
+
+Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau hubungi kami.
+
+---
+
+## Kontributor
+
+- **Azfir (rifza.p.p)**  
+  [Instagram](https://www.instagram.com/rifza.p.p) • [GitHub](https://github.com/Rifza123) • [YouTube](https://www.youtube.com/@rifza) • [WhatsappChannel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
+
+- **Hanif skizo**  
+  [Instagram](https://instagram.com/htr.ox)

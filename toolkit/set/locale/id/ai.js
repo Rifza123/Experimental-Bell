@@ -101,6 +101,11 @@ Param: \`.txt2img <checkpoint>[<lora>]|<prompt>\`
 
  ▪︎ \`lebih dari 1 lora\`
 - .txt2img <checkpoint>[<lora>,<lora>,...more lora]|<prompt>
+
+ ▪︎ \`Cara custom rasio aspek\`
+-  .txt2img <checkpoint>[<lora>]<aspect:ratio>|<prompt>
+> Ex: txt2img 1233[9380]3:4|1girl, beautiful, futuristic, armored mecha*
+
 --------------------------------------------------
  ▪︎ \`Contoh\`: 
 - *.txt2img 1233[9380]|1girl, beautiful, futuristic, armored mecha*

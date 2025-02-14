@@ -4,8 +4,10 @@ const fs = "fs".import()
 
 /*!-======[ Functions Imports ]======-!*/
 const { gpt } = await (fol[2] + "gpt3.js").r()
+const { deepseek } = await (fol[2] + "deepseek.js").r()
 const { GeminiImage } = await (fol[2] + "gemini.js").r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
+const { catbox } = await (fol[0] + 'catbox.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
@@ -103,7 +105,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
         let i = 0
         await cht.edit(infos.messages.wait, _key, true)
-        let tph = await tmpFiles(media)
+        let tph = await catbox(media)
         try{
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
             console.log(ai)
@@ -131,8 +133,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         cmd: ['txt2img', 'text2img','stablediffusion'],
         listmenu: ['text2img'],
         tag: 'stablediffusion',
-        energy: 35,
-        premium: true
+        energy: 35
     }, async () => {
     const _key = keys[sender]
     if (!cht.q) return cht.reply(infos.ai.txt2img)
@@ -143,9 +144,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       try {
       
         let ckpt = model.split("[")[0]
-        let loraPart = model.split("[")[1]?.replace("]", "")
+        let loraPart = model.split("[")[1]?.split("]")?.[0]
         let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
-        if(!ckpt||!prompt) return cht.reply(infos.ai.txt2img)
+        let as = model.split(']')[1]
+        let asp = ["1:1","9:16","16:9","3:4","4:3","2:3","3:2","21:9","9:21","5:4","4:5","18:9","9:18","16:10","10:16"]
+        let aspect_ratio = as?.length > 1 ? as : '3:4'
+        if(!aspect_ratio.includes(':')) return cht.reply(`*Invalid Aspect ratio!*\n\n${infos.ai.txt2img}`)
+        if(!asp.includes(aspect_ratio)) return cht.reply(`*Invalid aspect ratio!*\n\nList aspect ratio:\n- ${asp.join('\n- ')}`)
+        if(!ckpt||!prompt) return cht.reply(`*Please input checkpoints & prompt!*\n\n${infos.ai.txt2img}`)
         await cht.edit(infos.messages.wait, _key, true)
 
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -194,7 +200,7 @@ ${notSameLora.join('\n')}`
             checkpoint: checkpoints[ckpt].model,
             prompt: prompt,
             negativePrompt: negative || "",
-            aspect_ratio: "3:4",
+            aspect_ratio,
             lora: lora,
             sampling: "DPM++ 2M Karras",
             samplingSteps: 20,
@@ -212,7 +218,7 @@ ${notSameLora.join('\n')}`
         })
 
         if (!aiResponse.ok) {
-            return cht.reply(`HTTP error! status: ${aiResponse.status}`)
+            return cht.reply(`HTTP error! status: ${aiResponse.status}${aiResponse.status == 429 ? '\n_Rate limit reached! please check your limit apikey!_': aiResponse.status == 403 ? '_Your apikey is invalid or expired! Please check .cekapikey for details your key':''}`)
         }
 
         let ai = await aiResponse.json()
@@ -230,7 +236,7 @@ ${notSameLora.join('\n')}`
             let sResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/taskStatus?id=${ai.id}`)
 
             if (!sResponse.ok) {
-                return cht.reply(`HTTP error! status: ${sResponse.status}`)
+                return cht.reply(`HTTP error! status: ${sResponse.status}${aiResponse.status == 429 ? '\n_Rate limit reached! please check your limit apikey!_': sResponse.status == 403 ? '_Your apikey is invalid or expired! Please check .cekapikey for details your key':''}`)
             }
 
             let s = await sResponse.json()
@@ -298,7 +304,7 @@ ${notSameLora.join('\n')}`
 	})
 	
 	ev.on({ 
-        cmd: ['luma','img2video'], 
+        cmd: ['luma','img2video','i2v'], 
         listmenu: ['luma'],
         tag: "ai",
         energy: 185,
@@ -378,6 +384,17 @@ ${notSameLora.join('\n')}`
     }, async() => {
         let res = await gpt(cht.q)
         cht.reply("[ GPT-3 ]\n"+res.response, { ai: true })
+	})
+	
+	ev.on({ 
+        cmd: ['deepseek','deepseek-r1'],
+        tag: "ai",
+        args: infos.ai.isQuery,
+        listmenu: ["deepseek"],
+        energy: 7
+    }, async() => {
+        let res = await deepseek(cht.q)
+        cht.reply("[ DEEPSEEK-R1 ]\n"+res.response, { ai: true })
 	})
 	
     ev.on({ 
@@ -560,7 +577,7 @@ ${notSameLora.join('\n')}`
     ev.on({ 
         cmd: ['clay','clayfilters','clayfilter','toclay'], 
         listmenu: ['clayfilters'],
-        tag: "ai",
+        tag: "art",
         energy: 25,
         media: { 
            type: ["image"]
@@ -571,6 +588,68 @@ ${notSameLora.join('\n')}`
           let url = await tmpFiles(media)
           await cht.edit(infos.messages.wait, _key)
           Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/clay-filters?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
+        } catch(e) {
+          await cht.reply("Failed!")
+          throw new Error(e)
+        }
+    })
+    ev.on({ 
+        cmd: ['zombie','tozombie'], 
+        listmenu: ['tozombie'],
+        tag: "art",
+        energy: 25,
+        media: { 
+           type: ["image"]
+        }
+    }, async({ media }) => {
+        try {
+          const _key = keys[sender]
+          let url = await tmpFiles(media)
+          await cht.edit(infos.messages.wait, _key)
+          Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/to-zombie?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
+        } catch(e) {
+          await cht.reply("Failed!")
+          throw new Error(e)
+        }
+    })
+	ev.on({ 
+        cmd: [
+          'japan_anime', 'pixel_art',    'Watercolor',
+          'cartoon',     'cartoon_2',    'cartoon_3',
+          'epic_manga',  'oil_painting', 'monet',
+          'sketch',      '3d_cartoon',   'parchment',
+          'christmas',   'christmas_2',  'christmas_3',
+          'christmas_4', 'ps2',          'clay',
+          'lego',        'toy',          'barbie',
+          'crochet',     'glowing',      'futuristic',
+          'star',        'underwater',   'beach',
+          'cyberpunk',   'monster',      'ghost',
+          'voorhees',    'clown',        'krueger'
+        ], 
+        listmenu: [
+          'japan_anime', 'pixel_art',    'Watercolor',
+          'cartoon',     'cartoon_2',    'cartoon_3',
+          'epic_manga',  'oil_painting', 'monet',
+          'sketch',      '3d_cartoon',   'parchment',
+          'christmas',   'christmas_2',  'christmas_3',
+          'christmas_4', 'ps2',          'clay',
+          'lego',        'toy',          'barbie',
+          'crochet',     'glowing',      'futuristic',
+          'star',        'underwater',   'beach',
+          'cyberpunk',   'monster',      'ghost',
+          'voorhees',    'clown',        'krueger'
+        ],
+        tag: "art",
+        energy: 25,
+        media: { 
+           type: ["image"]
+        }
+    }, async({ media }) => {
+        try {
+          const _key = keys[sender]
+          let url = await tmpFiles(media)
+          await cht.edit(infos.messages.wait, _key)
+          Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/${cht.cmd}-filters?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
         } catch(e) {
           await cht.reply("Failed!")
           throw new Error(e)

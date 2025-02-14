@@ -41,12 +41,12 @@ async function initialize({ Exp, store }) {
         const min = jimpread.getWidth()
         const max = jimpread.getHeight()
         const cropped = jimpread.crop(0, 0, min, max)
-
+        
         let buff = await cropped.scaleToFit(720, 720).getBufferAsync(jimp.MIME_JPEG)
         return await Exp.query({
 			tag: 'iq',
 			attrs: {
-			    target: id,
+			    ...(id.endsWith(from.group) ? { target: id }:{}),
 			    to: "@s.whatsapp.net",
 				type:'set',
 				xmlns: 'w:profile:picture'
@@ -142,7 +142,7 @@ async function initialize({ Exp, store }) {
         }
       }
     }
-
+    
   } catch (e) {
     console.error("Error in Initialize.js: "+ e)
   }

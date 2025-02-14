@@ -7,6 +7,8 @@ const { mediafireDl } = await (fol[0] + 'mediafire.js').r()
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
     let infos = Data.infos
+    let { func } = Exp
+    let { archiveMemories:memories } = func
     let { sender, id } = cht
     
     ev.on({ 
@@ -54,7 +56,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['tiktok', 'ttdl'], 
       tag: 'downloader',
       urls: {
-        formats: ["tiktok"],
+        formats: ["tiktok","douyin"],
         msg: true
       },
       energy: 5
@@ -204,4 +206,40 @@ export default async function on({ cht, Exp, store, ev, is }) {
       Exp.sendMessage(cht.id, { document: { url: zipUrl }, mimetype: 'application/zip', fileName: `${repoName}.zip` }, { quoted: cht })
       .catch(e => cht.reply(`[❗LINK ERROR ❗]\n\nExample : ${cht.prefix}${cht.cmd} https://github.com/adiwajshing/baileys.git`))
 	})
+	
+	ev.on({ 
+      cmd: ['youtube','ytdl','youtubedl','youtubedownloader'],
+      listmenu: ['youtube'],
+      tag: 'downloader',
+      badword: true,
+      args: "Harap sertakan url/judul videonya!",
+    }, async ({ args,urls }) => {
+      let [url,_type] = args.split(' ')
+      let type = _type?.toLowerCase()
+      let auds = {
+        mp3: "ytmp3",
+        m4a: "ytm4a",
+        audio: "ytm4a",
+        vn: "playvn"
+      }
+      let videos= {
+        mp4: "ytmp4",
+        video: "ytmp4"
+      }
+      
+      let audio = auds[type]
+      let video =  videos[type]
+      console.log({ video, audio })
+      if(!type) {
+        memories.setItem(sender, "questionCmd", { 
+          emit: `${cht.cmd} ${urls[0]}`,
+          exp: Date.now() + 15000,
+          accepts: [Object.keys(auds), Object.keys(videos)].flat()
+        })
+        return cht.reply("audio/video?")
+      }
+      cht.cmd = audio||video
+      ev.emit(audio||video)
+    })
+    
 }

@@ -122,7 +122,14 @@ class EventEmitter {
             console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error reloading event handlers:\nDetails: ${error.stack}`);
         }
     }
-
+    
+    addQuestion(sender, cmd, accepts=[]){
+      ArchiveMemories.setItem(sender, "questionCmd", { 
+        emit: `${cmd}`,
+        exp: Date.now() + 20000,
+        accepts,
+      })
+    }
     async emit(event, opts) {
         try {
             !isLoad && await this.loadEventHandlers()
@@ -194,11 +201,7 @@ class EventEmitter {
 
             if (ev.args){
                 if(!this.cht.q) {
-                  ArchiveMemories.setItem(sender, "questionCmd", { 
-                    emit: `${this.cht.cmd}`,
-                    exp: Date.now() + 15000,
-                    accepts: []
-                  })
+                  this.addQuestion(sender, this.cht.cmd)
                   return this.cht.reply(ev.args !== true ? ev.args : ev.isArgs);
                 }
                 const badword = Data.badwords.filter(a => this.cht.q.includes(a))
@@ -212,29 +215,35 @@ class EventEmitter {
                 const { type, msg, etc } = ev.media;
                 let { type: mediaType, quoted: isQuotedMedia } = this.getMediaType();
                 if (!type.includes(mediaType)) {
+                    this.addQuestion(sender, this.cht.cmd)
                     return this.cht.reply(msg || func.tagReplacer(messages.isMedia, { type:type.join("/"), caption: this.cht.msg} ));
                 }
 
                 if (mediaType === "audio") {
                     if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
+                        this.addQuestion(sender, this.cht.cmd)
                         return this.cht.reply(func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds }))
                     }
                 }
                 
                 if (mediaType === "video") {
                     if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
+                        this.addQuestion(sender, this.cht.cmd)
                         return this.cht.reply(func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds }))
                     }
                 }
                 
                 if (mediaType === "sticker") {
                     if (etc && etc.isNoAnimated && this.is.quoted?.sticker?.isAnimated) {
+                        this.addQuestion(sender, this.cht.cmd)
                         return this.cht.reply(etc.isNoAnimated !== true ? etc.isNoAnimated : messages.isNoAnimatedSticker)
                     }
                     if (etc && etc.isAnimated && !this.is.quoted?.sticker?.isAnimated) {
+                        this.addQuestion(sender, this.cht.cmd)
                         return this.cht.reply(etc.isAnimated !== true ? etc.isAnimated : messages.isAnimatedSticker)
                     }
                     if (etc && etc.isAvatar && !this.is.quoted?.sticker?.isAvatar) {
+                        this.addQuestion(sender, this.cht.cmd)
                         return this.cht.reply(etc.avatar !== true ? etc.avatar : messages.isAvatarSticker );
                     }
                 }
@@ -247,12 +256,18 @@ class EventEmitter {
             }
             
             if (ev.urls) {
-               if(!(urls?.length > 0)) return this.cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl)
+               if(!(urls?.length > 0)){
+                 this.addQuestion(sender, this.cht.cmd)
+                 return this.cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl)
+               }
                if(ev.urls.formats){
                    let isFormatsUrl = urls.some(url => 
                        ev.urls.formats.some(keyword => url.toLowerCase().includes(keyword.toLowerCase()))
                    )
-                   if(!isFormatsUrl) return this.cht.reply(func.tagReplacer(messages.isFormatsUrl, { formats:ev.urls.formats.join("\n- ") }))
+                   if(!isFormatsUrl){
+                     this.addQuestion(sender, this.cht.cmd)
+                     return this.cht.reply(func.tagReplacer(messages.isFormatsUrl, { formats:ev.urls.formats.join("\n- ") }))
+                   }
                }
             }
 

@@ -104,6 +104,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 			quoted: cht
 		})
 	  } catch (e) {
+	    console.error(e)
 	    await cht.reply("Failed convert image to sticker!")
 	    throw new Error(e)
 	  }

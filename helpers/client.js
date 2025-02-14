@@ -36,7 +36,11 @@ async function client({ Exp, store, cht, is }) {
         /*!-======[ Block Chat ]======-!*/
 		const groupDb = is.group ? Data.preferences[cht.id] : {}
 	    
-        if (global.cfg.public === false && !is.owner && !is.me) return
+        if (global.cfg.public !== true && !is.owner && !is.me) {
+          if(global.cfg.public === false && !is.offline) return 
+          if(global.cfg.public === "onlygc" && !is.group) return 
+          if(global.cfg.public === "onlypc" && is.group) return
+        }
         
         let except = is.antiTagall || is.antibot
         if((is.baileys||is.mute) && !except) return
@@ -44,7 +48,7 @@ async function client({ Exp, store, cht, is }) {
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
         if(!Data.ev) Data.ev = ev
-        if(cht.cmd){
+        if(cht.cmd && !is.offline){
             if("questionCmd" in cht.memories) await func.archiveMemories.delItem(cht.sender, "questionCmd")
             if(cfg.similarCmd && Data.events[cht.cmd] === undefined){
               let events = Object.keys(Data.events).filter(a => cht.cmd.length >= a.length && Math.abs(cht.cmd.length - a.length) <= 2)
@@ -60,7 +64,8 @@ async function client({ Exp, store, cht, is }) {
               cht.cmd = (func.getTopSimilar(await func.searchSimilarStrings(cht.cmd, events, similar))).item
             }
             ev.emit(cht.cmd)
-        } else if(cht.reaction){
+        } else if(cht.reaction && !is.offline){
+            if("questionCmd" in cht.memories) await func.archiveMemories.delItem(cht.sender, "questionCmd")
             Data.reaction({ ev, ...exps })
         } else {
             Data.In({ ev, ...exps })

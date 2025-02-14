@@ -77,9 +77,6 @@ async function launch() {
             auth: state
         });
         
-        /*!-======[ Detect File Update ]======-!*/
-        detector({ Exp, store })
-        
         if (global.pairingCode && !Exp.authState.creds.registered) {
            const phoneNumber = await question(chalk.yellow('Please type your WhatsApp number : '));
            let code = await Exp.requestPairingCode(phoneNumber.replace(/[+ -]/g, ""));
@@ -90,6 +87,9 @@ async function launch() {
         /*!-======[ INITIALIZE Exp Functions ]======-!*/
         Data.initialize({ Exp, store })
 
+        /*!-======[ Detect File Update ]======-!*/
+        detector({ Exp, store })
+        
         /*!-======[ EVENTS Exp ]======-!*/
         Exp.ev.on('connection.update', async (update) => {
             await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });

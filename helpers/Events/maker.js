@@ -1,6 +1,6 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
-
+const { brat } = await (fol[2]+'brat.js').r()
 /*!-======[ Function Import ]======-!*/
 
 let exif = await (fol[0] + 'exif.js').r()
@@ -225,9 +225,10 @@ export default async function on({
 		cmd: ['brat', 'bart', 'bratgenerator'],
 		listmenu: ['brat'],
 		tag: "maker",
+		energy: 5,
 		args: `Example: ${cht.msg} halo`
-	}, async () => {
-        let buff = await func.getBuffer(`https://termai-brat.hf.space/?q=${encodeURIComponent(cht.q)}`)
+	}, async ({ args }) => {
+        let buff = await brat(args)
 		let res = await exif["writeExifImg"](buff, {
 			packname: 'My brat sticker',
 			author: 'Ⓒ' + cht.pushName
@@ -263,6 +264,35 @@ export default async function on({
 		}, {
 			quoted: cht
 		})
+	})
+	
+	ev.on({
+		cmd: ['emojimix'],
+		listmenu: ['emojimix'],
+		tag: "maker",
+		energy: 10,
+		args: `Example: ${cht.msg} 😭+😂`
+	}, async ({ args }) => {
+	    let [a,b] = args.split("+")
+	    if(!a||!b) return cht.reply(`Example: .${cht.cmd} 😭+😂`)
+	    let r = await fetch(`https://tenor.googleapis.com/v2/featured?key=AIzaSyC-P6_qz3FzCoXGLk6tgitZo4jEJ5mLzD8&contentfilter=high&media_filter=png_transparent&component=proactive&collection=emoji_kitchen_v5&q=${encodeURIComponent(a)}_${encodeURIComponent(b)}`).then(a => a.json())
+	    let { results:res } = r
+	    if(res.length < 1) return cht.reply("Unsupported emoji!")
+	    for(let i of res){
+	      let buff = await func.getBuffer(i.url)
+		  let res = await exif["writeExifImg"](buff, {
+			packname: 'My emojimix sticker',
+			author: 'Ⓒ' + cht.pushName
+		  })
+		  Exp.sendMessage(id, {
+			sticker: {
+				url: res
+			}, ai:true
+		  }, {
+			quoted: cht
+		  })
+		  
+		}
 	})
 	
 }

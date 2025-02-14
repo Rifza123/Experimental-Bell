@@ -140,7 +140,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isGroup: true,
         isAdmin: true
     }, async() => {
-         if(Data.preferences[cht.id]["antitagall"]) return cht.reply("Tagall tidak di izinkan disini!")
+         if(Data.preferences[id]["antitagall"]) return cht.reply("Tagall tidak di izinkan disini!")
          let mentions = Exp.groupMembers.map(a => a.id)
          let text = cht.cmd == "tagall" ? `\`${cht?.q ?? 'TAG ALL'}\`\n` : (cht.q||"")
          if(cht.cmd == "tagall"){
@@ -148,7 +148,41 @@ export default async function on({ cht, Exp, store, ev, is }) {
              text += `\n${i+1}. @${mentions[i]?.split("@")[0]}`
            }
          }
-        Exp.sendMessage(cht.id, { text, mentions }, { quoted: cht })
+        Exp.sendMessage(id, { text, mentions }, { quoted: cht })
+	})
+	
+	ev.on({ 
+        cmd: ['jadwalsholat'],
+        listmenu: ['jadwalsholat'],
+        tag: 'religion',
+        args: 'Silahkan input daerahnya!'
+    }, async({ args }) => {
+      let { status, data, msg, timeZone, list } = await jadwal.init('no', args)
+      if(!status){
+        func.archiveMemories.setItem(sender, "questionCmd", { 
+           emit: `${cht.cmd}`,
+          exp: Date.now() + 20000,
+          accepts:[]
+        })
+        return cht.reply(`*${msg}*${list ? `\n\nList daerah:\n- ${list.join('\n- ')}`:''}`)
+      }
+      const formatter = new Intl.DateTimeFormat('id-ID', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+
+      const parts = formatter.formatToParts(new Date())
+      const d = parts.find(p => p.type === 'day').value
+      const m = parts.find(p => p.type === 'month').value
+
+      let dm = `${d}/${m}`
+      let a = data.find(a => a.tanggal == dm)
+      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map(a => ` \n 🗓️ \`${a.tanggal}\`\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`
+      cht.reply(text)
 	})
 	
 	ev.on({ 
@@ -158,8 +192,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isGroup: true,
         isAdmin: true
     }, async() => {
-        let input = cht.q?.trim().toLowerCase()
-        let actions = ["welcome","antilink","antitagall","mute","antibot","playgame"]
+        let [input,v,...etc] = cht.q?.trim().toLowerCase().split(' ')
+        let actions = ["welcome","antilink","antitagall","mute","antibot","playgame","jadwalsholat"]
         let text = `Opsi yang tersedia:\n\n- ${actions.join("\n- ")}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`
         if(!actions.includes(input)){
           func.archiveMemories.setItem(sender, "questionCmd", { 
@@ -169,14 +203,55 @@ export default async function on({ cht, Exp, store, ev, is }) {
           })
           return cht.reply(text)
         }
-        let sets = Data.preferences[cht.id]
+        let sets = Data.preferences[id]
             sets[input] = sets[input] || false
-        if(cht.cmd == "on" && sets[input]) return cht.reply(`*${input}* sudah aktif disini!`)
-        if(cht.cmd !== "on" && !sets[input]) return cht.reply(`*${input}* sudah non-aktif disini!`)
-            sets[input] = cht.cmd == "on"
-            if(input =="antilink"){
-              sets.links = sets.links ||["chat.whatsapp.com"]
+        let sholat = {}
+        if(input == 'jadwalsholat' && cht.cmd == 'on'){
+          if(!v) return cht.reply(`*Harap sertakan daerahnya!*
+- Contoh: ${cht.prefix + cht.cmd +' jadwalsholat kab-bungo'}
+
+_Anda juga bisa menyertakan type di sebelah input daerah untuk kebutuhan tertentu_
+
+\`List type:\`
+- ramadhan
+> Untuk bulan ramadhan, ini akan sekaligus mengingatkan waktu imsak dan ucapan selamat berbuka saat adzan Maghrib berkumandang
+- tutup
+> otomatis menutup grup(selama 5 menit) saat tiba waktu sholat
+
+- Contoh penggunaan type: .on jadwalsholat kab-bungo ramadhan tutup
+
+_Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikannya dengan .off jadwalsholat lalu mengak6kembali .on jadwalsholat tanpa menyertakan type_
+
+> *❗Dengan teks ini, admin sangat berharap kepada user untuk membaca dengan teliti agar tidak menanyakan lagi!*`)
+          let isOpt = false
+          if(etc.length > 0){
+            let acts = ['ramadhan', 'tutup']
+            let notf = etc.find(a => !acts.includes(a))
+            if(notf) return cht.reply(`Pilihan opsi ${notf} tidak tersedia!\n\nOpsi yang tersedia: ${acts.join(', ')}`)
+            isOpt = true
+          }
+          let _txt = `${infos.group.on(cht.cmd, input)}`
+          if(isOpt){
+            _txt += `\n\n\`Type\`:`
+            for(let i of etc){
+              _txt += `\n- ${i}`
+              sholat[i] = true
             }
+          }
+          let { status, msg, data, list, db } = await jadwal.init(id, v, sholat)
+          if(!status) return cht.reply(`*${msg}*${list ? `\n\nList daerah:\n- ${list.join('\n- ')}`:''}`)
+          sets['jadwalsholat'] = db
+          return await cht.reply(_txt)
+        } else {
+          if(cht.cmd == "on" && sets[input]) return cht.reply(`*${input}* sudah aktif disini!`)
+          if(cht.cmd !== "on" && !sets[input]) return cht.reply(`*${input}* sudah non-aktif disini!`)
+            sets[input] = cht.cmd == "on"
+          if(input =="antilink"){
+            sets.links = sets.links ||["chat.whatsapp.com"]
+          }
+          if(input == 'jadwalsholat' && cht.cmd !== 'on') delete jadwal.groups[id]
+        }
+        
         cht.reply(infos.group.on(cht.cmd, input))
 	})
 	ev.on({ 

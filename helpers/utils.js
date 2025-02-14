@@ -1,4 +1,4 @@
-const { getContentType } = "baileys".import()
+const { proto, getContentType, generateWAMessage } = "baileys".import()
 
 export default 
 async function utils({ Exp, cht, is, store }) {
@@ -64,6 +64,7 @@ async function utils({ Exp, cht, is, store }) {
 
 		if(cht.type == "reactionMessage"){
 		  let react = await store.loadMessage(cht.id, cht[cht.type].key.id)
+		  console.log(cht)
 		  let rtype = getContentType(react?.message)
 		  let mtype = Exp.func['getType'](rtype)
 		  let rtext = rtype == "conversation" ? react.message[rtype]
@@ -93,14 +94,14 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.mtype = Object.keys(cht.quoted)[0]
             cht.quoted.type = Exp.func['getType'](cht.quoted.mtype)
             cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
+            cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
+            cht.quoted.text = cht.quoted?.[cht.quoted.type]?.caption || cht.quoted?.[cht.quoted.type]?.text || cht.quoted?.conversation || false            
             cht.quoted.url = cht.quoted.text ? (
                 cht?.quoted?.text?.match(/https?:\/\/[^\s)]+/g)
                 || cht?.quoted?.text?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
                 || []
               ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
             : []
-            cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
-            cht.quoted.text = cht.quoted?.[cht.quoted.type]?.caption || cht.quoted?.[cht.quoted.type]?.text || cht.quoted?.conversation || false            
             cht.quoted.download = async () => Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type)
             cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId
             cht.quoted.delete = async () => Exp.sendMessage(cht.id, { delete: { ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key, participant: cht.quoted.sender }})
@@ -126,7 +127,7 @@ async function utils({ Exp, cht, is, store }) {
 
         is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
-        is.owner =  global.owner.some(a => { const jid = a?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
+        is.owner =  global.owner.some(a => { const jid = String(a)?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
 		const groupDb = is.group ? Data.preferences[cht.id] : {}
 
         is.baileys = /^(3EB|BAE5|BELL409|B1E)/.test(cht.key.id)
@@ -157,10 +158,10 @@ async function utils({ Exp, cht, is, store }) {
         }
 	    is.antibot = groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin
         is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
-
+        is.offline =  'offline' in cfg && typeof cfg.offline === 'object' && !is.owner && !is.group
         is.memories = cht.memories
         is.quoted = cht.quoted
-        is.reaction = cht.reaction
+        is.reaction = cht.reaction        
         
         if(!cht.reply) cht.reply = async function (text, etc={},quoted={ quoted: true }) {
           try {
@@ -222,6 +223,39 @@ async function utils({ Exp, cht, is, store }) {
               groupDb.warn[cht.sender][t].value++
           }
           Data.preferences[cht.id] = groupDb
+        }
+
+        Exp.append = async(text, [_mess]) => {
+  	      let msg = await generateWAMessage(_mess.key.remoteJid, { text, mentions: cht.mention }, {
+     		userJid: Exp.user.id,
+  		    quoted: {
+              key: {
+                  remoteJid: cht.quoted?.key?.remoteJid,
+                  fromMe: cht.quoted?.key?.fromMe,
+                  id: cht.quoted.stanzaId,
+              },
+              message: cht.quoted,
+               ...(is.group ? { participant: cht.quoted.sender } : {})
+            }
+          })    
+          msg = {
+            ...msg,
+            key: {
+              id: cht.key.id,
+              fromMe: cht.sender == Exp.number,
+              ..._mess.key
+            },
+            pushName: cht.pushName,
+            ...(is.group ? { participant: cht.sender } : {})
+          }
+          
+          let m = {
+            type: 'append',
+            ..._mess,
+            messages: [proto.WebMessageInfo.fromObject(msg)],
+          }
+          console.log(m)
+          Exp.ev.emit('messages.upsert', m)
         }
         
 
