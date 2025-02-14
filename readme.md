@@ -142,9 +142,10 @@ Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau h
 ## Kontributor
 
 - **Azfir (rifza.p.p)**  
-  (All contributions)
   [Instagram](https://www.instagram.com/rifza.p.p) • [GitHub](https://github.com/Rifza123) • [YouTube](https://www.youtube.com/@rifza) • [WhatsappChannel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
+  (All contributions)
 
 - **Hanif skizo**  
-  (Berkontribusi dalam penambahan game chess.js)
   [Instagram](https://instagram.com/htr.ox)
+  (Berkontribusi dalam: penambahan game chess.js)
+
