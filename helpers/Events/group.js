@@ -220,7 +220,7 @@ _Anda juga bisa menyertakan type di sebelah input daerah untuk kebutuhan tertent
 
 - Contoh penggunaan type: .on jadwalsholat kab-bungo ramadhan tutup
 
-_Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikannya dengan .off jadwalsholat lalu mengak6kembali .on jadwalsholat tanpa menyertakan type_
+_Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikannya dengan .off jadwalsholat lalu meng-aktifkan kembali .on jadwalsholat tanpa menyertakan type_
 
 > *❗Dengan teks ini, admin sangat berharap kepada user untuk membaca dengan teliti agar tidak menanyakan lagi!*`)
           let isOpt = false
