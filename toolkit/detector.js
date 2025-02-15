@@ -153,9 +153,12 @@ async function detector({ Exp, store }) {
         let { status, data, db } = await jadwal.now(id)
         const groupMetadata = await func.getGroupMetadata(id,Exp)
         let { ramadhan, tutup } = b.jadwalsholat
-        const { participants, subject } = groupMetadata
-        let groupAdmins = func.getGroupAdmins(participants)
-        let isBotAdmin = groupAdmins.includes(Exp.number)
+        let isBotAdmin;
+        if(tutup){
+         const { participants, subject } = groupMetadata
+         let groupAdmins = func.getGroupAdmins(participants)
+         isBotAdmin = groupAdmins.includes(Exp.number)
+        }
         let w = '5 menit'
           //console.log(data)
           if(data.now && !data.hasNotice){
