@@ -201,7 +201,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
           data.now !== 'imsak' && await Exp.sendMessage(id, { audio: { url: data.adzan }, mimetype: "audio/mpeg", ptt: true })
           Data.preferences[id].jadwalsholat = db
         }
-        await sleep(1000+Math.floor(Math.random() * 1000))
+        await sleep(2000+Math.floor(Math.random() * 1000))
       }
       for(let i of Object.keys(jadwal.groups)){
         if(!chatDb.map(a => a[0]).includes(i)) delete jadwal.groups[i]
