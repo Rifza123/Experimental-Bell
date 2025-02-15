@@ -157,7 +157,7 @@ async function detector({ Exp, store }) {
         let groupAdmins = func.getGroupAdmins(participants)
         let isBotAdmin = groupAdmins.includes(Exp.number)
         let w = '5 menit'
-          console.log(data)
+          //console.log(data)
           if(data.now && !data.hasNotice){
             let emoji = ({
               imsak: "🌄",
@@ -201,6 +201,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
           data.now !== 'imsak' && await Exp.sendMessage(id, { audio: { url: data.adzan }, mimetype: "audio/mpeg", ptt: true })
           Data.preferences[id].jadwalsholat = db
         }
+        await sleep(1000+Math.floor(Math.random() * 1000))
       }
       for(let i of Object.keys(jadwal.groups)){
         if(!chatDb.map(a => a[0]).includes(i)) delete jadwal.groups[i]
@@ -241,6 +242,6 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       } catch (error) {
         console.error("Terjadi kesalahan dalam penulisan file atau keyChecker:", error.message);
       }
-    }, 15000);
+    }, 20000);
 
 }
