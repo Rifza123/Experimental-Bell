@@ -28,9 +28,10 @@ Data.audio = {
 }
 
 export class JadwalSholat {
-   constructor(groups={}){
+   constructor(groups={}, proxy=true){
+     cfg.proxy_url = cfg.proxy_url || "https://proxy.xtermai.xyz/api/proxy?url="
      this.groups = groups
-     this.url = 'https://proxy.xtermai.xyz/api/fetch?url=https://www.kompas.com/jadwal-sholat/'
+     this.url = cfg.proxy_url+'https://www.kompas.com/jadwal-sholat/'
    }
 
    async init(id, v='kab-bungo',opts={}){
