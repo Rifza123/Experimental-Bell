@@ -87,7 +87,7 @@ export class JadwalSholat {
 
     let c = { hm: `${h}:${min}`, dm: `${d}/${m}` }
     this.groups[id].jadwal = this.groups[id].jadwal || await this.init(id, v).then(a => a.data)
-    this.groups[id].today = this.groups[id].today || this.groups[id].jadwal.find(a => a.tanggal == c.dm)
+    this.groups[id].today = this.groups[id].jadwal.find(a => a.tanggal == c.dm)
     if(!this.groups[id].today) {
       await this.init(id, this.groups[id].v)
       this.groups[id].today = this.groups[id].jadwal.find(a => a.tanggal == c.dm)
