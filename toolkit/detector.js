@@ -157,7 +157,7 @@ async function detector({ Exp, store }) {
         let w = '5 menit'
           //console.log(data)
           if(data.now && !data.hasNotice){
-            let { participants }  = await func.getGroupMetadata(id,Exp)
+            let { participants, subject }  = await func.getGroupMetadata(id,Exp)
             let groupAdmins = func.getGroupAdmins(participants)
             let isBotAdmin = groupAdmins.includes(Exp.number)
         
