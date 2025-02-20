@@ -218,7 +218,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     
     global.jadwal = new JadwalSholat(jdwl)
     
-    setInterval(async () => {
+    keys["detector"] = setInterval(async () => {
       await sholat()
       for (let i of keys) {
         config[i] = global[i];

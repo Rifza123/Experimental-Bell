@@ -88,6 +88,7 @@ async function launch() {
         Data.initialize({ Exp, store })
 
         /*!-======[ Detect File Update ]======-!*/
+        keys["detector"] && clearInterval(keys["detector"])
         detector({ Exp, store })
         
         /*!-======[ EVENTS Exp ]======-!*/
