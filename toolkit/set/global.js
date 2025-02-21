@@ -111,7 +111,8 @@ global["Data"] = {
       "yanami_anna",
       "MasKhanID",
       "Myka",
-      "raiden"
+      "raiden",
+      "CelzoID"
     ],
     spinner: "⠇⠋⠙⠹⠼⠦".split('')
 }

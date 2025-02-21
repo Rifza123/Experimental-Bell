@@ -72,7 +72,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         tag: "tts"
     }, async() => {
         await Exp.sendPresenceUpdate('recording', cht.id);
-        let v = cht.cmd.startsWith("bell") ? "bella" : cht.cmd == "myka" ? "Myka" : cht.cmd
+        let v = Data.voices.find(a => a.toLowerCase() == cht.cmd.toLowerCase())
         Exp.sendMessage(id, { audio: { url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}&${config}`}, mimetype: "audio/mpeg", ai: true }, { quoted: cht })
 	})
    
