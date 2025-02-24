@@ -5,8 +5,8 @@ const { brat } = await (fol[2]+'brat.js').r()
 
 let exif = await (fol[0] + 'exif.js').r()
 const {
-	catbox
-} = await (fol[0] + 'catbox.js').r()
+	TermaiCdn
+} = await (fol[0] + 'cdn.termai.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({
@@ -96,7 +96,7 @@ export default async function on({
 		media
 	}) => {
 		let [txt1, txt2] = cht.q.split("|")
-		let tmp = await catbox(media)
+		let tmp = await TermaiCdn(media)
         let ats = (txt2 ? txt1 : "_").replace(/ /g,"_")
         let bwh = (txt2 ? txt2 : txt1).replace(/ /g, "_")
         let buff = await func.getBuffer(`https://api.memegen.link/images/custom/${ats}/${bwh}.png?background=${tmp}`)
