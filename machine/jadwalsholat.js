@@ -51,7 +51,7 @@ export class JadwalSholat {
       for(let proxy of proxies){
         try {
           let res = await fetch(this.url+v)
-          if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
+          if(!res.ok) continue
 
           let html = await res.text()
           const $ = cheerio.load(html)
