@@ -2,8 +2,8 @@
 const fs = "fs".import()
 const { generateWAMessageFromContent } = "baileys".import()
 const {
-	catbox
-} = await (fol[0] + 'catbox.js').r()
+	TermaiCdn
+} = await (fol[0] + 'cdn.termai.js').r()
 let exif = await (fol[0] + 'exif.js').r()
 let { convert } = exif
 
@@ -217,7 +217,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 		energy: 5
     }, async ({ media }) => {
         try {
-          let link = await catbox(media)
+          let link = await TermaiCdn(media)
           const apiUrl = `https://api.trace.moe/search?url=${encodeURIComponent(link)}`
 
             const res = await fetch(apiUrl)

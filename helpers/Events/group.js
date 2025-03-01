@@ -176,7 +176,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       })
 
       const parts = formatter.formatToParts(new Date())
-      const d = parts.find(p => p.type === 'day').value
+      const d = parseInt(parts.find(p => p.type === 'day').value, 10)
       const m = parts.find(p => p.type === 'month').value
 
       let dm = `${d}/${m}`

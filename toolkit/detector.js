@@ -103,6 +103,7 @@ async function detector({ Exp, store }) {
     
     /*!-======[ Auto Update ]======-!*/
     async function keyChecker(url,key){
+      try {
         Data.notify.h++
         if(Data.notify.h == 1 && Exp.authState){
           let own = owner[0].split("@")[0]+from.sender
@@ -143,10 +144,13 @@ async function detector({ Exp, store }) {
         if(Data.notify.h >= Data.notify.every){
           Data.notify.h = 0
         }
-        
+      } catch (e) { 
+       console.error("Error in key checker", e)
+     }
     }
     
     async function sholat(){
+     try { 
       let chatDb = Object.entries(Data.preferences).filter(([a,b]) => a.endsWith(from.group) && b.jadwalsholat)
       for(let [id,b] of chatDb){
         if(!(id in jadwal.groups)) await jadwal.init(id, b.jadwalsholat.v)
@@ -208,6 +212,9 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       for(let i of Object.keys(jadwal.groups)){
         if(!chatDb.map(a => a[0]).includes(i)) delete jadwal.groups[i]
       }
+     } catch (e) { 
+       console.error("Error in jadwal sholat", e)
+     }
     }
     
     //initialize available setup group jadwalsholat
@@ -235,6 +242,9 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       ];
 
       try {
+        for(let i of keys){
+          config[i] = global[i]
+        }
         for (const file of files) {
           await fs.writeFileSync(file.path, JSON.stringify(file.data, null, 2))
           await sleep(100)

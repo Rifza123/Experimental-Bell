@@ -7,7 +7,7 @@ const { gpt } = await (fol[2] + "gpt3.js").r()
 const { deepseek } = await (fol[2] + "deepseek.js").r()
 const { GeminiImage } = await (fol[2] + "gemini.js").r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
-const { catbox } = await (fol[0] + 'catbox.js').r()
+const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
@@ -105,7 +105,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
         let i = 0
         await cht.edit(infos.messages.wait, _key, true)
-        let tph = await catbox(media)
+        let tph = await TermaiCdn(media)
         try{
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
             console.log(ai)

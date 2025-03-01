@@ -4,7 +4,7 @@ const path = "path".import()
 const { getContentType, generateWAMessage, STORIES_JID, generateWAMessageFromContent } = "baileys".import()
 
 /*!-======[ Function Imports ]======-!*/
-const { catbox } = await (fol[0] + 'catbox.js').r()
+const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r()
 
 let Lists = {
   audio: Object.keys(Data.audio),
@@ -438,7 +438,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 { url: t3, list: t2 }
               )
             } else if(is.quoted?.audio) {
-              let audio = await catbox(await cht.quoted.download())
+              let audio = await TermaiCdn(await cht.quoted.download())
               Data.audio[t2].push(audio)
               cht.replyWithTag(msg,
                 { url: audio, list: t2 }
