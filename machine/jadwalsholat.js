@@ -49,27 +49,32 @@ export class JadwalSholat {
       ...cfg.proxies
       ]
       for(let proxy of proxies){
-        let res = await fetch(this.url+v)
-        if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
+        try {
+          let res = await fetch(this.url+v)
+          if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
 
-        let html = await res.text()
-        const $ = cheerio.load(html)
+          let html = await res.text()
+          const $ = cheerio.load(html)
 
-        let list = []
-        $('#jadwal-ramadhan table tbody tr').each((index, element) => {
-          const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
-          if (row.length > 0) {
-            list.push(row)
-          }
-        })
+          let list = []
+          $('#jadwal-ramadhan table tbody tr').each((index, element) => {
+            const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
+            if (row.length > 0) {
+              list.push(row)
+            }
+          })
 
-        list = list.map(row => {
-          return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
-        })
-        let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
-        if(id=='no') return { status: true, data: list, timeZone }
-        if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }
-        return { status: true, data: list, db: this.groups[id] }
+          list = list.map(row => {
+            return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
+          })
+          let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
+          if(id=='no') return { status: true, data: list, timeZone }
+          if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }
+          return { status: true, data: list, db: this.groups[id] }
+        } catch(e) {
+          console.error(`[${proxy}] Error proxyng jadwalsholat.js > init`, e)
+          continue
+        }
       }
       return { status: false, msg: `Failed to fetch using all proxies!` }
     } catch (e) {
