@@ -31,34 +31,51 @@ export class JadwalSholat {
    constructor(groups={}, proxy=true){
      if(cfg.proxy_url) delete cfg.proxy_url 
      this.groups = groups
-     cfg.proxy = cfg.proxy||''
-     this.url = cfg.proxy+'https://www.kompas.com/jadwal-sholat/'
+     cfg.proxies = cfg.proxies|| [
+       'https://thingproxy.freeboard.io/fetch/', 
+       'https://api.allorigins.win/raw?url=',
+       'https://api.cors.lol/?url=',
+       'https://proxy.xtermai.xyz/api/proxy?key=Bell49&url=',
+     ]
+     this.url = 'https://www.kompas.com/jadwal-sholat/'
    }
 
    async init(id, v='kab-bungo',opts={}){
-    Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
-    if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
-    let res = await fetch(this.url+v)
-    if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
+    try {
+      Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
+      if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
+      let proxies= [
+      '',
+      ...cfg.proxies
+      ]
+      for(let proxy of proxies){
+        let res = await fetch(this.url+v)
+        if(!res.ok) return { status: false, msg: 'failed to fetch, status is not ok!' }
 
-    let html = await res.text()
-    const $ = cheerio.load(html)
+        let html = await res.text()
+        const $ = cheerio.load(html)
 
-    let list = []
-    $('#jadwal-ramadhan table tbody tr').each((index, element) => {
-      const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
-      if (row.length > 0) {
-        list.push(row)
+        let list = []
+        $('#jadwal-ramadhan table tbody tr').each((index, element) => {
+          const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
+          if (row.length > 0) {
+            list.push(row)
+          }
+        })
+
+        list = list.map(row => {
+          return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
+        })
+        let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
+        if(id=='no') return { status: true, data: list, timeZone }
+        if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }
+        return { status: true, data: list, db: this.groups[id] }
       }
-    })
-
-    list = list.map(row => {
-      return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
-    })
-    let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
-    if(id=='no') return { status: true, data: list, timeZone }
-    if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }
-    return { status: true, data: list, db: this.groups[id] }
+      return { status: false, msg: `Failed to fetch using all proxies!` }
+    } catch (e) {
+      console.error("Error in jadwalsholat.js > init", e)
+      return { status: false, msg: `jadwalsholat.js > init\nErr:${String(e)}` }
+    }
   }
   
   async now(id){     
