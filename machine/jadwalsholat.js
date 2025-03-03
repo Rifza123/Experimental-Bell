@@ -50,7 +50,7 @@ export class JadwalSholat {
       ]
       for(let proxy of proxies){
         try {
-          let res = await fetch(this.url+v)
+          let res = await fetch(proxy + this.url+v)
           if(!res.ok) continue
 
           let html = await res.text()
