@@ -14,7 +14,9 @@ async function initialize({ Exp, store }) {
     const { sendMessage } = Exp
 
     Exp.func = new func({ Exp, store })
-        
+    
+    Exp.number ??= Exp?.user?.id?.split(':')[0] + from.sender
+                
     Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
       jid = jidNormalizedUser(jid)
       const result = await Exp.query({

@@ -90,7 +90,7 @@ export class JadwalSholat {
     if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
     
     if(!timeZone){
-      timeZone = this.groups[id].timezone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
+      timeZone = this.groups[id].timezone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wita.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
     }
 
     const formatter = new Intl.DateTimeFormat('id-ID', {

@@ -21,7 +21,7 @@ async function react({ cht, Exp, store, is, ev }) {
 	    switch(emoji){
 	       case "🗑":
 	       case "❌":
-	           if(mention !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.reaction.download)
+	           if(mention !== Exp.number && !is.groupAdmins && !is.owner) return cht.reply(infos.messages.isAdmin)
 	           if(!is.groupAdmins && !is.owner){
                  let qsender = (await store.loadMessage(id,key.id))?.message?.extendedTextMessage?.contextInfo.quotedMessage?.sender
                  if(qsender && qsender !== cht.sender) return cht.reply(`*Anda tidak diizinkan menghapus pesan itu!*

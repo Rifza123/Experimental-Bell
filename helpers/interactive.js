@@ -85,8 +85,6 @@ async function In({ cht,Exp,store,is,ev }) {
 		let isBabyGen = usr_babygenerator && cht.quoted && usr_babygenerator.messages_id.includes(cht.quoted.stanzaId) && !cht.cmd
   		        
 		let isTagAfk = cht.mention?.length > 0 && (cht.quoted ? true : cht.msg.includes("@")) && cht.mention?.some(a => memories.getItem(a, "afk") && a !== sender) && !is.me && is.group
-		let userAfk = is.group && memories.getItem(sender, "afk")
-		let isAfk = Boolean(userAfk)
 		
 		let isGame = "game" in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId)
 		
@@ -107,6 +105,7 @@ async function In({ cht,Exp,store,is,ev }) {
 		  return false
 		})(sender) : false
 		let isConfess = Boolean(conff)
+		let isAfkBack = Boolean(is.afk)
 
 		switch (!0) {
 		    case isTagAfk: 
@@ -135,9 +134,9 @@ async function In({ cht,Exp,store,is,ev }) {
 		        await cht.reply(rsn)
 		        memories.setItem(cht.mention[0], "afk", tagAfk)
 		        break
-		    case isAfk:
-		        let dur = func.formatDuration(Date.now() - userAfk.time)
-		        let text = `@${sender.split("@")[0]} *Telah kembali dari AFK!*\nSetelah ${userAfk.reason} selama ${dur.days > 0 ? dur.days+"hari ":''}${dur.hours > 0 ? dur.hours+"jam ":''}${dur.minutes > 0 ? dur.minutes+"menit ":''}${dur.seconds > 0 ? dur.seconds+"detik ":''}${dur.milisecondss > 0 ? dur.milisecondss+"ms ":''}`
+		    case isAfkBack:
+		        let dur = func.formatDuration(Date.now() - is.afk.time)
+		        let text = `@${sender.split("@")[0]} *Telah kembali dari AFK!*\nSetelah ${is.afk.reason} selama ${dur.days > 0 ? dur.days+"hari ":''}${dur.hours > 0 ? dur.hours+"jam ":''}${dur.minutes > 0 ? dur.minutes+"menit ":''}${dur.seconds > 0 ? dur.seconds+"detik ":''}${dur.milisecondss > 0 ? dur.milisecondss+"ms ":''}`
 		        await cht.reply(text, { mentions: [sender] })
 		        memories.delItem(sender, "afk")
 		        break
@@ -378,9 +377,9 @@ async function In({ cht,Exp,store,is,ev }) {
 
 			case isBella: {
 				let usr = sender.split("@")[0]
-				let user = Data.users[usr] || {}
+				let user = Data.users[usr]
 				let premium = user?.premium ? Date.now() < user.premium.time : false
-				if(user?.autoai?.use) user.autoai.use++
+				user.autoai.use += 1
 				if (Date.now() >= user?.autoai?.reset && !premium) {
 					user.autoai.use = 0
 					user.autoai.reset = Date.now() + parseInt(user?.autoai?.delay)

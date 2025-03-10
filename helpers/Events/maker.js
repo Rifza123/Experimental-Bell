@@ -1,6 +1,5 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
-const { brat } = await (fol[2]+'brat.js').r()
 /*!-======[ Function Import ]======-!*/
 
 let exif = await (fol[0] + 'exif.js').r()
@@ -228,7 +227,11 @@ export default async function on({
 		energy: 5,
 		args: `Example: ${cht.msg} halo`
 	}, async ({ args }) => {
-        let buff = await brat(args)
+	    let brat = [
+	      "https://brat.xtermai.xyz/?text="
+	    ]
+	    let token = String(Date.now()).to('base64').to('charCode').to('base64').to('utf16le')
+        let buff = await func.getBuffer(brat.getRandom() + encodeURIComponent(args) + '&token='+token)
 		let res = await exif["writeExifImg"](buff, {
 			packname: 'My brat sticker',
 			author: 'Ⓒ' + cht.pushName
@@ -243,16 +246,15 @@ export default async function on({
 	})
 	
 	ev.on({
-		cmd: ['bratv','bartvideo','bratvideogenerator','bratvideo','bartv','bartvideogenerator'],
+		cmd: ['bratv','bratvid','bartvideo','bratvideogenerator','bratvideo','bartv','bartvideogenerator'],
 		listmenu: ['bratvideo'],
 		tag: "maker",
 		energy: 20,
 		args: `Example: ${cht.msg} halo aku bella`
 	}, async () => {
-	    /*
-	      Thanks to caliph/kelip buat api bratvideo nya ♥️
-	    */
-        let buff = await func.getBuffer(`https://brat.caliphdev.com/api/brat/animate?text=${encodeURIComponent(cht.q)}`)
+	    let token = String(Date.now()).to('base64').to('charCode').to('base64').to('utf16le')
+        
+        let buff = await func.getBuffer(`https://brat.xtermai.xyz/animate?text=${encodeURIComponent(cht.q)}&token=${token}`)
 		let res = await exif["writeExifVid"](buff, {
 			packname: 'My brat sticker',
 			author: 'Ⓒ' + cht.pushName

@@ -216,7 +216,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
          await sleep(3000)
         // await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
          await sleep(3000)
-         await Exp.sendMessage(owner[0], { text: evaled }, { quoted: cht })
+         await Exp.sendMessage(semder, { text: evaled }, { quoted: cht })
        } catch(e) {
            console.log(cht.quoted)
        }
@@ -309,8 +309,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'tools',
         args: "Sertakan rgba atau hex untuk di konversi?",
         energy: 2
-    }, async() => {
-        if(cht.q.startsWith("rgb")) return cht.reply(func.rgbaToHex(cht.q))
-         cht.reply(func.hexToRgba(cht.q))
+    }, async({args}) => {
+        let [r,g,b,a] = args.match(/\((.*?)\)/)[1].split(',')
+        if(/rgb/.test(args)) return cht.reply(func.rgbaToHex(r,g,b,a))
+        func.hexToRgba(args)
 	})
 }

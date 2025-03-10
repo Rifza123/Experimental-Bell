@@ -12,69 +12,40 @@ async function client({ Exp, store, cht, is }) {
           func.archiveMemories.delItem(cht.sender, "banned")
         }
         
-        if (Data.preferences[cht.id]?.ai_interactive === undefined) {
-            if (is.group) {
-                Data.preferences[cht.id].ai_interactive = cfg.ai_interactive.group
-            } else {
-                Data.preferences[cht.id].ai_interactive = cfg.ai_interactive.private
-            }
-        }
+        Data.preferences[cht.id].ai_interactive ??= Data.preferences[cht.id].ai_interactive = cfg.ai_interactive[is.group ? 'group': 'private']
         let frmtEdMsg = cht?.msg?.length > 50 ? `\n${cht.msg}` : cht.msg
       
-        if (!is.group && cht.msg) {
-            global.cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id)
-            global.cfg["autoreadpc"] && await Exp.readMessages([cht.key])
-            console.log(func.logMessage('PRIVATE', cht.id, cht.pushName, frmtEdMsg))
-        }
-
-        if (is.group && cht.msg) {
-            global.cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id)
-            global.cfg["autoreadgc"] && await Exp.readMessages([cht.key])
-            console.log(func.logMessage('GROUP', cht.id, cht.pushName, frmtEdMsg))
+        if (cht.msg) {
+          cfg["autotyping"] && await Exp.sendPresenceUpdate('composing', cht.id)
+          cfg[is.group ? "autoreadgc" : "autoreadpc"] && await Exp.readMessages([cht.key])
+          console.log(func.logMessage(is.group ? 'GROUP' : 'PRIVATE', cht.id, cht.pushName, frmtEdMsg))
         }
 
         /*!-======[ Block Chat ]======-!*/
 		const groupDb = is.group ? Data.preferences[cht.id] : {}
 	    
-        if (global.cfg.public !== true && !is.owner && !is.me) {
-          if(global.cfg.public === false && !is.offline) return 
-          if(global.cfg.public === "onlygc" && !is.group) return 
-          if(global.cfg.public === "onlypc" && is.group) return
-        }
+        if (!cfg.public && !is.owner && !is.me && !is.offline) return
+        if (cfg.public === "onlygc" && !is.group) return
+        if (cfg.public === "onlypc" && is.group) return
+
         
         let except = is.antiTagall || is.antibot
         if((is.baileys||is.mute) && !except) return
 
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
-        if(!Data.ev) Data.ev = ev
-        if(cht.cmd && !is.offline){
-            if("questionCmd" in cht.memories) await func.archiveMemories.delItem(cht.sender, "questionCmd")
-            if(cfg.similarCmd && Data.events[cht.cmd] === undefined){
-              let events = Object.keys(Data.events).filter(a => cht.cmd.length >= a.length && Math.abs(cht.cmd.length - a.length) <= 2)
-              let similar = calcMinThreshold(cht.cmd)
-              function calcMinThreshold(text) {
-                const length = text.length;
-                if (length <= 4) return 0.3;
-                  else if (length <= 7) return 0.4;
-                  else if (length <= 10) return 0.5;
-                  else return 0.6;
-                }
-                
-              cht.cmd = (func.getTopSimilar(await func.searchSimilarStrings(cht.cmd, events, similar))).item
-            }
-            ev.emit(cht.cmd)
-        } else if(cht.reaction && !is.offline){
-            if("questionCmd" in cht.memories) await func.archiveMemories.delItem(cht.sender, "questionCmd")
-            Data.reaction({ ev, ...exps })
+        Data.ev ??= ev
+
+        if (!is.offline && !is.afk && (cht.reaction || Boolean(await ev.emit(cht.cmd)))){
+          "questionCmd" in cht.memories && await func.archiveMemories.delItem(cht.sender, "questionCmd");        
+          cht.reaction && await Data.reaction({ ev, ...exps });
         } else {
-            Data.In({ ev, ...exps })
+          await Data.In({ ev, ...exps });
         }
 
         /*!-======[ Chat Interactions Add ]======-!*/
-        if (!cht.cmd && is.botMention) {
-            await func.archiveMemories.addChat(cht.sender)
-        }
+        !cht.cmd && is.botMention && await func.archiveMemories.addChat(cht.sender)
+        
         await func.archiveMemories.setItem(cht.sender, "name", cht.pushName)
         func.archiveMemories.setItem(cht.sender, "lastChat", Date.now())
     } catch (error) {

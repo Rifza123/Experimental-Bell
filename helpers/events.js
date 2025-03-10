@@ -159,6 +159,21 @@ class EventEmitter {
                 let notAllowPlayGame = Data.infos?.group?.nallowPlayGame
              
             let { func } = this.Exp
+            let cd = func.archiveMemories.getItem(sender, "cooldown") || { use: 0, max: 5, interval: 5000 }
+            if(!cd.reset || Date.now() >= cd.reset){
+              cd.use = 0
+              cd.reset = Date.now() + cd.interval
+              delete cd.notice
+            }
+            cd.use++
+            func.archiveMemories.setItem(sender, "cooldown",cd)
+            if(cd.use >= cd.max){
+              !cd.notice && await this.cht.reply(`Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`)
+              cd.notice = true 
+              func.archiveMemories.setItem(sender, "cooldown",cd)
+              return
+            }
+            
             const checks = [
               {
                 condition: ev.isOwner && !this.is.owner,
@@ -281,9 +296,10 @@ class EventEmitter {
             await ev.resolve(resolves);
             await func.addCmd();
             await func.addCMDForTop(event);
-            return
+            return true
         } catch (error) {
-            return console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${event}"`, error.stack);
+            console.error(`${bgcolor("[ERROR]","red")} ${timestamp()}\n- Error emitting "${event}"`, error.stack);
+            return
         }
     }
 }

@@ -3,27 +3,12 @@ const { proto, getContentType, generateWAMessage } = "baileys".import()
 export default 
 async function utils({ Exp, cht, is, store }) {
     try {
-        Object.assign(is, {
-            owner: false,
-            group: false,
-            me: false,
-            baileys: false,
-            botMention: false,
-            cmd: null,
-            sticker: false,
-            audio: false,
-            image: false,
-            video: false,
-            document: false,
-            url: null,
-            memories: null,
-            quoted: null,
-        })
         
-        if (Data.preferences[cht.id] === undefined) {
-            Data.preferences[cht.id] = {}
-        }
+        Data.preferences[cht.id] ??= {}
         
+        const { func } = Exp
+        let { archiveMemories:memories } = func 
+    
         const sender = cht?.participant || cht?.key?.participant || cht?.key?.remoteJid || Exp?.user?.id || ''
         cht.sender = await Exp.func['getSender'](sender)
         cht.delete = async () => Exp.sendMessage(cht.id, { delete: cht.key }).then(a => undefined)
@@ -54,9 +39,20 @@ async function utils({ Exp, cht, is, store }) {
         cht.prefix = /^[.#‽٪]/.test(cht.msg) ? cht?.msg?.match(/^[.#‽٪]/gi) : '#'
         global.prefix = cht.prefix
 
-        cht.cmd = cht?.msg?.startsWith(cht.prefix) ? cht?.msg?.slice(1)?.toLowerCase()?.trim()?.split(/ +/).shift() : null
+        cht.cmd = cht?.msg?.startsWith(cht.prefix) 
+        ? await (async() => {
+            let cmd = cht?.msg?.slice(1)?.toLowerCase()?.trim()?.split(/ +/).shift();
+            if (cfg.similarCmd && Data.events[cmd] === undefined) {
+                let events = Object.keys(Data.events).filter(a => cmd.length >= a.length && Math.abs(cmd.length - a.length) <= 2);
+                let similar = cmd.length <= 4 ? 0.3 : cmd.length <= 7 ? 0.4 : cmd.length <= 10 ? 0.5 : 0.6;
+                return (func.getTopSimilar(await func.searchSimilarStrings(cmd, events, similar))).item;
+            }
+            return cmd
+        })()
+        : null;
 
-        cht.memories = await Exp.func.archiveMemories.get(cht.sender)
+            
+        cht.memories = await memories.get(cht.sender)
 
         cht.download = async () => Exp.func.download(cht?.message?.[type], cht.type)
 
@@ -64,19 +60,19 @@ async function utils({ Exp, cht, is, store }) {
 
 		if(cht.type == "reactionMessage"){
 		  let react = await store.loadMessage(cht.id, cht[cht.type].key.id)
-		  console.log(cht)
+
 		  let rtype = getContentType(react?.message)
 		  let mtype = Exp.func['getType'](rtype)
 		  let rtext = rtype == "conversation" ? react.message[rtype]
               : rtype === 'extendedTextMessage' ? react.message[rtype]?.text
               : (rtype === 'imageMessage' || rtype === 'videoMessage') ? react.message[rtype]?.caption 
               : (type === "interactiveResponseMessage") ? JSON.parse(react?.message?.[rtype]?.nativeFlowResponseMessage?.paramsJson)?.id : null
-		  cht.reaction = {
-		    key: cht[cht.type]?.key,
-		    emoji: cht[cht.type]?.text,
-		    mtype,
-		    text: rtext,
-		    url: rtext ? ( 
+		  cht.reaction = Object.assign({}, {
+            key: cht[cht.type]?.key,
+            emoji: cht[cht.type]?.text,
+            mtype,
+            text: rtext,
+            url: rtext ? (
               rtext?.match(/https?:\/\/[^\s)]+/g)
               || rtext?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
               || []
@@ -84,7 +80,7 @@ async function utils({ Exp, cht, is, store }) {
             mention: await Exp.func['getSender'](react?.participant || react?.key?.participant || react?.key?.remoteJid ),
             download: async () => Exp.func.download(react?.message?.[rtype], mtype),
             delete: async () => Exp.sendMessage(cht.id, { delete: cht[cht.type]?.key }),
-		  }
+          })
 		  cht.reaction[mtype] = react?.message?.[rtype]
 		}
 		
@@ -93,7 +89,7 @@ async function utils({ Exp, cht, is, store }) {
             cht.quoted.sender = await Exp.func['getSender'](quotedParticipant)
             cht.quoted.mtype = Object.keys(cht.quoted)[0]
             cht.quoted.type = Exp.func['getType'](cht.quoted.mtype)
-            cht.quoted.memories = await Exp.func.archiveMemories.get(cht.quoted.sender)
+            cht.quoted.memories = await memories.get(cht.quoted.sender)
             cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype]
             cht.quoted.text = cht.quoted?.[cht.quoted.type]?.caption || cht.quoted?.[cht.quoted.type]?.text || cht.quoted?.conversation || false            
             cht.quoted.url = cht.quoted.text ? (
@@ -123,46 +119,49 @@ async function utils({ Exp, cht, is, store }) {
                        ? [cht.message[type].contextInfo.participant]
                          : []
 
-        Exp.number = Exp?.user?.id?.split(':')[0] + from.sender
-
-        is.group = cht.id?.endsWith(from.group)
         is.me = cht?.key?.fromMe
         is.owner =  global.owner.some(a => { const jid = String(a)?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
-		const groupDb = is.group ? Data.preferences[cht.id] : {}
-
-        is.baileys = /^(3EB|BAE5|BELL409|B1E)/.test(cht.key.id)
-        is.botMention = cht?.mention?.includes(Exp.number)
-        is.cmd = cht.cmd
-        is.sticker = cht.type === "sticker"
-        is.audio = cht.type === "audio"
-        is.image = cht.type === "image"
-        is.video = cht.type === "video"
-        is.document = cht.type === "document"
-        is.url = cht?.msg ? (
-            cht?.msg?.match(/https?:\/\/[^\s)]+/g)
-            || cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
-            || []
-          ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g,''))
-        : []
-        is.mute = groupDb?.mute && !is.owner && !is.me
-        is.antiTagall = groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner && !is.admin && (is.url?.length < 1)
-
+        
+        is.group = cht.id?.endsWith(from.group)
+		const groupDb = is.group ? Data.preferences[cht.id] : {}		        
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
             Exp.groupMetdata = groupMetadata
             Exp.groupMembers = groupMetadata.participants
             Exp.groupName = groupMetadata.subject
             Exp.groupAdmins = Exp.func.getGroupAdmins(groupMetadata.participants)
-            is.botAdmin = Exp.groupAdmins.includes(Exp.number)
-            is.groupAdmins = Exp.groupAdmins.includes(cht.sender)
+            Object.assign(is, {
+              botAdmin: Exp.groupAdmins.includes(Exp.number),
+              groupAdmins: Exp.groupAdmins.includes(cht.sender)
+            })
         }
-	    is.antibot = groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin
-        is.antilink = groupDb?.antilink && (is.url.length > 0) && is.url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
-        is.offline =  'offline' in cfg && typeof cfg.offline === 'object' && !is.owner && !is.group
-        is.memories = cht.memories
-        is.quoted = cht.quoted
-        is.reaction = cht.reaction        
-        
+        let url = cht?.msg ? (
+          cht?.msg?.match(/https?:\/\/[^\s)]+/g)
+          || cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 
+          || []
+        ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g, '')) : []
+
+        Object.assign(is, {
+          baileys: /^(3EB|BAE5|BELL409|B1E)/.test(cht.key.id),
+          botMention: cht?.mention?.includes(Exp.number),
+          cmd: cht.cmd,
+          sticker: cht.type === "sticker",
+          audio: cht.type === "audio",
+          image: cht.type === "image",
+          video: cht.type === "video",
+          document: cht.type === "document",
+          url,
+          offline: 'offline' in cfg && typeof cfg.offline === 'object' && !is.owner && !is.group,
+          memories: cht.memories,
+          quoted: cht.quoted,
+          reaction: cht.reaction,
+          afk: is.group ? memories.getItem(sender, "afk") : false,
+          mute: groupDb?.mute && !is.owner && !is.me,
+          antiTagall: groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner && !is.groupAdmins && (url?.length < 1),
+          antibot: groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin,
+          antilink: groupDb?.antilink && (url.length > 0) && url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin  
+        });
+
         if(!cht.reply) cht.reply = async function (text, etc={},quoted={ quoted: true }) {
           try {
             if(quoted?.quoted){
@@ -206,58 +205,25 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
         
-        if(!cht.warnGc) cht.warnGc = async({ type, warn, kick, max }) => {
+        if(!cht.warnGc) cht.warnGc = async({ id, type, warn, kick, max }) => {
           let t = type||"antibot"
+          let jid = id||cht.sender
           groupDb.warn = groupDb.warn || {}
-          groupDb.warn[cht.sender] = groupDb.warn[cht.sender] || {}
-          groupDb.warn[cht.sender][t] = groupDb.warn[cht.sender][t] || { value:1, reset: Date.now() + 8640000 }
-          if(groupDb.warn[cht.sender][t].reset < Date.now()) {
-            groupDb.warn[cht.sender][t] = { value:1, reset: Date.now() + 8640000 }
+          groupDb.warn[jid] = groupDb.warn[jid] || {}
+          groupDb.warn[jid][t] = groupDb.warn[jid][t] || { value:1, reset: Date.now() + 8640000 }
+          if(groupDb.warn[jid][t].reset < Date.now()) {
+            groupDb.warn[jid][t] = { value:1, reset: Date.now() + 8640000 }
           }
-          if(groupDb.warn[cht.sender][t].value > max){
+          if(groupDb.warn[jid][t].value > max){
               await cht.reply(kick)
-              delete groupDb.warn[cht.sender][t]
-              await Exp.groupParticipantsUpdate(cht.id, [cht.sender], "remove")
+              delete groupDb.warn[jid][t]
+              await Exp.groupParticipantsUpdate(cht.id, [jid], "remove")
           } else {
-              await cht.reply(`*Peringatan ke ${groupDb.warn[cht.sender][t].value}⚠️*\n\n${warn}\n\n_Jika sudah di beri peringatan ${max} kali maka akan otomatis dikeluarkan!_`)
-              groupDb.warn[cht.sender][t].value++
+              await cht.reply(`*Peringatan ke ${groupDb.warn[jid][t].value}⚠️*\n\n${warn}\n\n_Jika sudah di beri peringatan ${max} kali maka akan otomatis dikeluarkan!_`)
+              groupDb.warn[jid][t].value++
           }
           Data.preferences[cht.id] = groupDb
         }
-
-        Exp.append = async(text, [_mess]) => {
-  	      let msg = await generateWAMessage(_mess.key.remoteJid, { text, mentions: cht.mention }, {
-     		userJid: Exp.user.id,
-  		    quoted: {
-              key: {
-                  remoteJid: cht.quoted?.key?.remoteJid,
-                  fromMe: cht.quoted?.key?.fromMe,
-                  id: cht.quoted.stanzaId,
-              },
-              message: cht.quoted,
-               ...(is.group ? { participant: cht.quoted.sender } : {})
-            }
-          })    
-          msg = {
-            ...msg,
-            key: {
-              id: cht.key.id,
-              fromMe: cht.sender == Exp.number,
-              ..._mess.key
-            },
-            pushName: cht.pushName,
-            ...(is.group ? { participant: cht.sender } : {})
-          }
-          
-          let m = {
-            type: 'append',
-            ..._mess,
-            messages: [proto.WebMessageInfo.fromObject(msg)],
-          }
-          console.log(m)
-          Exp.ev.emit('messages.upsert', m)
-        }
-        
 
     } catch (error) {
         console.error("Error in utils:", error)
