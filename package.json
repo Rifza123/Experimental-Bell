@@ -1,4 +1,4 @@
-{
+{Update apt update && apt upgrade
   "name": "experimental-Bell",
   "version": "1.0.0",
   "description": "Artificial Intelligence, The beginning of the robot era",
