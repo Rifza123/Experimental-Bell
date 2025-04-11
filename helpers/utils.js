@@ -121,6 +121,8 @@ async function utils({ Exp, cht, is, store }) {
                        ? [cht.message[type].contextInfo.participant]
                          : []
 
+        Exp.number = Exp?.user?.id?.split(':')[0] + from.sender
+        
         is.me = cht?.key?.fromMe
         is.owner =  global.owner.some(a => { const jid = String(a)?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
         

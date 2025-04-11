@@ -84,6 +84,7 @@ export class JadwalSholat {
   }
   
   async now(id){     
+    this.groups ??= {}
     Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
     if(!id||!(id in this.groups)) return { status: false, msg: "id tidak ada dalam data, silahkan lakukan init terlebih dahulu" }
     let { timeZone, v, ramadhan } = this.groups[id]
