@@ -59,6 +59,9 @@ infos.set = `
 - autoreactsw <off or emojis>
 - checkpoint <checkpoint_id>
 - lora <lora_id>
+- apikey <apikey>
+- antitagowner <(on/off) or reply message>
+- keyChecker <on/off>
 
 _Example: .set public on_`
 
@@ -259,24 +262,36 @@ Examples:
 \`Please read this guide carefully to avoid needing further assistance from the admin. Thank you.\`
 `
 
-infos.setRole = `*Panduan untuk mengubah role user (Hanya bisa digunakan oleh owner!)*
+infos.setRole = `*Guide to Changing User Roles (Owner Only!)*
 
-*Bagaimana cara menggunakannya?*
+*How to Use?*
 
-_*Sertakan nomor/Reply/tag user target*_
+_*Include the number / reply to / tag the target user*_
 
-Contoh:
- - *#1* => _Dengan reply pesan target_
+Examples:
+ - *#1* => _Reply to the target's message_
 - .setrole 🎀Soulmate🦋
 
- - *#2* => _Dengan tag target_
+ - *#2* => _Tag the target user_
 - .setrole @rifza|🎀Soulmate🦋
 
- - *#3* => _Dengan nomor target_
+ - *#3* => _Use the target's phone number_
 - .setrole +62 831-xxxx-xxxx|🎀Soulmate🦋
 
-\`LIST ROLE\`
+\`ROLE LIST\`
 <role>
 
-\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
+\`Make sure to read this guide carefully to avoid asking the admin about how to use this feature. Thank you.\``
 
+infos.setAntiTagOwner = `**✦ ANTI-TAG OWNER GUIDE ✦**
+
+• *Enable the feature:*
+Type \`.set antitagowner on\`
+
+• *Disable the feature:* 
+Type \`.set antitagowner off\`
+
+• *Set the response when owner is tagged:*
+Reply to the message you want to use as the response, then type:  
+\`.set antitagowner\`
+`

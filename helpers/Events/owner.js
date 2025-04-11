@@ -49,7 +49,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         autoreadgc: 'auto read group',
         premium_mode: 'premium mode',
         editmsg: 'edit message',
-        similarCmd: 'similarity command'
+        similarCmd: 'similarity command',
+        antitagowner: 'Anti Tag Owner',
+        keyChecker: 'Auto detector apikey'
     }
 
     function sendPremInfo({ _text, text }, cust=false, number){
@@ -109,6 +111,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
            ? `Example: .${cht.cmd} ${t1} 2067`
            : t1 == "checkpoint"
            ? `Example: .${cht.cmd} ${t1} 1552`
+           : t1 == "apikey" 
+           ? true
            : false)
 
         if (!mode) return cht.reply(infos.owner.set)
@@ -254,6 +258,32 @@ export default async function on({ cht, Exp, store, ev, is }) {
               })
             }
             return cht.replyWithTag(isOff ? infos.owner.isModeOffSuccess : infos.owner.isModeOnSuccess, { mode })
+        } else if(t1 == "apikey"){
+          if(!t2){
+            await cht.reply("Silahkan input apikeynya!")
+            return func.archiveMemories.setItem(sender, "questionCmd", { 
+              emit: `${cht.cmd} ${t1}`,
+              exp: Date.now() + 20000,
+              accepts: []
+            })
+          }
+          api.xterm.key = t2.trim()
+          cht.reply(`Success set apikey xtermai!\nKey: ${t2}`)
+        } else if(t1 == "antitagowner"){
+          if(t2){
+            let off = ["off","false"]
+            let isOff = off.includes(t2)
+            let on = ["on","true"]
+            let isOn = on.includes(t2)
+            if(!(isOff||isOn)) return cht.reply(infos.owner.setAntiTagOwner)
+            cfg['antitagowner'] = isOn
+            return cht.replyWithTag(isOff ? infos.owner.isModeOffSuccess : infos.owner.isModeOnSuccess, { mode })
+          } else {
+            if(!cht.quoted) return cht.reply(infos.owner.setAntiTagOwner)
+            let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message
+            Data.response['tagownerresponse'] = res
+            cht.reply(`Success set antitagowner!\nType: ${cht.quoted.type}`)
+          }
         } else {
           if (t2 === "on" || t2 === "true") {
             if (global.cfg[t1]) return cht.replyWithTag(infos.owner.isModeOn, { mode })
@@ -709,6 +739,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
         cht.reply(`@${sender.split("@")[0]} Telah kembali online ✅`,  { mentions: [sender] })
       }
     })
+    
+    ev.on({
+        cmd: ['addowner','delowner'],
+        listmenu: ['addowner','delowner'],
+        isOwner: true,
+        isMention: true
+    }, ({ args })=> {
+        let mention = cht.mention.map(a => String(a.split('@')[0]))
+        owner = 'addowner' == cht.cmd ? [...owner, ...mention] : owner.filter(a => !mention.includes(String(a).split('@')[0]))
+        cht.reply(`Success ${'addowner' == cht.cmd ? 'add':'delete'} owner ${mention.map(a => '@'+a).join(', ')}!`, { mentions: cht.mention })
+    })
  
     ev.on({ 
         cmd: ['update'],
@@ -844,7 +885,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }) 
       
         //await Exp.sendMessage(ID, { text: 'Success' }, { quoted: msg })
-        /*await Exp.relayMessage(ID, {
+        let mmm = await generateWAMessageFromContent({
             [ID.endsWith(from.group) ? "groupStatusMentionMessage":"statusMentionMessage"]: {
               message: {
                 protocolMessage: {
@@ -853,7 +894,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 },
               },
             },
-          }, {
+          })
+        await Exp.relayMessage(ID, mmm.message, {
           additionalNodes: [
             {
               tag: "meta",
@@ -862,9 +904,66 @@ export default async function on({ cht, Exp, store, ev, is }) {
             },
           ],
         })
-        */
+        
       }
       
+    })
+    
+    ev.on({
+      cmd: ['addrespon','setresponse','setrespon','adresponse'],
+      listmenu: ['addrespon'],
+      isQuoted: `Reply pesan! dengan caption: ${cht.prefix+cht.cmd} <teks>`,
+      isOwner: true,
+      tag: "owner"
+    }, async ({ args })=> {
+      let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message
+      Data.response[args.toLowerCase()?.replace(/ /g,'')] = res
+      cht.reply(`Success set response!\n- Type: ${cht.quoted.type}\n\n_Pesan dengan teks "*${args}*" akan direspon dengan pesan tersebut!_`)
+    })
+    
+    ev.on({
+      cmd: ['delrespon','delresponse'],
+      listmenu: ['delrespon'],
+      isQuoted: `Reply pesan! dengan caption: ${cht.prefix+cht.cmd} <teks>`,
+      isOwner: true,
+      tag: "owner"
+    }, async ({ args })=> {
+      delete Data.response[args.toLowerCase()?.replace(/ /g,'')]
+      cht.reply(`Success delete response "*${args}*"`)
+    })
+    
+    ev.on({ 
+        cmd: ['setcmd'], 
+        listmenu: ['setcmd'],
+        media: {
+            type: ["image","sticker","video","audio","document"],
+            save: false
+        },
+        tag: "owner",
+        args: `Reply pesan media! dengan caption: ${cht.prefix+cht.cmd} <command>`,
+        isOwner: true
+    }, async ({ args }) => {
+        let { quoted, type } = ev.getMediaType()
+        Data.setCmd[(quoted ? cht.quoted:cht)[type].fileSha256.toString().to('utf16le')] = args
+        cht.reply(`Success set cmd!\n- Type: ${type}\n- Command: ${args}`)
+    })
+    
+    ev.on({ 
+        cmd: ['delcmd'], 
+        listmenu: ['delcmd'],
+        media: {
+            type: ["image","sticker","video","audio","document"],
+            save: false
+        },
+        tag: "owner",
+        args: `Reply pesan media! dengan caption: ${cht.prefix+cht.cmd}`,
+        isOwner: true
+    }, async({ args }) => {
+        let { quoted, type } = ev.getMediaType()
+        let cmd = Data.setCmd[(quoted ? cht.quoted:cht)[type].fileSha256.toString().to('utf16le')]
+        await cht.reply(`Success delete cmd!\n- Type: ${type}\n- Command: ${cmd}`)
+        delete Data.setCmd[(quoted ? cht.quoted:cht)[type].fileSha256.toString().to('utf16le')]
+                
     })
     
 }

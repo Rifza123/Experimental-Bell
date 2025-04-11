@@ -5,7 +5,8 @@ async function utils({ Exp, cht, is, store }) {
     try {
         
         Data.preferences[cht.id] ??= {}
-        
+        Data.setCmd ??= {}
+
         const { func } = Exp
         let { archiveMemories:memories } = func 
     
@@ -24,18 +25,21 @@ async function utils({ Exp, cht, is, store }) {
 
         cht.msg = (cht.id === "status@broadcast") 
             ? null 
-            : ([
+            : Data.setCmd[cht?.message?.[type]?.fileSha256?.toString()?.to('utf16le')]
+            || ([
                { type: 'conversation', msg: cht?.message?.[type] },
                { type: 'extendedTextMessage', msg: cht?.message?.[type]?.text },
                { type: 'imageMessage', msg: cht?.message?.[type]?.caption },
                { type: 'videoMessage', msg: cht?.message?.[type]?.caption },
                { type: 'pollCreationMessageV3', msg: cht?.message?.[type]?.name },
+               { type: 'ephemeralMessage', msg: cht?.message?.[type]?.message?.extendedTextMessage.text || cht?.message?.[type]?.message?.imageMessage?.caption },
                { type: 'eventMessage', msg: cht?.message?.[type]?.description },
                { type: "interactiveResponseMessage", msg: cht?.message?.[type]?.nativeFlowResponseMessage?.paramsJson 
                     ? JSON.parse(cht.message?.[type].nativeFlowResponseMessage?.paramsJson)?.id
                     : null }
-            ].find(entry => type === entry.type)?.msg) || null
-
+            ].find(entry => type === entry.type)?.msg) 
+            || null
+        
         cht.prefix = /^[.#‽٪]/.test(cht.msg) ? cht?.msg?.match(/^[.#‽٪]/gi) : '#'
         global.prefix = cht.prefix
 
@@ -52,8 +56,6 @@ async function utils({ Exp, cht, is, store }) {
         : null;
 
             
-        cht.memories = await memories.get(cht.sender)
-
         cht.download = async () => Exp.func.download(cht?.message?.[type], cht.type)
 
         cht[cht.type] = cht?.message?.[type]
@@ -135,6 +137,8 @@ async function utils({ Exp, cht, is, store }) {
               groupAdmins: Exp.groupAdmins.includes(cht.sender)
             })
         }
+        cht.memories = await memories.get(cht.sender, { is })
+        
         let url = cht?.msg ? (
           cht?.msg?.match(/https?:\/\/[^\s)]+/g)
           || cht?.msg?.match(/(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi) 

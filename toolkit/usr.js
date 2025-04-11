@@ -24,7 +24,7 @@ export class ArchiveMemories {
         return userData;
     }
 
-    static async get(userJid) {
+    static async get(userJid, { is }={}) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
         let userData = global.Data.users[userId]
         let aut = cfg.first.autoai
@@ -38,7 +38,12 @@ export class ArchiveMemories {
         let premium = (userData.premium && Date.now() < userData.premium.time) ? userData.premium : false
 
         try {
-            userData.role = role(userData.chat)
+            let roles = [role(userData.chat)]
+            is?.owner && roles.push('owner')
+            is?.groupAdmin && roles.push('admin group')
+            premium && roles.push('user premium')
+            userData.role = roles.join(', ')
+            if(!userData.energy) userData.energy = 0
             if (!userData.lastCharge || !userData.maxCharge || !userData.chargingSpeed || !userData.chargeRate) {
                 userData = {
                     ...userData,
@@ -55,6 +60,7 @@ export class ArchiveMemories {
                     coins: cfg.first.coins
                 };
             }
+            
             let { chargeRate, maxCharge } = userData
                  
             if(premium && premium.maxCharge && premium.chargeRate){

@@ -59,6 +59,9 @@ infos.set = `
 - autoreactsw <off or emojis>
 - checkpoint <checkpoint_id>
 - lora <lora_id>
+- apikey <apikey>
+- antitagowner <(on/off) or reply message>
+- keyChecker <on/off>
 
 _Example: .set public on_`
 
@@ -277,3 +280,15 @@ Contoh:
 
 \`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
 
+infos.setAntiTagOwner = `**✦ PETUNJUK ANTI-TAG OWNER ✦**
+
+• *Aktifkan fitur:*
+Ketik \`.set antitagowner on\`
+
+• *Nonaktifkan fitur:* 
+Ketik \`.set antitagowner off\`
+
+• *Atur respon saat owner di-tag:*
+Balas pesan yang ingin dijadikan respon, lalu ketik:  
+\`.set antitagowner\`
+`

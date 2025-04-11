@@ -41,7 +41,9 @@ const files = [
     { path: db + 'badwords.json', content: [] },
     { path: db + 'links.json', content: [] },
     { path: db + 'fquoted.json', content: {} },
-    { path: db + 'audio.json', content: { welcome:[], leave:[] } }
+    { path: db + 'audio.json', content: { welcome:[], leave:[] } },
+    { path: db + 'setCmd.json', content: {} },
+    { path: db + 'response.json', content: {} },     
 ]
 
 files.forEach(file => {
@@ -94,6 +96,8 @@ global["Data"] = {
         cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
     },
     infos:{},
+    setCmd: JSON.parse(fs.readFileSync(db + 'setCmd.json')),
+    response: JSON.parse(fs.readFileSync(db + 'response.json')),
     voices: [
       "prabowo",
       "yanzgpt",

@@ -7,6 +7,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
    const { func } = Exp
    const { archiveMemories:memories, dateFormatter } = func
    let infos = Data.infos
+   const chatDb = Data.preferences[cht.id] || {}
    
     ev.on({ 
         cmd: ['group','resetlink','open','close','linkgc','setppgc'],
@@ -254,6 +255,7 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         
         cht.reply(infos.group.on(cht.cmd, input))
 	})
+	
 	ev.on({ 
         cmd: ['antilink'],
         listmenu: ['antilink'],
@@ -294,8 +296,9 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         listmenu: ['afk'],
         tag: 'group',
         isGroup: true,
-    }, async({ args }) => {
+    }, async({ args,urls }) => {
       let alasan = args || "Tidak diketahui"
+      if(urls?.length > 0) return cht.reply('Alasan tidak boleh menggunakan link/promosi!')
       if(alasan.length > 100) return cht.reply("Alasan tidak boleh lebih dari 100 karakter!")
       func.archiveMemories.setItem(sender, "afk", { 
         time: Date.now(),
@@ -303,4 +306,232 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
       })
       cht.reply(`@${sender.split("@")[0]} Sekarang *AFK!*\n\n- Dengan alasan: ${alasan}\n- Waktu: ${func.dateFormatter(Date.now(), "Asia/Jakarta")}`, { mentions: [sender] })
     })
+    
+    let schedule = `Format: .${cht.cmd} type msg|action|hh:mm,Time/Zone  
+\`*Type*\`: add, delete, list
+
+# *MENAMBAH SCHEDULE*
+- format: .${cht.cmd} add msg|action|hh:mm,Time/Zone
+> _Contoh: .${cht.cmd} add Hai semua, udah malam nih, jadi grup aku tutup ya|tutup|22:00,Asia/Jakarta_ 
+*Detail:*  
+ ℹ️ \`msg\` adalah pesan yang akan dikirim saat bot menjalankan action sesuai jadwal yang telah ditentukan.  
+
+ ℹ️ \`action\` adalah tindakan yang akan dilakukan oleh bot:  
+  _List: close,tutup,open,buka,none,silent,-_
+  > Keterangan:
+- *close/tutup* → Menutup grup  
+- *open/buka* → Membuka grup
+- *none/silent/- → Hanya mengirimkan pesan 
+
+ ℹ️ \`hh:mm,Time/Zone\` adalah waktu eksekusi berdasarkan zona waktu yang dipilih.  
+- *Daftar TimeZone*: Asia/Jakarta, Asia/Makassar, Asia/Jayapura  
+
+# *MENGHAPUS SCHEDULE*
+- format: .${cht.cmd} delete time
+> _Contoh: .${cht.cmd} delete 22:00
+
+# *MELIHAT LIST SCHEDULE*
+> .${cht.cmd} list
+
+\`Kami sangat berharap panduan ini dibaca dengan teliti agar tidak lagi menanyakan kepada admin terkait cara penggunaanya, terimakasih\`
+ `
+    function calculateSoon(timeZone, hh, mm){
+      let now = new Date();
+      let formatter = new Intl.DateTimeFormat('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
+      let [currentHour, currentMinute] = formatter.format(now).split(':').map(Number);
+
+      let nowDate = new Date(new Date().toLocaleString("en-US", { timeZone }));
+
+      let targetDate = new Date(nowDate);
+      targetDate.setHours(hh, mm, 0, 0);
+
+      if (targetDate < nowDate) {
+        targetDate.setDate(targetDate.getDate() + 1);
+      }
+
+      let diffMs = targetDate - nowDate;
+      let diffMinutes = Math.floor(diffMs / 60000);
+      let remainingHours = Math.floor(diffMinutes / 60);
+      let remainingMinutes = diffMinutes % 60;
+      return { remainingHours, remainingMinutes }
+    }
+    ev.on({ 
+        cmd: ['schedule','schedules'],
+        listmenu: ['schedules'],
+        tag: 'group',
+        args: schedule,
+        isGroup: true,
+        isAdmin: true,
+        isBotAdmin: true
+    }, async({ args }) => {
+      let [type, ...format] = args.split(' ')
+      let q = format.join(' ')?.trim()
+      chatDb.schedules ??= [];
+      if(type == 'add'){
+        let [msg, action, timezone] = q.split('|')
+        let actions = {
+          'open': 'not_announcement',
+          'close': 'announcement',
+          'buka': 'not_announcement',
+          'tutup': 'announcement',
+          'none': '-',
+          'silent': '-',
+          '-': '-'
+        };
+        if(!msg||!action||!timezone) return cht.reply(`*Harap masukkan ${!msg ? 'pesan' : !action ? 'action' : 'timezone'} nya!*\n\n${schedule}`)
+        if(!actions[action]) return cht.reply(`Action tidak tersedia, silahkan baca lagi!\n\n${schedule}`)
+        let [time,zone] = timezone.split(',')
+        if(!time) return cht.reply(`*Harap sertakan time nya!*\n\n${schedule}`)
+        if(chatDb.schedules.find(a => a.time == time)) return cht.reply(`*Schedule dengan waktu ${time} sudah ada, harap gunakan waktu lain!*`)
+        let [hh,mm] = time.split(':')
+
+        if(!hh||!mm||isNaN(hh) || isNaN(mm)) return cht.reply(`*Time tidak valid!*\n\n${schedule}`)
+        if(!zone) return cht.reply(`*Harap sertakan Zona waktunya!*\n\n${schedule}`)
+        let LSZone = ['Asia/Jakarta', 'Asia/Jayapura', 'Asia/Makassar'];
+
+        let timeZone = func.getTopSimilar(await func.searchSimilarStrings(zone, LSZone, 0.7)).item
+        if (!timeZone) return cht.reply(`*Zona waktu tidak valid, harap baca kembali!* \n\n${schedule}`);
+
+        let { remainingHours, remainingMinutes } = calculateSoon(timeZone, hh, mm)
+
+        chatDb.schedules.push({ time, timeZone, msg, action: actions[action] });
+        chatDb.schedules = chatDb.schedules.map(JSON.stringify).filter((v, i, a) => a.indexOf(v) === i).map(JSON.parse)
+        cht.reply(`✅ Success menambahkan schedule!  \n\n🕒 Waktu: ${time}, ${timeZone}  \n⚡ Action: ${action}  \n💬 Pesan: ${msg}  \n\n_⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._`)
+      } else if(type == 'delete'){
+        if(!q) return cht.reply(`*Harap sertakan time nya!*\n\n${schedule}`)
+        let [hh,mm] = q.split(':')
+        if(!hh||!mm||isNaN(hh) || isNaN(mm)) return cht.reply(`*Time tidak valid!*\n\n${schedule}`)
+        let fTime = chatDb.schedules.find(a => a.time == q)
+        if(!fTime) return cht.reply(`*Schedule dengan waku tersebut tidak ditemukan!*`)
+        chatDb.schedules = chatDb.schedules.filter(a => a.time !== q)
+        cht.reply(`✅ Success menghapus schedule!\n🕒 Waktu: ${q}`)
+      } else if(type == 'list'){
+        if(chatDb.schedules.length < 1) return cht.reply('Tidak ada schedule yang aktif disini!')
+        let txt = '*[ LIST SCHEDULE ]*\n'
+        let l = 0
+        for(let i of chatDb.schedules){
+          l++;
+          let [hh,mm] = i.time.split(':')
+          let { remainingHours, remainingMinutes } = calculateSoon(i.timeZone, hh, mm)
+          txt += `
+# \`${i.time}, ${i.timeZone}\`
+- ⚡ Action: ${i.action}
+- 💬 Pesan: ${i.msg}
+_⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
+`
+        }
+        
+        cht.reply(txt)
+      } else {
+        cht.reply(`*Type tidak valid!*\n\n${schedule}`)
+      }
+    })
+    
+    ev.on({
+      cmd: ['inviteinfo'],
+      listmenu: ['inviteinfo'],
+      tag: 'group',
+      energy: 10,
+      args: 'Masukkan link grup yang valid!'
+    }, async ({ args }) => {
+      let inviteCodeMatch = args.match(/chat\.whatsapp\.com\/([\w-]+)/);
+      if (!inviteCodeMatch) return cht.reply('Gunakan perintah ini dengan link grup yang valid!');
+
+      let inviteCode = inviteCodeMatch[1];
+      let groupInfo = await Exp.groupGetInviteInfo(inviteCode);
+      let groupId = groupInfo.id;
+      let isBotInGroup = false;
+      let joinedGroups = await Exp.groupFetchAllParticipating();
+      let groupData = isBotInGroup ? await Exp.groupMetadata(groupId) : groupInfo;
+
+      if (joinedGroups[groupId]) {
+          isBotInGroup = true;
+      }
+
+      let data = {
+          id: groupData.id,
+          name: groupData.subject,
+          createdAt: func.dateFormatter(groupData.creation * 1000, 'Asia/Jakarta'),
+          owner: groupData.owner ? `@${groupData.owner.split('@')[0]}` : 'Tidak diketahui',
+          totalMembers: groupData.size || groupData.participants.length,
+          admins: groupData.participants
+              .filter(p => p.admin)
+              .map(p => `@${p.id.split('@')[0]}`),
+          totalAdmins: groupData.participants.filter(p => p.admin).length,
+          description: groupData.desc || 'Tidak ada deskripsi',
+          isCommunity: groupData.isCommunity ? '✅ Ya' : '❌ Tidak',
+          isAnnouncement: groupData.announce ? '✅ Ya' : '❌ Tidak',
+          isRestricted: groupData.restrict ? '✅ Ya' : '❌ Tidak',
+          joinApproval: groupData.joinApprovalMode ? '✅ Ya' : '❌ Tidak',
+          ephemeralDuration: groupData.ephemeralDuration ? `${groupData.ephemeralDuration} detik` : 'Tidak aktif',
+      };
+      let text = `╭───────────────────\n` +
+        `│ *Group Name:* ${data.name}\n` +
+        `│ *ID Grup:* ${data.id}\n` +
+        `│ *Dibuat Pada:* ${data.createdAt}\n` +
+        `│ *Pembuat Grup:* ${data.owner}\n` +
+        `│ *Total Anggota:* ${data.totalMembers}\n` +
+        `│ *Total Admin:* ${data.totalAdmins}\n` +
+        `╰───────────────────────────────\n\n` +
+        `*Deskripsi Grup:*\n${data.description}\n\n` +
+        `*Admin Grup:*\n${data.admins.length > 0 ? data.admins.join(', ') : 'Tidak ada admin'}\n\n` +
+        `*Pengaturan Grup:*\n` +
+        `- Komunitas: ${data.isCommunity}\n` +
+        `- Pengumuman: ${data.isAnnouncement}\n` +
+        `- Dibatasi: ${data.isRestricted}\n` +
+        `- Persetujuan Join: ${data.joinApproval}\n` +
+        `- Pesan Sementara: ${data.ephemeralDuration}\n` +
+        `- *Link Group:* https://chat.whatsapp.com/${inviteCode}`;
+
+      cht.reply(text, { mentions: groupData.participants.map(p => p.id) });
+    })
+  
+    ev.on({
+      cmd: ['topenergy'],
+      listmenu: ['topenergy'],
+      tag: 'group'
+    }, async ({ args }) => {
+      let topUsers = []
+      let topEnergy = await Promise.all(
+        Exp.groupMembers.map(a => 
+          memories.get(a.id)
+              .then(v => ({ ...v, id: a.id, energy: v.energy || 0 }))
+              .catch(() => ({ id: a.id, energy: 0 }))
+        )
+      )
+      .then(members => members
+        .sort((a, b) => b.energy - a.energy)
+        .slice(0, args ? (parseInt(args)*1) : 10)
+        .map((a, i) => {
+          topUsers.push(a.id);
+          let username = a.id.includes('@') ? a.id.split('@')[0] : a.id;        
+          let emoji = i === 0 ? '(🏆)' 
+                   : i === 1 ? '(🥈)' 
+                   : i === 2 ? '(🥉)'
+                   : ''
+          return `${i + 1}. @${username} ${a.energy}⚡ ${emoji}`;
+        }).join('\n')
+      )
+
+    cht.reply(`*TOP 10 ENERGY TERBANYAK DI GROUP \`${Exp.groupMetdata.subject}\`*\n\n${topEnergy}`, { mentions: topUsers });
+  })
+  
+  ev.on({ 
+        cmd: ['promote','demote'],
+        listmenu: ['promote','demote'],
+        tag: 'group',
+        isGroup: true,
+        isAdmin: true,
+        isMention: true,
+        isBotAdmin: true
+    }, async() => {
+        try {
+            if(is.botMention) return cht.reply("Promote/demote ke diri sendiri tidak dapat dilakukan!")
+            await Exp.groupParticipantsUpdate(id, cht.mention, cht.cmd)
+            cht.reply(`Success ${cht.cmd} user @${cht.mention[0].replace(from.sender, '')}`, { mentions: cht.mention })
+        } catch(e) {
+          cht.reply(`Enggak bisa!${infos.others.readMore}\n\n${e}`)
+        }
+	})
+  
 }

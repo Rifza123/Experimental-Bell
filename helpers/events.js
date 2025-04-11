@@ -8,6 +8,8 @@ let isLoad = false
 /*!-======[ Fubctions Imports ]======-!*/
 const { ArchiveMemories } = await (fol[0] + "usr.js").r();
 const { bgcolor } = await (fol[0]+"color.js").r();
+const { GeminiImage } = await (fol[2] + "gemini.js").r()
+
 const timestamp = () => {
     return new Intl.DateTimeFormat('id-ID', {
         year: 'numeric',
@@ -159,15 +161,17 @@ class EventEmitter {
                 let notAllowPlayGame = Data.infos?.group?.nallowPlayGame
              
             let { func } = this.Exp
-            let cd = func.archiveMemories.getItem(sender, "cooldown") || { use: 0, max: 5, interval: 5000 }
+            let max = 5
+            let interval = 5000//5detik
+            let cd = func.archiveMemories.getItem(sender, "cooldown") || { use: 0 }
             if(!cd.reset || Date.now() >= cd.reset){
               cd.use = 0
-              cd.reset = Date.now() + cd.interval
+              cd.reset = Date.now() + interval
               delete cd.notice
             }
             cd.use++
             func.archiveMemories.setItem(sender, "cooldown",cd)
-            if(cd.use >= cd.max){
+            if(cd.use >= max){
               !cd.notice && await this.cht.reply(`Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`)
               cd.notice = true 
               func.archiveMemories.setItem(sender, "cooldown",cd)
@@ -268,6 +272,15 @@ class EventEmitter {
                 media = ev.media.save
                     ? await func.downloadSave(save, mediaType)
                     : await download();
+                
+                /*
+                  if(mediaType == "image"){
+                    let prompt = `Kamu adalah AI yang berfungsi untuk mendeteksi apakah sebuah gambar mengandung sosok manusia berkulit gelap atau dengan postur berotot. Tugasmu adalah memberikan respons true jika gambar tersebut sesuai, dan false jika tidak. Jawaban harus berupa boolean (true atau false) tanpa penjelasan tambahan`
+                    let ress = await GeminiImage(await func.minimizeImage(media), prompt)
+                    console.log(ress)
+                    if(ress.trim() == 'true') return this.cht.reply('Di larang mmebuat stiker dari gambar berisi orang berkulit hitam/jomok')
+                  }
+                */
             }
             
             if (ev.urls) {

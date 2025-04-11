@@ -22,8 +22,6 @@ async function client({ Exp, store, cht, is }) {
         }
 
         /*!-======[ Block Chat ]======-!*/
-		const groupDb = is.group ? Data.preferences[cht.id] : {}
-	    
         if (!cfg.public && !is.owner && !is.me && !is.offline) return
         if (cfg.public === "onlygc" && !is.group) return
         if (cfg.public === "onlypc" && is.group) return
@@ -35,10 +33,9 @@ async function client({ Exp, store, cht, is }) {
         let exps = { Exp, store, cht, is }
         let ev = new Data.EventEmitter(exps)
         Data.ev ??= ev
-
-        if (!is.offline && !is.afk && (cht.reaction || Boolean(await ev.emit(cht.cmd)))){
-          "questionCmd" in cht.memories && await func.archiveMemories.delItem(cht.sender, "questionCmd");        
-          cht.reaction && await Data.reaction({ ev, ...exps });
+        if (!is.offline && !is.afk && (cht.cmd||cht.reaction)){
+           cht.cmd && await Promise.all(["questionCmd" in cht.memories && func.archiveMemories.delItem(cht.sender, "questionCmd"), ev.emit(cht.cmd)])
+           cht.reaction && await Data.reaction({ ev, ...exps });
         } else {
           await Data.In({ ev, ...exps });
         }

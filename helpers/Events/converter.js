@@ -45,18 +45,40 @@ export default async function on({
         tag: 'converter',
 	    energy: 10,
         media: { 
-           type: ["sticker"],
+           type: ["sticker","video"],
            etc: {
              isAnimated:true
            }
         }
     }, async({ media }) => {
          let res = await tmpFiles(media)
-         let url = await convert({
+         let url = cht.type == 'video' ? res : await convert({
            url: res,
            from: "webp", to: "mp4"
          })
          Exp.sendMessage(id, { video: { url }, gifPlayback: cht.cmd == 'togif' }, { quoted: cht })
+	})
+	
+	ev.on({ 
+        cmd: ['webp2jpg','webptojpg','webp2png','webptopng'],
+        listmenu:  ['webp2jpg','webp2png'],
+        tag: 'converter',
+	    energy: 10,
+        media: { 
+           type: ["sticker","image"]
+        }
+    }, async({ media }) => {
+      try {
+         let res = await tmpFiles(media)
+         let url = await convert({
+           url: res,
+           from: "webp", to: cht.cmd.includes("jpg") ? 'jpg':'png'
+         })
+         Exp.sendMessage(id, { image: { url } }, { quoted: cht })
+      } catch (e) {
+        console.error(e)
+        cht.reply('Failed!')
+      }
 	})
 	
 	ev.on({ 

@@ -6,8 +6,12 @@ const fs = "fs".import()
 const { gpt } = await (fol[2] + "gpt3.js").r()
 const { deepseek } = await (fol[2] + "deepseek.js").r()
 const { GeminiImage } = await (fol[2] + "gemini.js").r()
+const { imageEdit } = await (fol[2] + "imageEdit.js").r()
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r()
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r()
+
+let exif = await (fol[0] + 'exif.js').r()
+let { convert } = exif
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ Exp, ev, store, cht, ai, is }) {
@@ -43,13 +47,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         
              if (eventData) {
                  const data = JSON.parse(eventData[1])
+                 console.log(data)
                  switch (data.status){
                      case 'searching':
                      case 'separating':
                      case 'starting':
                      case 'processing':
                      case 'mixing':
-                         data.msg && cht.edit(data.msg, _key, true)
+                         data.msg && cht.edit(data.msg||'...', _key, true)
                      break
                      case 'success':
                          await Exp.sendMessage(id, { audio: { url: data.result }, mimetype: "audio/mp4"}, { quoted: cht })
@@ -64,7 +69,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
            })
          })
          .catch(error => {
-             cht.edit('Error:'+error.response ? error.response.data : error.message, _key)
+             cht.edit(`Error: ${error.response ? error.response.data : error.message}`, _key)
          })
     })
     
@@ -105,7 +110,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         }
         let i = 0
         await cht.edit(infos.messages.wait, _key, true)
-        let tph = await TermaiCdn(media)
+        let tph = await TermaiCdn(await func.minimizeImage(media))
         try{
             let ai = await fetch(api.xterm.url + "/api/img2img/filters?action="+ type +"&url="+tph+"&key="+api.xterm.key).then(a => a.json())
             console.log(ai)
@@ -129,29 +134,46 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 	
 	})
 	
+	let i2i = ['img2img', 'i2i','image2image']
+    let isI2i = i2i.includes(cht.cmd)
+    
 	ev.on({
-        cmd: ['txt2img', 'text2img','stablediffusion'],
-        listmenu: ['text2img'],
+        cmd: ['txt2img', 'text2img','stablediffusion',...i2i],
+        listmenu: ['text2img','img2img'],
         tag: 'stablediffusion',
-        energy: 35
+        args: (isI2i ? '*REPLY/KIRIM GAMBARNYA!!*\nFormat:\n\n':'') + infos.ai.txt2img,
+        energy: 100
     }, async () => {
     const _key = keys[sender]
+    const img = is.quoted.image || is.image || (is.sticker?.isAnimated||is.quoted.sticker?.isAnimated) == false
+    if(isI2i && !img) return cht.reply('*REPLY/KIRIM GAMBARNYA!!*\nFormat:\n\n'+infos.ai.txt2img)
+    let image = img
+          ? await ((is.image||is.sticker)
+            ? cht.download()
+            : (is.quoted?.image||is.quoted?.sticker)
+              ? cht.quoted.download()
+              : false)
+          : null
+    
     if (!cht.q) return cht.reply(infos.ai.txt2img)
     let [model, prompt, negative] = cht.q.split("|")
     if (!model.includes("[")) {
         return cht.reply(infos.ai.txt2img)
     }
       try {
-      
-        let ckpt = model.split("[")[0]
+        let modl = model.split("[")[0]
+        let ckpt = modl.split('{')[0]
+        let son = modl.split('{')?.[1]?.split('}')?.[0]||''
+        let rgx = /'/g
+        let json = JSON.parse(`{${son?.replace(rgx,'"')}}`)
         let loraPart = model.split("[")[1]?.split("]")?.[0]
-        let loras = loraPart ? JSON.parse("[" + loraPart + "]") : []
+        let loras = loraPart ? loraPart.split(',').map(a => ({ [a.split(':')[0]]:a.split(':')[1]||0.65 })): []
         let as = model.split(']')[1]
         let asp = ["1:1","9:16","16:9","3:4","4:3","2:3","3:2","21:9","9:21","5:4","4:5","18:9","9:18","16:10","10:16"]
         let aspect_ratio = as?.length > 1 ? as : '3:4'
         if(!aspect_ratio.includes(':')) return cht.reply(`*Invalid Aspect ratio!*\n\n${infos.ai.txt2img}`)
         if(!asp.includes(aspect_ratio)) return cht.reply(`*Invalid aspect ratio!*\n\nList aspect ratio:\n- ${asp.join('\n- ')}`)
-        if(!ckpt||!prompt) return cht.reply(`*Please input checkpoints & prompt!*\n\n${infos.ai.txt2img}`)
+        if(!ckpt||!img && !prompt) return cht.reply(`*Please input checkpoints & prompt!*\n\n${infos.ai.txt2img}`)
         await cht.edit(infos.messages.wait, _key, true)
 
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -169,14 +191,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         ])
 
         let lora = loras.map(c => ({
-            model: loraModels[c].model,
-            weight: 0.65
+            model: loraModels[Object.keys(c)[0]].model,
+            weight: Object.values(c)[0]
         }))
         
         let baseType = checkpoints[ckpt].baseType
         let notSame = []
         for(let i of loras){
-          if(loraModels[i].baseType !== baseType) notSame.push(i)
+          if(loraModels[Object.keys(i)[0]].baseType !== baseType) notSame.push(i)
         }
         
         if(notSame.length > 0){
@@ -195,21 +217,36 @@ Base Type: \`${baseType}\`
 ${notSameLora.join('\n')}`
           return cht.reply(txt)
         }
+        
+        if(is.sticker||is.quoted?.sticker){
+          let url = await tmpFiles(image)
+          let cv = await convert({
+              url,
+              from: "webp", to: "png"
+            })
+          image = await func.getBuffer(
+            cv
+          )
+        }
 
         let body = {
             checkpoint: checkpoints[ckpt].model,
-            prompt: prompt,
+            prompt: prompt||'',
             negativePrompt: negative || "",
             aspect_ratio,
-            lora: lora,
+            denoisingStrength: json.denoisingStrength||0.65,
+            styleFidelity: json.styleFidelity,
+            lora,
             sampling: "DPM++ 2M Karras",
-            samplingSteps: 20,
-            cfgScale: 7.5
+            samplingSteps: 30,
+            imageStrength: json.imageStrength||0.45,
+            cfgScale: json.cfgScale||8.5,
+            image: await func.minimizeImage(image)
         }
 
         console.log(body)
 
-        let aiResponse = await fetch(`${api.xterm.url}/api/text2img/stablediffusion/createTask?key=${api.xterm.key}`, {
+        let aiResponse = await fetch(`${api.xterm.url}/api/${img ? 'img':'text'}2img/stablediffusion/createTask?key=${api.xterm.key}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -246,7 +283,32 @@ ${notSameLora.join('\n')}`
             } else if (s.taskStatus === 1) {
                 await cht.edit(`${Data.spinner[i++]} Processing.... ${s.progress}%`, _key, true)
             } else if (s.taskStatus === 2) {
-                return Exp.sendMessage(id, { image: { url: s.result.url }, ai: true }, { quoted: cht })
+                const loraText = body.lora && body.lora.length
+                  ? body.lora.map((l, i) => `  ${i + 1}. ${l.model} (Weight: ${l.weight})`).join('\n')
+                  : '  None';
+    
+                return Exp.sendMessage(id, {
+                    image: { 
+                      url: s.result.url 
+                    }, 
+                    ...(isI2i ? { 
+                      caption: `
+Image2image Generation Detail:
+${infos.others.readMore}
+
+- Prompt: *${body.prompt || 'None'}*
+- Negative Prompt: *${s.result.info.split('Negative prompt: ')[1]?.split('\n')[0]}*
+- Checkpoint: ${body.checkpoint}
+- LoRA(s):
+${loraText}
+- Sampling Method: ${body.sampling}
+- Sampling Steps: ${body.samplingSteps}
+- CFG Scale: ${body.cfgScale}`.trim()
+                      }:{}),
+                    ai: true 
+                  }, { 
+                    quoted: cht
+                })
             } else if (s.taskStatus === 3) {
                 return cht.reply(infos.ai.failTryImage)
             }
@@ -314,7 +376,7 @@ ${notSameLora.join('\n')}`
         }
     }, async({ media }) => {
         const _key = keys[sender]
-        const response = await axios.post(`${api.xterm.url}/api/img2video/luma?key=${api.xterm.key}${cht?.q ? ("&prompt=" + cht.q) : ""}`, media, {
+        const response = await axios.post(`${api.xterm.url}/api/img2video/luma?key=${api.xterm.key}${cht?.q ? ("&prompt=" + cht.q) : ""}`, await func.minimizeImage(media), {
                 headers: {
                     'Content-Type': 'application/octet-stream'
                 },
@@ -570,7 +632,7 @@ ${notSameLora.join('\n')}`
            type: ["image"]
         }
     }, async({ media }) => {
-        let res = await GeminiImage(media, cht.q)
+        let res = await GeminiImage(await func.minimizeImage(media), cht.q)
         cht.reply(res, { ai: true })
     })
 
@@ -604,52 +666,9 @@ ${notSameLora.join('\n')}`
     }, async({ media }) => {
         try {
           const _key = keys[sender]
-          let url = await tmpFiles(media)
+          let url = await tmpFiles(await func.minimizeImage(media))
           await cht.edit(infos.messages.wait, _key)
           Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/to-zombie?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
-        } catch(e) {
-          await cht.reply("Failed!")
-          throw new Error(e)
-        }
-    })
-	ev.on({ 
-        cmd: [
-          'japan_anime', 'pixel_art',    'Watercolor',
-          'cartoon',     'cartoon_2',    'cartoon_3',
-          'epic_manga',  'oil_painting', 'monet',
-          'sketch',      '3d_cartoon',   'parchment',
-          'christmas',   'christmas_2',  'christmas_3',
-          'christmas_4', 'ps2',          'clay',
-          'lego',        'toy',          'barbie',
-          'crochet',     'glowing',      'futuristic',
-          'star',        'underwater',   'beach',
-          'cyberpunk',   'monster',      'ghost',
-          'voorhees',    'clown',        'krueger'
-        ], 
-        listmenu: [
-          'japan_anime', 'pixel_art',    'Watercolor',
-          'cartoon',     'cartoon_2',    'cartoon_3',
-          'epic_manga',  'oil_painting', 'monet',
-          'sketch',      '3d_cartoon',   'parchment',
-          'christmas',   'christmas_2',  'christmas_3',
-          'christmas_4', 'ps2',          'clay',
-          'lego',        'toy',          'barbie',
-          'crochet',     'glowing',      'futuristic',
-          'star',        'underwater',   'beach',
-          'cyberpunk',   'monster',      'ghost',
-          'voorhees',    'clown',        'krueger'
-        ],
-        tag: "art",
-        energy: 25,
-        media: { 
-           type: ["image"]
-        }
-    }, async({ media }) => {
-        try {
-          const _key = keys[sender]
-          let url = await tmpFiles(media)
-          await cht.edit(infos.messages.wait, _key)
-          Exp.sendMessage(cht.id, { image: { url: `${api.xterm.url}/api/img2img/${cht.cmd}-filters?url=${url}&key=${api.xterm.key}` }}, { quoted: cht })
         } catch(e) {
           await cht.reply("Failed!")
           throw new Error(e)
@@ -959,4 +978,83 @@ ${notSameLora.join('\n')}`
 
         async function save(_db) { return func.archiveMemories.setItem(usr, key, _db) }
     })
+    
+    ev.on({ 
+        cmd: ['imageedit','edit'], 
+        listmenu: ['imageedit'],
+        tag: "ai",
+        energy: 30,
+        args: 'Please input prompt (English recommended)!',
+        media: { 
+           type: ["image"]
+        }
+    }, async({ media }) => {
+      try {
+        if(is.sticker||is.quoted?.sticker){
+          let url = await tmpFiles(media)
+          let cv = await convert({
+              url,
+              from: "webp", to: "png"
+            })
+          media = await func.getBuffer(
+            cv
+          )
+        }
+        Exp.sendMessage(id, { image: await imageEdit(await func.minimizeImage(media), cht.q), ai:true }, { quoted: cht })
+      } catch (e) {
+        cht.reply('Failed!: '+ e.message)
+      }
+    })
+    
+    let aifilters = {
+        ghibli: '1625[14187:4]|Studio Ghibli style, animated film background, soft brush strokes, painterly environment, whimsical magic, peaceful atmosphere, fantasy anime style',
+        naruto: '1552[11850:0.7]|Naruto uzumaki, Anime Naruto, wearing a konoha headband',
+        statue: '1552[469:0.9]|stone statue',
+        disney3d: '1122[14072:0.85]|cartoon, disney cartoon, 3d, disney 3d cartoon',
+        disney3d_ip: '1009[]|Disney 3d ip, disney pixar 3d ip character',
+        jadipatung: '1552[469:0.9]|stone statue',
+        disneypixar: '8[]|disney pixar, disney cartoon Pixar',
+        disney: '1492[5617:0.8]',
+        luffy: '1552[1662:0.8]|luffy, luffy one piece, wearing a straw hat ',
+        cyberpunk: '1548[]|cyberpunk',
+        wangdong: '1552[13077:0.9]',
+        cartoon: '916[]'
+    }
+    
+    ev.on({ 
+        cmd: Object.keys(aifilters), 
+        listmenu: Object.keys(aifilters), 
+        tag: "art"
+    }, async() => {
+      
+      cht.q = aifilters[cht.cmd]
+      cht.cmd = 'img2img'
+      ev.emit(cht.cmd)
+      
+    })
+    
+    let cmds = [
+      'hitamkan', 'irengkan', 'irengin', 
+      'putihkan', 'putihin',
+      'jadibiru'
+    ]
+    
+    let edits = Object.fromEntries(
+        cmds.map(cmd => [
+        cmd,
+        cmd.includes('putih') ? 'change skin color to white'
+        : cmd.includes('biru') ? 'change skin color to blue'
+        : 'change skin color to black'
+      ])
+    )
+
+    ev.on({
+        cmd: cmds,
+        listmenu: ['irengkan','putihkan','jadibiru'],
+        tag: 'ai'
+    }, ()=> {
+      cht.q = edits[cht.cmd]
+      ev.emit('edit')
+    })
 }
+

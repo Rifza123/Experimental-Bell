@@ -582,9 +582,28 @@ export class func {
       })
     })
   }
+  
+  formatDateTimeParts(date, timeZone='Asia/Jakarta', code='id-ID'){
+    const formatter = new Intl.DateTimeFormat(code, {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+
+    const parts = formatter.formatToParts(date)
+    return { 
+      h: parts.find(p => p.type === 'hour').value,
+      min: parts.find(p => p.type === 'minute').value,
+      d: parseInt(parts.find(p => p.type === 'day').value, 10),
+      m: parts.find(p => p.type === 'month').value
+    }    
+   }
  
-  clearSessionConfess = async(_,__) => {
-    let _default = { sent:[], inbox:[], block: [], sess: {} }
+   clearSessionConfess = async(_,__) => {
+     let _default = { sent:[], inbox:[], block: [], sess: {} }
     let a = await ArchiveMemories.getItem(_, "confess") || _default
     let b = await ArchiveMemories.getItem(__, "confess") || _default
     a.sess = b.sess = {}
@@ -601,4 +620,30 @@ export class func {
   }
   
   getDirectoriesRecursive = getDirectoriesRecursive
+  
+  async minimizeImage(input,size=768) {
+      let image = await Jimp.read(input);
+      let quality = 80;
+      let scale = 1.0;
+
+      image = image.clone().quality(quality)
+     
+      let output = await image.getBufferAsync(Jimp.MIME_JPEG);
+    
+      while (output.length > 100 * size && quality > 10) {
+        quality -= 5;
+        image.quality(quality);
+        output = await image.getBufferAsync(Jimp.MIME_JPEG);
+      }
+
+      while (output.length > 100 * size && scale > 0.1) {
+        scale -= 0.1;
+        const resized = image.clone().resize(image.bitmap.width * scale, image.bitmap.height * scale);
+        resized.quality(quality);
+        output = await resized.getBufferAsync(Jimp.MIME_JPEG);
+      }
+
+      return output;
+  }
+
 }
