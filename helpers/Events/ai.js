@@ -241,7 +241,7 @@ ${notSameLora.join('\n')}`
             samplingSteps: 30,
             imageStrength: json.imageStrength||0.45,
             cfgScale: json.cfgScale||8.5,
-            image: await func.minimizeImage(image)
+            image: image ? await func.minimizeImage(image) : null
         }
 
         console.log(body)
