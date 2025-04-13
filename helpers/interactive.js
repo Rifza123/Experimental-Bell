@@ -753,7 +753,7 @@ async function In({ cht,Exp,store,is,ev }) {
                      stanzaId: cht.key.id,
                      participant: cht.key.participant||etc.quoted?.key.remoteJid,
                      quotedMessage: cht,
-                     mentionedJid: message[type].contextInfo.mentionedJid
+                     mentionedJid: message[type]?.contextInfo?.mentionedJid
                   }
                   Exp.relayMessage(cht.id, message, {})
 			    } break

@@ -23,8 +23,8 @@ async function client({ Exp, store, cht, is }) {
 
         /*!-======[ Block Chat ]======-!*/
         if (!cfg.public && !is.owner && !is.me && !is.offline) return
-        if (cfg.public === "onlygc" && !is.group) return
-        if (cfg.public === "onlypc" && is.group) return
+        if (cfg.public === "onlygc" && !is.group  && !is.owner) return
+        if (cfg.public === "onlypc" && is.group && !is.owner) return
 
         
         let except = is.antiTagall || is.antibot
