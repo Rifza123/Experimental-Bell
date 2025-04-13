@@ -113,7 +113,7 @@ async function In({ cht,Exp,store,is,ev }) {
 		let isAntiTagOwner = cfg.antitagowner && !is.owner && cht?.msg?.includes('@') && cht.mention.some(m => owner.some(o => m.includes(o)))		
 		let Response = cht.msg ? Object.keys(Data.response).find(a => a == cht.msg.toLowerCase().replace(/ /g,'')) : null
 		let isResponse = Response in Data.response
-		console.log({ Response, isResponse })
+
 		switch (!0) {
 		    case isTagAfk: 
 		        let maxTag = 10
@@ -581,7 +581,6 @@ async function In({ cht,Exp,store,is,ev }) {
 					let config = _ai?.data || {}
 					await func.addAiResponse()
 					let noreply = false
-					console.log(config)
 					switch (config?.cmd) {
 					    case "sticker":
 					        await cht.reply(config?.msg || "ok")
@@ -641,7 +640,6 @@ async function In({ cht,Exp,store,is,ev }) {
 							cfg.models = cfg.models || { checkpoint: 1552, loras: [2067] }
 							let { checkpoint, loras } = cfg.models
 							cht.q = `${checkpoint}${JSON.stringify(loras)}|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`
-							console.log(cht.q)
 							await cht.reply(config?.msg || "ok")
 							return ev.emit("txt2img")
 						case 'txt2img':
