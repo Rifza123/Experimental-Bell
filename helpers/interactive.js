@@ -735,7 +735,7 @@ async function In({ cht,Exp,store,is,ev }) {
 			      let type = getContentType(message)
 			      message[type].contextInfo = {
                      stanzaId: cht.key.id,
-                     participant: cht.key.participant||etc.quoted?.key.remoteJid,
+                     participant: cht.key.participant||cht.quoted?.key.remoteJid,
                      quotedMessage: cht,
                   }
                   Exp.relayMessage(cht.id, message, {})
@@ -749,7 +749,7 @@ async function In({ cht,Exp,store,is,ev }) {
 			      let type = getContentType(message)
 			      message[type].contextInfo = {
                      stanzaId: cht.key.id,
-                     participant: cht.key.participant||etc.quoted?.key.remoteJid,
+                     participant: cht.key.participant||cht.quoted?.key.remoteJid,
                      quotedMessage: cht,
                      mentionedJid: message[type]?.contextInfo?.mentionedJid
                   }

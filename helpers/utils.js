@@ -32,7 +32,7 @@ async function utils({ Exp, cht, is, store }) {
                { type: 'imageMessage', msg: cht?.message?.[type]?.caption },
                { type: 'videoMessage', msg: cht?.message?.[type]?.caption },
                { type: 'pollCreationMessageV3', msg: cht?.message?.[type]?.name },
-               { type: 'ephemeralMessage', msg: cht?.message?.[type]?.message?.extendedTextMessage.text || cht?.message?.[type]?.message?.imageMessage?.caption },
+               { type: 'ephemeralMessage', msg: cht?.message?.[type]?.message?.extendedTextMessage?.text || cht?.message?.[type]?.message?.imageMessage?.caption },
                { type: 'eventMessage', msg: cht?.message?.[type]?.description },
                { type: "interactiveResponseMessage", msg: cht?.message?.[type]?.nativeFlowResponseMessage?.paramsJson 
                     ? JSON.parse(cht.message?.[type].nativeFlowResponseMessage?.paramsJson)?.id

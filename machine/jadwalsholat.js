@@ -31,7 +31,7 @@ export class JadwalSholat {
    constructor(groups={}, proxy=true){
      if(cfg.proxy_url) delete cfg.proxy_url 
      this.groups = groups
-     cfg.proxies = cfg.proxies|| [
+     cfg.proxies ??= [
        'https://thingproxy.freeboard.io/fetch/', 
        'https://api.allorigins.win/raw?url=',
        'https://api.cors.lol/?url=',
@@ -84,7 +84,6 @@ export class JadwalSholat {
   }
   
   async now(id){     
-    this.groups ??= {}
     Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
     if(!id||!(id in this.groups)) return { status: false, msg: "id tidak ada dalam data, silahkan lakukan init terlebih dahulu" }
     let { timeZone, v, ramadhan } = this.groups[id]
@@ -118,7 +117,7 @@ export class JadwalSholat {
     }
     let except = ['hari','tanggal','terbit','notice','imsak']
     if(ramadhan) except = except.filter(a => a !== 'imsak')
-    let ktoday = Object.keys(this.groups[id].today).filter(a => !except.some(b => a.includes(b)) )
+    let ktoday = Object.keys(this.groups[id].today||{}).filter(a => !except.some(b => a.includes(b)) )
    
     let waktu = ktoday.find(a => {
       let [sh, sm] = this.groups[id].today[a].split(':').map(Number)
