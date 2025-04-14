@@ -122,7 +122,7 @@ export class JadwalSholat {
     let ktoday = Object.keys(this.groups[id]?.today||{}).filter(a => !except.some(b => a.includes(b)) )
    
     let waktu = ktoday.find(a => {
-      let [sh, sm] = this.groups[id]?.today?[a]?.split(':').map(Number)
+      let [sh, sm] = this.groups[id]?.today?.[a]?.split(':').map(Number)
       return sh == h && (parseInt(min)-sm) <= 10 && parseInt(min) >= sm
     })
 
