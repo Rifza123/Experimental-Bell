@@ -63,6 +63,8 @@ export class JadwalSholat {
               list.push(row)
             }
           })
+          
+          if(list.length < 1) continue
 
           list = list.map(row => {
             return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
@@ -117,14 +119,14 @@ export class JadwalSholat {
     }
     let except = ['hari','tanggal','terbit','notice','imsak']
     if(ramadhan) except = except.filter(a => a !== 'imsak')
-    let ktoday = Object.keys(this.groups[id].today||{}).filter(a => !except.some(b => a.includes(b)) )
+    let ktoday = Object.keys(this.groups[id]?.today||{}).filter(a => !except.some(b => a.includes(b)) )
    
     let waktu = ktoday.find(a => {
-      let [sh, sm] = this.groups[id].today[a].split(':').map(Number)
+      let [sh, sm] = this.groups[id]?.today?[a]?.split(':').map(Number)
       return sh == h && (parseInt(min)-sm) <= 10 && parseInt(min) >= sm
     })
 
-    let hasNotice = Boolean(this.groups[id].today['notice-'+waktu])
+    let hasNotice = Boolean(this.groups[id]?.today?.['notice-'+waktu])
     if(waktu) this.groups[id].today['notice-'+waktu] = true
     return { 
       status: true, 

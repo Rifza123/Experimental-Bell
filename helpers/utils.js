@@ -168,7 +168,7 @@ async function utils({ Exp, cht, is, store }) {
           antilink: groupDb?.antilink && (url.length > 0) && url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin  
         });
 
-        if(!cht.reply) cht.reply = async function (text, etc={},quoted={ quoted: true }) {
+        cht.reply = async function (text, etc={},quoted={ quoted: true }) {
           try {
             if(quoted?.quoted){
               quoted.quoted = cht?.reaction ? {
@@ -190,7 +190,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
         
-        if(!cht.replyWithTag) cht.replyWithTag = async function (text, tag) {
+        cht.replyWithTag = async function (text, tag) {
           try {
             const { key } = await Exp.sendMessage(cht.id, { text: Exp.func.tagReplacer(text, tag) }, { quoted: cht })
             keys[cht.sender] = key
@@ -200,7 +200,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
 
-        if(!cht.edit) cht.edit = async function (text, key, force) {
+        cht.edit = async function (text, key, force) {
           if(!("editmsg" in cfg)) cfg.editmsg = true
           let msg = { text:text||"..." }
           if(cfg.editmsg||force) msg.edit = key
@@ -211,7 +211,7 @@ async function utils({ Exp, cht, is, store }) {
           }
         }
         
-        if(!cht.warnGc) cht.warnGc = async({ id, type, warn, kick, max }) => {
+        cht.warnGc = async({ id, type, warn, kick, max }) => {
           let t = type||"antibot"
           let jid = id||cht.sender
           groupDb.warn = groupDb.warn || {}
