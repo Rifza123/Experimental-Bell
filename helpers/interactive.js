@@ -244,7 +244,7 @@ async function In({ cht,Exp,store,is,ev }) {
 				}
 				if (isImage) {
 					let download = is.image ? cht?.download : cht?.quoted?.download
-					isImage = await download()
+					isImage = await func.minimizeImage(await download())
 				}
 				
 				try {
@@ -262,7 +262,7 @@ async function In({ cht,Exp,store,is,ev }) {
 							botfullname,
 							botnickname
 						}),
-						image: await func.minimizeImage(isImage),
+						image: isImage,
 						commands: [{
 								"description": "Jika perlu atau kamu sedang ingin membalas dengan suara",
 								"output": {
@@ -308,10 +308,8 @@ async function In({ cht,Exp,store,is,ev }) {
 						    for (let line of sp) {
 						        if(!line) return
 						        let isFormat = isFormatMsg(line)
-						        console.log({ isFormat })
 				    		    if (!isFormat) {
 						            let parts = line.split(". ");
-						            console.log({ parts })
 						            for (let part of parts) {
 						                let typing = part.length * 50;
 						                await Exp.sendPresenceUpdate("composing", cht.id);
@@ -417,7 +415,7 @@ async function In({ cht,Exp,store,is,ev }) {
 				}
 				if (isImage) {
 					let download = is.image ? cht?.download : cht?.quoted?.download
-					isImage = await download()
+					isImage = await func.minimizeImage(await download())
 				}
 				chat = func.clearNumbers(chat)
 				try {
@@ -696,10 +694,8 @@ async function In({ cht,Exp,store,is,ev }) {
 						    for (let line of sp) {
 						        if(!line) return
 						        let isFormat = isFormatMsg(line)
-						        console.log({ isFormat })
 				    		    if (!isFormat) {
 						            let parts = line.split(". ");
-						            console.log({ parts })
 						            for (let part of parts) {
 						                let typing = part.length * 50;
 						                await Exp.sendPresenceUpdate("composing", cht.id);
@@ -735,7 +731,7 @@ async function In({ cht,Exp,store,is,ev }) {
 			      let type = getContentType(message)
 			      message[type].contextInfo = {
                      stanzaId: cht.key.id,
-                     participant: cht.key.participant||cht.quoted?.key.remoteJid,
+                     participant: cht.key.participant||etc.quoted?.key.remoteJid,
                      quotedMessage: cht,
                   }
                   Exp.relayMessage(cht.id, message, {})
@@ -749,7 +745,7 @@ async function In({ cht,Exp,store,is,ev }) {
 			      let type = getContentType(message)
 			      message[type].contextInfo = {
                      stanzaId: cht.key.id,
-                     participant: cht.key.participant||cht.quoted?.key.remoteJid,
+                     participant: cht.key.participant||etc.quoted?.key.remoteJid,
                      quotedMessage: cht,
                      mentionedJid: message[type]?.contextInfo?.mentionedJid
                   }

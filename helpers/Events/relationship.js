@@ -771,4 +771,76 @@ _Code ${code} akan dihapus dalam kurun waktu ${time}_
 - Last Online: ${func.dateFormatter(cht.memories.lastChat, "Asia/Jakarta")}`, { mentions: [Sender.split("@")[0]+from.sender] })
     })
     
+    infos.about.tfenergy ??=  `
+    📌 *[ Panduan melakukan transfer Energy ]*
+
+*💡 Cara Penggunaan:*
+
+🔸 *Cara #1 - Dengan Reply Pesan Target*  
+   ➡️ Balas pesan pengguna yang akan diubah energinya, lalu kirim:
+   - \`.transfer [jumlah energi]\`
+   
+   _Contoh_: \`.transfer 10\`
+
+🔸 *Cara #2 - Dengan Tag Target*  
+   ➡️ Gunakan \`@username\` diikuti \`|\` dan jumlah energi.
+   - \`.transfer @username|[jumlah energi]\`
+   
+   _Contoh_: \`.transfer @rifza|10\`
+
+🔸 *Cara #3 - Dengan Nomor Target*  
+   ➡️ Sertakan nomor lengkap pengguna diikuti \`|\` dan jumlah energi.
+   - \`.transfer +62xxxxxxx|[jumlah energi]\`
+   
+   _Contoh_: \`.transfer +62831xxxxxxx|10\`
+
+⚠️ *[Catatan]*
+- ℹ️Mentransfer energy akan mengurangi energy anda, dan menambahkannya ke nomor target
+- ⚡Anda harus memiliki energy yang cukup untuk melakukan transfer 
+- 🔄 Gantilah \`[jumlah energi]\` dengan angka sesuai kebutuhan.
+- ✅ Pastikan target (username atau nomor) valid untuk menghindari kesalahan.
+    `
+    ev.on({ 
+        cmd: ['tf','tfenergy','transfer','transferenergy'],
+        listmenu: ['tfenergy'],
+        args: infos.about.tfenergy,
+        tag: 'relationship',
+        isMention: infos.about.tfenergy,
+    }, async() => {
+        let num = cht.q?.split("|")?.[1] || cht.q
+        let nu = Math.abs(num)
+        if(isNaN(num)) return cht.replyWithTag(infos.messages.onlyNumber, { value: "Energy" })
+        if(cht.memories.energy < parseInt(nu)) return cht.reply(`Energy kamu tidak memcukupi untuk melakukan transfer!
+
+- ⚡Energy: ${cht.memories.energy}
+- Membutuhkan: ⚡${parseInt(nu)}
+
+⚠️ *_Perlu ${parseInt(nu) - cht.memories.energy} ⚡Energy lagi untuk melakukan transfer!_*`)
+        let target = cht.mention[0].split("@")[0]
+        if(!(target in Data.users)) return cht.reply(infos.owner.userNotfound)
+        let user = await func.archiveMemories.get(target)
+        user.energy = func.archiveMemories.addEnergy(target, nu).energy
+        let reduce = func.archiveMemories.reduceEnergy(sender, nu).energy
+        
+        await func.archiveMemories.setItem(target, "energy", user.energy)
+        await func.archiveMemories.setItem(sender, "energy", reduce)
+        if(user.energy >= user.maxCharge){
+            user.charging = false
+        }
+        const { default: ms } = await "ms".import()
+        let max = user.maxCharge
+        let energy = user.energy
+        let _speed = user.chargingSpeed
+        let rate = user.chargeRate
+        let speed = ms(_speed)
+        
+        let txt = `*Berhasil mentransfer ${num} ⚡Energy ke @${target}*`
+            txt += "\n\n*[🔋] Energy*"
+            txt += "\n⚡Energy: " + user.energy
+            txt += `\n\n- Status: ${user.charging ? "🟢Charging" : " ⚫Discharging"}`
+            txt += "\n- Charging Speed: ⚡" + rate + " Energy/" + speed
+            txt += "\n- Max Charge: " + max
+        Exp.sendMessage(cht.id, { text: txt, mentions: cht.mention }, { quoted: cht })
+	})
+    
 }

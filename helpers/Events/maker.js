@@ -169,7 +169,6 @@ export default async function on({
 		if (!args) return cht.reply(`Example: ${cht.prefix+cht.cmd} pink hello\n\nColor list:\n- ${Object.keys(colors).join("\n- ")}`)
 
 		let [color, ...message] = args.split(' ');
-		message = message.join(' ') || args;
 
 		let avatar;
 		try {
@@ -195,7 +194,7 @@ export default async function on({
 						url: avatar
 					}
 				},
-				text: message,
+				text: colors[color] ? message.join(' ') : args,
 				'm.replyMessage': {}
 			}]
 		};

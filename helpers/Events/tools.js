@@ -181,7 +181,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
              + `\nID Pesan: ${res.serverMessageId}`,
          keys[sender])
        } catch(e) {
-           console.log(cht.quoted)
            cht.reply("Error get Channel id" + e.message)
        }
 	})
@@ -209,7 +208,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
          }, async({ cht }) => {
              ${evaled.replace("cht.sender","cht.id")}
          })`)
-         console.log(random)
          await sleep(3000)
         // await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
          await sleep(3000)

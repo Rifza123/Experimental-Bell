@@ -34,13 +34,12 @@ export class JadwalSholat {
      cfg.proxies ??= [
        'https://thingproxy.freeboard.io/fetch/', 
        'https://api.allorigins.win/raw?url=',
-       'https://api.cors.lol/?url=',
-       'https://proxy.xtermai.xyz/api/proxy?key=Bell49&url=',
+       'https://api.cors.lol/?url='
      ]
      this.url = 'https://www.kompas.com/jadwal-sholat/'
    }
 
-   async init(id, v='kab-bungo',opts={}){
+   async init(id, v='kab-bungo',opts={ ramadhan: false }){
     try {
       Data.daerah = Data.daerah || await fetch(git.daerah).then(a => a.json())
       if(!Object.values(Data.daerah).flat().includes(v)) return { status: false, msg: `Daerah "${v}" tidak ada dalam daftar!`, list: Object.values(Data.daerah).flat() }
@@ -57,18 +56,38 @@ export class JadwalSholat {
           const $ = cheerio.load(html)
 
           let list = []
-          $('#jadwal-ramadhan table tbody tr').each((index, element) => {
-            const row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
+          $(`#jadwal-${opts.ramadhan ? 'ramadhan':'sholat'} table tbody tr`).each((index, element) => {
+            let row = $(element).find('td').map((_, td) => $(td).text().trim()).get()    
             if (row.length > 0) {
+              if(!opts.ramadhan) {
+                const dateMatch = row[0].match(/\d{2}\/\d{2}/);
+                const dateOnly = dateMatch ? dateMatch[0].split('/')[0] : '';
+                row = [
+                  dateOnly,
+                  dateMatch ? dateMatch[0] : '',
+                  ...row.slice(1)
+                ]
+              }
               list.push(row)
             }
           })
-          
-          if(list.length < 1) continue
+    
 
           list = list.map(row => {
-            return Object.fromEntries(["hari", "tanggal", "imsak", "subuh", "terbit", "dzuhur", "ashar", "magrib", "isya"].map((key, index) => [key, row[index]]))
+            return Object.fromEntries(
+              [
+                "hari",
+                "tanggal",
+                ...(opts.ramadhan ? ['imsak']:[]), 
+                "subuh", 
+                "terbit", 
+                "dzuhur", 
+                "ashar", 
+                "magrib", 
+                "isya"
+              ].map((key, index) => [key, row[index]]))
           })
+
           let timeZone = Data.daerah.wib.includes(v) ? 'Asia/Jakarta' : Data.daerah.wit.includes(v) ? 'Asia/Makassar' : 'Asia/Jayapura'
           if(id=='no') return { status: true, data: list, timeZone }
           if(!(id in this.groups)) this.groups[id] = { v, jadwal:list, timeZone,...opts }

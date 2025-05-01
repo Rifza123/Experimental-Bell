@@ -182,7 +182,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
       let dm = `${d}/${m}`
       let a = data.find(a => a.tanggal == dm)
-      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map(a => ` \n 🗓️ \`${a.tanggal}\`\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`
+      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak||'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map(a => ` \n 🗓️ \`${a.tanggal}\`\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`
       cht.reply(text)
 	})
 	
@@ -194,7 +194,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isAdmin: true
     }, async() => {
         let [input,v,...etc] = cht.q?.trim().toLowerCase().split(' ')
-        let actions = ["welcome","antilink","antitagall","mute","antibot","playgame","jadwalsholat"]
+        let actions = ["welcome","antilink","antitagall","mute","antibot","playgame","jadwalsholat","onlyadmin"]
         let text = `Opsi yang tersedia:\n\n- ${actions.join("\n- ")}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`
         if(!actions.includes(input)){
           func.archiveMemories.setItem(sender, "questionCmd", { 
@@ -487,13 +487,13 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
     })
   
     ev.on({
-      cmd: ['topenergy'],
-      listmenu: ['topenergy'],
+      cmd: ['topenergy','topglobalenergy'],
+      listmenu: ['topenergy','topglobalenergy'],
       tag: 'group'
     }, async ({ args }) => {
       let topUsers = []
       let topEnergy = await Promise.all(
-        Exp.groupMembers.map(a => 
+        [...(is.group && cht.cmd !== "topglobalenergy" ? Exp.groupMembers:Object.keys(Data.users).map(a=> ({ id: String(a) })))].map(a => 
           memories.get(a.id)
               .then(v => ({ ...v, id: a.id, energy: v.energy || 0 }))
               .catch(() => ({ id: a.id, energy: 0 }))
@@ -501,19 +501,20 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       )
       .then(members => members
         .sort((a, b) => b.energy - a.energy)
-        .slice(0, args ? (parseInt(args)*1) : 10)
+        .slice(0, (args&&!isNaN(args)) ? (parseInt(args)*1) : 10)
         .map((a, i) => {
           topUsers.push(a.id);
-          let username = a.id.includes('@') ? a.id.split('@')[0] : a.id;        
+          let aid = a.id.includes('@') ? a.id.split('@')[0] : a.id;    
+          let name = func.getName(aid)    
           let emoji = i === 0 ? '(🏆)' 
                    : i === 1 ? '(🥈)' 
                    : i === 2 ? '(🥉)'
                    : ''
-          return `${i + 1}. @${username} ${a.energy}⚡ ${emoji}`;
+          return `${i + 1}. ${name.extractMentions().length == 0 ? name:(name.slice(0, 5) + '****' + name.slice(-4))} \`${cht.cmd == "topglobalenergy" ? (aid.slice(0, 5) + '****' + aid.slice(-4)) : aid}\` (${a.energy}⚡) ${emoji}`;
         }).join('\n')
       )
-
-    cht.reply(`*TOP 10 ENERGY TERBANYAK DI GROUP \`${Exp.groupMetdata.subject}\`*\n\n${topEnergy}`, { mentions: topUsers });
+      let di = cht.cmd !== "topglobalenergy" ? `DI GROUP \`${Exp.groupMetdata.subject}\`` : `DARI TOTAL \`${Object.keys(Data.users).length} USERS\``
+    cht.reply(`*TOP 10 ENERGY TERBANYAK ${di}*\n\n${topEnergy}`)
   })
   
   ev.on({ 

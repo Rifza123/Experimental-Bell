@@ -60,7 +60,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
                     renderLargerThumbnail: true,
                     showAdAttribution: true,
-                    mediaType: 1,
+                    mediaType: "IMAGE",
+                    sourceType: "ad",
+                    sourceId: "1",
+                    sourceUrl: "https://instagram.com/rifza.p.p"
                 },
                 forwardingScore: 19,
                 isForwarded: true,

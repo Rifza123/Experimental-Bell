@@ -114,3 +114,33 @@ infos.antilink = `📌 *Panduan Penggunaan Fitur Antilink Bot*
    - *Gunakan perintah ini untuk menghapus URL dari daftar blokir.*
    - Contoh: \`.antilink del https://wa.me\`
 `
+
+infos.tfenergy =  `
+    📌 *[ Panduan melakukan transfer Energy ]*
+
+*💡 Cara Penggunaan:*
+
+🔸 *Cara #1 - Dengan Reply Pesan Target*  
+   ➡️ Balas pesan pengguna yang akan diubah energinya, lalu kirim:
+   - \`.transfer [jumlah energi]\`
+   
+   _Contoh_: \`.transfer 10\`
+
+🔸 *Cara #2 - Dengan Tag Target*  
+   ➡️ Gunakan \`@username\` diikuti \`|\` dan jumlah energi.
+   - \`.transfer @username|[jumlah energi]\`
+   
+   _Contoh_: \`.transfer @rifza|10\`
+
+🔸 *Cara #3 - Dengan Nomor Target*  
+   ➡️ Sertakan nomor lengkap pengguna diikuti \`|\` dan jumlah energi.
+   - \`.transfer +62xxxxxxx|[jumlah energi]\`
+   
+   _Contoh_: \`.transfer +62831xxxxxxx|10\`
+
+⚠️ *[Catatan]*
+- ℹ️Mentransfer energy akan mengurangi energy anda, dan menambahkannya ke nomor target
+- ⚡Anda harus memiliki energy yang cukup untuk melakukan transfer 
+- 🔄 Gantilah \`[jumlah energi]\` dengan angka sesuai kebutuhan.
+- ✅ Pastikan target (username atau nomor) valid untuk menghindari kesalahan.
+    `

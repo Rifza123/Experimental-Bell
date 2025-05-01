@@ -39,7 +39,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
    let infos = Data.infos
    const { func } = Exp
-   const { getDirectoriesRecursive } = func
+   const { getDirectoriesRecursive, archiveMemories:memories } = func
    const { id, sender } = cht
     const options = {
         public: 'mode public',
@@ -79,7 +79,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: "owner",
         isOwner: true,
         args: infos.owner.set
-    }, async ({ args }) => {
+    }, async ({ args, urls }) => {
         let fquotedKeys = Object.keys(Data.fquoted)
         let [t1, t2, t3, t4] = args.split(" ")
         if(!options[t1] && t1.includes("\n")){
@@ -87,7 +87,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
         let isOn = ["on","true"].includes(t2)
         let isOff = ["off","false"].includes(t2)
-        let isOnly = ["onlypc","onlygc"].includes(t2)
+        let isOnly = ["onlypc","onlygc","onlyjoingc"].includes(t2)
             
         let mode = options[t1] || (t1 == "fquoted" 
            ? `Success ${fquotedKeys.includes(t2) ? "change" : "add"} fake quoted ${t2}\n\nList fake quoted:\n\n- ${!fquotedKeys.includes(t2) ? [...fquotedKeys, t2].join("\n- ") : fquotedKeys.join("\n- ")}`
@@ -249,12 +249,69 @@ export default async function on({ cht, Exp, store, ev, is }) {
               let vv = t2.trim().toLowerCase()
               mode = `mode ${vv}`
               global.cfg[t1] = vv
+              let iAdL = `\n\n## *Jika anda ingin menambahkan linkgroup lain*
+- Ketik: \`.addlinkgc linknya\`
+
+## *Untuk menghapus linkgroup*
+- Ketik: \`.dellinkgc linknya\`
+
+## *Untuk melihat linkgroup*
+- Ketik: \`.listlinkgc\`
+`
+              if(vv == "onlyjoingc"){
+                if(!cfg.gcurl) {
+                  if(!t3){
+                    let { key } = await cht.reply(`Mode *Public* telah diubah menjadi *Only Join GC*. Dalam mode ini pengguna non-premium harus bergabung ke grup yang Anda tentukan sebelum dapat menggunakan bot.\n\n*Namun, karena Anda belum menambahkan link grup, mode ini belum dapat berfungsi.*\nUntuk mengaktifkannya, balas pesan ini dengan mengirimkan link grup Anda.\n\n_Kirimkan dalam waktu kurang dari 1 menit._`)
+                    let qcmds = memories.getItem(sender, "quotedQuestionCmd") ||{}
+                      qcmds[key.id] = {
+                        emit: `${cht.cmd} ${t1} ${t2}`,
+                        exp: Date.now() + 60000,
+                        accepts: []
+                      }
+                    memories.setItem(sender, "quotedQuestionCmd", qcmds)
+                  } else {
+                    
+                    let isFormatsUrl = urls.some(url => 
+                       url.toLowerCase().includes("https://chat.whatsapp.com")
+                    )
+                   if(!isFormatsUrl){
+                     func.archiveMemories.setItem(sender, "questionCmd", { 
+                      emit: `${cht.cmd} ${t1} ${t2}`,
+                      exp: Date.now() + 60000,
+                      accepts: []
+                     })
+                     let wt = '\n_Kirimkan ulang dalam waktu kurang dari 1 menit_'
+                      
+                     let { key } = await cht.reply(func.tagReplacer(infos.messages.isFormatsUrl, { formats:'- https://chat.whatsapp.com' }) + wt)
+                     let qcmds = memories.getItem(sender, "quotedQuestionCmd") ||{}
+                      qcmds[key.id] = {
+                        emit: `${cht.cmd} ${t1} ${t2}`,
+                        exp: Date.now() + 60000,
+                        accepts:[]
+                      }
+                     return memories.setItem(sender, "quotedQuestionCmd", qcmds)
+                    
+                   }
+                    cfg.gcurl ??= []
+                    cfg.gcurl = [...new Set([...cfg.gcurl, ...urls])]
+                    let list = cfg.gcurl.map(a => `- ${a}`).join("\n")
+                    
+                    return cht.reply(`Link grup berhasil ditambahkan!\n\`LIST INVITELINK\`\n${list}\n\nMode *Only Join GC* sekarang aktif. Pengguna non-premium harus bergabung ke salah satu grup diatas sebelum dapat menggunakan bot.\n_Terima kasih telah menambahkan link grup._${iAdL}`)
+                    
+                  }
+                } else {
+                  let list = cfg.gcurl.map(a => `- ${a}`).join("\n")
+                  return cht.reply(`${func.tagReplacer(infos.owner.isModeOnSuccess, { mode })}!\n\n\`LIST INVITELINK\`\n${list}\n\nMode *Only Join GC* sekarang aktif. Pengguna non-premium harus bergabung ke salah satu grup diatas sebelum dapat menggunakan bot${iAdL}`)
+                }
+              }
+                 
+               
             } else {
-              await cht.reply("on/off/onlygc/onlypc ?")
+              await cht.reply("on/off/onlygc/onlypc/onlyjoingc ?")
               return func.archiveMemories.setItem(sender, "questionCmd", { 
                 emit: `${cht.cmd} ${t1}`,
                 exp: Date.now() + 60000,
-                accepts: ["on","off","true","false","onlygc","onlypc"]
+                accepts: ["on","off","true","false","onlygc","onlypc","onlyjoingc"]
               })
             }
             return cht.replyWithTag(isOff ? infos.owner.isModeOffSuccess : infos.owner.isModeOnSuccess, { mode })
@@ -613,7 +670,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isOwner: true
     }, async() => {
         let user = await Exp.func.archiveMemories.get(cht.mention[0])
-        console.log(user)
         let Sender = cht.mention[0].split("@")[0];
         if(!cht.quoted && !cht.q.includes("|") && cht.cmd == "banned") return cht.reply(infos.owner.banned)
         if(!Sender) return cht.reply("Harap reply/tag/sertakan nomor yang ingin di unbanned!\n\n"+infos.owner.banned)
@@ -627,7 +683,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
           }
           let date = (user.banned && (user.banned > Date.now())) ? user.banned:Date.now() 
           let bantime = (date +_time)
-          console.log(bantime)
           let formatDur = func.formatDuration(_time|| 0)
           let ban = func.formatDuration(bantime - Date.now())
           await Exp.sendMessage(cht.mention[0], { text: func.tagReplacer(infos.owner.addBanned, { ...ban }) })
@@ -918,18 +973,33 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }, async ({ args })=> {
       let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message
       Data.response[args.toLowerCase()?.replace(/ /g,'')] = res
-      cht.reply(`Success set response!\n- Type: ${cht.quoted.type}\n\n_Pesan dengan teks "*${args}*" akan direspon dengan pesan tersebut!_`)
+      cht.reply(`Success set response!\n- Type: ${cht.quoted.type}\n\n_Pesan dengan teks "*${args}*" akan direspon dengan pesan tersebut!_\n\n> ℹ️ Untuk melihat list response, ketik: ${cht.prefix}listresponse\n> ℹ️ Untuk menghapus response, ketik: ${cht.prefix}delresponse <teks yang direspon>`)
     })
     
     ev.on({
       cmd: ['delrespon','delresponse'],
       listmenu: ['delrespon'],
-      isQuoted: `Reply pesan! dengan caption: ${cht.prefix+cht.cmd} <teks>`,
       isOwner: true,
       tag: "owner"
     }, async ({ args })=> {
       delete Data.response[args.toLowerCase()?.replace(/ /g,'')]
       cht.reply(`Success delete response "*${args}*"`)
+    })
+    
+    ev.on({
+      cmd: ['listrespon','listresponse'],
+      listmenu: ['listresponse'],
+      isOwner: true,
+      tag: "owner"
+    }, ()=> {
+      let res = Object.keys(Data.response||{});
+      let t = 0;
+      let tx = '*LIST RESPONSE*\n'
+      for(let i of res){
+        t++
+        tx += `\n${t}. \`${i}\`\n- type: \`${Object.keys(Data.response[i])[0]}\``  
+      };
+      cht.reply(`${tx}\n\n> ℹ️ Untuk menghapus response, ketik: ${cht.prefix}delresponse <teks yang direspon>`)
     })
     
     ev.on({ 
@@ -964,6 +1034,156 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await cht.reply(`Success delete cmd!\n- Type: ${type}\n- Command: ${cmd}`)
         delete Data.setCmd[(quoted ? cht.quoted:cht)[type].fileSha256.toString().to('utf16le')]
                 
+    })
+    
+    ev.on({
+        cmd: ['addlinkgc','dellinkgc'], 
+        listmenu: ['addlinkgc','dellinkgc'],
+        tag: "owner",
+        args: `Sertakan linkgroupnya!`,
+        urls: {
+          formats: ["https://chat.whatsapp.com"],
+          msg: true
+        },
+        isOwner: true
+    }, async({ urls }) => {
+        cfg.gcurl ??= []
+        let url = urls.map(a => `- ${a}`).join("\n")
+        if(cht.cmd == "addlinkgc"){
+          cfg.gcurl = [...new Set([...cfg.gcurl, ...urls])]
+        } else {
+          cfg.gcurl = cfg.gcurl.filter(a => !cfg.gcurl.includes(a))
+        }
+        cht.reply(`Berhasil men${cht.cmd == "addlinkgc" ? 'ambahkan':'ghapus'} url✅\n\n${url}`)
+    })
+    
+    ev.on({
+        cmd: ['listlinkgc'],
+        listmenu: ['listlinkgc'],
+        tag: "owner",
+        isOwner: true
+    }, () => {
+        cfg.gcurl ??= []
+        let url = cfg.gcurl.length > 0 ? cfg.gcurl.map(a => `- ${a}`).join("\n") : `_❗Tidak ada linkgroup yang tersedia!_\n\n## *Jika anda ingin menambahkan linkgroup*\n- Ketik: \`.addlinkgc linknya\``
+        cht.reply(`*LIST LINK GROUP*\n\n${url}`)
+    })
+    
+    ev.on({
+        cmd: ['masuk','join'],
+        listmenu: ['masuk','join'],
+        isOwner: true, 
+        args: 'Masukkan linknya!',
+        urls: {
+          formats: ["https://chat.whatsapp.com"],
+          msg: "Itu bukan link group!"
+        }
+    }, async ()=> {
+      try {
+        await Exp.groupAcceptInvite(cht.q.split('/').slice(-1)[0])
+        cht.reply('success✅')
+      } catch(e){
+        console.error(e)
+        cht.reply('TypeErr: '+e.message)
+      }
+    })
+    
+    ev.on({
+        cmd: ['leave','keluar'],
+        listmenu: ['leave'],
+        isOwner: true
+    }, async ({ args, urls })=> {
+      try {
+        let y = ['y','ya','iy','iya','hooh',"ho'oh",'iye','yo','iyo','yup','iyup','nggeh','yakin']
+        let cyk = args.split('--')?.[1]?.trim()
+        let q = cyk ? args.split('-- '+cyk)[0] : (urls?.[0] || args?.split(' ')[0])
+        let gid = q.split('@')?.[0]?.trim()
+        let idgc = q && !isNaN(gid) ? gid : false
+        let yakin = y.includes(cyk?.toLowerCase())
+        const host = q?.split('://')?.[1]?.split('/')?.[0]
+        let isLinkGc = 'chat.whatsapp.com'.includes(host)
+        let inviteCodeMatch = q.match(/chat\.whatsapp\.com\/([\w-]+)/);
+        let ki = "Kirimkan link"
+        let dmpi = "dengan mereply pesan ini"
+        let inviteCode = inviteCodeMatch?.[1];
+        
+        
+        const question = (emit) => func.archiveMemories.setItem(sender, "questionCmd", { 
+           emit,
+           exp: Date.now() + 20000,
+           accepts: y
+        })
+      
+        if(!is.group){
+          if(!(idgc && !isNaN(idgc) || isLinkGc)) {
+            question(`${cht.cmd}`)
+            return cht.reply(`${ki}/id groupnya ${dmpi}!`)
+          }
+        }
+        if(idgc && isNaN(idgc)){
+          question(`${cht.cmd}`)
+          return cht.reply(`${ki}/id group yang valid ${dmpi}!`)
+        }
+        if(!idgc && !isLinkGc){
+          question(`${cht.cmd}`)
+          return cht.reply(`${ki}/id group yang valid ${dmpi}!`)
+        }
+      
+        if(!inviteCodeMatch && isLinkGc) {
+          question(`${cht.cmd}`)
+          return cht.reply(`${ki} yang valid ${dmpi}!`)
+        }
+        
+        let gcid;
+        if(inviteCodeMatch) {
+           let groupInfo = await Exp.groupGetInviteInfo(inviteCode);
+           gcid = groupInfo.id;
+        } else if(idgc && !isNaN(idgc)){
+           gcid = idgc+from.group
+         } else {
+           gcid = id
+        }
+      
+        if(!cyk)  {
+          let meta = await func.getGroupMetadata(gcid,Exp)
+          question(`${cht.cmd} ${q} --`)
+          return cht.reply(`Yakin ingin keluar dari group \`${meta.subject}\`?`)
+        }
+        if(yakin){
+           await cht.reply('Sedang keluar...')
+           await sleep(3000)
+           await Exp.groupLeave(gcid)
+        }
+      } catch(e) {
+        cht.reply('TypeErr: '+ e.message)
+      }
+    })
+    
+    ev.on({
+      cmd: ['listgc','listgroup'],
+      listmenu: ['listgroup'],
+      isOwner: true,
+      tag: "owner"
+    }, async ({ args })=> {
+      let tx = 'Mengecek semua nama group yang terdaftar...'
+      await cht.reply(tx)
+      let gc = Object.keys(Data.preferences).filter(a => a.includes(from.group))
+      let g = `*LIST GROUP*\n`
+      let perStep = Math.ceil(gc.length / 5)
+      
+      for(let i=0;i<gc.length;i++){
+        try {
+          if ((i + 1) % perStep === 0 || i + 1 === gc.length) {
+            const progress = Math.round(((i + 1) / gc.length) * 100)
+            cht.edit(`${tx}\nProgress: ${progress}%`, keys[sender], true)
+          }
+          await sleep(750+Math.floor(Math.random() * 800))
+          let meta = await func.getGroupMetadata(gc[i], Exp)
+          g += `\n${i+1}. ${meta.subject}`
+          } catch (e) {
+          console.error(e)
+        }
+        }
+        cht.reply(g)
     })
     
 }
