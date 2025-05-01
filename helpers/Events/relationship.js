@@ -843,4 +843,4 @@ _Code ${code} akan dihapus dalam kurun waktu ${time}_
         Exp.sendMessage(cht.id, { text: txt, mentions: cht.mention }, { quoted: cht })
 	})
     
-}
+} 

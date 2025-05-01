@@ -754,5 +754,5 @@ async function In({ cht,Exp,store,is,ev }) {
 		}
 	} catch (error) {
 		console.error("Error in Interactive:", error)
-	}
+	} 
 }

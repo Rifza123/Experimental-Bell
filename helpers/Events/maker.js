@@ -294,6 +294,5 @@ export default async function on({
 		  })
 		  
 		}
-	})
-	
+	})	
 }

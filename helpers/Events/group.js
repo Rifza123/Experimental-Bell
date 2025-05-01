@@ -534,5 +534,4 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
           cht.reply(`Enggak bisa!${infos.others.readMore}\n\n${e}`)
         }
 	})
-  
 }
