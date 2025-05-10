@@ -53,6 +53,12 @@ async function client({ Exp, store, cht, is }) {
         } else {
           await Data.In({ ev, ...exps });
         }
+        console.log({
+           offline: !is.offline,
+           afk: !is.afk,
+           cmd: cht.cmd||cht.reaction,
+           all: !is.offline && !is.afk && (cht.cmd||cht.reaction)
+         })
 
         /*!-======[ Chat Interactions Add ]======-!*/
         !cht.cmd && is.botMention && await func.archiveMemories.addChat(cht.sender)

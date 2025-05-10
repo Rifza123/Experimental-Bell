@@ -46,7 +46,7 @@ async function utils({ Exp, cht, is, store }) {
         cht.cmd = cht?.msg?.startsWith(cht.prefix) 
         ? await (async() => {
             let cmd = cht?.msg?.slice(1)?.toLowerCase()?.trim()?.split(/ +/).shift();
-            if (cfg.similarCmd && Data.events[cmd] === undefined) {
+            if (cfg.similarCmd && Object.keys(Data.events).length !== 0 && Data.events[cmd] === undefined) {
                 let events = Object.keys(Data.events).filter(a => cmd.length >= a.length && Math.abs(cmd.length - a.length) <= 2);
                 let similar = cmd.length <= 4 ? 0.3 : cmd.length <= 7 ? 0.4 : cmd.length <= 10 ? 0.5 : 0.6;
                 return (func.getTopSimilar(await func.searchSimilarStrings(cmd, events, similar))).item;
