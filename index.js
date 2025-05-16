@@ -21,15 +21,16 @@ const pino = "pino".import()
 const { Boom } = "boom".import();
 const { Connecting } = await `${fol[8]}systemConnext.js`.r()
 const Event = (await 'events'.import()).default
+let { makeInMemoryStore } = await './toolkit/store.js'.r()
+
 Event.defaultMaxListeners = 25 
 
 let {
     makeWASocket,
     useMultiFileAuthState,
-  	DisconnectReason,
-  	getContentType,
-  	makeInMemoryStore,
-  	Browsers
+    DisconnectReason,
+    getContentType,
+    Browsers
 } = baileys;
 /*!-======[ Functions Imports ]======-!*/
 let detector = (await (fol[0] + "detector.js").r()).default
@@ -44,7 +45,7 @@ Data.eventGame = (await `${fol[1]}eventGame.js`.r()).default
 Data.initialize = (await `${fol[1]}initialize.js`.r()).default
 
 let logger = pino({ level: 'silent' })
-let store = makeInMemoryStore({ logger });
+let store = makeInMemoryStore();
 
 async function launch() {
   try {
