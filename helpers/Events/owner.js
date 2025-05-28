@@ -11,7 +11,7 @@ let Lists = {
   fquoted: Object.keys(Data.fquoted)
 }
 
-const roles = {/*
+const roles = {/* 
   Role ini berdasarkan role default dari role.js
   kalo mau ubah ini wajib ubah role.js terlebih dahulu 
 */
