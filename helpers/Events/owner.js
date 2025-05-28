@@ -876,11 +876,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
             return [link, `${folder}${filename}`];
           }
       
-          if (filename === 'index.js') {
+          if (['index.js','package'].some(a => filename.includes(a))) {
             return [link, `./${filename}`];
           }
         }
-        failed += `\n- Unknown error`
+        failed += `\n- Unknown error URL(${link})`
         return null;
       }).filter(Boolean)
       
