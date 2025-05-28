@@ -9,7 +9,7 @@ export const TermaiCdn = async(buffer) => {
   formData.append('file', buffer, { filename: 'file.'+ext });
 
   try {
-    const { data } = await axios.post(`https://cdn.xtermai.xyz/api/upload?key=${key}`, formData, {
+    const { data } = await axios.post(`https://c.termai.cc/api/upload?key=${key}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

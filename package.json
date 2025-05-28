@@ -1,6 +1,6 @@
 {
   "name": "Experimental-Bell",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Artificial Intelligence, The beginning of the robot era",
   "main": "index.js",
   "type": "module",
@@ -32,6 +32,7 @@
     "jimp": "^0.16.1",
     "jsdom": "^16.5.0",
     "moment-timezone": "^0.5.33",
+    "mongodb": "^6.16.0",
     "node-webpmux": "^3.2.0",
     "path": "^0.12.7",
     "qrcode-terminal": "^0.12.0",

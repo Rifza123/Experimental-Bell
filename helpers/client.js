@@ -32,15 +32,16 @@ async function client({ Exp, store, cht, is }) {
             let ii = i.split('/').slice(-1)[0]
             keys[ii] ??= await Exp.groupGetInviteInfo(ii).then(a => a.id)
             let mem = await func.getGroupMetadata(keys[ii], Exp).then(a => a.participants.map(a => a.id))
-            isJoin ??= mem.includes(cht.sender)
-            if(isJoin) continue
+            if (mem.includes(cht.sender)) {
+              isJoin = true
+              break
+            }
           }
           if(!isJoin && (!cht.memories.cdIsJoin||cht.memories.cdIsJoin >= Date.now())){
             cht.memories.cdIsJoin = Date.now() + func.parseTimeString('10 menit')
             return cht.reply(`Anda harus bergabung ke salah satu grup dibawah sebelum dapat menggunakan bot!\n\`LIST INVITELINK\`\n${list}\n\n_Setelah bergabung harap tunggu selama 1 menit sebelum menggunakan bot!, data anggota grup hanya di perbarui setiap 1 menit sekali guna mengurangi rate-limit!_`)
           }
         }
-        
         let except = is.antiTagall || is.antibot || is.antilink
         if((is.baileys||is.mute||is.onlyadmin) && !except) return
 
@@ -63,4 +64,4 @@ async function client({ Exp, store, cht, is }) {
         console.error('Error in client.js:', error)
     }
     return
-} 
+}

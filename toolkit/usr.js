@@ -5,28 +5,21 @@ export class ArchiveMemories {
     static add(userJid) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
         let aut = cfg.first.autoai
-
-        const userData = {
-            chat: 1,
-            role: role(1),
-            energy: cfg.first.energy,
-            chargingSpeed: cfg.first.chargingSpeed,
-            chargeRate: cfg.first.chargeRate,
-            maxCharge: cfg.first.maxCharge,
-            flow: cfg.first.flow,
-            coins: cfg.first.coins,
-            charging: false,
-            premium: { time:0 },
-            autoai: { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false },
-            lastCharge: Date.now()
-        };
+        const userData = this.init(userJid,true)
         global.Data.users[userId] = userData;
         return userData;
     }
+    
+    static set(userJid, data) {
+	if (!data) return 'Data required'
+	const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
+	global.Data.users[userId] = data;
+	return data;
+    }
 
-    static async get(userJid, { is }={}) {
+    static get(userJid, { is }={}) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
-        let userData = global.Data.users[userId]
+        let userData = this.init(userJid)
         let aut = cfg.first.autoai
         if (!userData) {
             userData = this.add(userJid)
@@ -77,7 +70,7 @@ export class ArchiveMemories {
                     userData.charging = false
                 }
             }
-            global.Data.users[userId] = userData;
+            this.set(userJid,userData)
             return userData;
         } catch (error) {
             console.error('Error processing user data:', error)
@@ -87,7 +80,7 @@ export class ArchiveMemories {
 
     static addEnergy(userJid, amount) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
-        let userData = global.Data.users[userId]
+        let userData = this.get(userJid)
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`)
@@ -97,7 +90,7 @@ export class ArchiveMemories {
         try {
             userData.energy += parseFloat(amount)
             userData.role = role(userData.chat) 
-            global.Data.users[userId] = userData;
+            this.set(userJid,userData)
             return userData;
         } catch (error) {
             console.error('Error adding energy:', error)
@@ -107,7 +100,7 @@ export class ArchiveMemories {
 
     static reduceEnergy(userJid, amount) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
-        let userData = global.Data.users[userId]
+        let userData = this.get(userJid)
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`)
@@ -118,7 +111,7 @@ export class ArchiveMemories {
             userData.role = role(userData.chat) 
             let newEnergy = userData.energy - parseFloat(amount)
             userData.energy = newEnergy < 0 ? 0 : newEnergy;
-            global.Data.users[userId] = userData;
+            this.set(userJid,userData)
             return userData;
         } catch (error) {
             console.error('Error reducing energy:', error)
@@ -128,7 +121,7 @@ export class ArchiveMemories {
 
     static addChat(userJid) {
         const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
-        let userData = global.Data.users[userId]
+        let userData = this.get(userJid)
         
         if (!userData) {
             console.error(`User data for ${userJid} not found.`)
@@ -138,7 +131,7 @@ export class ArchiveMemories {
         try {
             userData.chat += 1;
             userData.role = role(userData.chat) 
-            global.Data.users[userId] = userData;
+            this.set(userJid,userData)
             return userData;
         } catch (error) {
             console.error('Error updating chat count:', error)
@@ -164,9 +157,8 @@ export class ArchiveMemories {
     static getItem(usr, item) {
         const userJid = String(usr).replace(/[+ -]/g, "")
         const userId = userJid.split("@")[0]
-        if (!(userId in global.Data.users)) return false;
 
-        let userData = this.clearExpiredData(global.Data.users[userId])
+        let userData = this.clearExpiredData(this.get(userJid))
 
         const defaultItems = {
             chat: 0,
@@ -244,17 +236,18 @@ export class ArchiveMemories {
         const userJid = String(usr).replace(/[+ -]/g, "")
         const userId = userJid.split("@")[0]
         if (!(userId in global.Data.users)) {
-            global.Data.users[userId] = {}
+            this.set(userJid,{})
         }
 
         const keys = item.split('.')
-        let current = global.Data.users[userId]
+        let current = this.get(userJid)
         for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i]
             if (!(key in current)) current[key] = {}
             current = current[key]
         }
         current[keys[keys.length - 1]] = value
+        this.set(userJid,current)
         return global.Data.users[userId]
     }
 
@@ -264,13 +257,14 @@ export class ArchiveMemories {
         if (!(userId in global.Data.users)) return false
 
         const keys = item.split('.')
-        let current = global.Data.users[userId]
+        let current = this.get(userJid)
         for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i]
             if (!(key in current)) return false
             current = current[key]
         }
         delete current[keys[keys.length - 1]]
+        this.set(userJid,current)
         return global.Data.users[userId]
     }
 
@@ -306,5 +300,30 @@ export class ArchiveMemories {
             console.error('Error combining user files:', error)
             throw error;
         }
+    }
+    
+    static init(userJid,New=false) {
+      /**
+       * Inisialisasi konfigurasi default data user
+       *
+       * Untuk memastikan setiap user memiliki data yang lengkap 
+       **/
+      const userId = String(userJid).replace(/[+ -]/g, "").split("@")[0]
+      if (!(userId in global.Data.users) && !New) return false;
+      let aut = cfg.first.autoai
+      let userData = Data.users[userId] || {}
+          userData.chat ||= 1
+          userData.role ||= role(1)
+          userData.energy ||= cfg.first.energy
+          userData.chargingSpeed ||= cfg.first.chargingSpeed
+          userData.chargeRate ||= cfg.first.chargeRate
+          userData.maxCharge ||= cfg.first.maxCharge
+          userData.charging ||= false
+          userData.premium ||= { time:0 }
+          userData.autoai ||= { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false }
+          userData.lastCharge ||= Date.now()
+          userData.cooldown ||= {}
+          userData.cooldown.claim ||= 0
+      return userData
     }
 }

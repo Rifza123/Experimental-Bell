@@ -49,19 +49,20 @@ infos.set = `
 - similarCmd <on/off>
 - premium_mode <on/of>
 - editmsg <on/off>
-- fquoted <name> <object or quoted>
-- welcome <type>
+- fquoted <name> <objek oratau quoted>
+- welcome <tipe>
 - logic <logic>
-- lang <Country Code>
-- voice <modelname>
-- menu <type>
-- call <off or action>
-- autoreactsw <off or emojis>
+- lang <kode negara>
+- voice <nama model>
+- menu <tipe>
+- call <off atau action>
+- autoreactsw <off atau emojis>
 - checkpoint <checkpoint_id>
 - lora <lora_id>
 - apikey <apikey>
-- antitagowner <(on/off) or reply message>
+- antitagowner <(on/off) atau balas pesan>
 - keyChecker <on/off>
+- chid <reply pesan (teruskan dari channel)
 
 _Example: .set public on_`
 

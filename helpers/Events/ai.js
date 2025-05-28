@@ -86,7 +86,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         await Exp.sendMessage(id, { image: { url: api.xterm.url + "/api/text2img/instant-lora?id="+text1+"&prompt="+text2 + "&key=" + api.xterm.key }, caption: infos.ai.lora_models[parseInt(text1) - 1], ai:true }, { quoted: cht })
 	})
 	
-	ev.on({ 
+     ev.on({ 
         cmd: ['imglarger','enlarger','enlarge','filters','filter','toanime','jadianime','jadinyata','toreal'],
         listmenu: ['toanime','filters','toreal'],
         tag: 'art',
@@ -246,7 +246,7 @@ ${notSameLora.join('\n')}`
 
         console.log(body)
 
-        let aiResponse = await fetch(`${api.xterm.url}/api/${img ? 'img':'text'}2img/stablediffusion/createTask?key=${api.xterm.key}`, {
+        let aiResponse = await fetch(`${api.xterm.url}/api/${isI2i ? 'img':'text'}2img/stablediffusion/createTask?key=${api.xterm.key}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

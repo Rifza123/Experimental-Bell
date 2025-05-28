@@ -143,4 +143,4 @@ infos.tfenergy =  `
 - ⚡Anda harus memiliki energy yang cukup untuk melakukan transfer 
 - 🔄 Gantilah \`[jumlah energi]\` dengan angka sesuai kebutuhan.
 - ✅ Pastikan target (username atau nomor) valid untuk menghindari kesalahan.
-`
+    `

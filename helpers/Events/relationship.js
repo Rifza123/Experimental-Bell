@@ -38,12 +38,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }, { quoted: cht })
     }
     
+    let getProfile = ['getprofile','cekprofile']
+    let isGetProfile = getProfile.includes(cht.cmd)
+    
     ev.on({ 
-        cmd: ['status','profil','profile','relationship'],
-        listmenu: ['profile'],
-        tag: 'relationship'
+        cmd: [...getProfile, 'status','profil','profile','relationship'],
+        listmenu: ['getprofile','profile'],
+        energy: isGetProfile ? 25 : undefined,
+        tag: 'relationship',
+        isMention: isGetProfile
     }, async() => {
-        let user = await memories.get(sender)
+        let Sender = isGetProfile ? cht.mention[0] : sender
+        let user = await memories.get(Sender)
         if (!("premium" in user)) {
             user.premium = { time: 0 };
         }
@@ -52,7 +58,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let speed = ms(user.chargingSpeed)
         let url
         try {
-            url = await Exp.profilePictureUrl(sender)
+            url = await Exp.profilePictureUrl(Sender)
         } catch {
             url = "https://telegra.ph/file/fddb61dda9e76235b8857.jpg"
         }
@@ -61,8 +67,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             chargeRate: user.premium?.chargeRate || 0,
             maxCharge: user.premium?.maxCharge || 0,
         }
-        let txt = "*!-====[ Profile ]====-!*\n"
-            txt += "\nNama: " + cht.pushName
+        let txt = isGetProfile ? `Profile user: ${Sender.split('@')[0]}\n` : "*!-====[ Profile ]====-!*\n"
+            txt += "\nNama: " + await func.getName(Sender)
             txt += "\nRole: " + user.role
             txt += "\nChatting: " + user.chat
             txt += "\n⚡Energy: " + user.energy
@@ -101,7 +107,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 }
             }
         }
-        Data.users[sender.split("@")[0]] = user
+        Data.users[Sender.split("@")[0]] = user
         Exp.sendMessage(id, menu, { quoted: cht })
     })
     
@@ -843,4 +849,4 @@ _Code ${code} akan dihapus dalam kurun waktu ${time}_
         Exp.sendMessage(cht.id, { text: txt, mentions: cht.mention }, { quoted: cht })
 	})
     
-} 
+}

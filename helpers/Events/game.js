@@ -497,7 +497,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
   ev.on({
     cmd: ["sos"],
     //listmenu: ["sos"],
-    tag: "game",
+   // tag: "game",
     args: `Format: .sos <create/join/leave/theme/move> <room_name>`,
   }, async ({ cht }) => {
     const [action, param1, param2] = (cht.q || "").split(" ");

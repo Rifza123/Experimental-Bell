@@ -3,7 +3,6 @@ const { proto, getContentType, generateWAMessage } = "baileys".import()
 export default 
 async function utils({ Exp, cht, is, store }) {
     try {
-        
         Data.preferences[cht.id] ??= {}
         Data.setCmd ??= {}
 
@@ -15,8 +14,10 @@ async function utils({ Exp, cht, is, store }) {
         cht.delete = async () => Exp.sendMessage(cht.id, { delete: cht.key }).then(a => undefined)
         
         const type = getContentType(cht?.message)
-
-        if(/^(protocolMessage)/.test(type)) return
+        const isProtocol = /^(protocolMessage)/.test(type)
+        let isDelete = isProtocol && cht.message[type].type === 0
+             
+        if(isProtocol && !isDelete) return
         
         const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.[type]) : type
         cht.type = Exp.func['getType'](msgType) || type
@@ -127,17 +128,15 @@ async function utils({ Exp, cht, is, store }) {
         is.owner =  global.owner.some(a => { const jid = String(a)?.split("@")[0]?.replace(/[^0-9]/g, ''); return jid && (jid + from.sender === cht.sender) }) || is.me
         
         is.group = cht.id?.endsWith(from.group)
-		const groupDb = is.group ? Data.preferences[cht.id] : {}		        
+        const groupDb = is.group ? Data.preferences[cht.id] : {}		        
         if (is.group) {
             const groupMetadata = await Exp.func.getGroupMetadata(cht.id,Exp)
             Exp.groupMetdata = groupMetadata
             Exp.groupMembers = groupMetadata.participants
             Exp.groupName = groupMetadata.subject
             Exp.groupAdmins = Exp.func.getGroupAdmins(groupMetadata.participants)
-            Object.assign(is, {
-              botAdmin: Exp.groupAdmins.includes(Exp.number),
-              groupAdmins: Exp.groupAdmins.includes(cht.sender)
-            })
+            is.botAdmin= Exp.groupAdmins.includes(Exp.number)
+            is.groupAdmins= Exp.groupAdmins.includes(cht.sender)
         }
         cht.memories = await memories.get(cht.sender, { is })
         
@@ -147,41 +146,41 @@ async function utils({ Exp, cht, is, store }) {
           || []
         ).map(url => (url.startsWith('http') ? url : 'https://' + url).replace(/['"`]/g, '')) : []
 
-        Object.assign(is, {
-          baileys: /^(3EB|BAE5|BELL409|B1E)/.test(cht.key.id),
-          botMention: cht?.mention?.includes(Exp.number),
-          cmd: cht.cmd,
-          sticker: cht.type === "sticker",
-          audio: cht.type === "audio",
-          image: cht.type === "image",
-          video: cht.type === "video",
-          document: cht.type === "document",
-          url,
-          offline: 'offline' in cfg && typeof cfg.offline === 'object' && !is.owner && !is.group,
-          memories: cht.memories,
-          quoted: cht.quoted,
-          reaction: cht.reaction,
-          afk: is.group ? memories.getItem(sender, "afk") : false,
-          mute: groupDb?.mute && !is.owner && !is.me,
-          onlyadmin: groupDb?.onlyadmin && !is.owner && !is.me && !is.groupAdmins,
-          antiTagall: groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner && !is.groupAdmins && (url?.length < 1),
-          antibot: groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin,
-          antilink: groupDb?.antilink && (url.length > 0) && url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin  
-        });
+        
+        is.baileys= /^(3EB|BAE5|BELL409|Laurine|B1E)/.test(cht.key.id)
+        is.botMention= cht?.mention?.includes(Exp.number)
+        is.cmd= cht.cmd
+        is.sticker= cht.type === "sticker"
+        is.audio= cht.type === "audio"
+        is.image= cht.type === "image"
+        is.video= cht.type === "video"
+        is.document= cht.type === "document"
+        is.url = url
+        is.offline= 'offline' in cfg && typeof cfg.offline === 'object' && !is.owner && !is.group
+        is.memories= cht.memories
+        is.quoted= cht.quoted
+        is.reaction= cht.reaction
+        is.afk= is.group ? memories.getItem(sender, "afk") : false
+        is.mute= groupDb?.mute && !is.owner && !is.me
+        is.onlyadmin= groupDb?.onlyadmin && !is.owner && !is.me && !is.groupAdmins
+        is.antiTagall= groupDb?.antitagall && (cht.mention?.length >= 5) && !is.owner && !is.groupAdmins && (url?.length < 1)
+        is.antibot= groupDb?.antibot && !is.owner && !is.groupAdmins && is.baileys && is.botAdmin
+        is.antilink= groupDb?.antilink && (url.length > 0) && url.some(a => groupDb?.links?.some(b => a.includes(b))) && !is.me && !is.owner && !is.groupAdmins && is.botAdmin
+        is.antidelete= groupDb?.antidelete && isDelete && !is.me && !is.owner && !is.groupAdmins && !is.baileys
 
         cht.reply = async function (text, etc={},quoted={ quoted: true }) {
           try {
             if(quoted?.quoted){
               quoted.quoted = cht?.reaction ? {
-               key: {
-                 fromMe: cht.key.fromMe,
-                 participant: cht.sender
-               },
-               message: {
-                conversation: cht.reaction.emoji,
-               }
-	   		  } : cht
-	   		}
+                key: {
+                  fromMe: cht.key.fromMe,
+                  participant: cht.sender
+                },
+                message: {
+                 conversation: cht.reaction.emoji,
+                }
+	      } : cht
+	    }
               
             const { key } = await Exp.sendMessage(cht.id, { text, ...etc }, quoted)
             keys[cht.sender] = key
@@ -231,7 +230,7 @@ async function utils({ Exp, cht, is, store }) {
           }
           Data.preferences[cht.id] = groupDb
         }
-
+        
     } catch (error) {
         console.error("Error in utils:", error)
     }

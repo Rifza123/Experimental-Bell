@@ -1,6 +1,7 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = "fs".import()
 const { downloadContentFromMessage } = "baileys".import()
+const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r()
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -26,6 +27,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
           menu.image = fs.readFileSync(fol[3] + "bell.jpg")
           menu.caption = text
           await Exp.sendMessage(id, menu, { quoted: cht })
+        } else if(cfg?.menu_type == "video" ){
+          menu.video = { url: cfg.menu.video||'https://c.termai.cc/v86/J剗K尿fY' }
+          menu.caption = text
+          await Exp.sendMessage(id, menu, { quoted: cht })
         } else if(cfg?.menu_type == "liveLocation"){
            await Exp.relayMessage(cht.id, {
 	         liveLocationMessage: {
@@ -48,6 +53,67 @@ export default async function on({ cht, Exp, store, ev, is }) {
              "thumbnail": (await fs.readFileSync(fol[3] + "bell.jpg")).toString("base64"),
            }
          },{})
+        } else if(cfg?.menu_type=="gif"){
+          let video = await func.uploadToServer(cfg.menu.video||'https://c.termai.cc/v86/J剗K尿fY','video')
+          await Exp.relayMessage(cht.id, {
+            "videoMessage": {
+              ...video,
+              "gifPlayback": true,
+              "height": 520,
+              "width": 732,
+              "caption": text,
+              "contextInfo": {
+                "stanzaId": cht.key.id,
+                "participant": cht.sender,
+                "quotedMessage": cht.message,
+                "forwardingScore": 19,
+                "isForwarded": true,
+                "forwardedNewsletterMessageInfo": cfg.chId || {
+                  "newsletterJid": "120363301254798220@newsletter",
+                  "newslettedName": "Termai",
+                  "serverMessageId": 152
+                }
+              },
+            },
+          },{})
+        } else if(cfg?.menu_type=="gif+linkpreview"){
+          let video = await func.uploadToServer(cfg.menu.video||'https://c.termai.cc/v86/J剗K尿fY','video')
+          keys["thumbnailUrl"] ||= await TermaiCdn(fs.readFileSync(fol[3] + "bell.jpg"))
+          let { thumbnailUrl } = keys
+          await Exp.relayMessage(cht.id, {
+            "videoMessage": {
+              ...video,
+              "gifPlayback": true,
+              "height": 520,
+              "width": 732,
+              "caption": text,
+              "contextInfo": {
+                "stanzaId": cht.key.id,
+                "participant": cht.sender,
+                "quotedMessage": cht.message,
+                "forwardingScore": 19,
+                "isForwarded": true,
+                "externalAdReply": {
+                    "title": cht.pushName,
+                    "body": "Artificial Intelligence, The beginning of the robot era",
+                    thumbnail: fs.readFileSync(fol[3] + "bell.jpg"),
+                    "sourceUrl": "https://github.com/Rifza123",
+                    "mediaUrl": `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
+                    "renderLargerThumbnail": true,
+                    "showAdAttribution": true,
+                    "mediaType": "IMAGE",
+                    "sourceType": "ad",
+                    "sourceId": "1",
+                    "sourceUrl": "https://instagram.com/rifza.p.p"
+                },
+                "forwardedNewsletterMessageInfo": cfg.chId || {
+                  "newsletterJid": "120363301254798220@newsletter",
+                  "newslettedName": "Termai",
+                  "serverMessageId": 152
+                }
+              },
+            },
+          },{})
         } else {
           menu = {
             text,
@@ -88,9 +154,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
     })
     
     ev.on({ 
-        cmd: ['rvo','getviewonce'],
-        listmenu: ['getviewonce'],
-        tag: 'baileys',
+        cmd: ['rvome','rvo','getviewonce'],
+        listmenu: ['getviewonce','rvome'],
+        tag: 'others',
         premium: true,
         isAdmin: true,
         isMention: true,
@@ -130,7 +196,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             let mssg = {}
             if(cht.quoted.text) mssg.caption = cht.quoted.text || undefined 
             thay.type == "audio" && (mssg.ptt = true)
-            await Exp.sendMessage(id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
+            await Exp.sendMessage(cht.cmd == 'rvome' ? cht.sender:id, {  [thay.type]: buffer, ...mssg }, { quoted:aa })
         }
       } catch (e) { 
         console.error(e)

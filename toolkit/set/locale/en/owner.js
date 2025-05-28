@@ -62,6 +62,7 @@ infos.set = `
 - apikey <apikey>
 - antitagowner <(on/off) or reply message>
 - keyChecker <on/off>
+- chid <reply message (forward from channell)
 
 _Example: .set public on_`
 

@@ -12,6 +12,7 @@ const os = await "os".import()
 const process = await "process".import()
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss')
 const { ArchiveMemories } = await (fol[0] + "usr.js").r()
+const { Inventory } = await (fol[0] + "inventory.js").r()
 const { color, bgcolor } = await `${fol[0]}color.js`.r()
 const Jimp = (await "jimp".import()).default
 const cache = new Map()
@@ -76,6 +77,42 @@ export class func {
         }
         return groupMetadata;
     };
+    
+    async modifyReply(groupId, text) {
+  const { gpt } = await (fol[2] + "gpt3.js").r();
+  let query = `Kamu adalah alat Ai untuk merubah teks menjadi versi profile AI di bawah
+
+Profile: ${cfg.logic}
+Buat teks ini menjadi sesuai sifat yang dijelaskan pada profile.
+
+teks: ${text}
+Kirimkan teksnya saja yang sudah dimodifikasi, jangan berikan deskripsi atau tambahan lain.`;
+
+  try {
+    let res = await gpt(query);
+    return await this.Exp.relayMessage(groupId, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            footer: { text: res.response },
+            carouselMessage: {}
+          }
+        }
+      }
+    }, {});
+  } catch (e) {
+    return await this.Exp.relayMessage(groupId, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            footer: { text },
+            carouselMessage: {}
+          }
+        }
+      }
+    }, {});
+  }
+}
     
     async downloadSave(message, filename) {
         let quoted = message.msg ? message.msg : message
@@ -619,8 +656,6 @@ export class func {
     })
   }
   
-  getDirectoriesRecursive = getDirectoriesRecursive
-  
   async minimizeImage(input,size=768) {
       let image = await Jimp.read(input);
       let quality = 80;
@@ -645,5 +680,7 @@ export class func {
 
       return output;
   }
-
+  
+  getDirectoriesRecursive = getDirectoriesRecursive
+  inventory = Inventory
 }

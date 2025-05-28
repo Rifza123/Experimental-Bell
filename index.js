@@ -6,11 +6,12 @@
       ▪︎ https://github.com/Rifza123
       ▪︎ https://instagram.com/rifza.p.p?igshid=ZGUzMzM3NWJiOQ==
       ▪︎ https://www.threads.net/@rifza.p.p
+      ▪︎ https://termai.cc
       ▪︎ https://xterm.tech
   */
 /*!-======[ Preparing Configuration ]======-!*/
 import "./toolkit/set/string.prototype.js";
-await "./toolkit/set/global.js".r()
+let { initialize } = await "./toolkit/set/global.js".r()
 
 /*!-======[ Mudules Imports ]======-!*/
 const readline = "readline".import()
@@ -21,7 +22,7 @@ const pino = "pino".import()
 const { Boom } = "boom".import();
 const { Connecting } = await `${fol[8]}systemConnext.js`.r()
 const Event = (await 'events'.import()).default
-let { makeInMemoryStore } = await './toolkit/store.js'.r()
+let { makeInMemoryStore } = await `${fol[0]}store.js`.r()
 
 Event.defaultMaxListeners = 25 
 
@@ -32,6 +33,8 @@ let {
     getContentType,
     Browsers
 } = baileys;
+
+await initialize()//db
 /*!-======[ Functions Imports ]======-!*/
 let detector = (await (fol[0] + "detector.js").r()).default
 Data.utils = (await `${fol[1]}utils.js`.r()).default
@@ -85,8 +88,8 @@ async function launch() {
            );
         }
         
-        /*!-======[ INITIALIZE Exp Functions ]======-!*/
-        Data.initialize({ Exp, store })
+        /*!-======[ INITIALIZE ]======-!*/
+        Data.initialize({ Exp, store })//Exp function
 
         /*!-======[ Detect File Update ]======-!*/
         keys["detector"] && clearInterval(keys["detector"])

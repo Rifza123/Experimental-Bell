@@ -10,6 +10,7 @@ async function on({ Exp, ev, store, cht, ai, is }) {
     "mengurangi energy": infos.about?.energy,
     "menambah premium": infos.owner?.premium_add,
     "mengurangi premium": infos.owner?.premium_add,
+    "transfer energy": infos.about?.tfenergy,
     "txt2img stablediffusion": infos.about?.stablediffusion,
     "antilink": infos.about?.antilink,
     "memblokir atau membanned user": infos.owner.banned,

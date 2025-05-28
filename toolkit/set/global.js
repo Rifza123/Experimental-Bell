@@ -21,10 +21,18 @@ global['fol'] = {
 }
 global['session'] = fol[8] + 'session';
 
+const { Mongo } = await `${fol[0]}mongodb.js`.r()
+
+let mongoURI = ""
+/* Masukkan SRV URI jika ingin menggunakan database mongo
+  📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
+*/
+
 const db = fol[5]
 const conf = fol[3] + 'config.json'
 let config = JSON.parse(fs.readFileSync(conf))
 let keys = Object.keys(config)
+let mongo;
 
 //antisipasi kalo masi pake config lama
 if(!(config.cfg.ai_interactive?.group || config.cfg.ai_interactive?.private)){
@@ -34,23 +42,10 @@ if(!(config.cfg.ai_interactive?.group || config.cfg.ai_interactive?.private)){
     config.cfg.ai_interactive.private = true
 }
 
-const files = [
-    { path: db + 'cmd.json', content: { "total": 0, "ai_response": 0, "cmd": [] } },
-    { path: db + 'preferences.json', content: {} },
-    { path: fol[6] + 'users.json', content: {} },
-    { path: db + 'badwords.json', content: [] },
-    { path: db + 'links.json', content: [] },
-    { path: db + 'fquoted.json', content: {} },
-    { path: db + 'audio.json', content: { welcome:[], leave:[] } },
-    { path: db + 'setCmd.json', content: {} },
-    { path: db + 'response.json', content: {} },     
-]
+if(mongoURI && mongoURI.length > 5){
+  mongo = await new Mongo(mongoURI, {}, ["db"]).init();
+}
 
-files.forEach(file => {
-    if (!fs.existsSync(file.path)) {
-        fs.writeFileSync(file.path, JSON.stringify(file.content, null, 2));
-    }
-})
 
 /*!-======[ Definition of config  ]======-!*/
 for (let i of keys){
@@ -86,18 +81,9 @@ global["keys"] = {}
 global["Data"] = {
     Events: new Map(),
     events: {},
-    badwords: JSON.parse(fs.readFileSync(db + 'badwords.json')),
-    links: JSON.parse(fs.readFileSync(db + 'links.json')),
-    users: JSON.parse(fs.readFileSync(fol[6] + 'users.json')),
-    audio: JSON.parse(fs.readFileSync(db + 'audio.json')),
-    fquoted: JSON.parse(fs.readFileSync(db + 'fquoted.json')),
-    preferences: JSON.parse(fs.readFileSync(db + 'preferences.json')),
-    use: { 
-        cmds: JSON.parse(fs.readFileSync(db + 'cmd.json'))
-    },
+    use: {},
+    mongo,
     infos:{},
-    setCmd: JSON.parse(fs.readFileSync(db + 'setCmd.json')),
-    response: JSON.parse(fs.readFileSync(db + 'response.json')),
     voices: [
       "prabowo",
       "yanzgpt",
@@ -121,9 +107,67 @@ global["Data"] = {
     spinner: "⠇⠋⠙⠹⠼⠦".split('')
 }
 
-/*!-======[ Definition of Infos ]======-!*/
-await fs.readdirSync(fol[9] + locale+"/")
-  .filter(file => file.endsWith('.js')).forEach(async file => await (fol[9] + locale + "/" + file).r())
+export const initialize = async () => {
+  const DB = [
+    { path: db, name: 'cmd', content: { total: 0, ai_response: 0, cmd: [] } },
+    { path: db, name: 'preferences', content: {} },
+    { path: fol[6], name: 'users', content: {} },
+    { path: db, name: 'badwords', content: [] },
+    { path: db, name: 'links', content: [] },
+    { path: db, name: 'fquoted', content: {} },
+    { path: db, name: 'audio', content: { welcome: [], leave: [] } },
+    { path: db, name: 'setCmd', content: {} },
+    { path: db, name: 'response', content: {} },
+    { path: fol[6], name: 'inventories', content: {} }, //new
+    { path: db, name: 'ShopRPG', content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {}  } }//new
+  ]
+  for (let { path: base, name, content } of DB) {
+    const filepath = base + name + '.json'
+    let fileData = null
+
+    if (fs.existsSync(filepath)) {
+      const raw = fs.readFileSync(filepath)
+      try {
+        fileData = JSON.parse(raw)
+      } catch (e) {
+        console.error('Error in global.js > initialize > JSON.parse', e)
+        const oldpath = filepath + `.old[${Date.now()}]`
+        fs.writeFileSync(oldpath, raw)
+        console.log(`\x1b[33m[Warning]\x1b[0m Gagal parse JSON, file lama disimpan ke \x1b[36m${oldpath}\x1b[0m`)
+        fileData = null
+      }
+    }
+
+    let data;
+
+    if (mongo) {
+      const mongoData = await mongo.db.get(name)
+      if (!mongoData) {
+        data = fileData || content
+        await mongo.db.set(name, data)
+      } else {
+        data = mongoData
+      }
+    } else {
+      data = fileData || content
+      if (!fileData) {
+        fs.writeFileSync(filepath, JSON.stringify(content, null, 2))
+      }
+    }
+
+    if (name == 'cmd') {
+      Data.use.cmds = data
+    } else {
+      Data[name] = data
+    }
+  }
+
+  /*!-======[ Definition of Infos ]======-!*/
+  const files = fs.readdirSync(fol[9] + locale + "/").filter(file => file.endsWith('.js'))
+  for (const file of files) {
+    await (fol[9] + locale + "/" + file).r()
+  }
+};
 
 const originalConsoleError = console.error;
 const originalConsoleLog = console.log;

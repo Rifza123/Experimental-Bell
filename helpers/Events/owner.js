@@ -80,6 +80,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         isOwner: true,
         args: infos.owner.set
     }, async ({ args, urls }) => {
+      try {
         let fquotedKeys = Object.keys(Data.fquoted)
         let [t1, t2, t3, t4] = args.split(" ")
         if(!options[t1] && t1.includes("\n")){
@@ -112,6 +113,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
            : t1 == "checkpoint"
            ? `Example: .${cht.cmd} ${t1} 1552`
            : t1 == "apikey" 
+           ? true
+           : t1 == "chid" 
            ? true
            : false)
 
@@ -159,7 +162,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
           global.cfg.logic = profile
           cht.replyWithTag(mode, { logic: cfg.logic })
         } else if(t1 == "menu"){
-          let list = ["linkpreview","order","liveLocation","image","text"]
+          let list = [
+            "linkpreview",
+            "gif",            
+            "gif+linkpreview",
+            "video",
+            "order",
+            "liveLocation",
+            "image",
+            "text"
+          ]
           let tlist = func.tagReplacer(infos.owner.listSetmenu, { list:list.join("\n- ") })
           if(!t2) return cht.reply(tlist)
           if(!list.includes(t2)) return cht.reply(`*Type menu _${t2}_ notfound!*\n\n${tlist}`)
@@ -326,6 +338,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
           }
           api.xterm.key = t2.trim()
           cht.reply(`Success set apikey xtermai!\nKey: ${t2}`)
+        } else if(t1 == "chid"){
+          if(!cht.quoted) return await cht.reply(`Reply pesan channel dengan caption \`${cht.prefix+cht.cmd} ${t1}\`\n*Usahakan untuk menggunakan pesan non-media*`)
+          let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message[cht.quoted.type].contextInfo.forwardedNewsletterMessageInfo
+          if(!res) return cht.reply("Gagal, id saluran mungkin tidak tersedia")
+          cfg.menu.chId = res
+          cht.reply("Success...✅️")
         } else if(t1 == "antitagowner"){
           if(t2){
             let off = ["off","false"]
@@ -359,20 +377,32 @@ export default async function on({ cht, Exp, store, ev, is }) {
             })
           }
         }
+      } catch(e) {
+        console.error(e)
+        cht.reply(`TypeErr: ${e.message}`)
+      }
     })
     
+    let setmedia = ['setthumb','setvideo']
     ev.on({ 
-        cmd: ['setthumb'], 
-        listmenu: ['setthumb'],
+        cmd: setmedia,
+        listmenu: setmedia,
         media: {
-            type: ["image"],
+            type: ["image","video"],
             save: false
         },
         tag: "owner",
         isOwner: true
     }, async ({ media }) => {
+      await cht.reply(infos.messages.wait)
+      let text = infos.owner.successSetThumb
+      if(cht.cmd == "setthumb"){
          await fs.writeFileSync(fol[3] + 'bell.jpg', media)
-         cht.reply(infos.owner.successSetThumb)
+      } else {
+         cfg.menu.video = await TermaiCdn(media)
+         text = text.replace('thumbnail','video')
+      }
+      cht.reply(text)
     })
     
     ev.on({ 
@@ -1184,5 +1214,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
         }
         cht.reply(g)
-    })    
+    })
+    
 }
