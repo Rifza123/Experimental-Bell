@@ -230,7 +230,7 @@ export default async function on({
     args: `Example: ${cht.msg} halo`
   }, async ({ args }) => {
       let brat = [
-        "https://brat.xtermai.xyz/?text="
+        "https://brat.termai.cc/?text="
       ]
       let token = String(Date.now()).to('base64').to('charCode').to('base64').to('utf16le')
         let buff = await func.getBuffer(brat.getRandom() + encodeURIComponent(args) + '&token='+token)
@@ -256,7 +256,7 @@ export default async function on({
   }, async () => {
       let token = String(Date.now()).to('base64').to('charCode').to('base64').to('utf16le')
         
-        let buff = await func.getBuffer(`https://brat.xtermai.xyz/animate?text=${encodeURIComponent(cht.q)}&token=${token}`)
+        let buff = await func.getBuffer(`https://brat.termai.cc/animate?text=${encodeURIComponent(cht.q)}&token=${token}`)
     let res = await exif["writeExifVid"](buff, {
       packname: 'My brat sticker',
       author: 'Ⓒ' + cht.pushName

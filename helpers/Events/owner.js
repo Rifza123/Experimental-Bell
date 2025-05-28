@@ -842,7 +842,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         tag: 'owner',
         isOwner: true,
         urls: {
-          formats: ["https://cdn.xtermai.xyz","https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/"],
+          formats: ["https://c.termai.cc","https://cdn.xtermai.xyz","https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/"],
           msg: true
         },
     }, async({ urls }) => {
