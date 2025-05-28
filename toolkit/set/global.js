@@ -23,7 +23,8 @@ global['session'] = fol[8] + 'session';
 
 const { Mongo } = await `${fol[0]}mongodb.js`.r()
 
-let mongoURI = ""
+let mongoURI = "mongodb+srv://izz123:120738@cluster0.qz0qohv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
 /* Masukkan SRV URI jika ingin menggunakan database mongo
   📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
 */
