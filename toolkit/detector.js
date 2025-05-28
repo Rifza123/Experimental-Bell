@@ -331,7 +331,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 	}
 
 	async function saveData(name) {
-		let data = name == 'cmd' ? Data.use.cmd : Data[name]
+		let data = name == 'cmd' ? Data.use.cmds : Data[name]
 		if (Data.mongo) {
 			await Data.mongo.db.set(name, data);
 		} else {
@@ -491,6 +491,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 			for (let i of keys) {
 				config[i] = global[i]
 			}
+			
 			for (const name of DB) {
 				await saveData(name)
 			}
@@ -498,7 +499,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 			await fs.writeFileSync(conf, JSON.stringify(config, null, 2))
 			await updateHargaInvestasi()
 		} catch (error) {
-			console.error("Terjadi kesalahan dalam penulisan file", error.message);
+			console.error("Terjadi kesalahan dalam penulisan file", error);
 		}
 	}, 20000);
 
