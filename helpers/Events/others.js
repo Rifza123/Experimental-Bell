@@ -88,6 +88,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               "height": 520,
               "width": 732,
               "caption": text,
+              "mimetype": "video/mp4",
               "contextInfo": {
                 "stanzaId": cht.key.id,
                 "participant": cht.sender,
