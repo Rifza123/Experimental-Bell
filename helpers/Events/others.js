@@ -80,6 +80,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           let video = await func.uploadToServer(cfg.menu.video||'https://c.termai.cc/v86/J剗K尿fY','video')
           keys["thumbnailUrl"] ||= await TermaiCdn(fs.readFileSync(fol[3] + "bell.jpg"))
           let { thumbnailUrl } = keys
+
           await Exp.relayMessage(cht.id, {
             "videoMessage": {
               ...video,
@@ -96,12 +97,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 "externalAdReply": {
                     "title": cht.pushName,
                     "body": "Artificial Intelligence, The beginning of the robot era",
-                    thumbnail: fs.readFileSync(fol[3] + "bell.jpg"),
+                    thumbnailUrl,
                     "sourceUrl": "https://github.com/Rifza123",
                     "mediaUrl": `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
                     "renderLargerThumbnail": true,
                     "showAdAttribution": true,
-                    "mediaType": "IMAGE",
+                    "mediaType": 1,
                     "sourceType": "ad",
                     "sourceId": "1",
                     "sourceUrl": "https://instagram.com/rifza.p.p"
