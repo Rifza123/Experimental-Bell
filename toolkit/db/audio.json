@@ -1,0 +1,17 @@
+{
+  "welcome": [
+    "https://files.catbox.moe/1ouo5c.mp3"
+  ],
+  "adzan": [
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan1.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan2.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan3.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan4.mp3"
+  ],
+  "adzan_subuh": [
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan_subuh1.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan_subuh2.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan_subuh3.mp3",
+    "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan_subuh4.mp3"
+  ]
+}
