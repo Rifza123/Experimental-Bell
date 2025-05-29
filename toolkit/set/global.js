@@ -118,12 +118,18 @@ export const initialize = async () => {
     { path: db, name: 'audio', content: { welcome: [], leave: [] } },
     { path: db, name: 'setCmd', content: {} },
     { path: db, name: 'response', content: {} },
-    { path: fol[6], name: 'inventories', content: {} }, //new
-    { path: db, name: 'ShopRPG', content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {}  } }//new
+    { path: fol[6], name: 'inventories', content: {} }, // new
+    { path: db, name: 'ShopRPG', content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {} } } // new
   ]
+
   for (let { path: base, name, content } of DB) {
     const filepath = base + name + '.json'
+    const dir = path.dirname(filepath)
     let fileData = null
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
 
     if (fs.existsSync(filepath)) {
       const raw = fs.readFileSync(filepath)
@@ -155,7 +161,7 @@ export const initialize = async () => {
       }
     }
 
-    if (name == 'cmd') {
+    if (name === 'cmd') {
       Data.use.cmds = data
     } else {
       Data[name] = data
@@ -167,7 +173,7 @@ export const initialize = async () => {
   for (const file of files) {
     await (fol[9] + locale + "/" + file).r()
   }
-};
+}
 
 const originalConsoleError = console.error;
 const originalConsoleLog = console.log;
