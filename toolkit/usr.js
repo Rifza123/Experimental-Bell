@@ -312,18 +312,18 @@ export class ArchiveMemories {
       if (!(userId in global.Data.users) && !New) return false;
       let aut = cfg.first.autoai
       let userData = Data.users[userId] || {}
-          userData.chat ||= 1
-          userData.role ||= role(1)
-          userData.energy ||= cfg.first.energy
-          userData.chargingSpeed ||= cfg.first.chargingSpeed
-          userData.chargeRate ||= cfg.first.chargeRate
-          userData.maxCharge ||= cfg.first.maxCharge
-          userData.charging ||= false
-          userData.premium ||= { time:0 }
-          userData.autoai ||= { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false }
-          userData.lastCharge ||= Date.now()
-          userData.cooldown ||= {}
-          userData.cooldown.claim ||= 0
+          userData.chat ??= 1
+          userData.role ??= role(1)
+          userData.energy ??= cfg.first.energy
+          userData.chargingSpeed ??= cfg.first.chargingSpeed
+          userData.chargeRate ??= cfg.first.chargeRate
+          userData.maxCharge ??= cfg.first.maxCharge
+          userData.charging ??= false
+          userData.premium ??= { time:0 }
+          userData.autoai ??= { ...aut, use:0, reset:(Date.now()+parseFloat(aut.delay)), response:false }
+          userData.lastCharge ??= Date.now()
+          userData.cooldown ??= {}
+          userData.cooldown.claim ??= 0
       return userData
     }
 }

@@ -37,6 +37,7 @@ async function In({
     sender
   } = cht
   try {
+  
     const commandExpired = memories.getItem(sender, "commandExpired")
     let isPendingCmd = (["y", "iy", "iya", "yakin", "hooh", "iye", "iyh"].includes(cht?.msg?.toLowerCase()) && Date.now() < commandExpired) ?
       memories.getItem(sender, "command") :
@@ -120,7 +121,6 @@ async function In({
       }
       return false
     })(sender) : false
-
     let isConfess = Boolean(conff)
     let isAfkBack = Boolean(is.afk)
     let isAntiTagOwner = cfg.antitagowner && !is.owner && cht?.msg?.includes('@') && cht.mention.some(m => owner.some(o => m.includes(o)))
@@ -199,6 +199,16 @@ async function In({
         },{})
         let message = deleted.message
         let type = getContentType(message)
+        
+        if(type == 'conversation'){
+          message = {
+            extendedTextMessage: {
+              text:message[type]
+            }
+          }
+          type = getContentType(message)
+        }
+        
         message[type].contextInfo = {
           isForwarded: true
         }
@@ -666,7 +676,6 @@ async function In({
               },
             ]
           })
-          console.log(_ai)
           let config = _ai?.data || {}
           await func.addAiResponse()
           let noreply = false

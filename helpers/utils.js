@@ -17,7 +17,7 @@ async function utils({ Exp, cht, is, store }) {
         const isProtocol = /^(protocolMessage)/.test(type)
         let isDelete = isProtocol && cht.message[type].type === 0
              
-        if(isProtocol && !isDelete) return
+        if(isProtocol && !isDelete) return 'SKIP'
         
         const msgType = type === "extendedTextMessage" ? getContentType(cht?.message?.[type]) : type
         cht.type = Exp.func['getType'](msgType) || type
@@ -230,9 +230,10 @@ async function utils({ Exp, cht, is, store }) {
           }
           Data.preferences[cht.id] = groupDb
         }
+        return 'NEXT'
         
     } catch (error) {
         console.error("Error in utils:", error)
+        return 'ERROR'
     }
-    return
 }

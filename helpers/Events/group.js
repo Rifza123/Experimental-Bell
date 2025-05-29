@@ -584,16 +584,10 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
         [...(is.group && cht.cmd !== "topglobalenergy" ? Exp.groupMembers : Object.keys(Data.users).map(a => ({
           id: String(a)
         })))].map(a =>
-          memories.get(a.id)
-          .then(v => ({
-            ...v,
+          ({
             id: a.id,
-            energy: v.energy || 0
-          }))
-          .catch(() => ({
-            id: a.id,
-            energy: 0
-          }))
+            energy: memories.get(a.id)?.energy||0
+          })
         )
       )
       .then(members => members
