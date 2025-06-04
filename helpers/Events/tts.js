@@ -58,7 +58,7 @@ const leanguages = {
 }
 
 export default async function on({ Exp, ev, store, cht, ai, is }) {
-    let config = new URLSearchParams({ speed: 0.9, pitch: 1 })
+    let config = new URLSearchParams({ speed: 0.9, pitch: 0 })
     let txtreply = `List voice models:\n${Data.voices.join("\n")}\nContoh: _.elevenlabs prabowo|halo_`	
 
     let txtreply2 = `List leanguage:\n${Object.keys(leanguages).map(a => "- "+a+" [ "+ leanguages[a] +" ]").join("\n")}\n\nContoh: _.gtts id|halo_`	
