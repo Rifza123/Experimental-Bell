@@ -4,7 +4,7 @@ async function imageEdit(image, prompt) {
       const payload = {
       contents: [{
         parts: [
-          { text },
+          { text:prompt },
           {
             inline_data: {
               mime_type: "image/jpeg",
