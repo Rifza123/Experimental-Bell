@@ -1165,12 +1165,30 @@ export default async function on({ cht, Exp, store, ev, is }) {
         formats: [
           'https://c.termai.cc',
           'https://cdn.xtermai.xyz',
+          'https://pastebin.com',
           'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/',
         ],
         msg: true,
       },
     },
     async ({ urls }) => {
+      if(urls[0].includes('pastebin.com')){
+        let _text = await fetch(urls[0].replace(/pastebin\.com\/(?!raw\/)(\w+)/, "pastebin.com/raw/$1")).then(a => a.text())
+        urls = _text
+      ? (
+          _text?.match(/https?:\/\/[^\s)]+/g) ||
+          _text?.match(
+            /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
+          ) ||
+          []
+        ).map((url) =>
+          (url.startsWith('http') ? url : 'https://' + url).replace(
+            /['"`]/g,
+            ''
+          )
+        )
+      : [];
+      }
       let fols = await getDirectoriesRecursive();
       await cht.reply('Updating...');
       let changed = `*📂File Changed:*`;
@@ -1182,7 +1200,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           const { pathname, host } = new URL(link);
           let isValidHost = [
             'cdn.xtermai.xyz',
-            'raw.githubusercontent.com',
+            'raw.githubusercontent.com'
           ].includes(host);
           if (!isValidHost) {
             failed += `\n- ${url}\n> Invalid host url`;
@@ -1213,7 +1231,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               return [link, `${folder}${filename}`];
             }
 
-            if (['index.js', 'package'].some((a) => filename.includes(a))) {
+            if (['index.js', 'package','readme.md','prettierignore','prettierrc'].some((a) => filename.includes(a))) {
               return [link, `./${filename}`];
             }
           }
@@ -1221,7 +1239,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
           return null;
         })
         .filter(Boolean);
-
+       
+      let text;
       for (let [url, fpath] of urlPath) {
         let res = await fetch(url);
         if (!res.ok) {
@@ -1236,9 +1255,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
         let buff = await res.text();
         await fs.writeFileSync(fpath, buff);
+        text = `*[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
+        await cht.edit(text, keys[sender]);
       }
 
-      let text = `*[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
+       
       if (failed.length > 12) text += failed;
       cht.edit(text, keys[sender]);
     }
