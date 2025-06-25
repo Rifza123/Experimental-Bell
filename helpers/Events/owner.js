@@ -1241,7 +1241,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         .filter(Boolean);
        
       let text;
+      let i = 0;
       for (let [url, fpath] of urlPath) {
+      if (i === Data.spinner.length) i = 0;
         let res = await fetch(url);
         if (!res.ok) {
           failed += `\n- ${url}\n> Failed to fetch url`;
@@ -1255,13 +1257,14 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
         let buff = await res.text();
         await fs.writeFileSync(fpath, buff);
-        text = `*[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
+        text = `*${Data.spinner[i++]}[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
         await cht.edit(text, keys[sender]);
       }
 
        
       if (failed.length > 12) text += failed;
-      cht.edit(text, keys[sender]);
+      await cht.edit(text, keys[sender]);    
+      cht.reply('Success ✅');
     }
   );
 
