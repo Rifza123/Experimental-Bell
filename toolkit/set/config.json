@@ -1,7 +1,5 @@
 {
-  "owner": [
-    "62831xxxxxxxx"
-  ],
+  "owner": ["62831xxxxxxxx"],
   "botname": "(Experimental) -▪︎ Bella-AI",
   "botfullname": "Experimental-Bell",
   "botnickname": "bella",
@@ -39,10 +37,7 @@
     },
     "menu": {
       "frames": {
-        "brackets": [
-          "[",
-          "]"
-        ],
+        "brackets": ["[", "]"],
         "head": "┌",
         "body": "│⇨",
         "foot": "└"
@@ -89,21 +84,11 @@
     "editmsg": true,
     "reactsw": {
       "on": false,
-      "emojis": [
-        "😍",
-        "😂",
-        "😬",
-        "🤢",
-        "🤮",
-        "🥰",
-        "😭"
-      ]
+      "emojis": ["😍", "😂", "😬", "🤢", "🤮", "🥰", "😭"]
     },
     "models": {
       "checkpoint": 1552,
-      "loras": [
-        13077
-      ]
+      "loras": [13077]
     },
     "call": {
       "block": true,

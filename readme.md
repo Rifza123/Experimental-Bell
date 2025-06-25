@@ -41,6 +41,7 @@ git clone https://github.com/Rifza123/Experimental-Bell.git
 ```bash
 cd /halaman/mengarah/ke/Experimental-Bell
 ```
+
 ```bash
 npm install
 ```
@@ -73,7 +74,7 @@ Jika mengalami kesulitan, coba hapus folder `lib/connection/session` dan jalanka
 ### Cara Mengimpor Modul
 
 ```javascript
-const fs = "fs".import(); 
+const fs = 'fs'.import();
 // Atau bisa gunakan await untuk mengatasi promise
 //const fs = await "fs".import()
 ```
@@ -87,45 +88,52 @@ Impor fungsi selalu dimulai dari awal, jadi tidak perlu kembali mundur dengan ca
 Misalnya, jika kita ingin mengimpor `events.js` yang terletak di `./tolkit/events.js` dari `./helpers/client.js`, maka cara pengambilannya adalah:
 
 ```javascript
-const events = await "./tolkit/events.js".r()
+const events = await './tolkit/events.js'.r();
 ```
 
 ---
 
-### Penggunaan Event Emitter 
+### Penggunaan Event Emitter
+
 Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomatis terdeteksi.
 
 Berikut adalah bagian-bagian yang tersedia dalam events ini:
 
 ```javascript
-ev.on({
+ev.on(
+  {
     cmd: [''], // Ini adalah cmd fitur yang digunakan sebagai pemanggil event, Anda bisa meletakkan banyak cmd
     listmenu: [''], // Bagian ini akan terlihat dalam menu
-    tag: "", // Tag ini menentukan di menu bagian mana list menu akan ditempatkan
+    tag: '', // Tag ini menentukan di menu bagian mana list menu akan ditempatkan
     energy: 7, // Harga penggunaan energi pada event ini
     premium: false, //Mengharuskan premium/tidak untuk menggunakan fitur ini
-    args: "Masukkan teks!", // Mengharuskan input teks/quoted teks
+    args: 'Masukkan teks!', // Mengharuskan input teks/quoted teks
     badword: false, //Memblokir badword pada args
-    media: { // Membutuhkan media
-        type: ["audio"], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
-        msg: "Reply audionya?", // Respon jika tidak ada audio yang di-reply
-        etc: { // Lain-lain
-            seconds: 360, // Maksimal audio 360 detik
-            msg: "Audio tidak boleh lebih dari 360 detik!" // Respon jika lebih dari 360 detik
-        },
-        save: false // Jika true maka media akan disimpan dalam bentuk file audio.mp3
+    media: {
+      // Membutuhkan media
+      type: ['audio'], // Membutuhkan media bertipe audio (tipe terdiri dari audio, document, video, image, sticker) bisa digunakn bersama did alam array
+      msg: 'Reply audionya?', // Respon jika tidak ada audio yang di-reply
+      etc: {
+        // Lain-lain
+        seconds: 360, // Maksimal audio 360 detik
+        msg: 'Audio tidak boleh lebih dari 360 detik!', // Respon jika lebih dari 360 detik
+      },
+      save: false, // Jika true maka media akan disimpan dalam bentuk file audio.mp3
     },
-    urls: { //Membutuhkan url
-        formats: ["pinterest.com","pin.it"], //Format url
-        msg: true//respon message or msg: 'isi pesan balasan'
+    urls: {
+      //Membutuhkan url
+      formats: ['pinterest.com', 'pin.it'], //Format url
+      msg: true, //respon message or msg: 'isi pesan balasan'
     },
     isMention: true, //Membutuhkan mention (tag/reply/input nomor)
     isQuoted: false, //membutuhkan quoted
-}, ({ media }) => {
-    // media adalah kembalian dari media yang di-download, 
+  },
+  ({ media }) => {
+    // media adalah kembalian dari media yang di-download,
     // jika save false maka media adalah buffer,
     // jika save true maka media adalah nama file yang tersimpan
-});
+  }
+);
 ```
 
 ## 🙌 Thanks to All Contributors
@@ -148,4 +156,3 @@ Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau h
 - **Hanif skizo**  
   [Instagram](https://instagram.com/htr.ox)
   (Berkontribusi dalam: penambahan game chess.js)
-

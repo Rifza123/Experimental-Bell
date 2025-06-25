@@ -1,20 +1,25 @@
-export async function gpt(prompt){
+export async function gpt(prompt) {
   try {
-     let res = await fetch(`${api.xterm.url}/api/chat/gpt?key=${api.xterm.key}`, {
+    let res = await fetch(
+      `${api.xterm.url}/api/chat/gpt?key=${api.xterm.key}`,
+      {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-            messages:[{
-              role: "user",
-              content: prompt
-            }] 
-        })
-      })
-     return await res.json()
-   } catch(e) {
-     console.error("Error in gpt3.js: "+ e.message)
-     return {}
-   }
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      }
+    );
+    return await res.json();
+  } catch (e) {
+    console.error('Error in gpt3.js: ' + e.message);
+    return {};
+  }
 }

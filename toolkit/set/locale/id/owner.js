@@ -1,41 +1,41 @@
-let infos = Data.infos.owner ??= {}; 
+let infos = (Data.infos.owner ??= {});
 
-
-  /*/------- 
+/*/------- 
    MESSAGES
 /*/
 
-infos.succesSetLang = `*Berhasil merubah bahasa default ke bahasa:* \`<lang>\``
-infos.lockedPrem =  "Dapatkan akses premium untuk membuka fitur² terkunci"
-infos.unBannedSuccess = `*Berhasil, user @<sender> telah dihapus di hapus dari banned`
-infos.delBanned = `Anda telah dihapus dari daftar banned!\n_Sekarang anda telah diizinkan kembali mengunakan bot_!`
+infos.succesSetLang = `*Berhasil merubah bahasa default ke bahasa:* \`<lang>\``;
+infos.lockedPrem = 'Dapatkan akses premium untuk membuka fitur² terkunci';
+infos.unBannedSuccess = `*Berhasil, user @<sender> telah dihapus di hapus dari banned`;
+infos.delBanned = `Anda telah dihapus dari daftar banned!\n_Sekarang anda telah diizinkan kembali mengunakan bot_!`;
 
-infos.bannedSuccess = `*Berhasil membanned user!*\n ▪︎ User:\n- @<sender>\n ▪︎ Waktu ditambahkan: \n- <days>hari <hours>jam <minutes>menit <seconds>detik <milliseconds>ms\n\n`
-infos.addBanned = `\`Anda telah diblokir dari bot❗️\`\nWaktu: <days>hari <hours>jam <minutes>menit <seconds>detik <milliseconds>ms`
+infos.bannedSuccess = `*Berhasil membanned user!*\n ▪︎ User:\n- @<sender>\n ▪︎ Waktu ditambahkan: \n- <days>hari <hours>jam <minutes>menit <seconds>detik <milliseconds>ms\n\n`;
+infos.addBanned = `\`Anda telah diblokir dari bot❗️\`\nWaktu: <days>hari <hours>jam <minutes>menit <seconds>detik <milliseconds>ms`;
 
-infos.successSetVoice = `Success✅️\n\n- Voice: _<voice>_`
-infos.successSetLogic = `Sukses mengubah logic ai chat✅️\n\n\`New Logic:\`\n<logic>`
+infos.successSetVoice = `Success✅️\n\n- Voice: _<voice>_`;
+infos.successSetLogic = `Sukses mengubah logic ai chat✅️\n\n\`New Logic:\`\n<logic>`;
 
-infos.userNotfound = "Nomor salah atau user tidak terdaftar!"
-infos.wrongFormat = "*❗Format salah, silahkan periksa kembali*"
+infos.userNotfound = 'Nomor salah atau user tidak terdaftar!';
+infos.wrongFormat = '*❗Format salah, silahkan periksa kembali*';
 
-infos.successDelBadword = `Berhasil menghapus <input> kedalam list badword!`
-infos.successSetThumb = "Berhasil mengganti thumbnail menu!"
-infos.successAddBadword = `Berhasil menambahkan <input> kedalam list badword!`
-infos.isModeOn = `Maaf, <mode> sudah dalam mode on!`
-infos.isModeOff = `Maaf, <mode> sudah dalam mode off!`
+infos.successDelBadword = `Berhasil menghapus <input> kedalam list badword!`;
+infos.successSetThumb = 'Berhasil mengganti thumbnail menu!';
+infos.successAddBadword = `Berhasil menambahkan <input> kedalam list badword!`;
+infos.isModeOn = `Maaf, <mode> sudah dalam mode on!`;
+infos.isModeOff = `Maaf, <mode> sudah dalam mode off!`;
 
-infos.isModeOnSuccess = `Sukses mengaktifkan <mode>`
-infos.isModeOffSuccess = `Sukses menonaktifkan <mode>`
+infos.isModeOnSuccess = `Sukses mengaktifkan <mode>`;
+infos.isModeOffSuccess = `Sukses menonaktifkan <mode>`;
 
-infos.badword = `Mau add, delete atau lihat list?\nContoh: <cmd> add|tobrut`
-infos.badwordAddNotfound = `Action mungkin tidak ada dalam list!\n*List Action*: add, delete, list\n\n_Contoh: <cmd> add|tobrut_`
+infos.badword = `Mau add, delete atau lihat list?\nContoh: <cmd> add|tobrut`;
+infos.badwordAddNotfound = `Action mungkin tidak ada dalam list!\n*List Action*: add, delete, list\n\n_Contoh: <cmd> add|tobrut_`;
 
-infos.listSetmenu = `\`List type menu yang tersedia:\`\n\n- <list>`
-infos.successSetMenu = `Berhasil mengganti menu ke <menu>`
-infos.audiolist = `Sukses menambahkan audio ke dalam list <list>✅️\n\nAudio: <url>\n> Untuk melihat list silahkan ketik *.getdata audio <list>*`
-infos.menuLiveLocationInfo = "_Menu liveLocation tidak dapat terlihat di private chat. Harap pertimbangkan kembali untuk menggunakan menu ini_"
-infos.checkJson = `Harap periksa kembali JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`
+infos.listSetmenu = `\`List type menu yang tersedia:\`\n\n- <list>`;
+infos.successSetMenu = `Berhasil mengganti menu ke <menu>`;
+infos.audiolist = `Sukses menambahkan audio ke dalam list <list>✅️\n\nAudio: <url>\n> Untuk melihat list silahkan ketik *.getdata audio <list>*`;
+infos.menuLiveLocationInfo =
+  '_Menu liveLocation tidak dapat terlihat di private chat. Harap pertimbangkan kembali untuk menggunakan menu ini_';
+infos.checkJson = `Harap periksa kembali JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`;
 
 /*!-======[ Set Info ]======-!*/
 infos.set = `
@@ -64,7 +64,7 @@ infos.set = `
 - keyChecker <on/off>
 - chid <reply pesan (teruskan dari channel)
 
-_Example: .set public on_`
+_Example: .set public on_`;
 
 infos.premium_add = `
 *Panduan untuk menambahkan/mengurangi waktu premium (Hanya bisa digunakan oleh owner!)*
@@ -118,7 +118,7 @@ Example:
     ➡️ Menambahkan 1 hari 2 jam 30 menit 15 detik.
 
 \`Semoga panduan ini dibaca dengan teiti agar tidak lagi menanyakan kepada admin terkait cara penggunaanya, terimakasih\`
-`
+`;
 
 infos.setCall = `
 \`Cara Penggunaan:\`
@@ -132,9 +132,9 @@ Contoh: .set call reject+block
 \`LIST ACTION\`
 - reject (menolak panggilan)
 - block (memblokir pemanggil)
-`
-infos.successSetCall = "Berhasil mengatur anti call!\nAction: <action>"
-infos.successOffCall = "Berhasil menonaktifkan anti call!"
+`;
+infos.successSetCall = 'Berhasil mengatur anti call!\nAction: <action>';
+infos.successOffCall = 'Berhasil menonaktifkan anti call!';
 
 infos.setAutoreactSw = `
 \`Cara Penggunaan:\`
@@ -143,9 +143,10 @@ infos.setAutoreactSw = `
 - Contoh: .set autoreactsw 😀😂🤣😭😘🥰😍🤩🥳🤢🤮
 
 _Anda bisa menambahkan emoji sebanyak-banyaknya_
-`
-infos.successSetAutoreactSw = "Berhasil mengatur Autoreact SW!\nEmoji: <action>"
-infos.successOffAutoreactSw = "Berhasil menonaktifkan Autoreact SW!"
+`;
+infos.successSetAutoreactSw =
+  'Berhasil mengatur Autoreact SW!\nEmoji: <action>';
+infos.successOffAutoreactSw = 'Berhasil menonaktifkan Autoreact SW!';
 
 infos.setHadiah = `
 \`Cara Penggunaan:\`
@@ -154,7 +155,7 @@ infos.setHadiah = `
 
 \`LIST GAME\`
 <game>
-`
+`;
 
 infos.setFquoted = `
 \`Contoh penggunaan:\`
@@ -176,7 +177,7 @@ infos.setFquoted = `
       "conversation": "Termai"
     }
   }
-`
+`;
 
 infos.setAudio = `
 \`Contoh penggunaan:\`
@@ -190,13 +191,13 @@ infos.setAudio = `
    ~ _Kirimkan pesan dengan perintah *.set audio <name> <url>*_
      \`Contoh\`:
      - .setdata audio welcome https://catbox.moe/xxxxxxx.mp3
-`
+`;
 
 infos.delAudio = `
   ~ _Kirimkan pesan dengan perintah *.deldata audio <name> <url>*_
    \`Contoh\`:
    - .deldata audio welcome https://catbox.moe/xxxxxxx.mp3
-`
+`;
 
 infos.setLogic = `*Untuk mengubah logic:*
 
@@ -210,7 +211,7 @@ Profile: <Your Logic Here>
 \`Logic saat ini:\`
 Fullainame: <botfullname>
 Nickainame: <botnickname>
-Profile: <logic>`
+Profile: <logic>`;
 
 infos.banned = `*Panduan untuk melakukan banned user dengan jangka waktu tertentu (Hanya bisa digunakan oleh owner!)*
 
@@ -258,7 +259,7 @@ Contoh:
 - .banned @rifza|1d 2h 30m 15s 
     ➡️ Melakukan banned selama 1 hari 2 jam 30 menit 15 detik.
 
-\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
+\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``;
 
 infos.setRole = `*Panduan untuk mengubah role user (Hanya bisa digunakan oleh owner!)*
 
@@ -279,7 +280,7 @@ Contoh:
 \`LIST ROLE\`
 <role>
 
-\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``
+\`Pastikan membaca panduan ini dengan teliti agar tidak perlu bertanya lebih lanjut kepada admin terkait cara penggunaannya. Terima kasih.\``;
 
 infos.setAntiTagOwner = `**✦ PETUNJUK ANTI-TAG OWNER ✦**
 
@@ -292,4 +293,4 @@ Ketik \`.set antitagowner off\`
 • *Atur respon saat owner di-tag:*
 Balas pesan yang ingin dijadikan respon, lalu ketik:  
 \`.set antitagowner\`
-`
+`;

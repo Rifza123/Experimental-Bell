@@ -1,6 +1,7 @@
-let infos = Data.infos.about ??= {};
+let infos = (Data.infos.about ??= {});
 
-infos.help = "Sertakan pertanyaan yang ingin Anda tanyakan terkait bot ini untuk mendapatkan bantuan"
+infos.help =
+  'Sertakan pertanyaan yang ingin Anda tanyakan terkait bot ini untuk mendapatkan bantuan';
 
 infos.energy = `
 📌 *[Panduan Menambah/Mengurangi Energi]*
@@ -37,7 +38,7 @@ Anda dapat menambah atau mengurangi energi pengguna lain dengan beberapa metode 
 ⚠️ *[Catatan]*
 - 🔄 Gantilah \`[jumlah energi]\` dengan angka sesuai kebutuhan.
 - ✅ Pastikan target (username atau nomor) valid untuk menghindari kesalahan.
-`
+`;
 
 infos.stablediffusion = `*[ CARA PENGGUNAAN STABLEDIFFUSION (TXT2IMG) ]*
 
@@ -85,14 +86,14 @@ Command untuk menghasilkan gambar dengan teks: \`.txt2img <checkpoint>[<lora>]|<
 
 *[ INFORMASI TENTANG STABLEDIFFUSION ]*
 - *Stable Diffusion adalah model AI generatif yang mengubah teks deskripsi menjadi gambar. Menggunakan teknik *diffusion*, model ini secara bertahap menghasilkan gambar berdasarkan input teks yang diberikan, memungkinkan pembuatan gambar dengan gaya atau tema tertentu. Dengan dukungan model tambahan seperti LoRA, pengguna dapat menyesuaikan detail atau efek gambar lebih lanjut. Model ini bersifat open-source dan banyak digunakan dalam seni digital dan desain kreatif.*
-`
+`;
 
-infos.helpList = `\`LIST PANDUAN/BANTUAN\`\n\n<keys>`
+infos.helpList = `\`LIST PANDUAN/BANTUAN\`\n\n<keys>`;
 
 infos.helpNotfound = `*Ups kami tidak menemukan bantuan yang anda cari!*
 
 Mungkin anda sedang mencari:
-<top>`
+<top>`;
 
 infos.antilink = `📌 *Panduan Penggunaan Fitur Antilink Bot*
 
@@ -113,9 +114,9 @@ infos.antilink = `📌 *Panduan Penggunaan Fitur Antilink Bot*
    - Perintah: \`.antilink del <link>\`
    - *Gunakan perintah ini untuk menghapus URL dari daftar blokir.*
    - Contoh: \`.antilink del https://wa.me\`
-`
+`;
 
-infos.tfenergy =  `
+infos.tfenergy = `
     📌 *[ Panduan melakukan transfer Energy ]*
 
 *💡 Cara Penggunaan:*
@@ -143,4 +144,4 @@ infos.tfenergy =  `
 - ⚡Anda harus memiliki energy yang cukup untuk melakukan transfer 
 - 🔄 Gantilah \`[jumlah energi]\` dengan angka sesuai kebutuhan.
 - ✅ Pastikan target (username atau nomor) valid untuk menghindari kesalahan.
-    `
+    `;

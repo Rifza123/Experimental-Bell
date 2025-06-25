@@ -1,35 +1,47 @@
-let infos = Data.infos.ai ??= {};
+let infos = (Data.infos.ai ??= {});
 
-
-  /*/------- 
+/*/------- 
    MESSAGES
 /*/
 
-infos.isPrompt = "*Harap beri deskripsi gambarnya!*"
-infos.notfound = "Tidak ditemukan!"
-infos.isQuery = "Mau tanya apa?"
-infos.prompt = "Harap masukkan prompt!"
+infos.isPrompt = '*Harap beri deskripsi gambarnya!*';
+infos.notfound = 'Tidak ditemukan!';
+infos.isQuery = 'Mau tanya apa?';
+infos.prompt = 'Harap masukkan prompt!';
 
-infos.interactiveOn = "Berhasil!, ai_interactive telah diaktifkan dalam chat ini!"
-infos.interactiveOff = "Berhasil!, ai_interactive telah dimatikan dalam chat ini!"
-infos.interactiveOnGroup = "Berhasil!, ai_interactive telah diaktifkan di semua grup!"
-infos.interactiveOffGroup = "Berhasil!, ai_interactive telah dimatikan di semua chat group!"
-infos.interactiveOnPrivate = "Berhasil!, ai_interactive telah diaktifkan di semua chat private!"
-infos.interactiveOffPrivate = "Berhasil!, ai_interactive telah dimatikan di semua chat private!"
-infos.interactiveOnAll = "Berhasil!, ai_interactive telah diaktifkan di semua chat!"
-infos.interactiveOffAll = "Berhasil!, ai_interactive telah dimatikan di semua chat!"
-infos.interactiveOnEnergy = "Berhasil!, sekarang energy bisa didapatkan dari interaksi!"
-infos.interactiveOffEnergy = "Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!"
-infos.interactiveOffPartResponse = "Berhasil menonaktifkan partResponse ai!"
-infos.interactiveOnPartResponse = "Berhasil mengaktifkan part-response ai!, sekarang AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis."
-infos.failTryImage = "Maaf terjadi kesalhan. coba gunakan gambar lain!"
-infos.payInstruction = "*Perhatikan petunjuk berikut!*"
+infos.interactiveOn =
+  'Berhasil!, ai_interactive telah diaktifkan dalam chat ini!';
+infos.interactiveOff =
+  'Berhasil!, ai_interactive telah dimatikan dalam chat ini!';
+infos.interactiveOnGroup =
+  'Berhasil!, ai_interactive telah diaktifkan di semua grup!';
+infos.interactiveOffGroup =
+  'Berhasil!, ai_interactive telah dimatikan di semua chat group!';
+infos.interactiveOnPrivate =
+  'Berhasil!, ai_interactive telah diaktifkan di semua chat private!';
+infos.interactiveOffPrivate =
+  'Berhasil!, ai_interactive telah dimatikan di semua chat private!';
+infos.interactiveOnAll =
+  'Berhasil!, ai_interactive telah diaktifkan di semua chat!';
+infos.interactiveOffAll =
+  'Berhasil!, ai_interactive telah dimatikan di semua chat!';
+infos.interactiveOnEnergy =
+  'Berhasil!, sekarang energy bisa didapatkan dari interaksi!';
+infos.interactiveOffEnergy =
+  'Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!';
+infos.interactiveOffPartResponse = 'Berhasil menonaktifkan partResponse ai!';
+infos.interactiveOnPartResponse =
+  'Berhasil mengaktifkan part-response ai!, sekarang AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis.';
+infos.failTryImage = 'Maaf terjadi kesalhan. coba gunakan gambar lain!';
+infos.payInstruction = '*Perhatikan petunjuk berikut!*';
 
 //Faceswap
-infos.noSessionFaceswap = "Tidak ada sesi faceswap"
-infos.successResetSessionFaceswap = "Berhasil mereset session faceswap!"
-infos.cannotChangeFace = "Tidak dapat merubah, hanya ada 1 gambar dalam sesi swap!"
-infos.successChangeFace = "Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!"
+infos.noSessionFaceswap = 'Tidak ada sesi faceswap';
+infos.successResetSessionFaceswap = 'Berhasil mereset session faceswap!';
+infos.cannotChangeFace =
+  'Tidak dapat merubah, hanya ada 1 gambar dalam sesi swap!';
+infos.successChangeFace =
+  'Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!';
 
 /*!-======[ Lora Info ]======-!*/
 infos.lora_models = [
@@ -51,8 +63,8 @@ infos.lora_models = [
   'Hisoka morow',
   'Ling Luochen ▪︎ The Unrivaled Tang Sect',
   'Tang Wutong ▪︎ The Unrivaled Tang Sect',
-  'Huo Yuhao ▪︎ The Unrivaled Tang Sect'
-]
+  'Huo Yuhao ▪︎ The Unrivaled Tang Sect',
+];
 infos.lora = `
 *Perhatikan petunjuk berikut!*
  \`\`\`[ StableDiffusion - Lora++ ]\`\`\`
@@ -65,9 +77,9 @@ Contoh: #lora 3|beautyfull cat with aesthetic jellyfish, sea god themes
 _*silahkan lihat list model yang tersedia:*_
 
 *[ID] [NAME]*
-`
-for(let _=0;_<infos.lora_models.length;_++){
-  infos.lora += `\n[${_+1}] [${infos.lora_models[_]}]`
+`;
+for (let _ = 0; _ < infos.lora_models.length; _++) {
+  infos.lora += `\n[${_ + 1}] [${infos.lora_models[_]}]`;
 }
 
 /*!-======[ Filters Info ]======-!*/
@@ -86,7 +98,7 @@ List Type:
 ▪︎ Digital:
 - steam
 
-_Contoh: .filters steam_`
+_Contoh: .filters steam_`;
 
 /*!-======[ Text To Image Info ]======-!*/
 infos.txt2img = `
@@ -114,7 +126,7 @@ Param: \`.txt2img <checkpoint>[<lora>]|<prompt>\`
  - lora: .lorasearch <query>
  - checkpoint: .checkpointsearch <query>
 
-`
+`;
 
 infos.faceSwap = (cht) => {
   return `
@@ -147,8 +159,8 @@ _Gambar target akan diganti dengan wajah pafa gambar kedua_
        akan menjadi gambar target_
 
 _Sesi akan otomatis terhapus jika lebih dari 10 menit tidak ada interaksi swap_
-`
-}
+`;
+};
 
 infos.startedFaceswap = `Sesi berhasil dibuat. silahkan reply chatbot dengan gambar wajah.
 Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar berikutnya
@@ -163,7 +175,7 @@ Gambar pertama adalah gambar target yang akan diganti dengan wajah pada gambar b
        akan menjadi gambar target_
 
 _Sesi akan otomatis terhapus setelah 10 menit_
-`
+`;
 
 /*!-======[ Auto Bell info ]======-!*/
 infos.bell = `
@@ -209,4 +221,4 @@ _List setting:_
 
 *Contoh:*
 > .bell on
-`
+`;

@@ -1,15 +1,18 @@
-let infos = Data.infos.reaction ??= {};
+let infos = (Data.infos.reaction ??= {});
 
 /* ---
    PENTING!
    Jangan ubah teks dalam tanda kurung <> karena merupakan format kunci.
 --- */
 
-
-infos.play = "To play YouTube using a reaction, please react to the message containing the text."
-infos.download = "Currently, we are unable to download the URL <url>\nSupported list:\n- <listurl>"
-infos.translate = "Please react with <emoji> to the text message to translate it to Indonesian."
-infos.delete = "Delete message using a special react is only for admins if the target is not a message I sent."
+infos.play =
+  'To play YouTube using a reaction, please react to the message containing the text.';
+infos.download =
+  'Currently, we are unable to download the URL <url>\nSupported list:\n- <listurl>';
+infos.translate =
+  'Please react with <emoji> to the text message to translate it to Indonesian.';
+infos.delete =
+  'Delete message using a special react is only for admins if the target is not a message I sent.';
 
 infos.menu = ` *[ LIST REACTION CMD ]*
 
@@ -55,4 +58,4 @@ infos.menu = ` *[ LIST REACTION CMD ]*
 
 *Guide:*
 _*React to the target message with one of the emojis above*_
-` 
+`;

@@ -1,5 +1,4 @@
-let infos = Data.infos.tools ??= {};
-
+let infos = (Data.infos.tools ??= {});
 
 /*!-======[ Enhance Info ]======-!*/
 infos.enhance = `
@@ -19,4 +18,4 @@ infos.enhance = `
 - text
 
 _How to use: #enhance phox4_
-`
+`;

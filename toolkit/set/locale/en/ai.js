@@ -1,35 +1,47 @@
-let infos = Data.infos.ai ??= {};
+let infos = (Data.infos.ai ??= {});
 
-
-  /*/------- 
+/*/------- 
    MESSAGES
 /*/
 
-infos.isPrompt = "*Please describe the image!*"
-infos.notfound = "Not found!"
-infos.isQuery = "Please input with query!"
-infos.prompt = "Please input prompt!"
+infos.isPrompt = '*Please describe the image!*';
+infos.notfound = 'Not found!';
+infos.isQuery = 'Please input with query!';
+infos.prompt = 'Please input prompt!';
 
-infos.interactiveOn = "Success! ai_interactive has been enabled in this chat!";
-infos.interactiveOff = "Success! ai_interactive has been disabled in this chat!";
-infos.interactiveOnGroup = "Success! ai_interactive has been enabled in all groups!";
-infos.interactiveOffGroup = "Success! ai_interactive has been disabled in all group chats!";
-infos.interactiveOnPrivate = "Success! ai_interactive has been enabled in all private chats!";
-infos.interactiveOffPrivate = "Success! ai_interactive has been disabled in all private chats!";
-infos.interactiveOnAll = "Success! ai_interactive has been enabled in all chats!";
-infos.interactiveOffAll = "Success! ai_interactive has been disabled in all chats!";
-infos.interactiveOnEnergy = "Success! energy can now be earned from interactions!";
-infos.interactiveOffEnergy = "Success! energy can no longer be earned from interactions!";
-infos.interactiveOffPartResponse = "Successfully disabled partResponse ai!"
-infos.interactiveOnPartResponse = "Successfully activated part-response ai!, now AI can give responses in stages, creating a more realistic impression."
+infos.interactiveOn = 'Success! ai_interactive has been enabled in this chat!';
+infos.interactiveOff =
+  'Success! ai_interactive has been disabled in this chat!';
+infos.interactiveOnGroup =
+  'Success! ai_interactive has been enabled in all groups!';
+infos.interactiveOffGroup =
+  'Success! ai_interactive has been disabled in all group chats!';
+infos.interactiveOnPrivate =
+  'Success! ai_interactive has been enabled in all private chats!';
+infos.interactiveOffPrivate =
+  'Success! ai_interactive has been disabled in all private chats!';
+infos.interactiveOnAll =
+  'Success! ai_interactive has been enabled in all chats!';
+infos.interactiveOffAll =
+  'Success! ai_interactive has been disabled in all chats!';
+infos.interactiveOnEnergy =
+  'Success! energy can now be earned from interactions!';
+infos.interactiveOffEnergy =
+  'Success! energy can no longer be earned from interactions!';
+infos.interactiveOffPartResponse = 'Successfully disabled partResponse ai!';
+infos.interactiveOnPartResponse =
+  'Successfully activated part-response ai!, now AI can give responses in stages, creating a more realistic impression.';
 
-infos.failTryImage = "Sorry, there was an error. Please try using another image!"
-infos.payInstruction = "*Please pay attention to the following instructions!*"
+infos.failTryImage =
+  'Sorry, there was an error. Please try using another image!';
+infos.payInstruction = '*Please pay attention to the following instructions!*';
 
-infos.noSessionFaceswap = "No faceswap session found";
-infos.successResetSessionFaceswap = "Successfully reset the faceswap session!";
-infos.cannotChangeFace = "Cannot swap, there is only 1 image in the swap session!";
-infos.successChangeFace = "Successfully swapped the target image with the last image you sent as the face!";
+infos.noSessionFaceswap = 'No faceswap session found';
+infos.successResetSessionFaceswap = 'Successfully reset the faceswap session!';
+infos.cannotChangeFace =
+  'Cannot swap, there is only 1 image in the swap session!';
+infos.successChangeFace =
+  'Successfully swapped the target image with the last image you sent as the face!';
 
 /*!-======[ Lora Info ]======-!*/
 infos.lora_models = [
@@ -51,8 +63,8 @@ infos.lora_models = [
   'Hisoka morow',
   'Ling Luochen ▪︎ The Unrivaled Tang Sect',
   'Tang Wutong ▪︎ The Unrivaled Tang Sect',
-  'Huo Yuhao ▪︎ The Unrivaled Tang Sect'
-]
+  'Huo Yuhao ▪︎ The Unrivaled Tang Sect',
+];
 
 infos.lora = `
 *Please follow the instructions below!*
@@ -66,9 +78,9 @@ Example: #lora 3|beautiful cat with aesthetic jellyfish, sea god themes
 _*please check the available model list:*_
 
 *[ID] [NAME]*
-`
-for(let _=0;_<infos.lora_models.length;_++){
-  infos.lora += `\n[${_+1}] [${infos.lora_models[_]}]`
+`;
+for (let _ = 0; _ < infos.lora_models.length; _++) {
+  infos.lora += `\n[${_ + 1}] [${infos.lora_models[_]}]`;
 }
 
 /*!-======[ Filters Info ]======-!*/
@@ -87,7 +99,7 @@ List of Types:
 ▪︎ Digital:
 - steam
 
-_Example: .filters steam_`
+_Example: .filters steam_`;
 
 /*!-======[ Text To Image Info ]======-!*/
 infos.txt2img = `
@@ -115,7 +127,7 @@ Param: \`.txt2img <checkpoint>[<lora>]|<prompt>\`
  - lora: .lorasearch <query>
  - checkpoint: .checkpointsearch <query>
 
-`
+`;
 
 infos.faceSwap = (cht) => {
   return `
@@ -147,8 +159,8 @@ _The target image will be replaced with the face from the second image._
      ~ _The last image you sent will become the target image_
 
 _The session will automatically be deleted if there is no swap interaction for more than 10 minutes_
-`
-} 
+`;
+};
 
 infos.startedFaceswap = `
 **Session created successfully. Please reply to the chatbot with a face image.**  
@@ -163,7 +175,7 @@ The first image will be the target image, which will be replaced by the face in 
      ~ _The last image you sent will become the target image_
 
 _The session will automatically be deleted after 10 minutes._
-`.trim()
+`.trim();
 
 infos.bell = `
 !-======[ Auto AI Response ]======-!
@@ -208,4 +220,4 @@ _List of settings:_
     
 *Example:*
 > .bell on
-`
+`;

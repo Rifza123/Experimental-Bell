@@ -1,15 +1,18 @@
-let infos = Data.infos.reaction ??= {};
+let infos = (Data.infos.reaction ??= {});
 
 /* ---
    PENTING!
    Jangan ubah teks dalam tanda kurung <> karena merupakan format kunci.
 --- */
 
-
-infos.play = "Untuk melakukan play youtube menggunakan react, harap beri react kepada pesan yang berisi teks"
-infos.download = "Saat ini kami belum bisa mengunduh url <url>\nList yang didukung:\n- <listurl>"
-infos.translate = "Harap beri reaksi <emoji> ke pesan teks untuk menerjemahkan ke bahasa indonesia"
-infos.delete = "Manghapus pesan menggunakan react khusus hanya untuk admin jika target bukan pesan yang saya kirimkan"
+infos.play =
+  'Untuk melakukan play youtube menggunakan react, harap beri react kepada pesan yang berisi teks';
+infos.download =
+  'Saat ini kami belum bisa mengunduh url <url>\nList yang didukung:\n- <listurl>';
+infos.translate =
+  'Harap beri reaksi <emoji> ke pesan teks untuk menerjemahkan ke bahasa indonesia';
+infos.delete =
+  'Manghapus pesan menggunakan react khusus hanya untuk admin jika target bukan pesan yang saya kirimkan';
 
 infos.menu = ` *[ LIST REACTION CMD ]*
 
@@ -55,5 +58,4 @@ infos.menu = ` *[ LIST REACTION CMD ]*
 
 *Guide:*
 _*Beri reaksi ke pesan target dengan salah satu emoji di atas*_
-`
-
+`;

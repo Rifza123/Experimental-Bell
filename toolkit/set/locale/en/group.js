@@ -1,4 +1,4 @@
-let infos = Data.infos.group ??= {};
+let infos = (Data.infos.group ??= {});
 
 /* ---
    PENTING!
@@ -8,6 +8,8 @@ infos.settings = `Available options:\n\n- <options>`;
 
 infos.kick_add = `*Include the number/Reply/tag the target to be <cmd> from the group!*\n\nExample: \n\n*Method #1* => _By replying to the target's message_\n - <prefix><cmd>\n \n*Method #2* => _By tagging the target_\n - <prefix><cmd> @rifza \n \n*Method #3* => _By using the target's number_\n - <prefix><cmd> +62 831-xxxx-xxxx`;
 
-infos.on = (cmd, input) => `Successfully ${cmd == "on" ? "enabled" : "disabled"} *${input}* in this group!`;
+infos.on = (cmd, input) =>
+  `Successfully ${cmd == 'on' ? 'enabled' : 'disabled'} *${input}* in this group!`;
 
-infos.nallowPlayGame = "Playing games is not allowed here!\n_To allow it, you can type *.on playgame* (can only be done by admin/owner)_";
+infos.nallowPlayGame =
+  'Playing games is not allowed here!\n_To allow it, you can type *.on playgame* (can only be done by admin/owner)_';

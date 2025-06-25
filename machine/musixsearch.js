@@ -1,20 +1,26 @@
 async function musixSearch(buffer) {
   try {
-    let response = await fetch(`${api.xterm.url}/api/audioProcessing/whatmusic?key=${api.xterm.key}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      },
-      body: buffer
-    })
-    let result = await response.json()
-    let title =  result.data !== null ? result.data.artists + ", " + result.data.title : "Gatau deh"
+    let response = await fetch(
+      `${api.xterm.url}/api/audioProcessing/whatmusic?key=${api.xterm.key}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+        body: buffer,
+      }
+    );
+    let result = await response.json();
+    let title =
+      result.data !== null
+        ? result.data.artists + ', ' + result.data.title
+        : 'Gatau deh';
 
-    return title
+    return title;
   } catch (error) {
-    console.error('Error in musixsearch: ', error)
-    return "gagal!"
+    console.error('Error in musixsearch: ', error);
+    return 'gagal!';
   }
 }
 
-export { musixSearch }
+export { musixSearch };

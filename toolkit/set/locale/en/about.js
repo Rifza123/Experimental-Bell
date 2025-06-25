@@ -1,6 +1,7 @@
-let infos = Data.infos.about ??= {};
+let infos = (Data.infos.about ??= {});
 
-infos.help = "Include the question you want to ask about this bot to get assistance.";
+infos.help =
+  'Include the question you want to ask about this bot to get assistance.';
 
 infos.energy = `
 📌 *[Guide to Adding/Reducing Energy]*
@@ -116,7 +117,7 @@ infos.antilink = `📌 *Bot Antilink Feature Guide*
    - Example: \`.antilink del https://wa.me\`
 `;
 
-infos.tfenergy =  `
+infos.tfenergy = `
     📌 *[ Guide to Transferring Energy ]*
 
 *💡 How to Use:*

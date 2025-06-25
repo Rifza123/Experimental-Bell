@@ -1,42 +1,43 @@
-let infos = Data.infos.owner ??= {}; 
+let infos = (Data.infos.owner ??= {});
 
-  /*/------- 
+/*/------- 
    MESSAGES
 /*/
-infos.succesSetLang = `*Successfully changed the default language to:* \`<lang>\``
-infos.unBannedSuccess = `*Success! The user @<sender> has been removed from the banned list*`
-infos.delBanned = `You have been removed from the banned list!\n_You are now allowed to use the bot again!_`
+infos.succesSetLang = `*Successfully changed the default language to:* \`<lang>\``;
+infos.unBannedSuccess = `*Success! The user @<sender> has been removed from the banned list*`;
+infos.delBanned = `You have been removed from the banned list!\n_You are now allowed to use the bot again!_`;
 
-infos.bannedSuccess = `*Successfully banned the user!*\n ▪︎ User:\n- @<sender>\n ▪︎ Duration added:\n- <days>days <hours>hours <minutes>minutes <seconds>seconds <milliseconds>ms\n\n`
-infos.addBanned = `\`You have been blocked from the bot❗️\`\nDuration: <days>days <hours>hours <minutes>minutes <seconds>seconds <milliseconds>ms`
+infos.bannedSuccess = `*Successfully banned the user!*\n ▪︎ User:\n- @<sender>\n ▪︎ Duration added:\n- <days>days <hours>hours <minutes>minutes <seconds>seconds <milliseconds>ms\n\n`;
+infos.addBanned = `\`You have been blocked from the bot❗️\`\nDuration: <days>days <hours>hours <minutes>minutes <seconds>seconds <milliseconds>ms`;
 
-infos.successSetVoice = `Success✅️\n\n- Voice: _<voice>_`
-infos.successSetLogic = `Success change logic ai chat✅️\n\n\`New Logic:\`\n<logic>`
+infos.successSetVoice = `Success✅️\n\n- Voice: _<voice>_`;
+infos.successSetLogic = `Success change logic ai chat✅️\n\n\`New Logic:\`\n<logic>`;
 
-infos.userNotfound = "Wrong number or user not registered❗️"
-infos.wrongFormat = "*❗Incorrect format, please check again*"
+infos.userNotfound = 'Wrong number or user not registered❗️';
+infos.wrongFormat = '*❗Incorrect format, please check again*';
 
-infos.successDelBadword = `Successfully deleted<input> into the badword list! `
-infos.successSetThumb = "Successfully changed menu thumbnail!"
-infos.successAddBadword = `Successfully added<input> into the list badword!`
+infos.successDelBadword = `Successfully deleted<input> into the badword list! `;
+infos.successSetThumb = 'Successfully changed menu thumbnail!';
+infos.successAddBadword = `Successfully added<input> into the list badword!`;
 
-infos.isModeOn = `Sory, <mode> already in on mode!`
-infos.isModeOff = `Sory, <mode> already in off mode!`
+infos.isModeOn = `Sory, <mode> already in on mode!`;
+infos.isModeOff = `Sory, <mode> already in off mode!`;
 
-infos.isModeOnSuccess = `Successful activation <mode>`
-infos.isModeOffSuccess = `Successfully disabled <mode>`
+infos.isModeOnSuccess = `Successful activation <mode>`;
+infos.isModeOffSuccess = `Successfully disabled <mode>`;
 
-infos.badword = `Want to add, delete or view the list?\nExample:<cmd> add|tobrut`
-infos.badwordAddNotfound = `Action may not be in the list!\n*List Action*: add, delete, list\n\n_Example:<cmd> add|tobrut_`
+infos.badword = `Want to add, delete or view the list?\nExample:<cmd> add|tobrut`;
+infos.badwordAddNotfound = `Action may not be in the list!\n*List Action*: add, delete, list\n\n_Example:<cmd> add|tobrut_`;
 
-infos.listSetmenu = `\`List of available menu types:\`\n\n- <list>`
-infos.successSetMenu = `Successfully changed the menu to <menu>`
-infos.lockedPrem =  "Get premium access to unlock locked features!"
+infos.listSetmenu = `\`List of available menu types:\`\n\n- <list>`;
+infos.successSetMenu = `Successfully changed the menu to <menu>`;
+infos.lockedPrem = 'Get premium access to unlock locked features!';
 
-infos.audiolist = `Successfully added audio to the list<list> ✅️\n\nAudio:<url> \n> To see the list please type *.getdata audio<list> *`
-infos.menuLiveLocationInfo = "_The liveLocation menu is not visible in private chat. Please reconsider using this menu._"
-infos.checkJson = `Please double check the JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`
- 
+infos.audiolist = `Successfully added audio to the list<list> ✅️\n\nAudio:<url> \n> To see the list please type *.getdata audio<list> *`;
+infos.menuLiveLocationInfo =
+  '_The liveLocation menu is not visible in private chat. Please reconsider using this menu._';
+infos.checkJson = `Please double check the JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`;
+
 /*!-======[ Set Info ]======-!*/
 infos.set = `
 [ BOT SETTING ]
@@ -64,7 +65,7 @@ infos.set = `
 - keyChecker <on/off>
 - chid <reply message (forward from channell)
 
-_Example: .set public on_`
+_Example: .set public on_`;
 
 infos.setCall = `
 \`How to Use:\`
@@ -78,9 +79,9 @@ Example: .set call reject+block
 \`LIST ACTION\`
 - reject (decline the call)
 - block (block the caller)
-`
-infos.successSetCall = "Successfully set anti call!\nAction: <action>"
-infos.successOffCall = "Successfully turned off anti call!"
+`;
+infos.successSetCall = 'Successfully set anti call!\nAction: <action>';
+infos.successOffCall = 'Successfully turned off anti call!';
 
 infos.setAutoreactSw = `
 \`How to use:\`
@@ -89,9 +90,10 @@ infos.setAutoreactSw = `
 - Contoh: .set autoreactsw 😀😂🤣😭😘🥰😍🤩🥳🤢🤮
 
 _You can add as many emojis as you like_
-`
-infos.successSetAutoreactSw = "Successfully setup Autoreact SW!\nEmoji: <action>"
-infos.successOffAutoreactSw = "Successfully disabled Autoreact SW!"
+`;
+infos.successSetAutoreactSw =
+  'Successfully setup Autoreact SW!\nEmoji: <action>';
+infos.successOffAutoreactSw = 'Successfully disabled Autoreact SW!';
 
 infos.setHadiah = `
 \`How to Use:\`
@@ -100,7 +102,7 @@ infos.setHadiah = `
 
 \`LIST GAME\`
 <game>
-`
+`;
 
 infos.premium_add = `
 *Guide to Adding/Removing Premium Time (Owner-Only Feature)*
@@ -153,7 +155,7 @@ Examples:
 - .addprem @rifza|1d 2h 30m 15s 
     ➡️ Adds 1 day 2 hours 30 minutes 15 seconds.
 
-\`Please read this guide carefully to avoid needing further assistance from the admin. Thank you.\``
+\`Please read this guide carefully to avoid needing further assistance from the admin. Thank you.\``;
 
 infos.setFquoted = `
 \`Usage Examples:\`
@@ -175,7 +177,7 @@ infos.setFquoted = `
       "conversation": "Termai"
     }
   }
-`
+`;
 
 infos.setAudio = `
 \`Usage Examples:\`
@@ -189,13 +191,13 @@ infos.setAudio = `
    ~ _Send a message with the command *.set audio <name> <url>*_
      \`Example\`:
      - .setdata audio welcome https://catbox.moe/xxxxxxx.mp3
-     `
+     `;
 
 infos.delAudio = `
 ~ _Send a message with the command *.deldata audio <name> <url>*_
    \`Example\`:
    - .deldata audio welcome https://catbox.moe/xxxxxxx.mp3
-`
+`;
 
 infos.setLogic = `
 *To modify the logic:*
@@ -211,7 +213,7 @@ Profile: <Your Logic Here>
 Fullainame: <botfullname>
 Nickainame: <botnickname>
 Profile: <logic>
-`
+`;
 
 infos.banned = `
 *Guide for Temporarily Banning a User (Owner-Only Feature)*
@@ -261,7 +263,7 @@ Examples:
     ➡️ Bans for 1 day 2 hours 30 minutes 15 seconds.
 
 \`Please read this guide carefully to avoid needing further assistance from the admin. Thank you.\`
-`
+`;
 
 infos.setRole = `*Guide to Changing User Roles (Owner Only!)*
 
@@ -282,7 +284,7 @@ Examples:
 \`ROLE LIST\`
 <role>
 
-\`Make sure to read this guide carefully to avoid asking the admin about how to use this feature. Thank you.\``
+\`Make sure to read this guide carefully to avoid asking the admin about how to use this feature. Thank you.\``;
 
 infos.setAntiTagOwner = `**✦ ANTI-TAG OWNER GUIDE ✦**
 
@@ -295,4 +297,4 @@ Type \`.set antitagowner off\`
 • *Set the response when owner is tagged:*
 Reply to the message you want to use as the response, then type:  
 \`.set antitagowner\`
-`
+`;

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "start",
-    "start": "node index"
+    "start": "node index",
+    "format": "node toolkit/prettier.js"
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,7 @@
     "chalk": "^3.0.0",
     "cheerio": "^1.0.0-rc.12",
     "chokidar": "^3.6.0",
+    "dotenv": "^16.5.0",
     "escape-string-regexp": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "jimp": "^0.16.1",
@@ -37,5 +39,8 @@
     "path": "^0.12.7",
     "qrcode-terminal": "^0.12.0",
     "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.1"
   }
 }

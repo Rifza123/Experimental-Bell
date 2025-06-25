@@ -55,9 +55,7 @@
         "displayName": "My Owner",
         "vcard": "BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN: Louis CPANEL\nitem1.TEL;waid=62815637773670:62815637773670\nitem1.X-ABLabel:\nPlease Don't Spam My Owner\nURL;Email Owner:Louis CPANEL@gmail.com\nORG: INI OWNER\nEND:VCARD",
         "contextInfo": {
-          "mentionedJid": [
-            "6283110928302@s.whatsapp.net"
-          ]
+          "mentionedJid": ["6283110928302@s.whatsapp.net"]
         }
       }
     }
@@ -85,12 +83,7 @@
             "mediaKeyTimestamp": "1730548356",
             "jpegThumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAD4ALwMBIgACEQEDEQH/xAAvAAADAQEBAAAAAAAAAAAAAAACBAUDAQYBAQEBAQEAAAAAAAAAAAAAAAIDAAEE/9oADAMBAAIQAxAAAABqhHa3Z08Rc/QhOthgCTtZqz7KApOvhm5SmgaLMtjyzk2ZGO26e9fP3efmL0Z7eR7/AP/EACYQAAICAgEDBAIDAAAAAAAAAAECAAMEERITITEiQlFhBSMkQXH/2gAIAQEAAT8AvyAtqBfB8yvXn6n5NsfrEgktKrQrgkA/Uxxi3Lz6Yi4q2WWFPSJkD+QnbtMm3pY5Ihrd2+zHrKE7mFfpwJjP2ft7o43YDMxOpUq/cXGZBv3TK5lvUO8FbVhWIImMf0AyrL2dN5gvUkbELnny7ahIbIVj8zOQPSdDxMS0GjXxOLj+pjl7GIPgQqQP8hqDgdu8IcoVJ2IOVLukJsUgGJyRSTEQFATCQogbazM2HDCMFLg6jaKERMnVYr904/rJLbPzKnYpMrk1gE5d4jHRnFbWJHZhOrZopymK3oMv11AZ/8QAHBEBAQACAgMAAAAAAAAAAAAAAQACERBBEiEx/9oACAECAQE/APD5GJOOuB98Al3DJojTd3//xAAbEQADAQADAQAAAAAAAAAAAAAAAQIREiExMv/aAAgBAwEBPwDmOmKtPCknJpqbwzoqVhNOrSGms0fyf//Z",
             "scansSidecar": "hAu7ZdwylPLAYwQH5d0HIFpf/LpDAtzfaQh4Q3TFI+TzuMaVpkF/RQ==",
-            "scanLengths": [
-              9431,
-              28192,
-              13043,
-              20580
-            ],
+            "scanLengths": [9431, 28192, 13043, 20580],
             "midQualityFileSha256": "zJYYz7ZY7f9Fg1LdAko0zgm9upIyXO63JgOlI7Gco+0="
           },
           "productId": "8080277038663215",

@@ -1,7 +1,5 @@
 {
-  "welcome": [
-    "https://files.catbox.moe/1ouo5c.mp3"
-  ],
+  "welcome": ["https://files.catbox.moe/1ouo5c.mp3"],
   "adzan": [
     "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan1.mp3",
     "https://github.com/Rifza123/lib/raw/refs/heads/main/db/audio/adzan2.mp3",
