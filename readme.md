@@ -156,3 +156,8 @@ Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau h
 - **Hanif skizo**  
   [Instagram](https://instagram.com/htr.ox)
   (Berkontribusi dalam: penambahan game chess.js)
+
+## 📄 License
+
+[MIT](./LICENSE) © Rifza
+```
