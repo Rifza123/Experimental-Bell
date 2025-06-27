@@ -160,4 +160,3 @@ Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau h
 ## 📄 License
 
 [MIT](./LICENSE) © Rifza
-```
