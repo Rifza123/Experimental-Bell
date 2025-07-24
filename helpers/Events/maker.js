@@ -301,6 +301,44 @@ export default async function on({ cht, Exp, store, ev, is }) {
       );
     }
   );
+  
+  ev.on(
+    {
+      cmd: ['iqc','iqc-wa'],
+      listmenu: ['iqc','iqc-wa'],
+      tag: 'maker',
+      energy: 5,
+      args: `Example: ${cht.msg} halo`,
+    },
+    async ({ args }) => {
+      let emoji = cht.cmd.includes("wa") ? 'whatsapp':'ios'
+      const formatter = new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+
+    const parts = formatter.formatToParts(new Date());
+    const h = parts.find((p) => p.type === 'hour').value;
+    const min = parts.find((p) => p.type === 'minute').value;
+
+      Exp.sendMessage(
+        id,
+        {
+          image: {
+            url: `${api.xterm.url + '/api/maker/iqc?text=' + encodeURIComponent(args)}&emojiType=${emoji}&timestamp=${h}:${min}&key=${api.xterm.key}`,
+          },
+          ai: true,
+        },
+        {
+          quoted: cht,
+        }
+      );
+    }
+  );
 
   ev.on(
     {

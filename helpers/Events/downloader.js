@@ -120,6 +120,73 @@ export default async function on({ cht, Exp, store, ev, is }) {
       );
     }
   );
+  
+  
+  ev.on(
+    {
+      cmd: ['spotify', 'spotdl', 'spodl'],
+      listmenu: ['spotify'],
+      tag: 'downloader',
+      urls: {
+        formats: ['spotify.com', 'open.spotify.com'],
+        msg: true,
+      },
+      energy: 15,
+    },
+    async ({ urls }) => {
+      const _key = keys[sender];
+      await cht.edit(infos.messages.wait, _key);
+      let data = (
+        await fetch(
+          api.xterm.url +
+            '/api/downloader/spotify?url=' +
+            urls[0] +
+            '&key=' +
+            api.xterm.key
+        ).then((a) => a.json())
+      ).data;
+      let duration = data.trackDuration
+      let m = Math.floor((duration % 3600) / 60);
+      let s = duration % 60;
+      let text = '*!-======[ Spotify🎵 ]======-!*\n';
+      text += `\nTrack: ${data.trackName}`;
+      text += `\nAccount: ${data.albumName}`;
+      text += `\nAlbumReleaseDate: ${data.albumReleaseDate}`;
+      text += `\nArtists: ${data.artists.join(", ")}`;
+      text += `\nTrackDuration: ${m +':'+ s}`;
+      text += `\nTrackPopularity: ${data.trackPopularity}`;
+      text += `\nTrackUrl: ${data.trackUrl}`;
+      const info = {
+        text,
+        contextInfo: {
+          externalAdReply: {
+            title: cht.pushName,
+            body: 'Spotify Downloader',
+            thumbnailUrl: data.albumImageUrl,
+            sourceUrl: 'https://github.com/Rifza123',
+            mediaUrl:
+              'http://ẉa.me/6283110928302/' +
+              Math.floor(Math.random() * 100000000000000000),
+            renderLargerThumbnail: true,
+            mediaType: 1,
+          },
+          forwardingScore: 19,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterName: 'Termai',
+            newsletterJid: '120363301254798220@newsletter',
+          },
+        },
+      };
+      await Exp.sendMessage(id, info, { quoted: cht });
+      await cht.edit(infos.messages.sending, _key);
+      await Exp.sendMessage(
+        id,
+        { audio: { url: data.downloadUrl }, mimetype: 'audio/mpeg' },
+        { quoted: cht }
+      );
+    }
+  );
 
   ev.on(
     {
@@ -182,7 +249,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             id,
             {
               image: { url: image.url },
-              caption: image.width + 'x' + image.height,
+             // caption: image.width + 'x' + image.height,
             },
             { quoted: cht }
           );
