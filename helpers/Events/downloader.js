@@ -123,6 +123,82 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
+      cmd: ['rednote', 'renotedl', 'xiaohongshu'],
+      listmenu: ['rednote', 'xiaohongshu'],
+      tag: 'downloader',
+      urls: {
+        formats: ['xhslink.com', 'xiaohongshu.com'],
+        msg: true,
+      },
+      energy: 5,
+    },
+    async ({ urls }) => {
+      const _key = keys[sender];
+      await cht.edit(infos.messages.wait, _key);
+
+      let res = await await fetch(
+        api.xterm.url +
+          '/api/downloader/rednote?url=' +
+          urls[0] +
+          '&key=' +
+          api.xterm.key
+      ).then((a) => a.json());
+      if (!res.status) return cht.reply(res.msg);
+      let data = res.data;
+      let text = '*!-======[ Rednote ]======-!*\n';
+      text += `\nTitle: ${data.title}`;
+      text += `\nAccount: ${data.user.nickName}`;
+      text += `\nLikes: ${data.interactInfo.likedCount}`;
+      text += `\nComments: ${data.commentCountL1}`;
+      text += `\nPostTime: ${func.dateFormatter(data.time, 'Asia/Jakarta')}`;
+      const info = {
+        text,
+        contextInfo: {
+          externalAdReply: {
+            title: cht.pushName,
+            body: 'Rednote Downloader',
+            thumbnailUrl: data.images[0].url,
+            sourceUrl: 'https://github.com/Rifza123',
+            mediaUrl:
+              'http://ẉa.me/6283110928302/' +
+              Math.floor(Math.random() * 100000000000000000),
+            renderLargerThumbnail: true,
+            mediaType: 1,
+          },
+          forwardingScore: 19,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterName: 'Termai',
+            newsletterJid: '120363301254798220@newsletter',
+          },
+        },
+      };
+      await Exp.sendMessage(id, info, { quoted: cht });
+      await cht.edit(infos.messages.sending, _key);
+      let type = data.type;
+      if (type == 'image') {
+        for (let image of data.images) {
+          await Exp.sendMessage(
+            id,
+            {
+              image: { url: image.url },
+              caption: image.width + 'x' + image.height,
+            },
+            { quoted: cht }
+          );
+        }
+      } else if (type == 'video') {
+        await Exp.sendMessage(
+          id,
+          { video: { url: data.video.url } },
+          { quoted: cht }
+        );
+      }
+    }
+  );
+
+  ev.on(
+    {
       cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4', 'playvn'],
       listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       tag: 'downloader',

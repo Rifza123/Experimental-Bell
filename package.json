@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.17",
+    "@whiskeysockets/baileys": "^6.7.18",
     "axios": "^1.7.8",
     "chalk": "^3.0.0",
     "cheerio": "^1.0.0-rc.12",
