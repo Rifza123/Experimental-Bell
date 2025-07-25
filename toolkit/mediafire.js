@@ -7,18 +7,27 @@ export const mediafireDl = async (url) => {
     });
     const html = await res.text();
     const $ = cheerio.load(html);
-    const dlButton = $('a#dlButton');
+
+    const dlButton = $('#downloadButton');
     if (!dlButton.length) throw new Error('Download button not found.');
-    const link = dlButton.attr('href');
-    if (!link) throw new Error('Download link not found.');
+
+    const scrambledUrl = dlButton.attr('data-scrambled-url');
+    if (!scrambledUrl) throw new Error('Scrambled download URL not found.');
+
+    const decodedUrl = Buffer.from(scrambledUrl, 'base64').toString('utf-8');
+
+    const fileName =
+      $('.dl-btn-label').attr('title') ||
+      $('.promoDownloadName .dl-btn-label').attr('title');
     const sizeText = dlButton.text().trim();
     const size = sizeText.match(/\((.*?)\)/)?.[1] || 'Unknown size';
-    const name = link.split('/').pop();
-    const mime = name.split('.').pop();
+
+    const mime = fileName ? fileName.split('.').pop() : 'unknown';
+
     return {
-      title: name,
+      title: fileName || 'Unknown file',
       size: size,
-      link: link,
+      link: decodedUrl,
       mime: mime,
     };
   } catch (error) {
