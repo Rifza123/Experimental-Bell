@@ -271,17 +271,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['brat'],
       tag: 'maker',
       energy: 5,
-      args: `Example: ${cht.msg} halo`,
+      args: `Example: ${cht.msg} halo --emoji=whatsapp or ios`,
     },
     async ({ args }) => {
-      let brat = ['https://brat.termai.cc/?text='];
+      let text = args.split("--")?.[0]?.trim()
+      let emoji = args.split('--emoji=')?.[1]?.split('--')?.[0] || 'ios'
+      let brat = [`https://brat.termai.cc/?emojiType=${emoji}&text=`];
       let token = String(Date.now())
         .to('base64')
         .to('charCode')
         .to('base64')
         .to('utf16le');
       let buff = await func.getBuffer(
-        brat.getRandom() + encodeURIComponent(args) + '&token=' + token
+        brat.getRandom() + encodeURIComponent(text) + '&token=' + token
       );
       let res = await exif['writeExifImg'](buff, {
         packname: 'My brat sticker',
@@ -308,10 +310,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['iqc','iqc-wa'],
       tag: 'maker',
       energy: 5,
-      args: `Example: ${cht.msg} halo`,
+      args: `Example: ${cht.msg} halo --timestamp=19:00`,
     },
     async ({ args }) => {
+      let text = args.split("--")?.[0]?.trim()
       let emoji = cht.cmd.includes("wa") ? 'whatsapp':'ios'
+      let timestamp = args.split('--timestamp=')?.[1]?.split('--')?.[0]
       const formatter = new Intl.DateTimeFormat('id-ID', {
         timeZone: 'Asia/Jakarta',
         hour: '2-digit',
@@ -322,14 +326,44 @@ export default async function on({ cht, Exp, store, ev, is }) {
       });
 
     const parts = formatter.formatToParts(new Date());
-    const h = parts.find((p) => p.type === 'hour').value;
-    const min = parts.find((p) => p.type === 'minute').value;
-
+    let h = parts.find((p) => p.type === 'hour').value;
+    let min = parts.find((p) => p.type === 'minute').value;
+    let t = timestamp || `${h}:${min}`
       Exp.sendMessage(
         id,
         {
           image: {
-            url: `${api.xterm.url + '/api/maker/iqc?text=' + encodeURIComponent(args)}&emojiType=${emoji}&timestamp=${h}:${min}&key=${api.xterm.key}`,
+            url: `${api.xterm.url + '/api/maker/iqc?text=' + encodeURIComponent(text)}&emojiType=${emoji}&timestamp=${t}&key=${api.xterm.key}`,
+          },
+          ai: true,
+        },
+        {
+          quoted: cht,
+        }
+      );
+    }
+  );
+  
+  ev.on(
+    {
+      cmd: ['ngl','fake-ngl'],
+      listmenu: ['ngl'],
+      tag: 'maker',
+      energy: 5,
+      args: `Example: ${cht.msg} halo --emoji=whatsapp or ios --backgroundColor=dark or css color format`,
+    },
+    async ({ args }) => {
+      args = args.replace(/#/g, '%23')
+      let text = args.split("--")?.[0]?.trim()
+      let emoji = args.split('--emoji=')?.[1]?.split('--')?.[0] || 'ios'
+      let backgroundColor = args.split('--backgroundColor=')?.[1]?.split('--')?.[0] || "light"
+      const url = `${api.xterm.url}/api/maker/ngl?text=${encodeURIComponent(text)}&emojiType=${emoji}&backgroundColor=${backgroundColor}&key=${api.xterm.key}`
+      console.log(url)
+      Exp.sendMessage(
+        id,
+        {
+          image: {
+            url
           },
           ai: true,
         },
@@ -354,9 +388,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['bratvideo'],
       tag: 'maker',
       energy: 20,
-      args: `Example: ${cht.msg} halo aku bella`,
+      args: `Example: ${cht.msg} halo aku bella --emoji=whatsapp or ios`,
     },
-    async () => {
+    async ({ args }) => {
+      let text = args.split("--")?.[0]?.trim()
+      let emoji = args.split('--emoji=')?.[1]?.split('--')?.[0] || 'ios'
       let token = String(Date.now())
         .to('base64')
         .to('charCode')
@@ -364,7 +400,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         .to('utf16le');
 
       let buff = await func.getBuffer(
-        `https://brat.termai.cc/animate?text=${encodeURIComponent(cht.q)}&token=${token}`
+        `https://brat.termai.cc/animate?text=${encodeURIComponent(text)}&token=${token}&emojiType=${emoji}`
       );
       let res = await exif['writeExifVid'](buff, {
         packname: 'My brat sticker',
