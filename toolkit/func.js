@@ -77,7 +77,7 @@ export class func {
     const isGroup = cht?.id?.endsWith('@g.us');
 
     try {
-      let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : {};
+      let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : null;
       //console.log(meta)
       let participants = meta?.participants || this.lid();
 

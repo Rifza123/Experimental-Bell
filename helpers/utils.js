@@ -8,13 +8,13 @@ export default async function utils({ Exp, cht, is, store }) {
     const { func } = Exp;
     let { archiveMemories: memories } = func;
 
-    const sender =
+    const sender = await Exp.func['getSender'](
       cht?.participant ||
       cht?.key?.participant ||
       cht?.key?.remoteJid ||
       Exp?.user?.id ||
-      '';
-    cht.sender = await Exp.func['getSender'](sender, { cht });
+      '', { cht });
+    cht.sender = sender
     cht.key.participantPn = cht.sender;
     cht.delete = async () =>
       Exp.sendMessage(cht.id, { delete: cht.key }).then((a) => undefined);
