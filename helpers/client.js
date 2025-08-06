@@ -43,7 +43,7 @@ export default async function client({ Exp, store, cht, is }) {
       let isJoin;
       let list = cfg.gcurl.map((a) => `- ${a}`).join('\n');
       for (let i of cfg.gcurl) {
-        let ii = i.split('/').slice(-1)[0];
+        let ii = i.split('/').slice(-1)?.[0]?.split('?')?.[0]
         keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
         let mem = await func
           .getGroupMetadata(keys[ii], Exp)
@@ -87,7 +87,7 @@ export default async function client({ Exp, store, cht, is }) {
 
       if (urls.length > 0) {
         for (let url of urls) {
-          let code = url.split('/').slice(-1)[0];
+          let code = url.split('/').slice(-1)?.[0]?.split('?')?.[0]
           keys[code] ??= await Exp.groupGetInviteInfo(code).then(a => a.id);
           metadata = await func.getGroupMetadata(keys[code], Exp);
   
