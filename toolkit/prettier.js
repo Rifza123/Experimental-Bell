@@ -8,7 +8,8 @@ let command = 'prettier --write';
 if (target) {
   command += ` "${target}"`;
 } else {
-  command += ' "**/*.{js}" --ignore-path .prettierignore';
+  command +=
+    ' "**/*.{js,jsx,ts,tsx,cjs,mjs,json,md}" --ignore-path .prettierignore';
 }
 
 console.log(`Running: ${command}`);

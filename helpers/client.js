@@ -23,7 +23,7 @@ export default async function client({ Exp, store, cht, is }) {
         func.logMessage(
           is.group ? 'GROUP' : 'PRIVATE',
           cht.id,
-          cht.pushName,
+          func.getName(cht.sender),
           frmtEdMsg
         )
       );
@@ -47,7 +47,11 @@ export default async function client({ Exp, store, cht, is }) {
         keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
         let mem = await func
           .getGroupMetadata(keys[ii], Exp)
-          .then((a) => a.participants.map((a) => a.id));
+          .then((a) =>
+            a.participants.map(
+              (a) => a[cht.sender.endsWith('@lid') ? 'lid' : 'id']
+            )
+          );
         if (mem.includes(cht.sender)) {
           isJoin = true;
           break;
@@ -59,8 +63,52 @@ export default async function client({ Exp, store, cht, is }) {
       ) {
         cht.memories.cdIsJoin = Date.now() + func.parseTimeString('10 menit');
         return cht.reply(
-          `Anda harus bergabung ke salah satu grup dibawah sebelum dapat menggunakan bot!\n\`LIST INVITELINK\`\n${list}\n\n_Setelah bergabung harap tunggu selama 1 menit sebelum menggunakan bot!, data anggota grup hanya di perbarui setiap 1 menit sekali guna mengurangi rate-limit!_`
+          `Anda harus bergabung ke salah satu grup dibawah sebelum dapat menggunakan bot!\n\`LIST INVITELINK\`\n${list}\n\n_Setelah bergabung harap tunggu selama 2 menit sebelum menggunakan bot!, data anggota grup hanya di perbarui setiap 2 menit sekali guna mengurangi rate-limit!_`
         );
+      }
+    }
+
+    /*
+      🔧 Handling LID (Linked ID / PC user)
+      - getSender akan mencari ID dalam Data.lids
+      - Jika user masih @lid, minta mereka bergabung ke grup dengan addressingMode @lid
+      - func.getGroupMetadata otomatis menyimpan data peserta (lid -> id) ke Data.lids
+    */
+
+    if (!is.group && cht.sender.endsWith('@lid')) {
+      let isJoin;
+      let list =
+        cfg.gcurl?.length == 0
+          ? ['https://chat.whatsapp.com/Hxl4AWWEsYE6u94Swin8VN']
+          : cfg.gcurl.map((a) => `- ${a}`).join('\n');
+      for (let i of cfg.gcurl) {
+        let ii = i.split('/').slice(-1)[0];
+        keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
+        let metadata = await func.getGroupMetadata(keys[ii], Exp);
+        let mem = metadata.participants.map((a) => a.lid);
+        if (mem.includes(cht.sender)) {
+          isJoin = true;
+          break;
+        }
+      }
+      if (
+        metadata.addressingMode == 'lid' &&
+        !isJoin &&
+        (!cht.memories.cdIsJLid || cht.memories.cdIsJLid >= Date.now())
+      ) {
+        cht.memories.cdIsJLid = Date.now() + func.parseTimeString('10 menit');
+        await cht.reply(
+          `Nomor asli Anda tidak dapat terdeteksi karena menggunakan @lid. 
+Silakan bergabung ke salah satu grup di bawah agar sistem dapat mengenali nomor Anda. 
+(Tanpa bergabung, data Anda hanya akan tersimpan sebagai @lid dan tidak lengkap)
+
+\`LIST UNDANGAN GRUP\`
+${list}
+
+_Setelah bergabung, harap tunggu ±2 menit sebelum menggunakan bot. 
+Data anggota grup diperbarui setiap 2 menit sekali untuk mengurangi beban server dan rate-limit._`
+        );
+        await sleep(1000);
       }
     }
     let except = is.antiTagall || is.antibot || is.antilink;

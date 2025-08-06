@@ -118,6 +118,7 @@ export const initialize = async () => {
     { path: fol[6], name: 'users', content: {} },
     { path: db, name: 'badwords', content: [] },
     { path: db, name: 'links', content: [] },
+    { path: db, name: 'lids', content: [] },
     { path: db, name: 'fquoted', content: {} },
     { path: db, name: 'audio', content: { welcome: [], leave: [] } },
     { path: db, name: 'setCmd', content: {} },
@@ -129,6 +130,8 @@ export const initialize = async () => {
       content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {} },
     }, // new
   ];
+
+  global._DB = DB.map((a) => a.name);
 
   for (let { path: base, name, content } of DB) {
     const filepath = base + name + '.json';

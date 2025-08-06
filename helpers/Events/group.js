@@ -164,7 +164,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let { status } = (
         await Exp.groupParticipantsUpdate(
           id,
-          cht.mention,
+          await func.getMentions(cht, true),
           cht.cmd == 'kick' ? 'remove' : 'add'
         )
       )[0];
@@ -259,11 +259,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
       });
 
       const parts = formatter.formatToParts(new Date());
-      const d = parseInt(parts.find((p) => p.type === 'day').value, 10);
-      const m = parts.find((p) => p.type === 'month').value;
+      const d = String(
+        parseInt(parts.find((p) => p.type === 'day').value, 10)
+      ).padStart(2, '0');
+      const m = String(
+        parseInt(parts.find((p) => p.type === 'month').value, 10)
+      ).padStart(2, '0');
 
       let dm = `${d}/${m}`;
       let a = data.find((a) => a.tanggal == dm);
+      console.log({ data, a, dm });
       let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak || 'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map((a) => ` \n 🗓️ \`${a.tanggal}\`\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`;
       cht.reply(text);
     }
@@ -740,7 +745,11 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
           return cht.reply(
             'Promote/demote ke diri sendiri tidak dapat dilakukan!'
           );
-        await Exp.groupParticipantsUpdate(id, cht.mention, cht.cmd);
+        await Exp.groupParticipantsUpdate(
+          id,
+          await func.getMentions(cht, true),
+          cht.cmd
+        );
         cht.reply(
           `Success ${cht.cmd} user @${cht.mention[0].replace(from.sender, '')}`,
           {

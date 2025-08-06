@@ -371,6 +371,7 @@ ${notSameLora.join('\n')}`;
         );
 
         if (!aiResponse.ok) {
+          console.log(await aiResponse.text())
           return cht.reply(
             `HTTP error! status: ${aiResponse.status}${aiResponse.status == 429 ? '\n_Rate limit reached! please check your limit apikey!_' : aiResponse.status == 403 ? '_Your apikey is invalid or expired! Please check .cekapikey for details your key' : ''}`
           );
@@ -421,7 +422,7 @@ ${notSameLora.join('\n')}`;
                     )
                     .join('\n')
                 : '  None';
-
+            console.log(s)
             return Exp.sendMessage(
               id,
               {

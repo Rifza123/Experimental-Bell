@@ -15,6 +15,7 @@ export default async function utils({ Exp, cht, is, store }) {
       Exp?.user?.id ||
       '';
     cht.sender = await Exp.func['getSender'](sender, { cht });
+    cht.key.participantPn = cht.sender;
     cht.delete = async () =>
       Exp.sendMessage(cht.id, { delete: cht.key }).then((a) => undefined);
 
@@ -200,20 +201,8 @@ export default async function utils({ Exp, cht, is, store }) {
     const args = cht?.msg?.trim()?.split(/ +/)?.slice(1);
     let q = args?.join(' ');
     cht.args = q;
-    cht.q = await String(q || cht?.quoted?.text || '').trim();
-    cht.mention = await Promise.all(
-      (q && cht.q.extractMentions().length > 0
-        ? cht.q.extractMentions().filter((a) => {
-            const n = a?.split('@')[0];
-            return n && n.length > 5 && n.length <= 15;
-          })
-        : cht?.message?.[type]?.contextInfo?.mentionedJid?.length > 0
-          ? cht.message[type].contextInfo.mentionedJid
-          : cht?.message?.[type]?.contextInfo?.participant
-            ? [cht.message[type].contextInfo.participant]
-            : []
-      ).map((m) => Exp.func['getSender'](m, { cht }))
-    );
+    cht.q = String(q || cht?.quoted?.text || '').trim();
+    cht.mention = await func.getMentions(cht);
 
     Exp.number = Exp?.user?.id?.split(':')[0] + from.sender;
 

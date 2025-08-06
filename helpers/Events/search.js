@@ -144,14 +144,30 @@ export default async function on({ cht, Exp, store, ev, is }) {
       energy: 5,
     },
     async () => {
-      let url = await await fetch(
-        api.xterm.url + '/api/search/google-image?query=' + cht.q
-      ).then(async (a) => (await a.json()).data.getRandom());
-      Exp.sendMessage(
-        id,
-        { image: { url }, caption: `Google image search: \`${cht.q}\`` },
-        { quoted: cht }
-      ).catch(() => cht.reply(`Failed downloading url: ${url}`));
+      try {
+        let url = await fetch(
+          api.xterm.url +
+            '/api/search/google-image?query=' +
+            encodeURIComponent(cht.q) +
+            '&key=' +
+            api.xterm.key
+        ).then(async (a) => {
+          if (!a.ok) throw new Error(`Fetch failed with status ${a.status}`);
+          let res = await a.json();
+          if (!res?.data) throw new Error('Response missing data');
+          return res.data.getRandom();
+        });
+
+        await Exp.sendMessage(
+          id,
+          { image: { url }, caption: `Google image search: \`${cht.q}\`` },
+          { quoted: cht }
+        ).catch((err) =>
+          cht.reply(`Failed sending image: ${err.message}\nURL: ${url}`)
+        );
+      } catch (err) {
+        cht.reply(`❌ Error: ${err.message}`);
+      }
     }
   );
 
@@ -327,6 +343,69 @@ export default async function on({ cht, Exp, store, ev, is }) {
           '❌ Terjadi kesalahan saat menghubungi API. Silakan coba lagi nanti.'
         );
       }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['liriksearch', 'lyrics', 'lirik'],
+      listmenu: ['lirik'],
+      tag: 'search',
+      args: `Contoh: ${cht.msg} Selendang Biru`,
+      energy: 15,
+    },
+    async ({ args }) => {
+      const _key = keys[sender];
+      await cht.edit(infos.messages.wait, _key);
+
+      let data = (
+        await fetch(
+          api.xterm.url +
+            '/api/search/lyrics?query=' +
+            args +
+            '&key=' +
+            api.xterm.key
+        ).then((a) => a.json())
+      ).data;
+
+      let duration = data.track_length;
+      let m = Math.floor((duration % 3600) / 60);
+      let s = duration % 60;
+
+      let text = '*!-======[ Lyrics 🎶 ]======-!*\n';
+      text += `\n🎵 *Judul:* ${data.track_name}`;
+      text += `\n👨‍🎤 *Penyanyi:* ${data.artist_name}`;
+      text += `\n💽 *Album:* ${data.album_name}`;
+      text += `\n📅 *Rilis:* ${data.first_release_date}`;
+      text += `\n⏱️ *Durasi:* ${m}:${s.toString().padStart(2, '0')}`;
+      text += `\n🔗 *URL:* ${data.track_share_url}`;
+      text += `\n\n📝 *Lyrics:*\n${data.lyrics}`;
+
+      const info = {
+        text,
+        contextInfo: {
+          externalAdReply: {
+            title: data.track_name,
+            body: data.artist_name,
+            thumbnailUrl: data.album_coverart_350x350,
+            sourceUrl: data.track_share_url,
+            mediaUrl:
+              'http://wa.me/6283110928302/' +
+              Math.floor(Math.random() * 100000000000000000),
+            renderLargerThumbnail: true,
+            mediaType: 1,
+          },
+          forwardingScore: 19,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: cfg.chId || {
+            newsletterName: 'Termai',
+            newsletterJid: '120363301254798220@newsletter',
+          },
+        },
+      };
+
+      await Exp.sendMessage(id, info, { quoted: cht });
+      await cht.edit(infos.messages.done, _key);
     }
   );
 }

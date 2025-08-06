@@ -10,8 +10,7 @@ const { func } = await `${fol[0]}func.js`.r();
 
 export default async function initialize({ Exp, store }) {
   try {
-    const { sendMessage } = Exp;
-    const { relayMessage } = Exp;
+    const { sendMessage, relayMessage } = Exp;
 
     Exp.func = new func({ Exp, store });
 
@@ -158,11 +157,11 @@ export default async function initialize({ Exp, store }) {
     };
     Exp.relayMessage = async (id, config, etc) => {
       let type = getContentType(config);
-      let { showAdAttribution } = config[type]?.contextInfo?.externalAdReply || {};
+      let { showAdAttribution } =
+        config[type]?.contextInfo?.externalAdReply || {};
       if (showAdAttribution)
-          delete config[type].contextInfo.externalAdReply.showAdAttribution;
+        delete config[type].contextInfo.externalAdReply.showAdAttribution;
       return relayMessage(id, config, etc);
-      
     };
   } catch (e) {
     console.error('Error in Initialize.js: ' + e);

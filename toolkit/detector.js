@@ -506,7 +506,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     await schedule();
     cfg.keyChecker && (await keyChecker());
 
-    const DB = [
+    const DB = global._DB || [
       'cmd',
       'preferences',
       'users',
@@ -518,6 +518,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       'response',
       'inventories',
       'ShopRPG',
+      'lids',
     ];
 
     try {

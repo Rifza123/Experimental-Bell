@@ -990,7 +990,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
             let type = getContentType(message);
             message[type].contextInfo = {
               stanzaId: cht.key.id,
-              participant: cht.key.participant || etc.quoted?.key.remoteJid,
+              participant: cht.key.participant || cht?.quoted?.key.remoteJid,
               quotedMessage: cht,
             };
             Exp.relayMessage(cht.id, message, {});
@@ -1004,12 +1004,14 @@ export default async function In({ cht, Exp, store, is, ev }) {
         {
           let message = Data.response[Response];
           let type = getContentType(message);
-          message[type].contextInfo = {
-            stanzaId: cht.key.id,
-            participant: cht.key.participant || etc.quoted?.key.remoteJid,
-            quotedMessage: cht,
-            mentionedJid: message[type]?.contextInfo?.mentionedJid,
-          };
+          if (typeof message[type] === 'object') {
+            message[type].contextInfo = {
+              stanzaId: cht.key.id,
+              participant: cht.key.participant || cht?.quoted?.key.remoteJid,
+              quotedMessage: cht,
+              mentionedJid: message[type]?.contextInfo?.mentionedJid,
+            };
+          }
           Exp.relayMessage(cht.id, message, {});
         }
         break;

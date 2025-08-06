@@ -1,6 +1,6 @@
 {
   "name": "Experimental-Bell",
-  "version": "1.0.0",
+  "version": "2.1.1",
   "description": "Artificial Intelligence, The beginning of the robot era",
   "main": "index.js",
   "type": "module",

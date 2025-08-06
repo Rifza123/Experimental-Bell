@@ -150,19 +150,20 @@ export default class EventEmitter {
       await this.loadEventHandler(eventFile);
       const ev = Data.events[event];
       if (!ev) return;
+      let cht = opts?.cht || this.cht;
       let urls =
-        this.cht.quoted?.url?.length > 0
-          ? this.cht.quoted?.url
-          : this.cht.url?.length > 0
-            ? this.cht.url
+        cht.quoted?.url?.length > 0
+          ? cht.quoted?.url
+          : cht.url?.length > 0
+            ? cht.url
             : this.is.quoted?.url?.length > 0
               ? this.is.quoted?.url
               : this.is.url?.length > 0
                 ? this.is.url
                 : [];
 
-      let args = this.cht?.q;
-      let sender = this.cht.sender;
+      let args = opts?.args || cht?.q;
+      let sender = cht.sender;
       let user = sender.split('@')[0];
       let isPremium = Data.users[user]?.premium?.time
         ? Data.users[user]?.premium?.time >= Date.now()
@@ -171,7 +172,7 @@ export default class EventEmitter {
       if (!isPremium && Data.users[user]?.premium?.time)
         Data.users[user].premium = { time: 0 };
       let trial = Data.users[user]?.claimPremTrial;
-      let metadata = Data.preferences[this.cht?.id];
+      let metadata = Data.preferences[cht?.id];
       let notAllowPlayGame = Data.infos?.group?.nallowPlayGame;
 
       let { func } = this.Exp;
@@ -187,7 +188,7 @@ export default class EventEmitter {
       func.archiveMemories.setItem(sender, 'cooldown', cd);
       if (cd.use >= max) {
         !cd.notice &&
-          (await this.cht.reply(
+          (await cht.reply(
             `Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`
           ));
         cd.notice = true;
@@ -219,7 +220,7 @@ export default class EventEmitter {
               : ev.isBotAdmin,
         },
         {
-          condition: ev.isQuoted && !this.cht.quoted,
+          condition: ev.isQuoted && !cht.quoted,
           message:
             typeof ev.isQuoted === 'boolean' ? messages.isQuoted : ev.isQuoted,
         },
@@ -230,72 +231,90 @@ export default class EventEmitter {
       ];
 
       for (const { condition, message } of checks) {
-        if (condition) return this.cht.reply(message);
+        if (condition) return cht.reply(message);
       }
       if (cfg.premium_mode && ev.premium && !isPremium)
         return this.sendPremiumMsg(trial, 'trial' in ev ? ev.trial : true);
       if (cfg.premium_mode && ev.premium && ev.trial === false) {
         cfg.first.trialPrem.time = cfg.first.trialPrem.time || '1 hari';
         if (
-          !isNaN(this.cht.memories.claimPremTrial) &&
-          Date.now() - this.cht.memories.claimPremTrial <
+          !isNaN(cht.memories.claimPremTrial) &&
+          Date.now() - cht.memories.claimPremTrial <
             func.parseTimeString(cfg.first.trialPrem.time)
         )
-          return this.cht.reply(messages.isNotAvailableOnTrial);
+          return cht.reply(messages.isNotAvailableOnTrial);
       }
 
-      if (
-        ev.energy &&
-        !isNaN(ev.energy) &&
-        this.cht.memories.energy < ev.energy
-      ) {
-        return this.cht.reply(
+      if (ev.energy && !isNaN(ev.energy) && cht.memories.energy < ev.energy) {
+        return cht.reply(
           messages.isEnergy({
-            uEnergy: this.cht.memories.energy,
+            uEnergy: cht.memories.energy,
             energy: ev.energy,
-            charging: this.cht.memories.charging,
+            charging: cht.memories.charging,
           })
         );
       }
 
       if (ev.args) {
-        if (!this.cht.q) {
-          this.addQuestion(sender, this.cht.cmd);
-          return this.cht.reply(ev.args !== true ? ev.args : ev.isArgs);
+        if (!cht.q) {
+          this.addQuestion(sender, cht.cmd);
+          return cht.reply(ev.args !== true ? ev.args : ev.isArgs);
         }
-        const badword = Data.badwords.filter((a) => this.cht.q.includes(a));
+        const badword = Data.badwords.filter((a) => cht.q.includes(a));
         this.is.badword = badword.length > 0;
         if (ev.badword && this.is.badword)
-          return this.cht.reply(
+          return cht.reply(
             func.tagReplacer(messages.isBadword, {
               badword: badword.join(', '),
             })
           );
       }
 
-      if (ev.isMention && this.cht.mention.length < 1)
-        return this.cht.reply(
+      if (ev.isMention && cht.mention.length < 1)
+        return cht.reply(
           ev.isMention !== true ? ev.isMention : messages.isMention
         );
+
+      if (ev.urls) {
+        if (!(urls?.length > 0)) {
+          this.addQuestion(sender, cht.cmd);
+          return cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl);
+        }
+        if (ev.urls.formats) {
+          let isFormatsUrl = urls.some((url) =>
+            ev.urls.formats.some((keyword) =>
+              url.toLowerCase().includes(keyword.toLowerCase())
+            )
+          );
+          if (!isFormatsUrl) {
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
+              func.tagReplacer(messages.isFormatsUrl, {
+                formats: ev.urls.formats.join('\n- '),
+              })
+            );
+          }
+        }
+      }
 
       if (ev.media) {
         const { type, msg, etc } = ev.media;
         let { type: mediaType, quoted: isQuotedMedia } = this.getMediaType();
         if (!type.includes(mediaType)) {
-          this.addQuestion(sender, this.cht.cmd);
-          return this.cht.reply(
+          this.addQuestion(sender, cht.cmd);
+          return cht.reply(
             msg ||
               func.tagReplacer(messages.isMedia, {
                 type: type.join('/'),
-                caption: this.cht.msg,
+                caption: cht.msg,
               })
           );
         }
 
         if (mediaType === 'audio') {
           if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
               func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds })
             );
           }
@@ -303,8 +322,8 @@ export default class EventEmitter {
 
         if (mediaType === 'video') {
           if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
               func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds })
             );
           }
@@ -312,24 +331,24 @@ export default class EventEmitter {
 
         if (mediaType === 'sticker') {
           if (etc && etc.isNoAnimated && this.is.quoted?.sticker?.isAnimated) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
               etc.isNoAnimated !== true
                 ? etc.isNoAnimated
                 : messages.isNoAnimatedSticker
             );
           }
           if (etc && etc.isAnimated && !this.is.quoted?.sticker?.isAnimated) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
               etc.isAnimated !== true
                 ? etc.isAnimated
                 : messages.isAnimatedSticker
             );
           }
           if (etc && etc.isAvatar && !this.is.quoted?.sticker?.isAvatar) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
+            this.addQuestion(sender, cht.cmd);
+            return cht.reply(
               etc.avatar !== true ? etc.avatar : messages.isAvatarSticker
             );
           }
@@ -339,12 +358,12 @@ export default class EventEmitter {
           ? this.is.quoted.download
           : this.is?.reaction
             ? this.is.reaction.download
-            : this.cht.download;
+            : cht.download;
         let save = this.is.quoted
           ? this.is.quoted[mediaType]
           : this.is?.reaction
             ? this.is.reaction[mediaType]
-            : this.cht[mediaType];
+            : cht[mediaType];
         media = ev.media.save
           ? await func.downloadSave(save, mediaType)
           : await download();
@@ -354,42 +373,18 @@ export default class EventEmitter {
                     let prompt = `Kamu adalah AI yang berfungsi untuk mendeteksi apakah sebuah gambar mengandung sosok manusia berkulit gelap atau dengan postur berotot. Tugasmu adalah memberikan respons true jika gambar tersebut sesuai, dan false jika tidak. Jawaban harus berupa boolean (true atau false) tanpa penjelasan tambahan`
                     let ress = await GeminiImage(await func.minimizeImage(media), prompt)
                     console.log(ress)
-                    if(ress.trim() == 'true') return this.cht.reply('Di larang mmebuat stiker dari gambar berisi orang berkulit hitam/jomok')
+                    if(ress.trim() == 'true') return cht.reply('Di larang mmebuat stiker dari gambar berisi orang berkulit hitam/jomok')
                   }
                 */
       }
 
-      if (ev.urls) {
-        if (!(urls?.length > 0)) {
-          this.addQuestion(sender, this.cht.cmd);
-          return this.cht.reply(
-            ev.urls.msg !== true ? ev.urls.msg : messages.isUrl
-          );
-        }
-        if (ev.urls.formats) {
-          let isFormatsUrl = urls.some((url) =>
-            ev.urls.formats.some((keyword) =>
-              url.toLowerCase().includes(keyword.toLowerCase())
-            )
-          );
-          if (!isFormatsUrl) {
-            this.addQuestion(sender, this.cht.cmd);
-            return this.cht.reply(
-              func.tagReplacer(messages.isFormatsUrl, {
-                formats: ev.urls.formats.join('\n- '),
-              })
-            );
-          }
-        }
-      }
-
       if (ev.energy) {
-        await ArchiveMemories.reduceEnergy(this.cht.sender, ev.energy);
-        await this.cht.reply(`-${ev.energy} Energy⚡`);
+        await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
+        await cht.reply(`-${ev.energy} Energy⚡`);
         await sleep(100);
       }
 
-      const resolves = { media, urls, args, cht: this.cht };
+      const resolves = { media, urls, args, cht };
       await ev.resolve(resolves);
       await func.addCmd();
       await func.addCMDForTop(event);

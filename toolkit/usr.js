@@ -274,19 +274,24 @@ export class ArchiveMemories {
   static setItem(usr, item, value) {
     const userJid = String(usr).replace(/[+ -]/g, '');
     const userId = userJid.split('@')[0];
+
     if (!(userId in global.Data.users)) {
       this.set(userJid, {});
     }
 
+    let userData = this.get(userJid);
+
     const keys = item.split('.');
-    let current = this.get(userJid);
+    let current = userData;
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
       if (!(key in current)) current[key] = {};
       current = current[key];
     }
+
     current[keys[keys.length - 1]] = value;
-    this.set(userJid, current);
+
+    this.set(userJid, userData);
     return global.Data.users[userId];
   }
 

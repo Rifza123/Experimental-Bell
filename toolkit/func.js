@@ -4,6 +4,7 @@ const {
   generateWAMessageContent,
   getBinaryNodeChild,
   getBinaryNodeChildren,
+  getContentType,
 } = 'baileys'.import();
 const fs = 'fs'.import();
 const axios = 'axios'.import();
@@ -21,6 +22,11 @@ const { ArchiveMemories } = await (fol[0] + 'usr.js').r();
 const { Inventory } = await (fol[0] + 'inventory.js').r();
 const { color, bgcolor } = await `${fol[0]}color.js`.r();
 const Jimp = (await 'jimp'.import()).default;
+
+const groupDir = './toolkit/db/groups/';
+if (!fs.existsSync(groupDir)) {
+  fs.mkdirSync(groupDir, { recursive: true });
+}
 const cache = new Map();
 const CACHE_DURATION = 1 * 60 * 1000;
 
@@ -54,25 +60,70 @@ export class func {
   constructor({ Exp, store }) {
     this.Exp = Exp;
     this.store = store;
+
+    this._metadata = {
+      init: false,
+    };
   }
 
-  async getSender(jid, { cht }) {
+  async getSender(jid, { cht, lid = false }) {
     if (!jid) return jid;
+    const { Exp } = this;
+    let { user, server } = jidDecode(jid) || {};
     if (/:\d+@/gi.test(jid)) {
-      let { user, server } = jidDecode(jid) || {};
       jid = user && server ? `${user}@${server}` : jid;
     }
-    if (jid.endsWith('@lid')) {
-      try {
-        let { participants } = await this.getGroupMetadata(cht.id, this.Exp);
+    //console.log({ user, server })
+    const isGroup = cht?.id?.endsWith('@g.us');
 
-        let lid = participants.find((a) => a.lid == jid);
-        return lid?.id || jid;
-      } catch (e) {
-        console.error('Error in func > getSender:', e);
+    try {
+      let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : {};
+      //console.log(meta)
+      let isGroupLid = meta?.addressingMode === 'lid';
+      let participants = meta?.participants || this.lid();
+
+      let v = participants.find(
+        (a) =>
+          (a.id || '').split('@')[0] === user ||
+          (a.lid || '').split('@')[0] === user
+      );
+      //console.log({ v })
+      if (!v) {
+        participants = this.lid();
+        v = participants.find(
+          (a) =>
+            (a.id || '').split('@')[0] === user ||
+            (a.lid || '').split('@')[0] === user
+        );
+        //console.log({ v2: v })
       }
+
+      if (!v) return jid;
+      if (lid) return v.lid || jid;
+      return v.id || jid;
+    } catch (e) {
+      console.error('Error in func > getSender:', e);
+      return jid;
     }
-    return jid;
+  }
+
+  async getMentions(cht, lid = false) {
+    const type = getContentType(cht?.message);
+    const ctx = cht?.message?.[type]?.contextInfo || {};
+
+    return Promise.all(
+      (cht.q && cht.q.extractMentions().length > 0
+        ? cht.q.extractMentions().filter((a) => {
+            const n = a?.split('@')[0];
+            return n && n.length > 5 && n.length <= 15;
+          })
+        : ctx.mentionedJid?.length > 0
+          ? ctx.mentionedJid
+          : ctx.participantPn || ctx.participant
+            ? [ctx.participantPn || ctx.participant]
+            : []
+      ).map((m) => this.getSender(m, { lid, cht }))
+    );
   }
 
   getType = (type) => {
@@ -103,13 +154,125 @@ export class func {
       .map((participant) => participant.id);
   };
 
+  lid(data) {
+    if (!data) return Data.lids;
+
+    const items = Array.isArray(data) ? data : [data];
+    let added = 0;
+    let skipped = 0;
+    let errors = [];
+
+    for (let item of items) {
+      if (!item || typeof item !== 'object') {
+        errors.push('❌ Input harus object { lid, id } atau array object');
+        skipped++;
+        continue;
+      }
+
+      if (!item.lid || !item.id) {
+        errors.push(
+          `⚠️ Item tidak valid: ${JSON.stringify(item)} (wajib ada 'lid' & 'id')`
+        );
+        skipped++;
+        continue;
+      }
+
+      const exists = Data.lids.some(
+        (x) => x.lid === item.lid && x.id === item.id
+      );
+      if (!exists) {
+        Data.lids.push({ lid: item.lid, id: item.id });
+        added++;
+      } else {
+        skipped++;
+      }
+    }
+
+    return (
+      `\x1b[36m[LID Manager]\x1b[0m ` +
+      `${added > 0 ? `\x1b[32m✅ Ditambahkan: ${added}\x1b[0m` : ''}` +
+      `${skipped > 0 ? ` \x1b[34m➜ Dilewati: ${skipped}\x1b[0m` : ''}` +
+      `${errors.length ? ` \x1b[33m⚠️ Error: ${errors.length}\x1b[0m` : ''}`
+    ).trim();
+  }
+
+  metadata = {
+    init: () => {
+      if (!this._metadata.init) {
+        for (let file of this.metadata.keys()) {
+          const id = file.replace(/\.json$/, '');
+          this._metadata[id] = this.metadata.get(id);
+        }
+        this._metadata.init = true;
+      }
+    },
+
+    has: (id) => {
+      return fs.existsSync(groupDir + id + '.json');
+    },
+
+    keys: () => {
+      return fs.readdirSync(groupDir);
+    },
+
+    set: (id, data) => {
+      try {
+        this._metadata[id] = data;
+        fs.writeFileSync(groupDir + id + '.json', JSON.stringify(data));
+        return true;
+      } catch (e) {
+        console.error(`Error in metadata > set > ${id}`, e);
+        return false;
+      }
+    },
+
+    delete: (id) => {
+      if (this._metadata[id]) {
+        delete this._metadata[id];
+      }
+
+      try {
+        if (this.metadata.has(id)) {
+          fs.unlinkSync(groupDir + id + '.json');
+          return true;
+        }
+      } catch (e) {
+        console.error(`Error in metadata > delete > ${id}`, e);
+      }
+      return false;
+    },
+
+    get: (id) => {
+      if (this._metadata[id]) return this._metadata[id];
+
+      try {
+        if (this.metadata.has(id)) {
+          const raw = fs.readFileSync(groupDir + id + '.json', 'utf-8');
+          return JSON.parse(raw);
+        }
+      } catch (e) {
+        console.error(`Error in metadata > get > ${id}, resetting...`, e);
+
+        this.metadata.delete(id);
+
+        return this._metadata[id];
+      }
+
+      return this._metadata[id];
+    },
+
+    all: () => {
+      return this._metadata;
+    },
+  };
+
   getGroupMetadata = async (chtId, Exp) => {
+    this.metadata.init();
+    let hasData = this.metadata.has(chtId);
+    let metadata = this.metadata.get(chtId);
     const currentTime = Date.now();
-    if (
-      cache.has(chtId) &&
-      currentTime - cache.get(chtId).timestamp < CACHE_DURATION
-    ) {
-      return cache.get(chtId).metadata;
+    if (hasData && currentTime - metadata.timestamp < CACHE_DURATION) {
+      return metadata.metadata;
     }
     let groupMetadata = await Exp.groupMetadata(chtId);
     if (groupMetadata.addressingMode == 'lid') {
@@ -136,15 +299,13 @@ export class func {
           admin: attrs.type || null,
         };
       });
+      console.log(this.lid(groupMetadata.participants));
     }
-    cache.set(chtId, {
+
+    this.metadata.set(chtId, {
       metadata: groupMetadata,
       timestamp: currentTime,
     });
-    if (cache.size > 100) {
-      const keysToRemove = [...cache.keys()].slice(0, cache.size - 100);
-      keysToRemove.forEach((key) => cache.delete(key));
-    }
     return groupMetadata;
   };
 
@@ -799,13 +960,11 @@ export class func {
     });
   };
 
-  async minimizeImage(
-    inputBuffer,
-    { width = 1024, quality = 3 } = {}
-  ) {
+  async minimizeImage(inputBuffer, { width = 1024, quality = 3 } = {}) {
     return new Promise((resolve, reject) => {
       const args = [
-        '-loglevel', 'error',
+        '-loglevel',
+        'error',
         '-i',
         'pipe:0',
         '-vf',
