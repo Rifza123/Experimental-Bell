@@ -1172,22 +1172,27 @@ export default async function on({ cht, Exp, store, ev, is }) {
       },
     },
     async ({ urls }) => {
-      if(urls[0].includes('pastebin.com')){
-        let _text = await fetch(urls[0].replace(/pastebin\.com\/(?!raw\/)(\w+)/, "pastebin.com/raw/$1")).then(a => a.text())
-        urls = _text
-      ? (
-          _text?.match(/https?:\/\/[^\s)]+/g) ||
-          _text?.match(
-            /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
-          ) ||
-          []
-        ).map((url) =>
-          (url.startsWith('http') ? url : 'https://' + url).replace(
-            /['"`]/g,
-            ''
+      if (urls[0].includes('pastebin.com') || urls[0].includes('c.termai.cc')) {
+        let _text = await fetch(
+          urls[0].replace(
+            /pastebin\.com\/(?!raw\/)(\w+)/,
+            'pastebin.com/raw/$1'
           )
-        )
-      : [];
+        ).then((a) => a.text());
+        urls = _text
+          ? (
+              _text?.match(/https?:\/\/[^\s)]+/g) ||
+              _text?.match(
+                /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
+              ) ||
+              []
+            ).map((url) =>
+              (url.startsWith('http') ? url : 'https://' + url).replace(
+                /['"`]/g,
+                ''
+              )
+            )
+          : [];
       }
       let fols = await getDirectoriesRecursive();
       await cht.reply('Updating...');
@@ -1199,8 +1204,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
         .map((link) => {
           const { pathname, host } = new URL(link);
           let isValidHost = [
-            'cdn.xtermai.xyz',
-            'raw.githubusercontent.com'
+            'c.termai.cc',
+            'raw.githubusercontent.com',
           ].includes(host);
           if (!isValidHost) {
             failed += `\n- ${url}\n> Invalid host url`;
@@ -1231,7 +1236,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
               return [link, `${folder}${filename}`];
             }
 
-            if (['index.js', 'package','readme.md','prettierignore','prettierrc'].some((a) => filename.includes(a))) {
+            if (
+              [
+                'index.js',
+                'package',
+                'readme.md',
+                'prettierignore',
+                'prettierrc',
+              ].some((a) => filename.includes(a))
+            ) {
               return [link, `./${filename}`];
             }
           }
@@ -1239,11 +1252,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
           return null;
         })
         .filter(Boolean);
-       
+
       let text;
       let i = 0;
       for (let [url, fpath] of urlPath) {
-      if (i === Data.spinner.length) i = 0;
+        if (i === Data.spinner.length) i = 0;
         let res = await fetch(url);
         if (!res.ok) {
           failed += `\n- ${url}\n> Failed to fetch url`;
@@ -1255,15 +1268,36 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else {
           newfile += `\n- \`new\`: ${fpath}`;
         }
-        let buff = await res.text();
-        await fs.writeFileSync(fpath, buff);
+        if (path.basename(fpath) === "global.js") {
+          let oldContent = fs.existsSync(fpath) ? fs.readFileSync(fpath, "utf8") : "";
+          let oldMongo = "";
+
+          let match = oldContent.match(/let\s+mongoURI\s*=\s*['"`](.*?)['"`]/);
+          if (match) {
+            oldMongo = match[1];
+          }
+
+          let buff = await res.text();
+
+          if (oldMongo) {
+            buff = buff.replace(
+              /let\s+mongoURI\s*=\s*['"`](.*?)['"`]\s*;/,
+              `let mongoURI = '${oldMongo}';`
+            );
+          }
+
+          fs.writeFileSync(fpath, buff);
+        } else {
+          let buff = await res.text();
+          fs.writeFileSync(fpath, buff);
+        }
+
         text = `*${Data.spinner[i++]}[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
         await cht.edit(text, keys[sender]);
       }
 
-       
       if (failed.length > 12) text += failed;
-      await cht.edit(text, keys[sender]);    
+      await cht.edit(text, keys[sender]);
       cht.reply('Success ✅');
     }
   );
@@ -1527,7 +1561,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async () => {
       try {
-        await Exp.groupAcceptInvite(cht.q.split('/').slice(-1)[0]);
+        await Exp.groupAcceptInvite(
+          cht.q.split('/').slice(-1)?.[0]?.split('?')?.[0]
+        );
         cht.reply('success✅');
       } catch (e) {
         console.error(e);
@@ -1564,7 +1600,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
           ? args.split('-- ' + cyk)[0]
           : urls?.[0] || args?.split(' ')[0];
         let gid = q.split('@')?.[0]?.trim();
-        let idgc = q && !isNaN(gid) ? gid : false;
+        let idgc =
+          q && !isNaN(gid) ? gid : is.group ? id?.split('@')[0] : false;
         let yakin = y.includes(cyk?.toLowerCase());
         const host = q?.split('://')?.[1]?.split('/')?.[0];
         let isLinkGc = 'chat.whatsapp.com'.includes(host);

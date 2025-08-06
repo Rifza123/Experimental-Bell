@@ -79,7 +79,6 @@ export class func {
     try {
       let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : {};
       //console.log(meta)
-      let isGroupLid = meta?.addressingMode === 'lid';
       let participants = meta?.participants || this.lid();
 
       let v = participants.find(
