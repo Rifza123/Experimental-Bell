@@ -74,39 +74,44 @@ export default async function client({ Exp, store, cht, is }) {
       - Jika user masih @lid, minta mereka bergabung ke grup dengan addressingMode @lid
       - func.getGroupMetadata otomatis menyimpan data peserta (lid -> id) ke Data.lids
     */
-
+    
     if (!is.group && cht.sender.endsWith('@lid')) {
-      let isJoin;
+      let isJoin = false;
       let gcurl = Array.isArray(cfg.gcurl) ? cfg.gcurl : [];
 
-      let list = gcurl.length === 0
-        ? ['https://chat.whatsapp.com/Hxl4AWWEsYE6u94Swin8VN']
-        : gcurl;
-      list = list.map(a => `- ${a}`).join('\n');
+      let urls = gcurl.length === 0
+      ? []
+      : gcurl;
 
-      for (let i of list) {
-        let ii = i.split('/').slice(-1)[0];
-        keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
-        let metadata = await func.getGroupMetadata(keys[ii], Exp);
-        let mem = metadata.participants.map((a) => a.lid);
+      let metadata;
+
+      for (let url of urls) {
+        let code = url.split('/').slice(-1)[0];
+        keys[code] ??= await Exp.groupGetInviteInfo(code).then(a => a.id);
+        metadata = await func.getGroupMetadata(keys[code], Exp);
+  
+        let mem = metadata.participants.map(a => a.lid);
         if (mem.includes(cht.sender)) {
           isJoin = true;
           break;
         }
       }
+
       if (
-        metadata.addressingMode == 'lid' &&
+        metadata?.addressingMode === 'lid' &&
         !isJoin &&
         (!cht.memories.cdIsJLid || cht.memories.cdIsJLid >= Date.now())
       ) {
         cht.memories.cdIsJLid = Date.now() + func.parseTimeString('10 menit');
+        let listText = urls.map(a => `- ${a}`).join('\n');
+    
         await cht.reply(
-          `Nomor asli Anda tidak dapat terdeteksi karena menggunakan @lid. 
+      `Nomor asli Anda tidak dapat terdeteksi karena menggunakan @lid. 
 Silakan bergabung ke salah satu grup di bawah agar sistem dapat mengenali nomor Anda. 
 (Tanpa bergabung, data Anda hanya akan tersimpan sebagai @lid dan tidak lengkap)
 
 \`LIST UNDANGAN GRUP\`
-${list}
+${listText}
 
 _Setelah bergabung, harap tunggu ±2 menit sebelum menggunakan bot. 
 Data anggota grup diperbarui setiap 2 menit sekali untuk mengurangi beban server dan rate-limit._`
@@ -114,6 +119,7 @@ Data anggota grup diperbarui setiap 2 menit sekali untuk mengurangi beban server
         await sleep(1000);
       }
     }
+
     let except = is.antiTagall || is.antibot || is.antilink;
     if ((is.baileys || is.mute || is.onlyadmin) && !except) return;
 
