@@ -77,10 +77,11 @@ export default async function client({ Exp, store, cht, is }) {
 
     if (!is.group && cht.sender.endsWith('@lid')) {
       let isJoin;
-      let list =
-        cfg.gcurl?.length == 0
-          ? ['https://chat.whatsapp.com/Hxl4AWWEsYE6u94Swin8VN']
-          : cfg.gcurl.map((a) => `- ${a}`).join('\n');
+      let list = (!cfg.gcurl || cfg.gcurl.length === 0)
+        ? ['https://chat.whatsapp.com/Hxl4AWWEsYE6u94Swin8VN']
+          : cfg.gcurl;
+        list = list.map(a => `- ${a}`).join('\n');
+
       for (let i of cfg.gcurl) {
         let ii = i.split('/').slice(-1)[0];
         keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
