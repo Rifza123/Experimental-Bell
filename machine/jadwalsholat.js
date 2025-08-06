@@ -162,14 +162,26 @@ export class JadwalSholat {
     });
 
     const parts = formatter.formatToParts(new Date());
-    const h = parts.find((p) => p.type === 'hour').value;
-    const min = parts.find((p) => p.type === 'minute').value;
-    const d = parseInt(parts.find((p) => p.type === 'day').value, 10);
-    const m = parts.find((p) => p.type === 'month').value;
+    const h = String(parts.find((p) => p.type === 'hour').value).padStart(
+      2,
+      '0'
+    );
+    const min = String(parts.find((p) => p.type === 'minute').value).padStart(
+      2,
+      '0'
+    );
+    const d = String(
+      parseInt(parts.find((p) => p.type === 'day').value, 10)
+    ).padStart(2, '0');
+    const m = String(
+      parseInt(parts.find((p) => p.type === 'month').value, 10)
+    ).padStart(2, '0');
 
     let c = { hm: `${h}:${min}`, dm: `${d}/${m}` };
     this.groups[id].jadwal =
-      this.groups[id].jadwal || (await this.init(id, v).then((a) => a.data));
+      this.groups[id].jadwal?.[0]?.tanggal?.split('/')?.[1] === m
+          ? this.groups[id].jadwal
+          : (await this.init(id, v)).data;
     this.groups[id].today =
       d == this.groups[id]?.today?.hari
         ? this.groups[id].today

@@ -358,7 +358,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       const _key = keys[sender];
       await cht.edit(infos.messages.wait, _key);
 
-      let data = (
+      let { data, status, msg } = (
         await fetch(
           api.xterm.url +
             '/api/search/lyrics?query=' +
@@ -366,7 +366,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             '&key=' +
             api.xterm.key
         ).then((a) => a.json())
-      ).data;
+      );
+      if(!status) return cht.reply(msg)
 
       let duration = data.track_length;
       let m = Math.floor((duration % 3600) / 60);
