@@ -695,6 +695,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       tag: 'group',
     },
     async ({ args }) => {
+      if(cht.cmd == 'topenergy' && !is.group) return cht.reply("Khusus group!")
       let topUsers = [];
       let topEnergy = await Promise.all(
         [
@@ -725,7 +726,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
         cht.cmd !== 'topglobalenergy'
           ? `DI GROUP \`${Exp.groupMetdata.subject}\``
           : `DARI TOTAL \`${Object.keys(Data.users).length} USERS\``;
-      cht.reply(`*TOP 10 ENERGY TERBANYAK ${di}*\n\n${topEnergy}`);
+      cht.reply(`*TOP ${args && !isNaN(args) ? parseInt(args) * 1 : 10} ENERGY TERBANYAK ${di}*\n\n${topEnergy}`);
     }
   );
 
