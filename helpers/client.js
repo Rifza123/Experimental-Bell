@@ -84,7 +84,7 @@ export default async function client({ Exp, store, cht, is }) {
         : gcurl;
       list = list.map(a => `- ${a}`).join('\n');
 
-      for (let i of cfg.gcurl) {
+      for (let i of list) {
         let ii = i.split('/').slice(-1)[0];
         keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
         let metadata = await func.getGroupMetadata(keys[ii], Exp);
