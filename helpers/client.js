@@ -85,15 +85,17 @@ export default async function client({ Exp, store, cht, is }) {
 
       let metadata;
 
-      for (let url of urls) {
-        let code = url.split('/').slice(-1)[0];
-        keys[code] ??= await Exp.groupGetInviteInfo(code).then(a => a.id);
-        metadata = await func.getGroupMetadata(keys[code], Exp);
+      if (urls.length > 0) {
+        for (let url of urls) {
+          let code = url.split('/').slice(-1)[0];
+          keys[code] ??= await Exp.groupGetInviteInfo(code).then(a => a.id);
+          metadata = await func.getGroupMetadata(keys[code], Exp);
   
-        let mem = metadata.participants.map(a => a.lid);
-        if (mem.includes(cht.sender)) {
-          isJoin = true;
-          break;
+          let mem = metadata.participants.map(a => a.lid);
+          if (mem.includes(cht.sender)) {
+            isJoin = true;
+            break;
+          }
         }
       }
 
