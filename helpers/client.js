@@ -21,8 +21,8 @@ export default async function client({ Exp, store, cht, is }) {
         (await Exp.readMessages([cht.key]));
       console.log(
         func.logMessage(
-          is.group ? 'GROUP' : 'PRIVATE',
-          cht.id,
+          is.group ? 'GROU1P' : 'PRIVATE',
+          is.group ? cht.id : cht.sender,
           func.getName(cht.sender),
           frmtEdMsg
         )
