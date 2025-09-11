@@ -1032,28 +1032,33 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
-      await cht.reply('Proses backup dimulai...');
-      let b = './backup.tar.gz';
-      let s = await Exp.func.createTarGz('./', b);
-      if (!s.status) return cht.reply(s.msg);
-      await cht.edit(
-        `File backup sedang dikirim${is.group ? ' melalui private chat...' : '...'}`,
-        keys[sender]
-      );
-      await Exp.sendMessage(
-        sender,
-        {
-          document: { url: b },
-          mimetype: 'application/zip',
-          fileName: `${path.basename(path.resolve('./'))} || ${Exp.func.dateFormatter(Date.now(), 'Asia/Jakarta')}.tar.gz`,
-          ai: true,
-        },
-        { quoted: cht }
-      );
-      await cht.reply(
-        `*Proses backup selesai✅️*${is.group ? '\nFile telah dikirimkan melalui chat pribadi' : ''}`
-      );
-      fs.unlinkSync(b);
+      try {
+        await cht.reply('Proses backup dimulai...');
+        let b = './backup.tar.gz';
+        let s = await Exp.func.createTarGz('./', b);
+        if (!s.status) return cht.reply(s.msg);
+          await cht.edit(
+          `File backup sedang dikirim${is.group ? ' melalui private chat...' : '...'}`,
+          keys[sender]
+        );
+        await Exp.sendMessage(
+          sender,
+          {
+            document: { url: b },
+            mimetype: 'application/zip',
+            fileName: `${path.basename(path.resolve('./'))} || ${Exp.func.dateFormatter(Date.now(), 'Asia/Jakarta')}.tar.gz`,
+            ai: true,
+          },
+          { quoted: cht }
+        );
+        await cht.reply(
+          `*Proses backup selesai✅️*${is.group ? '\nFile telah dikirimkan melalui chat pribadi' : ''}`
+        );
+        fs.unlinkSync(b);
+      } catch(e) {
+        console.error(e)
+        cht.reply(JSON.stringify(e,0,2))
+      }
     }
   );
 
