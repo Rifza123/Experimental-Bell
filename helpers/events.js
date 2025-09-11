@@ -23,12 +23,13 @@ const timestamp = () => {
 };
 
 export default class EventEmitter {
-  constructor({ Exp, store, cht, ai, is }) {
+  constructor({ Exp, store, cht, ai, is, chatDb }) {
     this.Exp = Exp;
     this.store = store;
     this.cht = cht;
     this.ai = ai;
     this.is = is;
+    this.chatDb = chatDb;
     this.eventFiles = [];
     this.dataEvents = Data.Events;
   }
@@ -151,6 +152,7 @@ export default class EventEmitter {
       const ev = Data.events[event];
       if (!ev) return;
       let cht = opts?.cht || this.cht;
+
       let urls =
         cht.quoted?.url?.length > 0
           ? cht.quoted?.url
@@ -172,7 +174,7 @@ export default class EventEmitter {
       if (!isPremium && Data.users[user]?.premium?.time)
         Data.users[user].premium = { time: 0 };
       let trial = Data.users[user]?.claimPremTrial;
-      let metadata = Data.preferences[cht?.id];
+      let metadata = opts?.chatDb || this.chatDb;
       let notAllowPlayGame = Data.infos?.group?.nallowPlayGame;
 
       let { func } = this.Exp;
@@ -189,12 +191,18 @@ export default class EventEmitter {
       if (cd.use >= max) {
         !cd.notice &&
           (await cht.reply(
-            `Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`
+            `Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`,
+            { replyAi: false }
           ));
         cd.notice = true;
         func.archiveMemories.setItem(sender, 'cooldown', cd);
         return;
       }
+
+      if (this.is.bancmd)
+        return cht.reply(
+          `Command \`${cht.cmd}\` di blokir di group ini!\nUntuk membuka blokir, silahkan ketik .unbancmd ${cht.cmd} (hanya bisa dilakukan oleh admin)`
+        );
 
       const checks = [
         {
@@ -227,6 +235,14 @@ export default class EventEmitter {
         {
           condition: ev.tag == 'game' && !metadata.playgame && this.is.group,
           message: notAllowPlayGame,
+        },
+        {
+          condition:
+            ev.tag == 'game' &&
+            'onlyGame' in ev &&
+            Array.isArray(ev.onlyGame) &&
+            !ev.onlyGame.includes(metadata.game?.type),
+          message: `Kamu ${metadata.game?.type ? '' : 'tidak '}sedang bermain game \`${metadata?.game?.type || '!'}\`, Command ini hanya bisa di gunakan ketika bermain game berikut: \n- ${ev?.onlyGame?.join('\n- ')}`,
         },
       ];
 
@@ -380,7 +396,7 @@ export default class EventEmitter {
 
       if (ev.energy) {
         await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
-        await cht.reply(`-${ev.energy} Energy⚡`);
+        await cht.reply(`-${ev.energy} Energy⚡`, { replyAi: false });
         await sleep(100);
       }
 

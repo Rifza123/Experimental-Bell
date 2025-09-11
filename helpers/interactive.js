@@ -9,8 +9,22 @@ const { transcribe } = await (fol[2] + 'transcribe.js').r();
 const { ai } = await `${fol[2]}reasoner.js`.r();
 
 const maxCommandExpired = 7000;
+let urls = {
+  tiktok: 'tiktok',
+  youtu: 'youtube',
+  instagram: 'instagram',
+  'fb.watch': 'facebook',
+  facebook: 'facebook',
+  'pin.it': 'pinterest',
+  pinterest: 'pinterest',
+  mediafire: 'mediafire',
+  xiaohongshu: 'rednote',
+  'xhslink.com': 'rednote',
+  'github.com': 'github',
+  'spotify.com': 'spotify',
+};
 
-export default async function In({ cht, Exp, store, is, ev }) {
+export default async function In({ cht, Exp, store, is, ev, chatDb }) {
   const { func } = Exp;
   let { archiveMemories: memories, parseTimeString } = func;
   let { sender } = cht;
@@ -75,7 +89,6 @@ export default async function In({ cht, Exp, store, is, ev }) {
       '>/dev/null',
     ];
 
-    const chatDb = Data.preferences[cht.id] || {};
     const isDangerous =
       dangerous.some((pattern) => sanitized.includes(pattern)) && !isPendingCmd;
 
@@ -131,12 +144,15 @@ export default async function In({ cht, Exp, store, is, ev }) {
     let isGame =
       'game' in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId);
 
-    let isSalam = /^a?s?salamu+?a?laiku?u+?m/i.test(
-      cht.msg
-        ?.toLowerCase()
-        .replace(/[\s]/g, '')
-        .replace(/[^a-z]/g, '')
-    );
+    let isSalam =
+      !is.me &&
+      !is.baileys &&
+      /^a?s?salamu+?a?laiku?u+?m/i.test(
+        cht.msg
+          ?.toLowerCase()
+          .replace(/[\s]/g, '')
+          .replace(/[^a-z]/g, '')
+      );
 
     const conff = !is.group
       ? await (async (_id) => {
@@ -225,6 +241,9 @@ export default async function In({ cht, Exp, store, is, ev }) {
           max: 5,
         });
         break;
+      case is.blacklist:
+        cht.delete();
+        break;
       case is.antidelete:
         let deleted = await store.loadMessage(cht.id, cht[cht.type].key.id);
         await Data.utils({ cht: deleted, Exp, is: {}, store });
@@ -272,11 +291,29 @@ export default async function In({ cht, Exp, store, is, ev }) {
         };
         await Exp.relayMessage(cht.id, message, {});
         break;
+      case is.antitagsw:
+        await cht.warnGc({
+          type: 'antitagsw',
+          warn: 'Kamu terdeteksi melakukan mention status di group ini! Mohon ikuti aturan grup untuk tidak melakukan mention di group ini!.',
+          kick: 'Kamu dikeluarkan dari grup karena melakukan tag/mention status group hingga peringatan terakhir!',
+          max: 1,
+        });
+        cht.delete();
+        break;
       case is.antilink:
         await cht.warnGc({
           type: 'antilink',
           warn: 'Anda terdeteksi mengirimkan link!. Harap ikuti peraturan disini untuk tidak mengirim link!',
-          kick: 'Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak mengirim link hingga peringatan terakhir!',
+          kick: 'Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirim link hingga peringatan terakhir!',
+          max: 3,
+        });
+        cht.delete();
+        break;
+      case is.antitoxic:
+        await cht.warnGc({
+          type: 'antitoxic',
+          warn: 'Kamu terdeteksi menggunakan bahasa yang kasar atau tidak pantas! Mohon ikuti aturan grup dan hindari kata-kata yang menyinggung.',
+          kick: 'Kamu dikeluarkan dari grup karena menggunakan bahasa kasar atau tidak pantas hingga peringatan terakhir!',
           max: 3,
         });
         cht.delete();
@@ -285,7 +322,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
         await cht.warnGc({
           type: 'antitagall',
           warn: 'Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!',
-          kick: 'Anda akan dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!',
+          kick: 'Anda dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!',
           max: 3,
         });
         cht.delete();
@@ -299,14 +336,14 @@ export default async function In({ cht, Exp, store, is, ev }) {
             'commandExpired',
             Date.now() + maxCommandExpired
           );
-          return cht.reply('Yakin?');
+          return cht.reply('Yakin?', { replyAi: false });
         }
         try {
           let evsync = await eval(`(async () => { ${cht?.msg?.slice(3)} })()`);
           if (typeof evsync !== 'string') evsync = await util.inspect(evsync);
-          cht.reply(evsync);
+          cht.reply(evsync, { replyAi: false });
         } catch (e) {
-          cht.reply(String(e));
+          cht.reply(String(e), { replyAi: false });
         }
         break;
 
@@ -319,16 +356,16 @@ export default async function In({ cht, Exp, store, is, ev }) {
             'commandExpired',
             Date.now() + maxCommandExpired
           );
-          return cht.reply('Yakin?');
+          return cht.reply('Yakin?', { replyAi: false });
         }
         try {
           let evaled = await eval(cht?.msg?.slice(2));
           if (typeof evaled !== 'string') evaled = await util.inspect(evaled);
           if (evaled !== 'undefined') {
-            cht.reply(evaled);
+            cht.reply(evaled, { replyAi: false });
           }
         } catch (err) {
-          cht.reply(String(err));
+          cht.reply(String(err), { replyAi: false });
         }
         break;
 
@@ -341,7 +378,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
             'commandExpired',
             Date.now() + maxCommandExpired
           );
-          return cht.reply('Yakin?');
+          return cht.reply('Yakin?', { replyAi: false });
         }
         let txt;
         try {
@@ -350,7 +387,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
         } catch (error) {
           txt = `Error: ${error}`;
         }
-        cht.reply(txt);
+        cht.reply(txt, { replyAi: false });
         break;
       case isQuestionCmd:
         let [cmd, ...q] = questionCmd.emit.split` `;
@@ -481,6 +518,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
                         await sleep(typing);
                         await cht.reply(part.trim(), {
                           ai: true,
+                          replyAi: false,
                         });
                         await sleep(2000);
                       }
@@ -490,6 +528,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
                       await sleep(typing);
                       await cht.reply(line.trim(), {
                         ai: true,
+                        replyAi: false,
                       });
                       await sleep(2000);
                     }
@@ -807,14 +846,14 @@ export default async function In({ cht, Exp, store, is, ev }) {
             let noreply = false;
             switch (config?.cmd) {
               case 'sticker':
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('s');
               case 'afk':
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 cht.q = config?.cfg?.reason;
                 return ev.emit('afk');
               case 'bard':
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 cht.q = config.cfg?.query;
                 return ev.emit('bard');
               case 'public':
@@ -865,14 +904,14 @@ export default async function In({ cht, Exp, store, is, ev }) {
               case 'ig':
                 noreply = true;
                 is.url = [config?.cfg?.url || ''];
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit(config?.cmd);
               case 'ytm4a':
               case 'ytmp4':
                 noreply = true;
                 cht.cmd = config?.cmd;
                 is.url = [config?.cfg?.url || ''];
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit(config?.cmd);
               case 'lora':
                 noreply = true;
@@ -882,19 +921,19 @@ export default async function In({ cht, Exp, store, is, ev }) {
                 };
                 let { checkpoint, loras } = cfg.models;
                 cht.q = `${checkpoint}${JSON.stringify(loras)}|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`;
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('txt2img');
               case 'txt2img':
                 cht.q = config?.cfg?.prompt || '';
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('dalle3');
               case 'img2img':
                 cht.q = config?.cfg?.prompt || '';
-                await cht.reply(config?.msg || 'ok');
-                return ev.emit('edit');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
+                return ev.emit('edit', { replyAi: false });
               case 'pinterest':
                 noreply = true;
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 cht.q = config?.cfg?.query || '';
                 return ev.emit(config?.cmd);
               case 'closegroup':
@@ -907,7 +946,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
                 return ev.emit('group');
               case 'img2video':
                 cht.q = config?.cfg?.prompt || '';
-                await cht.reply(config?.msg || 'ok');
+                await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('i2v');
             }
 
@@ -925,7 +964,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
                 cht?.sender,
                 parseInt(conf.energy.slice(1))
               );
-              await cht.reply(config.energy + ' Energy⚡️');
+              await cht.reply(config.energy + ' Energy⚡️', { replyAi: false });
               config.energyreply = true;
             }
             if (config?.cmd !== 'voice' && !noreply) {
@@ -958,14 +997,14 @@ export default async function In({ cht, Exp, store, is, ev }) {
                         let typing = part.length * 50;
                         await Exp.sendPresenceUpdate('composing', cht.id);
                         await sleep(typing);
-                        await cht.reply(part.trim());
+                        await cht.reply(part.trim(), { replyAi: false });
                         await sleep(2000);
                       }
                     } else {
                       let typing = line.length * 50;
                       await Exp.sendPresenceUpdate('composing', cht.id);
                       await sleep(typing);
-                      await cht.reply(line.trim());
+                      await cht.reply(line.trim(), { replyAi: false });
                       await sleep(2000);
                     }
                   }
@@ -980,7 +1019,7 @@ export default async function In({ cht, Exp, store, is, ev }) {
         }
         break;
       case isSalam:
-        cht.reply("Wa'alaikumussalaam...");
+        cht.reply("Wa'alaikumussalaam...", { replyAi: false });
         break;
 
       case isAntiTagOwner:
@@ -995,11 +1034,13 @@ export default async function In({ cht, Exp, store, is, ev }) {
             };
             Exp.relayMessage(cht.id, message, {});
           } else {
-            cht.reply('😡');
+            cht.reply('😡', { replyAi: false });
           }
         }
         break;
-
+      case is.autosticker:
+        ev.emit('s');
+        break;
       case isResponse:
         {
           let message = Data.response[Response];
@@ -1013,6 +1054,35 @@ export default async function In({ cht, Exp, store, is, ev }) {
             };
           }
           Exp.relayMessage(cht.id, message, {});
+        }
+        break;
+
+      case is.autodownload:
+        {
+          let _url = is.url[0];
+          let cmd =
+            _url &&
+            Object.entries(urls).find(([keyword]) => _url.includes(keyword))
+              ? urls[
+                  Object.entries(urls).find(([keyword]) =>
+                    _url.includes(keyword)
+                  )[0]
+                ]
+              : null;
+          cmd &&
+            (await cht.reply(
+              `*AUTO DOWNLOAD*\n _Link *${cmd.slice(0, 1).toUpperCase() + cmd.slice(1)}* terdeteksi!_`
+            ));
+          cmd &&
+            ev.emit(
+              cmd == 'github'
+                ? 'gitclone'
+                : cmd == 'youtube'
+                  ? 'ytm4a'
+                  : cmd == 'pinterest'
+                    ? 'pinterestdl'
+                    : cmd
+            );
         }
         break;
     }

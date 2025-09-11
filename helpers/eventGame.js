@@ -1,9 +1,9 @@
 function calcMinThreshold(text) {
   const length = text.length;
-  if (length <= 4) return 0.3;
-  else if (length <= 7) return 0.4;
-  else if (length <= 10) return 0.5;
-  else return 0.6;
+  if (length <= 4) return 0.5;
+  else if (length <= 7) return 0.6;
+  else if (length <= 10) return 0.7;
+  else return 0.8;
 }
 
 export default async function game({ cht, Exp, store, is, ev, chatDb }) {
@@ -11,8 +11,17 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
 
   let metadata = Data.preferences[cht.id];
   let { game } = chatDb;
-  let { type, question, answer, answered, startTime, endTime, energy, key } =
-    game;
+  let {
+    type,
+    description,
+    question,
+    answer,
+    answered,
+    startTime,
+    endTime,
+    energy,
+    key,
+  } = game;
   const { func } = Exp;
   let isEnd = Date.now() >= endTime;
   if (isEnd) {
@@ -23,10 +32,18 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
     let formatDur = func.formatDuration(endTime - Date.now());
     switch (type) {
       case 'tebakgambar':
-      case 'susunkata': {
+      case 'tebakanime':
+      case 'caklontong':
+      case 'tebakjenaka':
+      case 'asahotak':
+      case 'tebakbendera':
+      case 'susunkata':
+      case 'tebaklirik': {
         let userAnswer = cht.msg.trim().toLowerCase();
         if (userAnswer === answer.trim().toLowerCase()) {
-          await cht.reply(`Selamat jawabanmu benar💯🥳🥳`);
+          await cht.reply(
+            `Selamat jawabanmu benar💯🥳🥳${description ? `\n_${description}_` : ''}`
+          );
 
           let isSmart = Date.now() - startTime < 10000;
           let bonusMessage = isSmart
@@ -57,7 +74,7 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
         cht.msg =
           func.getTopSimilar(
             await func.searchSimilarStrings(cht.msg, answer, similar)
-          ).item || 'xtermaixyz';
+          ).item || 'termai';
         let userAnswer = cht.msg?.trim()?.toLowerCase();
         let answeredKey = Object.keys(answered);
 

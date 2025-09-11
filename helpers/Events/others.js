@@ -1,7 +1,7 @@
 /*!-======[ Module Imports ]======-!*/
-const fs = "fs".import();
-const { downloadContentFromMessage } = "baileys".import();
-const { TermaiCdn } = await (fol[0] + "cdn.termai.js").r();
+const fs = 'fs'.import();
+const { downloadContentFromMessage } = 'baileys'.import();
+const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -11,32 +11,38 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
-      cmd: ["menu"],
-      listmenu: ["menu"],
-      tag: "other",
+      cmd: ['menu'],
+      listmenu: ['menu'],
+      tag: 'other',
     },
-    async () => {
+    async ({ args }) => {
       let hit = func.getTotalCmd();
       let topcmd = func.topCmd(2);
-      let totalCmd = Object.keys(Data.events).length;
-      let head = `*[ INFO ]*\n- *${hit.total}* Hit Emitter\n- *${hit.ai_response}* Ai response\n\n*[ Relationship ]*\n- Status: *${cht.memories.role}*\n- Mood: ${cht.memories.energy}${cht.memories.energy < 10 ? "😪" : "⚡"}\n\n ▪︎ 『 \`Events On\` 』\n- Total: ${totalCmd}\n\n ▪︎ 『 \`Top Cmd \`』\n> ${"`"}${topcmd.join("`\n> `")}${"`"}\n\n`;
-      let text =
-        head + func.menuFormatter(Data.events, { ...cfg.menu, ...cht });
+      let events = Object.fromEntries(
+        Object.entries(Data.events).filter(
+          ([key, val]) => !args || args.toLowerCase().includes(val.tag)
+        )
+      );
+
+      let eventKey = Object.keys(events);
+      let totalCmd = eventKey.length;
+      let head = `*[ INFO ]*\n- *${hit.total}* Hit Emitter\n- *${hit.ai_response}* Ai response\n\n*[ Relationship ]*\n- Status: *${cht.memories.role}*\n- Mood: ${cht.memories.energy}${cht.memories.energy < 10 ? '😪' : '⚡'}\n\n ▪︎ 『 \`Events On\` 』\n- Total: ${totalCmd}\n\n ▪︎ 『 \`Top Cmd \`』\n> ${'`'}${topcmd.join('`\n> `')}${'`'}\n\n`;
+      let text = head + `${args.includes('reaction') ? '': func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`
       let menu = {};
-      if (cfg?.menu_type == "text") {
+      if (cfg?.menu_type == 'text') {
         menu.text = text;
         await Exp.sendMessage(id, menu, { quoted: cht });
-      } else if (cfg?.menu_type == "image") {
-        menu.image = fs.readFileSync(fol[3] + "bell.jpg");
+      } else if (cfg?.menu_type == 'image') {
+        menu.image = fs.readFileSync(fol[3] + 'bell.jpg');
         menu.caption = text;
         await Exp.sendMessage(id, menu, { quoted: cht });
-      } else if (cfg?.menu_type == "video") {
+      } else if (cfg?.menu_type == 'video') {
         menu.video = {
-          url: cfg.menu.video || "https://c.termai.cc/v86/J剗K尿fY",
+          url: cfg.menu.video || 'https://c.termai.cc/v86/J剗K尿fY',
         };
         menu.caption = text;
         await Exp.sendMessage(id, menu, { quoted: cht });
-      } else if (cfg?.menu_type == "liveLocation") {
+      } else if (cfg?.menu_type == 'liveLocation') {
         await Exp.relayMessage(
           cht.id,
           {
@@ -50,31 +56,31 @@ export default async function on({ cht, Exp, store, ev, is }) {
               },
             },
           },
-          {},
+          {}
         );
-      } else if (cfg?.menu_type == "order") {
+      } else if (cfg?.menu_type == 'order') {
         await Exp.relayMessage(
           cht.id,
           {
             orderMessage: {
-              orderId: "530240676665078",
-              status: "INQUIRY",
-              surface: "CATALOG",
+              orderId: '530240676665078',
+              status: 'INQUIRY',
+              surface: 'CATALOG',
               ItemCount: 0,
               message: text,
-              sellerJid: "6281374955605@s.whatsapp.net",
-              token: "AR6oiV5cQjZsGfjvfDwl0DXfnAE+OPRkWAQtFDaB9wxPlQ==",
-              thumbnail: (await fs.readFileSync(fol[3] + "bell.jpg")).toString(
-                "base64",
+              sellerJid: '6281374955605@s.whatsapp.net',
+              token: 'AR6oiV5cQjZsGfjvfDwl0DXfnAE+OPRkWAQtFDaB9wxPlQ==',
+              thumbnail: (await fs.readFileSync(fol[3] + 'bell.jpg')).toString(
+                'base64'
               ),
             },
           },
-          {},
+          {}
         );
-      } else if (cfg?.menu_type == "gif") {
+      } else if (cfg?.menu_type == 'gif') {
         let video = await func.uploadToServer(
-          cfg.menu.video || "https://c.termai.cc/v86/J剗K尿fY",
-          "video",
+          cfg.menu.video || 'https://c.termai.cc/v86/J剗K尿fY',
+          'video'
         );
         await Exp.relayMessage(
           cht.id,
@@ -92,22 +98,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 forwardingScore: 19,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: cfg.chId || {
-                  newsletterJid: "120363301254798220@newsletter",
-                  newslettedName: "Termai",
+                  newsletterJid: '120363301254798220@newsletter',
+                  newslettedName: 'Termai',
                   serverMessageId: 152,
                 },
               },
             },
           },
-          {},
+          {}
         );
-      } else if (cfg?.menu_type == "gif+linkpreview") {
+      } else if (cfg?.menu_type == 'gif+linkpreview') {
         let video = await func.uploadToServer(
-          cfg.menu.video || "https://c.termai.cc/v86/J剗K尿fY",
-          "video",
+          cfg.menu.video || 'https://c.termai.cc/v86/J剗K尿fY',
+          'video'
         );
-        keys["thumbnailUrl"] ||= await TermaiCdn(
-          fs.readFileSync(fol[3] + "bell.jpg"),
+        keys['thumbnailUrl'] ||= await TermaiCdn(
+          fs.readFileSync(fol[3] + 'bell.jpg')
         );
         let { thumbnailUrl } = keys;
 
@@ -120,35 +126,35 @@ export default async function on({ cht, Exp, store, ev, is }) {
               height: 520,
               width: 732,
               caption: text,
-              mimetype: "video/mp4",
+              mimetype: 'video/mp4',
               contextInfo: {
                 stanzaId: cht.key.id,
                 participant: cht.sender,
                 quotedMessage: cht.message,
-               // forwardingScore: 19,
+                forwardingScore: 19,
                 isForwarded: true,
                 externalAdReply: {
                   title: cht.pushName,
-                  body: "Artificial Intelligence, The beginning of the robot era",
+                  body: 'Artificial Intelligence, The beginning of the robot era',
                   thumbnailUrl,
-                  sourceUrl: "https://github.com/Rifza123",
+                  sourceUrl: 'https://github.com/Rifza123',
                   mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
                   renderLargerThumbnail: true,
-                //  showAdAttribution: true,
+                  showAdAttribution: true,
                   mediaType: 1,
-                  sourceType: "ad",
-                  /*sourceId: "1",*/
-                  sourceUrl: "https://instagram.com/rifza.p.p",
+                  sourceType: 'ad',
+                  sourceId: '1',
+                  sourceUrl: 'https://instagram.com/rifza.p.p',
                 },
                 forwardedNewsletterMessageInfo: cfg.chId || {
-                  newsletterJid: "120363301254798220@newsletter",
-                  newslettedName: "Termai",
+                  newsletterJid: '120363301254798220@newsletter',
+                  newslettedName: 'Termai',
                   serverMessageId: 152,
                 },
               },
             },
           },
-          {},
+          {}
         );
       } else {
         menu = {
@@ -156,22 +162,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
           contextInfo: {
             externalAdReply: {
               title: cht.pushName,
-              body: "Artificial Intelligence, The beginning of the robot era",
-              thumbnail: fs.readFileSync(fol[3] + "bell.jpg"),
-              sourceUrl: "https://github.com/Rifza123",
+              body: 'Artificial Intelligence, The beginning of the robot era',
+              thumbnail: fs.readFileSync(fol[3] + 'bell.jpg'),
+              sourceUrl: 'https://github.com/Rifza123',
               mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
               renderLargerThumbnail: true,
               showAdAttribution: true,
-              mediaType: "IMAGE",
-              sourceType: "ad",
-              sourceId: "1",
-              sourceUrl: "https://instagram.com/rifza.p.p",
+              mediaType: 'IMAGE',
+              sourceType: 'ad',
+              sourceId: '1',
+              sourceUrl: 'https://instagram.com/rifza.p.p',
             },
             forwardingScore: 19,
             isForwarded: true,
             forwardedNewsletterMessageInfo: {
-              newsletterJid: "120363301254798220@newsletter",
-              newslettedName: "Termai",
+              newsletterJid: '120363301254798220@newsletter',
+              newslettedName: 'Termai',
               serverMessageId: 152,
             },
           },
@@ -183,29 +189,32 @@ export default async function on({ cht, Exp, store, ev, is }) {
           cht.id,
           {
             audio: { url: Data.audio.menu.getRandom() },
-            mimetype: "audio/mpeg",
+            mimetype: 'audio/mpeg',
           },
-          { quoted: cht },
+          { quoted: cht }
         );
-    },
+    }
   );
 
   ev.on(
     {
-      cmd: ["reaction", "menureaction", "reactionmenu"],
-      listmenu: ["reactionmenu"],
-      tag: "other",
+      cmd: ['reaction', 'menureaction', 'reactionmenu'],
+      listmenu: ['reactionmenu'],
+      tag: 'other',
     },
     () => {
       cht.reply(infos.reaction.menu);
-    },
+    }
   );
 
   ev.on(
     {
-      cmd: ["rvome", "rvo", "getviewonce"],
-      listmenu: ["getviewonce", "rvome"],
-      tag: "others",
+      cmd: ['rvome', 'rvo', 'getviewonce'],
+      listmenu: ['getviewonce', 'rvome'],
+      media: {
+        type: ['image', 'video', 'audio'],
+      },
+      tag: 'others',
       premium: true,
       isAdmin: true,
       isMention: true,
@@ -213,73 +222,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async () => {
       try {
-        let isV1 = ["image", "audio", "video", "viewOnce"].includes(
-          cht.quoted.type,
-        );
-        let ab = isV1
-          ? [
-              {
-                message: cht.quoted,
-                key: {
-                  remoteJid: cht.id,
-                  fromMe: cht.quoted.sender == cht.id,
-                  id: cht.quoted.stanzaId,
-                  participant: cht.quoted.sender,
-                },
-              },
-            ]
-          : store.messages[id].array.filter(
-              (a) =>
-                a.key.participant.includes(cht.mention[0]) &&
-                (a.message?.viewOnceMessageV2 ||
-                  a.message?.viewOnceMessageV2Extension),
-            );
-        if (ab.length == 0) return cht.reply(infos.others.noDetectViewOnce);
-        for (let aa of ab) {
-          let thay = {
-            msg:
-              aa.message.viewOnceMessageV2?.message?.imageMessage ||
-              aa.message.viewOnceMessageV2?.message?.videoMessage ||
-              aa.message.viewOnceMessageV2Extension?.message?.audioMessage,
-            type: isV1
-              ? cht.quoted.type
-              : aa.message.viewOnceMessageV2?.message?.imageMessage
-                ? "image"
-                : aa.message.viewOnceMessageV2?.message?.videoMessage
-                  ? "video"
-                  : "audio",
-          };
-          let buffer;
-          if (isV1) {
-            buffer = await cht.quoted.download();
-          } else {
-            let stream = await downloadContentFromMessage(thay.msg, thay.type);
-            buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-              buffer = Buffer.concat([buffer, chunk]);
-            }
-          }
-          let mssg = {};
-          if (cht.quoted.text) mssg.caption = cht.quoted.text || undefined;
-          thay.type == "audio" && (mssg.ptt = true);
-          await Exp.sendMessage(
-            cht.cmd == "rvome" ? cht.sender : id,
-            { [thay.type]: buffer, ...mssg },
-            { quoted: aa },
-          );
-        }
+        let msg = cht.quoted;
+        let type = cht.quoted.mtype;
+        delete msg[type].viewOnce;
+        Exp.relayMessage(cht.cmd == 'rvome' ? cht.sender : cht.id, msg, {});
       } catch (e) {
         console.error(e);
         cht.reply(infos.others.noDetectViewOnce);
       }
-    },
+    }
   );
 
   ev.on(
     {
-      cmd: ["d", "del", "delete"],
-      listmenu: ["delete"],
-      tag: "other",
+      cmd: ['d', 'del', 'delete'],
+      listmenu: ['delete'],
+      tag: 'other',
       isQuoted: true,
     },
     async () => {
@@ -300,14 +258,14 @@ ${infos.others.readMore}
       } catch {
         cht.reply(infos.messages.failed);
       }
-    },
+    }
   );
 
   ev.on(
     {
-      cmd: ["statistic", "stats"],
-      listmenu: ["stats"],
-      tag: "other",
+      cmd: ['statistic', 'stats'],
+      listmenu: ['stats'],
+      tag: 'other',
     },
     async () => {
       const { cpuUsage, memoryUsage, processStats } =
@@ -320,9 +278,9 @@ ${infos.others.readMore}
             (cpu) =>
               `💻 *CPU ${cpu.cpu + 1}*\n` +
               `   Model: ${cpu.model}\n` +
-              `   Usage: ${cpu.usage}\n`,
+              `   Usage: ${cpu.usage}\n`
           )
-          .join("\n") +
+          .join('\n') +
         `🧠 *Memory Usage*\n` +
         `   Total: ${memoryUsage.totalMemory}\n` +
         `   Free: ${memoryUsage.freeMemory}\n` +
@@ -340,6 +298,6 @@ ${infos.others.readMore}
         `   Title: ${processStats.title}\n` +
         `   Exec Path: ${processStats.execPath}`;
       return cht.reply(txt);
-    },
+    }
   );
 }

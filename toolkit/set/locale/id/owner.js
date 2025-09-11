@@ -62,7 +62,9 @@ infos.set = `
 - apikey <apikey>
 - antitagowner <(on/off) atau balas pesan>
 - keyChecker <on/off>
-- chid <reply pesan (teruskan dari channel)
+- chid <reply pesan (teruskan dari channel)>
+- replyAi <on/off>
+- register <on/off>
 
 _Example: .set public on_`;
 
@@ -294,3 +296,13 @@ Ketik \`.set antitagowner off\`
 Balas pesan yang ingin dijadikan respon, lalu ketik:  
 \`.set antitagowner\`
 `;
+infos.setReplyAi = `Cara Penggunaan:
+ ▪︎ .set replyAi <true/on | false/off>
+   Contoh: .set replyAi true
+
+_Jika diaktifkan, semua balasan bot akan dimodifikasi sesuai dengan logic yang ada,
+sehingga membuat reply terasa lebih natural._`;
+infos.isReplyAiOn = `*Berhasil mengaktifkan \`replyAi\`!, sekarang semua balasan bot akan dimodifikasi sesuai dengan logic yang ada!
+⚠️ *WARNING!* ⚠️\n\nFitur *replyAi* mungkin akan banyak menghabiskan kuota API GPT (termai.cc).\nGunakan dengan bijak, terutama jika memakai key dengan limit terbatas!`;
+
+infos.isReplyAiOff = `Berhasil menonaktifkan *replyAi!*`;

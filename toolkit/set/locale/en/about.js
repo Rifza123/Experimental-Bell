@@ -96,25 +96,56 @@ infos.helpNotfound = `*Oops, we couldn't find the help you're looking for!*
 Maybe you were searching for:
 <top>`;
 
-infos.antilink = `📌 *Bot Antilink Feature Guide*
+infos.antilink = `📌 *Bot Antilink Feature Usage Guide*
 
 🔒 *1. Enable Antilink:*
-   - Command: \`.antilink on\`
-   - *Use this command to activate antilink protection in the group.*
+   - Command: \`.antilink on\`
+   - *Use this command to enable antilink protection in the group.*
 
 🔓 *2. Disable Antilink:*
-   - Command: \`.antilink off\`
-   - *Use this command to deactivate antilink protection.*
+   - Command: \`.antilink off\`
+   - *Use this command to disable antilink protection.*
 
-➕ *3. Add URL to Antilink List:*
-   - Command: \`.antilink add <link>\`
-   - *Use this command to block a specific URL.*
-   - Example: \`.antilink add https://wa.me\`
+➕ *3. Add a URL to the Antilink List:*
+   - Command: \`.antilink add <link>\`
+   - *Use this command to add a URL you want to block.*
+   - Example: \`.antilink add https://wa.me\`
 
-➖ *4. Remove URL from Antilink List:*
-   - Command: \`.antilink del <link>\`
-   - *Use this command to unblock a specific URL.*
-   - Example: \`.antilink del https://wa.me\`
+➖ *4. Remove a URL from the Antilink List:*
+   - Command: \`.antilink del <link>\`
+   - *Use this command to remove a URL from the block list.*
+   - Example: \`.antilink del https://wa.me\`
+   
+📄 *5. Show the Antilink URL List:*
+   - Command: \`.antilink list\`
+   - *Use this command to view all blocked URLs.*
+   - Example: \`.antilink list\`
+`;
+
+infos.antitoxic = `📌 *Bot Antitoxic Feature Usage Guide*
+
+🔒 *1. Enable Antitoxic:*
+   - Command: \`.antitoxic on\`
+   - *Use this command to enable antitoxic protection in the group.*
+
+🔓 *2. Disable Antitoxic:*
+   - Command: \`.antitoxic off\`
+   - *Use this command to disable antitoxic protection.*
+
+➕ *3. Add a Word to the Antitoxic List:*
+   - Command: \`.antitoxic add <word>\`
+   - *Use this command to add a word you want to block.*
+   - Example: \`.antitoxic add anjg\`
+
+➖ *4. Remove a Word from the Antitoxic List:*
+   - Command: \`.antitoxic del <word>\`
+   - *Use this command to remove a word from the block list.*
+   - Example: \`.antitoxic del anjg\`
+
+📄 *5. Show the Antitoxic Word List:*
+   - Command: \`.antitoxic list\`
+   - *Use this command to view all blocked words.*
+   - Example: \`.antitoxic list\`
 `;
 
 infos.tfenergy = `

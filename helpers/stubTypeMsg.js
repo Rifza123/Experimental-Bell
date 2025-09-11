@@ -6,7 +6,12 @@ export default async function stub({ Exp, cht }) {
     case StubType.GROUP_PARTICIPANT_ADD:
       {
         if (!Data.preferences[cht.id]?.welcome) return;
-        let newMember = cht.messageStubParameters;
+        let newMember = await Promise.all(
+          cht.messageStubParameters?.map(async (a) => {
+            return await Exp.func.getSender(a, { cht });
+          }) || []
+        );
+
         let members = newMember.map((a) => `@${a.split('@')[0]}`).join(', ');
         let group = await Exp.groupMetadata(cht.id);
         let pp;
@@ -164,9 +169,17 @@ ${group.desc}`
     case StubType.GROUP_PARTICIPANT_REMOVE:
     case StubType.GROUP_PARTICIPANT_LEAVE:
       {
+        let oldMember = await Promise.all(
+          cht.messageStubParameters?.map(async (a) => {
+            return await Exp.func.getSender(a, { cht });
+          }) || []
+        );
+        if (oldMember.includes(Exp.number)) {
+          delete Data.preferences[cht.id];
+          return;
+        }
         if (!Data.preferences[cht.id]?.welcome) return;
-        let oldMember = cht.messageStubParameters;
-        let members = oldMember.map((a) => `@${a.split('@')[0]}`).join(', ');
+        let members = oldMember.map((a) => `@${a?.split('@')[0]}`).join(', ');
         let group = await Exp.groupMetadata(cht.id);
         let pp;
         try {

@@ -4,7 +4,9 @@ const { fromBuffer } = (await 'file-type'.import()).default;
 const key = 'AIzaBj7z2z3xBjsk';
 
 export const TermaiCdn = async (buffer) => {
-  const { ext } = await fromBuffer(buffer);
+  const fileType = await fromBuffer(buffer);
+  const ext = fileType?.ext || 'bin';
+
   const formData = new Form();
   formData.append('file', buffer, { filename: 'file.' + ext });
 

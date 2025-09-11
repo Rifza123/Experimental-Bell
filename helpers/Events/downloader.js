@@ -37,7 +37,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       Exp.sendMessage(
         id,
         { video: { url: pin }, mimetype: 'video/mp4' },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
@@ -65,7 +65,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await Exp.sendMessage(
           id,
           { document: { url: m.link }, mimetype: type, fileName: m.title },
-          { quoted: cht }
+          { quoted: cht.reaction || cht }
         );
       } catch (e) {
         await cht.edit('TypeErr: ' + e, _key);
@@ -116,12 +116,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await Exp.sendMessage(
         id,
         { audio: { url: data.audio.url }, mimetype: 'audio/mpeg' },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
-  
-  
+
   ev.on(
     {
       cmd: ['spotify', 'spotdl', 'spodl'],
@@ -145,15 +144,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
             api.xterm.key
         ).then((a) => a.json())
       ).data;
-      let duration = data.trackDuration
+      let duration = data.trackDuration;
       let m = Math.floor((duration % 3600) / 60);
       let s = duration % 60;
       let text = '*!-======[ Spotify🎵 ]======-!*\n';
       text += `\nTrack: ${data.trackName}`;
       text += `\nAccount: ${data.albumName}`;
       text += `\nAlbumReleaseDate: ${data.albumReleaseDate}`;
-      text += `\nArtists: ${data.artists.join(", ")}`;
-      text += `\nTrackDuration: ${m +':'+ s}`;
+      text += `\nArtists: ${data.artists.join(', ')}`;
+      text += `\nTrackDuration: ${m + ':' + s}`;
       text += `\nTrackPopularity: ${data.trackPopularity}`;
       text += `\nTrackUrl: ${data.trackUrl}`;
       const info = {
@@ -183,7 +182,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await Exp.sendMessage(
         id,
         { audio: { url: data.downloadUrl }, mimetype: 'audio/mpeg' },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
@@ -249,16 +248,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
             id,
             {
               image: { url: image.url },
-             // caption: image.width + 'x' + image.height,
+              // caption: image.width + 'x' + image.height,
             },
-            { quoted: cht }
+            { quoted: cht.reaction || cht }
           );
         }
       } else if (type == 'video') {
         await Exp.sendMessage(
           id,
           { video: { url: data.video.url } },
-          { quoted: cht }
+          { quoted: cht.reaction || cht }
         );
       }
     }
@@ -328,7 +327,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           },
         };
         await cht.edit('Sending...', _key);
-        await Exp.sendMessage(id, audio, { quoted: cht });
+        await Exp.sendMessage(id, audio, { quoted: cht.reaction || cht });
       } catch (e) {
         console.log(e);
         cht.reply("Can't download from that url!");
@@ -363,7 +362,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       Exp.sendMessage(
         id,
         { video: { url: f.urls.sd }, mimetype: 'video/mp4', caption: f.title },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
@@ -421,14 +420,14 @@ export default async function on({ cht, Exp, store, ev, is }) {
           },
         },
       };
-      await Exp.sendMessage(id, info, { quoted: cht });
+      await Exp.sendMessage(id, info, { quoted: cht.reaction || cht });
       let { content } = f;
       for (let i of content) {
         try {
           await Exp.sendMessage(
             id,
             { [i.type]: { url: i.url } },
-            { quoted: cht }
+            { quoted: cht.reaction || cht }
           );
         } catch (e) {
           console.log(e);
@@ -462,7 +461,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           mimetype: 'application/zip',
           fileName: `${repoName}.zip`,
         },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       ).catch((e) =>
         cht.reply(
           `[❗LINK ERROR ❗]\n\nExample : ${cht.prefix}${cht.cmd} https://github.com/adiwajshing/baileys.git`

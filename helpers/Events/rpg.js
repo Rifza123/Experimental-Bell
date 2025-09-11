@@ -9,9 +9,93 @@ export default async function on({ cht, ev, Exp }) {
   let inv = inventory.get(sender);
   const user = cht.memories;
 
-  let { berburu, mancing, miningDrops, hargaAwal } =
+  let { berburu, mancing, miningItems, hargaAwal } =
     func.inventory.initCfg().rpg;
 
+  ev.on({ cmd: ['daftar', 'register'], tag: 'RPG' }, async () => {
+    const input = (cht.q || '').trim();
+    const parts = input.split(/[|,./#$&\s]+/).filter(Boolean);
+    if (parts.length < 2)
+      return cht.reply(`❌ Gunakan format: .daftar Nama Umur`, { replyAi: false });
+
+    const umur = parseInt(parts.pop());
+    const nama = parts.join(' ').trim();
+
+    if (umur < 8)
+      return cht.reply(`❌ Umur anda terlalu muda untuk mendaftar.`, { replyAi: false });
+    if (umur > 50)
+      return cht.reply(`❌ Umur anda terlalu tua untuk mendaftar.`, { replyAi: false });
+
+    const sn = await func.generateSN();
+    await memories.add(sender)
+    await memories.setItem(sender, 'nama', nama);
+    await memories.setItem(sender, 'umur', umur);
+    await memories.setItem(sender, 'sn', sn);
+
+    await inventory.setItem(sender, 'nama', nama);
+    await inventory.setItem(sender, 'umur', umur);
+    await inventory.setItem(sender, 'sn', sn);
+
+    cht.reply(
+      ` ╭━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙
+ │ *「 VERIFIKASI BERHASIL 」*
+ │ Kamu berhasil terdaftar!
+ ╰┬────────────┈ ⳹
+ ┌┤◦➛ *Nama* : *${nama}*
+ ││◦➛ *Umur* : *${umur}* Tahun
+ ││◦➛ *Nomor* : *${sender.split('@')[0]}*
+ ││◦➛ *Nomor SN* : *${sn}*
+ ││◦➛ *Total User* : ${Object.keys(Data.users).length} Orang
+ ╰━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙`, { replyAi: false }
+    );
+  });
+
+  ev.on(
+    {
+      cmd: ['ceksn'],
+      tag: 'RPG',
+    },
+    async () => {
+      const user = Data.users[sender];
+      if (!user || !user.sn) {
+        return cht.reply(
+          `❌ Kamu belum punya SN. Silakan daftar dulu dengan .daftar`, { replyAi: false }
+        );
+      }
+      return cht.reply(`🔑 SN Kamu: *${user.sn}*\nJaga baik-baik SN ini!`);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['unreg', 'unregister'],
+      tag: 'RPG',
+      args: `.unreg <SN>\nContoh: .unreg JJi6hgwysv72JvsJ`,
+    },
+    async () => {
+      const user = Data.users[sender];
+      if (!user || !user.sn) {
+        return cht.reply(`❌ Kamu belum terdaftar.`);
+      }
+
+      const inputSN = (cht.q || '').trim();
+      if (!inputSN) {
+        return cht.reply(`❌ SN belum dimasukkan.\nContoh: .unreg ${user.sn}`);
+      }
+
+      if (inputSN !== user.sn) {
+        return cht.reply(`❌ SN belum dimasukkan.\nContoh: .unreg ${user.sn}`);
+      }
+
+      const nama = user.name || sender.split('@')[0];
+      delete Data.users[sender];
+
+      return cht.reply(
+        `✅ Akun dengan nama *${nama}* berhasil dihapus dari database.`
+      );
+    }
+  );
+  ///////////
   ev.on(
     {
       cmd: ['infinity'],
@@ -20,45 +104,91 @@ export default async function on({ cht, ev, Exp }) {
       isOwner: true,
     },
     async () => {
-      const inf = 9999999;
-      const fields = [
-        'coins',
+      const inf = 999999999999999999;
+
+      let user = (await func.archiveMemories.get(sender)) || {};
+      user.coins = inf;
+      user.flow = inf;
+      user.energy = inf;
+
+      await func.archiveMemories.setItem(sender, 'coins', user.coins);
+      await func.archiveMemories.setItem(sender, 'flow', user.flow);
+      await func.archiveMemories.setItem(sender, 'energy', user.energy);
+
+      let inv = (await func.inventory.get(sender)) || {};
+      const resources = [
         'healt',
         'potion',
         'kayu',
         'iron',
         'gold',
         'diamond',
+        'apel',
+        'ikan',
+        'babi',
+        'kepiting',
+        'gurita',
+        'lobster',
+        'udang',
+        'sapi',
+        'kambing',
+        'domba',
+        'ayam',
       ];
 
-      for (const f of fields) {
-        inv[f] = inf;
-        await inventory.setItem(sender, f, inf);
+      for (const r of resources) {
+        inv[r] = inf;
+        await func.inventory.setItem(sender, r, inf);
+      }
+      inv.crate ??= {};
+      for (const tipe in inv.crate) {
+        inv.crate[tipe] = inf;
+      }
+      await func.inventory.setItem(sender, 'crate', inv.crate);
+
+      inv.item ??= {};
+
+      const defaultItems = {
+        pickaxe: {
+          maxDurability: Number(inf),
+          durability: Number(inf),
+          level: Number(inf),
+          lucky: Number(inf),
+          cooldown: 1,
+        },
+        sword: {
+          maxDurability: Number(inf),
+          durability: Number(inf),
+          level: Number(inf),
+          cooldown: 1,
+        },
+        ax: {
+          maxDurability: Number(inf),
+          durability: Number(inf),
+          level: Number(inf),
+          cooldown: 1,
+        },
+        fishing_hook: {
+          maxDurability: Number(inf),
+          durability: Number(inf),
+          level: Number(inf),
+          cooldown: 1,
+        },
+        armor: {
+          maxDurability: Number(inf),
+          durability: Number(inf),
+          ketahanan: Number(inf),
+        },
+      };
+
+      for (const alat in defaultItems) {
+        inv.item[alat] = defaultItems[alat];
       }
 
-      if (inv.crate) {
-        for (const tipe in inv.crate) {
-          inv.crate[tipe] = inf;
-        }
-        await inventory.setItem(sender, 'crate', inv.crate);
-      }
-      if (inv.item) {
-        for (const alat in inv.item) {
-          const i = inv.item[alat];
-          if (i?.durability) i.durability = inf;
-          if (i?.maxDurability) i.maxDurability = inf;
-        }
-        await inventory.setItem(sender, 'item', inv.item);
-      }
-      if (inv.buah) for (const x in inv.buah) inv.buah[x] = inf;
-      if (inv.makanan) for (const x in inv.makanan) inv.makanan[x] = inf;
-      if (inv.tanaman) for (const x in inv.tanaman) inv.tanaman[x] = inf;
-      await inventory.setItem(sender, 'buah', inv.buah);
-      await inventory.setItem(sender, 'makanan', inv.makanan);
-      await inventory.setItem(sender, 'tanaman', inv.tanaman);
+      await func.inventory.setItem(sender, 'item', inv.item);
 
       return cht.reply(
-        '♾️ Infinity mode aktif (9999999)! Semua resource utama kamu ditingkatkan.'
+        '♾️ Infinity mode aktif!\nSemua coins, flow, energy, resource, crate, dan item (pickaxe, sword, ax, fishing_hook, armor) sudah di-set ke infinity.'
       );
     }
   );
@@ -70,77 +200,74 @@ export default async function on({ cht, ev, Exp }) {
       tag: 'RPG',
     },
     async () => {
-      const lines = [];
+      try {
+        const lines = [];
 
-      lines.push(`🏦 *Toko RPG - Shop Menu*\n`);
-      lines.push(
-        `Perintah:\n.buy / .beli <item> <jumlah>\n.sell / .jual <item> <jumlah>\n.shop untuk melihat semua daftar\n`
-      );
+        lines.push(`🏦 *Toko RPG - Shop Menu*\n`);
+        lines.push(
+          `Perintah:\n.buy / .beli <item> <jumlah>\n.sell / .jual <item> <jumlah>\n.shop untuk melihat semua daftar\n`
+        );
+        lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐁𝐞𝐥𝐢 』═══════╗`);
+        for (const item in Data.ShopRPG.buy) {
+          let harga = Data.ShopRPG.buy[item];
+          if (!harga) continue;
 
-      lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐁𝐞𝐥𝐢 』═══════╗`);
-      for (const item in hargaAwal) {
-        const hargaObj = hargaAwal[item];
-        if (!hargaObj?.beli) continue;
+          const diskon = Data.ShopRPG.diskon?.[item];
+          let line = `║ ${item} = `;
 
-        const harga = Data.ShopRPG.buy[item] || hargaObj.beli;
-        const HargaAwal = hargaObj.beli;
-        const diskon = Data.ShopRPG.diskon[item];
+          if (diskon) {
+            const expired = diskon.expired || 0;
+            const sisa = diskon.jumlah;
+            const aktif =
+              (expired === 0 || expired > Date.now()) &&
+              (sisa === null || sisa > 0);
 
-        let line = `║ ${item} = `;
-        const selisih = harga - HargaAwal;
-        const panah = selisih > 0 ? '⬆︎' : selisih < 0 ? '⬇︎' : '';
+            if (aktif) {
+              const hargaDiskon = Math.max(1, harga - diskon.potongan);
+              const persenDiskon = Math.round(
+                100 - (hargaDiskon / harga) * 100
+              );
 
-        if (diskon) {
-          const aktif =
-            diskon.expired === 0
-              ? diskon.jumlah > 0
-              : diskon.expired > Date.now();
-          if (aktif) {
-            const hargaDiskon = Math.max(1, harga - diskon.potongan);
-            const persenDiskon = Math.round(100 - (hargaDiskon / harga) * 100);
-            const waktuSisa =
-              diskon.expired > 0
-                ? func.formatDuration(diskon.expired - Date.now())
-                : null;
+              let sisaStr = '';
+              if (expired > 0) {
+                const dur = func.formatDuration(expired - Date.now());
+                sisaStr = ` (sisa: ${dur.hours} jam ${dur.minutes} menit)`;
+              }
 
-            const sisaStr = waktuSisa
-              ? ` (sisa: ${waktuSisa.hours} jam ${waktuSisa.minutes} menit)`
-              : '';
-
-            line += `~${harga} Off ${persenDiskon}%~ ➯ *${hargaDiskon}*${sisaStr}`;
-            lines.push(line);
-            continue;
+              line += `~${harga}~ ➯ *${hargaDiskon}* (Diskon ${persenDiskon}%)${sisaStr}`;
+              lines.push(line);
+              continue;
+            } else {
+              delete Data.ShopRPG.diskon[item];
+            }
           }
+
+          line += `*${harga}*`;
+          lines.push(line);
         }
+        lines.push(`╚════════════════════════╝\n`);
+        lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐉𝐮𝐚𝐥 』═══════╗`);
+        for (const item in Data.ShopRPG.sell) {
+          let harga = Data.ShopRPG.sell[item];
+          if (!harga) continue;
 
-        line += panah ? `*${harga}${panah}*` : `*${harga}*`;
-        lines.push(line);
-      }
-      lines.push(`╚════════════════════════╝\n`);
-
-      lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐉𝐮𝐚𝐥 』═══════╗`);
-      for (const item in hargaAwal) {
-        const hargaObj = hargaAwal[item];
-        if (!hargaObj?.jual) continue;
-
-        const harga = Data.ShopRPG.sell[item] || hargaObj.jual;
-        const HargaAwal = hargaObj.jual;
-        const selisih = harga - HargaAwal;
-        const panah = selisih > 0 ? '⬆︎' : selisih < 0 ? '⬇︎' : '';
-
-        lines.push(`║ ${item} = *${harga}${panah}*`);
-      }
-      lines.push(`╚════════════════════════╝`);
-
-      return Exp.sendMessage(
-        cht.id,
-        {
-          text: lines.join('\n'),
-        },
-        {
-          quoted: cht,
+          lines.push(`║ ${item} = *${harga}*`);
         }
-      );
+        lines.push(`╚════════════════════════╝`);
+
+        return Exp.sendMessage(
+          cht.id,
+          {
+            text: lines.join('\n'),
+          },
+          {
+            quoted: cht,
+          }
+        );
+      } catch (e) {
+        console.error('❌ Error di .shop:', e);
+        return cht.reply('Terjadi error saat menampilkan shop.');
+      }
     }
   );
 
@@ -167,12 +294,21 @@ export default async function on({ cht, ev, Exp }) {
           `Item "${item}" tidak bisa di${isBuy ? 'beli' : 'jual'}.`
         );
 
-      inv.coins ??= 0;
-      inv[item] ??= 0;
+      let user = (await func.archiveMemories.get(cht.sender)) || {};
+      let inv = (await func.inventory.get(cht.sender)) || {};
+      user.coins ??= 0;
+      user.flow ??= 0;
+      user.energy ??= 0;
+      const isUserItem = ['coins', 'flow', 'energy'].includes(item);
+      if (!isUserItem) inv[item] ??= 0;
 
       let jumlah;
       if (jumlahStr === 'all') {
-        jumlah = isBuy ? Math.floor(inv.coins / harga) : inv[item];
+        jumlah = isBuy
+          ? Math.floor(user.coins / harga)
+          : isUserItem
+            ? user[item]
+            : inv[item];
       } else {
         jumlah = Math.max(1, parseInt(jumlahStr) || 1);
       }
@@ -189,7 +325,6 @@ export default async function on({ cht, ev, Exp }) {
         const potongan = Data.ShopRPG.diskon[item]?.potongan || 0;
         const expired = Data.ShopRPG.diskon[item]?.expired || 0;
 
-        // Hitung harga total dengan sisa diskon
         for (let i = 0; i < jumlah; i++) {
           const pakaiDiskon =
             sisaDiskon &&
@@ -202,93 +337,61 @@ export default async function on({ cht, ev, Exp }) {
           if (pakaiDiskon && sisaDiskon !== null) sisaDiskon--;
         }
 
-        if (inv.coins < total)
+        if (user.coins < total)
           return cht.reply(
-            `Koinmu tidak cukup untuk membeli ${jumlah} ${item}.\nSaldo: ${inv.coins}, Harga total: ${total}`
+            `Koinmu tidak cukup untuk membeli ${jumlah} ${item}.\nCoins: ${user.coins}, Harga total: ${total}`
           );
 
-        // Eksekusi pembelian
-        inv.coins -= total;
-        inv[item] += jumlah;
-
-        Data.ShopRPG.statistik[item] ??= {
-          beli: 0,
-          jual: 0,
-        };
-        Data.ShopRPG.statistik[item].beli += jumlah;
-
-        // Perbarui diskon
-        if (Data.ShopRPG.diskon[item]) {
-          if (Data.ShopRPG.diskon[item].jumlah !== null) {
-            Data.ShopRPG.diskon[item].jumlah -= jumlah;
-            if (Data.ShopRPG.diskon[item].jumlah <= 0)
-              delete Data.ShopRPG.diskon[item];
-          }
-          if (
-            Data.ShopRPG.diskon[item].expired &&
-            Data.ShopRPG.diskon[item].expired <= Date.now()
-          ) {
-            delete Data.ShopRPG.diskon[item];
-          }
+        user.coins -= total;
+        if (isUserItem) {
+          user[item] += jumlah;
+          await func.archiveMemories.setItem(cht.sender, item, user[item]);
+        } else {
+          inv[item] += jumlah;
+          await func.inventory.setItem(cht.sender, item, inv[item]);
         }
 
-        await inventory.setItem(cht.sender, 'coins', inv.coins);
-        await inventory.setItem(cht.sender, item, inv[item]);
+        Data.ShopRPG.statistik ??= {};
+        Data.ShopRPG.statistik[item] ??= { beli: 0, jual: 0 };
+        Data.ShopRPG.statistik[item].beli += jumlah;
+
+        await func.archiveMemories.setItem(cht.sender, 'coins', user.coins);
 
         return cht.reply(
           `✨ *Pembelian Berhasil!*
-Kamu membeli *${jumlah}* ${item}
-Menggunakan: *${total}* coins
-Sisa coins kamu sekarang: *${inv.coins}*
-Terima kasih telah berbelanja!`
+Kamu membeli *${jumlah}* ${item}, Menggunakan: *${total}* coins, coins kamu sekarang Tersisa: *${user.coins}*, Sekarang kamu Memiliki *${isUserItem ? user[item] : inv[item]}* ${item} `
         );
       }
 
       // === JUAL ===
-      if (inv[item] < jumlah)
+      const stok = isUserItem ? user[item] : inv[item];
+      if (stok < jumlah)
         return cht.reply(
-          `Kamu hanya punya ${inv[item]} ${item}, tidak cukup untuk dijual.`
+          `Kamu hanya punya ${stok} ${item}, tidak cukup untuk dijual.`
         );
 
       const total = harga * jumlah;
-      inv.coins += total;
-      inv[item] -= jumlah;
+      if (isUserItem) {
+        user[item] -= jumlah;
+        await func.archiveMemories.setItem(cht.sender, item, user[item]);
+      } else {
+        inv[item] -= jumlah;
+        await func.inventory.setItem(cht.sender, item, inv[item]);
+      }
+      user.coins += total;
 
-      Data.ShopRPG.statistik[item] ??= {
-        beli: 0,
-        jual: 0,
-      };
+      Data.ShopRPG.statistik ??= {};
+      Data.ShopRPG.statistik[item] ??= { beli: 0, jual: 0 };
       Data.ShopRPG.statistik[item].jual += jumlah;
 
-      const fileText = fs.readFileSync('./helpers/Events/rpg.js', 'utf-8');
-      const updatedText = fileText
-        .replace(/diskon: \{[\s\S]*?\},\n  inflasi:/, () => {
-          const diskonText = JSON.stringify(
-            Data.ShopRPG.diskon,
-            null,
-            2
-          ).replace(/"([^"]+)":/g, '$1:');
-          return `diskon: ${diskonText},\n  inflasi:`;
-        })
-        .replace(/statistik: \{[\s\S]*?\}\n\}/, () => {
-          const statistikText = JSON.stringify(
-            Data.ShopRPG.statistik,
-            null,
-            2
-          ).replace(/"([^"]+)":/g, '$1:');
-          return `statistik: ${statistikText}\n}`;
-        });
-      fs.writeFileSync('./helpers/Events/rpg.js', updatedText);
-
-      await inventory.setItem(cht.sender, 'coins', inv.coins);
-      await inventory.setItem(cht.sender, item, inv[item]);
+      await func.archiveMemories.setItem(cht.sender, 'coins', user.coins);
 
       return cht.reply(
         `✅ *Penjualan Berhasil!*
 Kamu menjual *${jumlah}* ${item}
 Mendapatkan: *${total}* coins
-Total coins kamu sekarang: *${inv.coins}*
-Terima kasih telah berdagang!`
+Total coins kamu sekarang: *${user.coins}*
+*${item}* kamu sekarang Tersisa: *${isUserItem ? user[item] : inv[item]}*`
       );
     }
   );
@@ -302,19 +405,25 @@ Terima kasih telah berdagang!`
 
 Contoh:
 .upgrade pickaxe
-.upgrade energy
 
 Biaya:
 - Item (pickaxe, ax, sword, fishing_hook, armor): coins, mulai dari 27.750 naik 80% tiap level.
-- Energy: 1 flow → +100 maxCharge & +200 premium.maxCharge`,
+- Energy: 1 flow → +100 maxCharge & +200 premium.maxCharge
+- RateCharge: 1 flow → -1 Hours Waktu pengisian energy`,
     },
     async () => {
+      const sender = cht.sender;
       const target = cht.q?.toLowerCase();
+
       if (!target)
         return cht.reply('Contoh: *.upgrade pickaxe* atau *.upgrade energy*');
 
+      // === GET DATA USER DAN INVENTORIES ===
+      let user = await func.archiveMemories.get(sender);
+      let inv = await func.inventory.get(sender);
+
       if (target === 'energy') {
-        const flow = inventory.flow || 0;
+        const flow = user.flow || 0;
         if (flow < 1)
           return cht.reply(
             `Flow kamu tidak cukup.\nDibutuhkan: 1 flow\nFlow kamu: ${flow}`
@@ -322,12 +431,13 @@ Biaya:
 
         const maxCharge = user.maxCharge || 200;
         const premiumMaxCharge = user.premium?.maxCharge || 1000;
-
         const newMax = maxCharge + 100;
         const newPrem = premiumMaxCharge + 200;
-        inventory.flow = flow - 1;
+        user.flow = flow - 1;
+        user.maxCharge = newMax;
+        user.premium.maxCharge = newPrem;
 
-        await func.archiveMemories.setItem(sender, 'flow', inventory.flow);
+        await func.archiveMemories.setItem(sender, 'flow', user.flow);
         await func.archiveMemories.setItem(sender, 'maxCharge', newMax);
         await func.archiveMemories.setItem(
           sender,
@@ -336,17 +446,59 @@ Biaya:
         );
 
         return Exp.sendMessage(
-          id,
+          cht.id,
           {
             text:
               `✅ Upgrade Energy Berhasil!\n\n` +
               `• Max Charge (Free): ${maxCharge} ➜ ${newMax}\n` +
               `• Max Charge (Premium): ${premiumMaxCharge} ➜ ${newPrem}\n` +
-              `• Flow dikurangi 1 (sisa: ${inventory.flow})`,
+              `• Flow dikurangi 1 (sisa: ${user.flow})`,
           },
+          { quoted: cht }
+        );
+      }
+
+      if (target === 'ratecharge') {
+        const flow = user.flow || 0;
+        if (flow < 1)
+          return cht.reply(
+            `Flow kamu tidak cukup.\nDibutuhkan: 1 flow\nFlow kamu: ${flow}`
+          );
+
+        const maxCharge = user.maxCharge || 200;
+        const premiumMaxCharge = user.premium?.maxCharge || 1000;
+        const speed = user.chargingSpeed || 1000;
+        let currentTime = (maxCharge / user.chargeRate) * (speed / 1000 / 3600);
+        let currentTimePrem =
+          (premiumMaxCharge / user.premium.chargeRate) * (speed / 1000 / 3600);
+        let newTime = Math.max(1, currentTime - 1);
+        let newTimePrem = Math.max(1, currentTimePrem - 1);
+        let newRate = (maxCharge / (newTime * 3600)) * (1000 / speed);
+        let newRatePrem =
+          (premiumMaxCharge / (newTimePrem * 3600)) * (1000 / speed);
+
+        user.flow = flow - 1;
+        user.chargeRate = newRate;
+        user.premium.chargeRate = newRatePrem;
+
+        await func.archiveMemories.setItem(sender, 'flow', user.flow);
+        await func.archiveMemories.setItem(sender, 'chargeRate', newRate);
+        await func.archiveMemories.setItem(
+          sender,
+          'premium.chargeRate',
+          newRatePrem
+        );
+
+        return Exp.sendMessage(
+          cht.id,
           {
-            quoted: cht,
-          }
+            text:
+              `✅ Upgrade RateCharge Berhasil!\n\n` +
+              `• Free: ${currentTime.toFixed(1)} jam ➜ ${newTime.toFixed(1)} jam (Rate: ${user.chargeRate.toFixed(6)})\n` +
+              `• Premium: ${currentTimePrem.toFixed(1)} jam ➜ ${newTimePrem.toFixed(1)} jam (Rate: ${user.premium.chargeRate.toFixed(6)})\n` +
+              `• Flow dikurangi 1 (sisa: ${user.flow})`,
+          },
+          { quoted: cht }
         );
       }
 
@@ -361,15 +513,17 @@ Biaya:
 
       let level = itemData.level || itemData.ketahanan || 1;
       let nextLevel = level + 1;
+
       const cost = Math.floor(27750 * Math.pow(1.8, level - 1));
-      const coins = inv.coins || 0;
+      const coins = user.coins || 0;
+
       if (coins < cost) {
         return cht.reply(
           `Coins kamu tidak cukup.\nBiaya: ${cost} coins\nCoins kamu: ${coins}`
         );
       }
 
-      inv.coins -= cost;
+      user.coins -= cost;
 
       if (target === 'armor') {
         itemData.ketahanan = nextLevel;
@@ -377,7 +531,6 @@ Biaya:
         itemData.level = nextLevel;
       }
 
-      // === Bonus Random ===
       let bonusText = '';
       const chances = {
         maxDurability: 0.3,
@@ -417,22 +570,21 @@ Biaya:
 
       inv.item[target] = itemData;
 
-      await inventory.setItem(sender, 'coins', inv.coins);
-      await inventory.setItem(sender, 'item', inv.item);
+      await func.archiveMemories.setItem(sender, 'coins', user.coins);
+      await func.inventory.setItem(sender, 'item', inv.item);
 
       let teks = `✅ Upgrade berhasil!\nItem: ${target}\n`;
       teks += `Level: ${level} ➜ ${nextLevel}\n`;
       teks += `Biaya: -${cost} coins\n`;
+      teks += `Total coins sekarang: ${user.coins}\n`;
       if (bonusText) teks += bonusText.trim().replace(/, $/, '');
 
       Exp.sendMessage(
-        id,
+        cht.id,
         {
           text: teks,
         },
-        {
-          quoted: cht,
-        }
+        { quoted: cht }
       );
     }
   );
@@ -467,8 +619,10 @@ Hanya berlaku untuk:
         );
       }
 
-      const itemData = inv.item?.[itemToRepair];
+      let user = (await func.archiveMemories.get(sender)) || {};
+      let inv = (await func.inventory.get(sender)) || {};
 
+      const itemData = inv.item?.[itemToRepair];
       if (!itemData) return cht.reply(`Kamu belum memiliki *${itemToRepair}*.`);
 
       const { durability, maxDurability } = itemData;
@@ -478,7 +632,7 @@ Hanya berlaku untuk:
 
       const durabilityToAdd = maxDurability - durability;
       const cost = durabilityToAdd * 100;
-      const userCoins = inv.coins || 0;
+      const userCoins = user.coins || 0;
 
       if (userCoins < cost) {
         return cht.reply(
@@ -486,28 +640,21 @@ Hanya berlaku untuk:
         );
       }
 
-      inv.coins -= cost;
+      user.coins -= cost;
       itemData.durability = maxDurability;
       inv.item[itemToRepair] = itemData;
 
-      await inventory.setItem(sender, 'coins', inv.coins);
-      await inventory.setItem(sender, 'item', inv.item);
+      await func.archiveMemories.setItem(sender, 'coins', user.coins);
+      await func.inventory.setItem(sender, 'item', inv.item);
 
       const text =
         `*Repair berhasil!*\n` +
         `Item: ${itemToRepair}\n` +
         `Durability: ${durability} ➜ ${maxDurability}\n` +
-        `Biaya: -${cost} coins`;
+        `Biaya: -${cost} coins\n` +
+        `Sisa coins: ${user.coins}`;
 
-      Exp.sendMessage(
-        id,
-        {
-          text,
-        },
-        {
-          quoted: cht,
-        }
-      );
+      Exp.sendMessage(id, { text }, { quoted: cht });
     }
   );
 
@@ -562,7 +709,7 @@ Hanya berlaku untuk:
       const diskonBaru = {
         potongan,
         jumlah: jumlah && !isNaN(jumlah) ? jumlah : Infinity,
-        expired: jumlah ? 0 : Date.now() + 5 * 60 * 60 * 1000, // 5 jam
+        expired: jumlah ? 0 : Date.now() + 5 * 60 * 60 * 1000,
       };
 
       Data.ShopRPG.diskon[item] = diskonBaru;
@@ -589,11 +736,21 @@ Hanya berlaku untuk:
       tag: 'RPG',
     },
     async () => {
-      const isPremium = (user.premium?.time || 0) > Date.now();
+      let user = (await memories.get(sender)) || {};
+      let inv = (await inventory.get(sender)) || {};
+
+      user.cooldown ??= {};
+      user.premium ??= {};
+      user.energy ??= 0;
+      user.coins ??= 0;
+      user.flow ??= 0;
+      inv.crate ??= {};
+
+      const isPremium = (user.premium.time || 0) > Date.now();
       const now = Date.now();
       const CLAIM_COOLDOWN = 36000000;
 
-      const nextClaim = user.cooldown.claim;
+      const nextClaim = user.cooldown.claim || 0;
       if (now < nextClaim) {
         const sisa = nextClaim - now;
         const dur = func.formatDuration(sisa);
@@ -604,33 +761,21 @@ Hanya berlaku untuk:
 
       user.cooldown.claim = now + CLAIM_COOLDOWN;
       await memories.setItem(sender, 'cooldown', user.cooldown);
-
       const baseEnergy = Math.floor(func.getRandomValue(50, 501));
       let bonusEnergy = 0;
-      let totalEnergy = baseEnergy;
-      if (func.getRandomValue(0, 1) < 0.4) {
+      if (Math.random() < 0.4) {
         const bonusRate = isPremium
           ? func.getRandomValue(0, 0.25)
           : func.getRandomValue(0, 0.15);
         bonusEnergy = Math.floor(baseEnergy * bonusRate);
-        totalEnergy += bonusEnergy;
       }
-      await memories.setItem(
-        sender,
-        'energy',
-        (user.energy || 0) + totalEnergy
-      );
+      const totalEnergy = baseEnergy + bonusEnergy;
+      user.energy += totalEnergy;
+      await memories.setItem(sender, 'energy', user.energy);
 
-      // ——— Drop pool lengkap
       const dropBonus = isPremium ? 0.03 : -0.05;
       let dropPool = [
-        {
-          type: 'flow',
-          rate: 0.0003,
-          min: 1,
-          max: 1,
-          premiumOnly: false,
-        },
+        { type: 'flow', rate: 0.0003, min: 1, max: 1, premiumOnly: false },
         {
           type: 'premium_bonus',
           rate: 0.03,
@@ -638,7 +783,6 @@ Hanya berlaku untuk:
           max: 720,
           premiumOnly: true,
         },
-
         {
           type: 'crate.legendary',
           rate: 0.01 + dropBonus,
@@ -674,7 +818,6 @@ Hanya berlaku untuk:
           max: 40,
           premiumOnly: false,
         },
-
         {
           type: 'diamond',
           rate: 0.04 + dropBonus,
@@ -717,13 +860,11 @@ Hanya berlaku untuk:
           max: 10000,
           premiumOnly: false,
         },
-      ];
+      ].filter((r) => !r.premiumOnly || isPremium);
 
-      dropPool = dropPool.filter((r) => !r.premiumOnly || isPremium);
-
-      let rewardGiven = null;
+      let rewardGiven = '(Tidak ada drop kali ini)';
       for (let reward of dropPool) {
-        if (func.getRandomValue(0, 1) < reward.rate) {
+        if (Math.random() < reward.rate) {
           if (reward.type === 'premium_bonus') {
             const minutes = Math.floor(
               func.getRandomValue(reward.min, reward.max + 1)
@@ -731,25 +872,26 @@ Hanya berlaku untuk:
             const ms = minutes * 60 * 1000;
             const newTime = Math.max(user.premium.time || now, now) + ms;
             user.premium.time = newTime;
-            memories.setItem(sender, 'premium', user.premium);
+            await memories.setItem(sender, 'premium', user.premium);
 
-            const dur = func.formatDuration(newTime - now);
-            const exp = func.dateFormatter(newTime, 'Asia/Jakarta');
-
-            rewardGiven = `🎁 Bonus Premium +${minutes} menit\n⏱️Expired after: ${dur.hours} jam ${dur.minutes} menit ${dur.seconds} detik\n🗓️Expired on: ${exp}`;
+            rewardGiven = `🎁 Bonus Premium +${minutes} menit`;
             break;
           } else {
             let amount = Math.floor(
               func.getRandomValue(reward.min, reward.max + 1)
             );
-            const adjust = isPremium ? 1.3 : 0.9;
-            amount = Math.floor(amount * adjust);
+            amount = Math.floor(amount * (isPremium ? 1.3 : 0.9));
 
             if (reward.type.startsWith('crate.')) {
               const key = reward.type.split('.')[1];
               inv.crate[key] = (inv.crate[key] || 0) + amount;
+              await inventory.setItem(sender, 'crate', inv.crate);
+            } else if (['coins', 'flow'].includes(reward.type)) {
+              user[reward.type] += amount;
+              await memories.setItem(sender, reward.type, user[reward.type]);
             } else {
               inv[reward.type] = (inv[reward.type] || 0) + amount;
+              await inventory.setItem(sender, reward.type, inv[reward.type]);
             }
 
             rewardGiven = `${reward.type.replace('crate.', 'Crate ')} +${amount}`;
@@ -758,31 +900,13 @@ Hanya berlaku untuk:
         }
       }
 
-      inventory.setItem(sender, 'crate', inv.crate);
-      inventory.setItem(sender, 'coins', inv.coins || 0);
-      inventory.setItem(sender, 'potion', inv.potion || 0);
-      inventory.setItem(sender, 'kayu', inv.kayu || 0);
-      inventory.setItem(sender, 'iron', inv.iron || 0);
-      inventory.setItem(sender, 'gold', inv.gold || 0);
-      inventory.setItem(sender, 'diamond', inv.diamond || 0);
-      inventory.setItem(sender, 'flow', inv.flow || 0);
-
       let teks = `✅ Klaim Berhasil!\n`;
       teks += `Status: ${isPremium ? 'Premium' : 'Biasa'}\n`;
       teks += `+ Energy: ${baseEnergy}${bonusEnergy ? ` + ${bonusEnergy} bonus` : ''}\n`;
-      teks += rewardGiven
-        ? `+ Hadiah: ${rewardGiven}`
-        : `(Tidak ada drop kali ini)`;
+      teks += `+ Hadiah: ${rewardGiven}\n`;
+      teks += `Coins: ${user.coins}|Flow: ${user.flow}`;
 
-      Exp.sendMessage(
-        id,
-        {
-          text: teks,
-        },
-        {
-          quoted: cht,
-        }
-      );
+      Exp.sendMessage(id, { text: teks }, { quoted: cht });
     }
   );
 
@@ -875,7 +999,6 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
         );
       }
 
-      // Kurangi bahan & tambahkan item
       inv.iron -= bahan.iron;
       inv.kayu -= bahan.kayu;
       inv.item[itemToCraft] = bahan.data;
@@ -948,57 +1071,46 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
       const luck = pickaxe.lucky || 0;
       const nama = user.name || 'Player';
 
-      // === Makanan
-      inv.makanan ??= {};
-      inv.makanan.roti ??= 0;
-
-      const roti = inv.makanan.roti;
-      let makanUsed = 0;
-      let penalty = 0;
-
-      const minBase = 10 + (level - 1) * 5;
-      const maxBase = 20 + (level - 1) * 5;
-      const base = func.getRandomValue(minBase, maxBase);
-
-      let bonusLuck = 0;
-      if (luck > 0) {
-        const minLucky = 5 + (luck - 1) * 10;
-        const maxLucky = 25 + (luck - 1) * 10;
-        bonusLuck = func.getRandomValue(minLucky, maxLucky);
-      }
-
-      let total = base + bonusLuck;
-
-      if (roti > 0) {
-        makanUsed = Math.min(func.getRandomValue(5, 15), Math.floor(roti));
-        inv.makanan.roti = Math.max(0, inv.makanan.roti - makanUsed);
-        total = Math.floor(total * 1.5);
-      } else {
-        penalty = Math.floor(total * 0.3);
-        total = Math.floor(total - penalty);
-      }
+      const miningItems = cfg.rpg.miningItems;
 
       const hasil = {};
-      for (const drop of miningDrops) {
+      let totalDrop = 0;
+
+      for (const [name, drop] of Object.entries(miningItems)) {
+        let rate = drop.rate || 0;
+        rate += level * 0.5;
+        rate += luck * 0.3;
+        if (rate > 100) rate = 100;
+
         let dropValue = 0;
-        if (drop.multiplier != null) {
-          dropValue = Math.floor(total * drop.multiplier);
-        } else if (drop.rate) {
-          const chance = Math.min(drop.rate * level, drop.maxRate);
-          dropValue = Math.random() < chance ? 1 : 0;
+
+        if (rate >= 100) {
+          const minAmount = Math.max(1, Math.floor(level / 2));
+          const maxAmount = Math.max(minAmount + 1, level);
+          dropValue = Math.floor(func.getRandomValue(minAmount, maxAmount));
+        } else {
+          if (Math.random() * 100 < rate) {
+            const maxRoll = Math.max(1, Math.ceil(rate));
+            dropValue = Math.floor(
+              func.getRandomValue(1, Math.min(maxRoll, drop.max || 2))
+            );
+          }
         }
-        hasil[drop.name] = dropValue;
-        inv[drop.name] = (inv[drop.name] || 0) + dropValue;
+
+        if (dropValue > 0) {
+          hasil[name] = (hasil[name] || 0) + dropValue;
+          inv[name] = (inv[name] || 0) + dropValue;
+          totalDrop += dropValue;
+        }
       }
 
-      // === Luka Tambang
       const lukaMenambang = [
         'Terjatuh di dalam tambang gelap',
         'Luka oleh alat pertambangan',
         'Batuan jatuh menimpa',
         'Tersengat listrik saat menambang',
         'Terkunci di dalam tambang',
-        'Kehabisan oksigen di dalam tambang',
+        'Kehabbisan oksigen di dalam tambang',
         'Luka oleh pecahan kaca',
         'Ketiban bebatuan saat menambang',
         'Mengalami runtuhan tambang',
@@ -1046,7 +1158,6 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
         }
       }
 
-      // === Simpan
       inv.item.pickaxe = pickaxe;
       user.cooldown ??= {};
       user.cooldown.mining = now;
@@ -1054,9 +1165,10 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
       await inventory.setItem(sender, 'item', inv.item);
       await memories.setItem(sender, 'cooldown', user.cooldown);
       await inventory.setItem(sender, 'healt', inv.healt);
-      await inventory.setItem(sender, 'makanan', inv.makanan);
-      for (const drop of miningDrops) {
-        await inventory.setItem(sender, drop.name, inv[drop.name]);
+      for (const [name] of Object.entries(miningItems)) {
+        if (inv[name] !== undefined) {
+          await inventory.setItem(sender, name, inv[name]);
+        }
       }
 
       const persentase = (a, b) => Math.floor((a / b) * 100);
@@ -1066,15 +1178,13 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
         : 0;
 
       let text = `*⛏️ Hasil Mining:*\n`;
-      for (const drop of miningDrops) {
-        const val = hasil[drop.name];
-        if (val > 0) text += `- ${drop.label}: +${val} \n`;
+      for (const [name, drop] of Object.entries(miningItems)) {
+        const val = hasil[name];
+        if (val > 0) text += `- ${drop.label}: +${val}\n`;
       }
 
       text += `\n*Peralatan:*\n- Pickaxe: ${durPickaxe}% durability\n`;
       if (armor) text += `- Armor: ${durArmor}% durability\n`;
-      /*  if (penalty) text += `\n• Penalti: -${penalty} (karena tidak makan)`
-		  if (makanUsed) text += `\n• Roti dikonsumsi: ${makanUsed}` */
 
       if (luka) {
         text += `\n\n*⚠️ ${kejadianLuka}*\n- Total Damage: ${dmg}\n- Ditahan Armor: ${absorbed}\n- Damage ke Healt: -${healtLoss} HP\n- Sisa HP: ${inv.healt}/100`;
@@ -1352,7 +1462,6 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
         await inventory.setItem(sender, i.nama, inv[i.nama]);
       }
 
-      // Caption hasil
       let caption = `_[ HASIL MANCING ]_\n`;
       for (const i of mancing) {
         if (hasil[i.nama] > 0) {
@@ -1411,7 +1520,7 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
         );
       }
 
-      const healAmount = func.getRandomValue(15, 35); // Bisa diatur sesuai balance
+      const healAmount = func.getRandomValue(20, 55);
       const newHealt = Math.min(100, healt + healAmount);
       const restored = newHealt - healt;
 
@@ -1436,6 +1545,295 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
           quoted: cht,
         }
       );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: [
+        'ikhlaskan',
+        'tembak',
+        'terima',
+        'tolak',
+        'mylove',
+        'pacarku',
+        'gembok',
+        'putus',
+      ],
+      listmenu: [
+        'gembok',
+        'ikhlaskan',
+        'pacarku',
+        'tembak',
+        'terima',
+        'tolak',
+        'putus',
+      ],
+      tag: 'fun',
+      isGroup: true,
+    },
+    async ({ args }) => {
+      /** |=====[ Experimental Bella ▫️🦋 ]=====|
+📛 *Nama Fitur* ′: intinya pacaran (have fun)
+✍️ *Create by* ′: Barr
+📣 *Sumber* ′: /** |=====[ Experimental Bella ▫️🦋 ]=====|
+📛 *Nama Fitur* ′: intinya pacaran (have fun)
+✍️ *Create by* ′: Barr
+📣 *Sumber* ′: https://whatsapp.com/channel/0029VbAPgdQGpLHLMCcgwT1j
+🗒️ *Note* ′: jika ada Error tanya aja ke wa.me/6282238228919
+**/
+      let user = Data.users[sender.split('@')[0]];
+      let cd = cht.cmd;
+
+      if (!user.pasangan) user.pasangan = {};
+
+      if (cd === 'pacarku' || cd === 'mylove') {
+        if (!user.pasangan.she)
+          return cht.reply('Kamu belum punya pasangan wkwkwkk');
+
+        if (user.pasangan.status === 'gantung')
+          return cht.reply(
+            'Kamu masih menunggu jawaban dari seseorang, alias masih di gantung wkwkwk'
+          );
+
+        let pacarnya = user.pasangan.she;
+        let sejak = user.pasangan.waktuTerima;
+
+        let teks = `乂  *P A S A N G A N  K A M U*\n\n`;
+        teks += `Kamu sudah pacaran dengan @${pacarnya.split('@')[0]} sejak \`${sejak}\`\n\n`;
+        teks += `🥰 Semoga langgeng sampai pelaminan yah...`;
+
+        return Exp.sendMessage(
+          id,
+          {
+            text: teks,
+            contextInfo: {
+              ...contextInfo,
+              mentionedJid: [pacarnya],
+            },
+          },
+          { quoted: cht }
+        );
+      }
+
+      if (cd === 'gembok') {
+        let act = ['on', 'off'];
+        let action = args.toLowerCase();
+
+        if (!act.includes(action))
+          return cht.reply(
+            '*❗ Pilih salah satu dari on/off*\n\n' +
+              '- on\n> Membuat seseorang ga bisa nembak kamu\n' +
+              '- off\n> Buka hati lagi'
+          );
+
+        if (action === 'on') {
+          if (user.pasangan.gembok === true)
+            return cht.reply('Kamu udah menutup hati sebelumnya...');
+
+          if (user.pasangan.she)
+            return cht.reply('💔 Putusin pacarmu dulu kalau mau kunci hati');
+
+          user.pasangan = {
+            she: null,
+            level: 0,
+            gembok: true,
+            status: null,
+            waktuNembak: null,
+            waktuTerima: null,
+          };
+          return cht.reply(
+            '♥️ Kini kamu telah nutup pintu hati mu, dan ga bakal nerima siapapun...'
+          );
+        } else {
+          if (user.pasangan.gembok === false)
+            return cht.reply('Hati Kamu sudah terbuka sebelumnya...');
+
+          user.pasangan = {};
+
+          return cht.reply(
+            '♥️ Kini kamu telah membuka pintu hati untuk siapapun lagi...'
+          );
+        }
+      }
+
+      if (cd === 'tembak') {
+        let she = cht.mention[0];
+
+        if (!she) return cht.reply('*❗ Tag orang yang ingin kamu tembak*');
+
+        let sheMen = she.split('@')[0];
+
+        if (!Data.users[sheMen]) Data.users[sheMen] = {};
+
+        let sheData = Data.users[sheMen];
+
+        if (she === sender)
+          return cht.reply(
+            'Ngapain nembak diri sendiri, ga ada yg mau yah? wkwkw'
+          );
+
+        if (user.pasangan?.status === 'gantung')
+          return cht.reply('Kamu sedang menunggu jawaban dari seseorang');
+
+        if (she === user.pasangan.she)
+          return cht.reply('Kamu sudah pacaran sama dia');
+
+        if (user.pasangan.she)
+          return cht.reply('Kamu udah punya pacar, jangan selingkuh dongo');
+
+        if (sheData.pasangan?.gembok === true)
+          return cht.reply(
+            '💔 Dia sedang nutup pintu hatinya, jadi ga bisa...'
+          );
+
+        if (sheData.pasangan?.status === 'gantung')
+          return cht.reply(
+            'Dia udah di tembak oleh seseorang, tapi belum memberi jawaban'
+          );
+
+        if (sheData.pasangan?.status === 'pacaran')
+          return cht.reply('Dia sudah punya pacar...');
+
+        let klmt = [
+          `💘 @${she.split('@')[0]}, aku nggak pandai merangkai kata... tapi aku tau aku mau kamu ada di sisiku. Mau nggak jadi pasangan aku? ❤️`,
+          `🥺 @${she.split('@')[0]}, setiap hari aku kepikiran kamu... sekarang aku berani ngomong, maukah kamu jadi pacarku? 💕`,
+          `Kamu tau ga @${she.split('@')[0]}?, kamu itu alasanku senyum tiap hari. Boleh nggak aku jadi alasannya kamu juga? 💖`,
+          `@${she.split('@')[0]}, aku nggak janji sempurna... tapi aku janji setia. Mau nggak kamu jadi pasangan aku? 💞`,
+        ];
+
+        let kalimat = klmt[Math.floor(Math.random() * klmt.length)];
+        let now = new Date().toLocaleString('id-ID', {
+          timeZone: 'Asia/Jakarta',
+        });
+
+        user.pasangan = {
+          she,
+          level: 0,
+          gembok: false,
+          status: 'gantung',
+          penembak: true,
+          waktuNembak: now,
+          waktuTerima: null,
+        };
+
+        sheData.pasangan = {
+          she: sender,
+          level: 0,
+          gembok: false,
+          status: 'gantung',
+          penembak: false,
+          waktuNembak: now,
+          waktuTerima: null,
+        };
+
+        return cht.reply(kalimat, {
+          mentions: [she],
+        });
+      }
+
+      if (cd === 'terima') {
+        let mention = cht.mention[0];
+
+        if (!mention) return cht.reply('*❗ Tag atau cht.reply target*');
+
+        if (mention === sender)
+          return replt('Tag orang yang nembak kamu, malah tag diri sendiri');
+
+        if (user.pasangan?.status !== 'gantung')
+          return cht.reply('Ga ada yang nembak kamu wkwkwk');
+
+        if (user.pasangan.penembak)
+          return cht.reply(`Tunggu dia yang ngetik \`.${cht.cmd}\``);
+
+        let now = new Date().toLocaleString('id-ID', {
+          timeZone: 'Asia/Jakarta',
+        });
+        let she = user.pasangan.she;
+        let sheData = Data.users[she.split('@')[0]];
+
+        if (mention !== she)
+          return cht.reply('Dia bukan orang yang nembak kamu wkwkwk');
+
+        user.pasangan.status = 'pacaran';
+        user.pasangan.waktuTerima = now;
+
+        if (sheData?.pasangan) {
+          sheData.pasangan.status = 'pacaran';
+          sheData.pasangan.waktuTerima = now;
+        }
+
+        return cht.reply(
+          `💞 Kini kamu resmi pacaran dengan @${she.split('@')[0]}`,
+          {
+            mentions: [she],
+          }
+        );
+      }
+
+      if (cd === 'tolak') {
+        if (user.pasangan?.status !== 'gantung')
+          return cht.reply('Ga ada yang nembak kamu wkkkwkwkk');
+
+        if (user.pasangan.penembak)
+          return cht.reply(`Tunggu dia yang ngetik \`.${cht.cmd}\``);
+
+        let she = user.pasangan.she;
+        let sheData = Data.users[she.split('@')[0]];
+
+        user.pasangan = {};
+        if (sheData?.pasangan) sheData.pasangan = {};
+
+        return cht.reply(`💔 Kamu menolak cinta dari @${she.split('@')[0]}`, {
+          mentions: [she],
+        });
+      }
+
+      if (cd === 'ikhlaskan') {
+        if (user.pasangan?.status !== 'gantung')
+          return cht.reply('Kamu tidak sedang menunggu jawaban dari siapapun');
+
+        if (user.pasangan.status === 'pacaran')
+          return cht.reply(
+            'Kamu udah pacaran dengan dia, berarti kamu ga di gantung'
+          );
+
+        let she = user.pasangan.she;
+        let sheData = Data.users[she.split('@')[0]];
+
+        user.pasangan = {};
+        if (sheData?.pasangan) sheData.pasangan = {};
+
+        return cht.reply(
+          `Karena @${she.split('@')[0]} tidak memberikan jawaban nya, dan kamu putuskan untuk mengikhlaskannya...`,
+          {
+            mentions: [she],
+          }
+        );
+      }
+
+      if (cd === 'putus') {
+        if (!user.pasangan.she)
+          return cht.reply('Kamu belum punya pacar wkwkwk');
+
+        let she = user.pasangan.she;
+        let sheData = Data.users[she.split('@')[0]];
+
+        let exName = `@${she.split('@')[0]}`;
+
+        user.pasangan = {};
+
+        if (sheData?.pasangan) {
+          sheData.pasangan = {};
+        }
+
+        return cht.reply(
+          `💔 Kamu resmi putus dengan ${exName}.\nGapapa, jodoh ga kemana kok :)`,
+          {
+            mentions: [she],
+          }
+        );
+      }
     }
   );
 

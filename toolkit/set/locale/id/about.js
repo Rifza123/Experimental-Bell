@@ -114,6 +114,38 @@ infos.antilink = `📌 *Panduan Penggunaan Fitur Antilink Bot*
    - Perintah: \`.antilink del <link>\`
    - *Gunakan perintah ini untuk menghapus URL dari daftar blokir.*
    - Contoh: \`.antilink del https://wa.me\`
+   
+📄 *5. Menampilkan Daftar URL Antilink:*
+   - Perintah: \`.antilink list\`
+   - *Gunakan perintah ini untuk melihat semua URL yang diblokir.*
+   - Contoh: \`.antilink list\`
+   
+`;
+
+infos.antitoxic = `📌 *Panduan Penggunaan Fitur Antitoxic Bot*
+
+🔒 *1. Mengaktifkan Antitoxic:*
+   - Perintah: \`.antitoxic on\`
+   - *Gunakan perintah ini untuk mengaktifkan proteksi antitoxic pada grup.*
+
+🔓 *2. Menonaktifkan antitoxic:*
+   - Perintah: \`.antitoxic off\`
+   - *Gunakan perintah ini untuk menonaktifkan antitoxic.*
+
+➕ *3. Menambah URL ke Daftar antitoxic:*
+   - Perintah: \`.antitoxic add <link>\`
+   - *Gunakan perintah ini untuk menambahkan kata yang ingin diblokir.*
+   - Contoh: \`.antitoxic add anjg\`
+
+➖ *4. Menghapus URL dari Daftar antitoxic:*
+   - Perintah: \`.antitoxic del <link>\`
+   - *Gunakan perintah ini untuk menghapus kata dari daftar blokir.*
+   - Contoh: \`.antitoxic del anjg\`
+
+📄 *5. Menampilkan Daftar Kata Antitoxic:*
+   - Perintah: \`.antitoxic list\`
+   - *Gunakan perintah ini untuk melihat semua kata yang diblokir.*
+   - Contoh: \`.antitoxic list\`
 `;
 
 infos.tfenergy = `

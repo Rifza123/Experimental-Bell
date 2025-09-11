@@ -53,9 +53,12 @@ infos.menu = ` *[ LIST REACTION CMD ]*
 > _Menerjemahkan pesan yang diberi react ke bahasa indonesia._
 
 - *Media uploader*
-    |🔗||📎||🏷️|
+    |🔗||📎||🏷️||⬆️||📤|
 > _Mengupload media ke cdn dan merubahnya menjadi link._
 
+- *Pengubah warna kulit*
+    |🟥||🟧||🟨||🟩||🟦||🟪||⬛||⬜||🟫|
+> _Mengganti warna kulit orang dalam gambar._
+
 *Guide:*
-_*Beri reaksi ke pesan target dengan salah satu emoji di atas*_
-`;
+_*Beri reaksi ke pesan target dengan salah satu emoji di atas*_`;

@@ -79,7 +79,8 @@ export class func {
     try {
       let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : null;
       //console.log(meta)
-      let participants = meta?.participants || this.lid();
+      let participants =
+        meta?.adressingMode == 'lid' ? meta.participants : this.lid();
 
       let v = participants.find(
         (a) =>
@@ -921,6 +922,16 @@ export class func {
         }
       );
     });
+  }
+
+  async generateSN(length = 16) {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let sn = '';
+    for (let i = 0; i < length; i++) {
+      sn += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return sn;
   }
 
   formatDateTimeParts(date, timeZone = 'Asia/Jakarta', code = 'id-ID') {

@@ -180,8 +180,8 @@ export class JadwalSholat {
     let c = { hm: `${h}:${min}`, dm: `${d}/${m}` };
     this.groups[id].jadwal =
       this.groups[id].jadwal?.[0]?.tanggal?.split('/')?.[1] === m
-          ? this.groups[id].jadwal
-          : (await this.init(id, v)).data;
+        ? this.groups[id].jadwal
+        : (await this.init(id, v)).data;
     this.groups[id].today =
       d == this.groups[id]?.today?.hari
         ? this.groups[id].today

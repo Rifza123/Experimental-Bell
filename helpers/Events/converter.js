@@ -309,26 +309,29 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
       },
     },
     async ({ media, args }) => {
-      console.log(args);
-      let { quoted, type: mtype } = ev.getMediaType();
-      let type =
-        mtype == 'sticker'
-          ? 'webp'
-          : mtype == 'image'
-            ? 'png'
-            : mtype == 'video'
-              ? 'mp4'
-              : 'mp3';
+      try {
+        let { quoted, type: mtype } = ev.getMediaType();
+        let type =
+          mtype == 'sticker'
+            ? 'webp'
+            : mtype == 'image'
+              ? 'png'
+              : mtype == 'video'
+                ? 'mp4'
+                : 'mp3';
 
-      const res = await processMedia(media, normalizeArgs(args), type);
-      return Exp.sendMessage(
-        cht.id,
-        {
-          [mtype]: res,
-          ...(mtype !== 'audio' ? {} : { mimetype: 'audio/mpeg' }),
-        },
-        { quoted: cht }
-      );
-    }
+        const res = await processMedia(media, normalizeArgs(args), type);
+        return Exp.sendMessage(
+          cht.id,
+          {
+            [mtype]: res,
+            ...(mtype !== 'audio' ? {} : { mimetype: 'audio/mpeg' }),
+          },
+          { quoted: cht }
+        );
+      } catch (e){
+        cht.reply(String(e))
+      }
+    }      
   );
 }

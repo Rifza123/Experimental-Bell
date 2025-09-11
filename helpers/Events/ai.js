@@ -75,6 +75,10 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
                   await cht.reply(infos.messages.failed);
                   response.data.destroy();
                   break;
+                case 'reject':
+                  cht.reply(data.msg);
+                  response.data.destroy();
+                  break;
               }
             }
           });
@@ -329,7 +333,7 @@ Base Type: \`${baseType}\`
 
 [ ID ] [ Name ] \`Base Type\`
 ${notSameLora.join('\n')}`;
-          return cht.reply(txt);
+          return cht.reply(txt, { replyAi: false });
         }
 
         if (is.sticker || is.quoted?.sticker) {
@@ -371,7 +375,7 @@ ${notSameLora.join('\n')}`;
         );
 
         if (!aiResponse.ok) {
-          console.log(await aiResponse.text())
+          console.log(await aiResponse.text());
           return cht.reply(
             `HTTP error! status: ${aiResponse.status}${aiResponse.status == 429 ? '\n_Rate limit reached! please check your limit apikey!_' : aiResponse.status == 403 ? '_Your apikey is invalid or expired! Please check .cekapikey for details your key' : ''}`
           );
@@ -422,7 +426,7 @@ ${notSameLora.join('\n')}`;
                     )
                     .join('\n')
                 : '  None';
-            console.log(s)
+            console.log(s);
             return Exp.sendMessage(
               id,
               {
@@ -560,6 +564,7 @@ ${loraText}
           responseType: 'stream',
         }
       );
+
       let rsp = 'rfz';
       let i = 0;
       response.data.on('data', async (chunk) => {
@@ -587,7 +592,7 @@ ${loraText}
                 );
                 break;
               case 'failed':
-                await cht.reply(data.status);
+                await cht.reply(data.msg);
                 response.data.destroy();
                 break;
               case 'completed':
@@ -600,6 +605,10 @@ ${loraText}
                   },
                   { quoted: cht }
                 );
+                response.data.destroy();
+                break;
+              case 'reject':
+                cht.reply(data.msg);
                 response.data.destroy();
                 break;
               default:
@@ -628,7 +637,7 @@ ${loraText}
         `${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`
       ).then((response) => response.json());
 
-      cht.reply('[ BARD GOOGLE ]\n' + ai.chatUi, { ai: true });
+      cht.reply('[ BARD GOOGLE ]\n' + ai.chatUi, { ai: true, replyAi: false });
     }
   );
 
@@ -642,7 +651,7 @@ ${loraText}
     },
     async () => {
       let res = await gpt(cht.q);
-      cht.reply('[ GPT-3 ]\n' + res.response, { ai: true });
+      cht.reply('[ GPT-3 ]\n' + res.response, { ai: true, replyAi: false });
     }
   );
 
@@ -656,7 +665,10 @@ ${loraText}
     },
     async () => {
       let res = await deepseek(cht.q);
-      cht.reply('[ DEEPSEEK-R1 ]\n' + res.response, { ai: true });
+      cht.reply('[ DEEPSEEK-R1 ]\n' + res.response, {
+        ai: true,
+        replyAi: false,
+      });
     }
   );
 
@@ -891,7 +903,7 @@ ${loraText}
     },
     async ({ media }) => {
       let res = await GeminiImage(await func.minimizeImage(media), cht.q);
-      cht.reply(res, { ai: true });
+      cht.reply(res, { ai: true, replyAi: false });
     }
   );
 
@@ -1025,6 +1037,10 @@ ${loraText}
                   cht.reply(infos.messages.failed);
                   response.data.destroy();
                   break;
+                case 'reject':
+                  cht.reply(data.msg);
+                  response.data.destroy();
+                  break;
               }
             }
           });
@@ -1128,9 +1144,17 @@ ${loraText}
                   response.data.destroy();
                   break;
                 case 'failed':
-                  cht.reply(infos.messages.failed);
+                  cht.reply(data.msg || infos.messages.failed);
                   response.data.destroy();
                   break;
+                case 'reject':
+                  cht.reply(data.msg);
+                  response.data.destroy();
+                  break;
+
+                default:
+                  cht.reply(data.msg);
+                  response.data.destroy();
               }
             }
           });
@@ -1366,7 +1390,7 @@ ${loraText}
             image: await imageEdit(await func.minimizeImage(media), cht.q),
             ai: true,
           },
-          { quoted: cht }
+          { quoted: cht.reaction || cht }
         );
       } catch (e) {
         cht.reply('Failed!: ' + e.message);
@@ -1375,8 +1399,6 @@ ${loraText}
   );
 
   let aifilters = {
-    ghibli:
-      '1625[14187:4]|Studio Ghibli style, animated film background, soft brush strokes, painterly environment, whimsical magic, peaceful atmosphere, fantasy anime style',
     naruto:
       '1552[11850:0.7]|Naruto uzumaki, Anime Naruto, wearing a konoha headband',
     statue: '1552[469:0.9]|stone statue',
@@ -1404,35 +1426,51 @@ ${loraText}
     }
   );
 
-  let cmds = [
-    'hitamkan',
-    'irengkan',
-    'irengin',
-    'putihkan',
-    'putihin',
-    'jadibiru',
-  ];
-
-  let edits = Object.fromEntries(
-    cmds.map((cmd) => [
-      cmd,
-      cmd.includes('putih')
-        ? 'change skin color to white'
-        : cmd.includes('biru')
-          ? 'change skin color to blue'
-          : 'change skin color to black',
-    ])
-  );
+  let edits = Object.fromEntries([
+    ...['hitamkan', 'irengkan', 'irengin'].map(k => [k, 'change skin color to black']),
+    ...['putihkan', 'putihin'].map(k => [k, 'change skin color to white']),
+    ...['merahkan', 'merahin'].map(k => [k, 'change skin color to red']),
+    ...['orenkan', 'orenin','orany oranyekan'].map(k => [k, 'change skin color to orange']),
+    ...['kuningkan', 'kuningin'].map(k => [k, 'change skin color to yellow']),
+    ...['hijaukan', 'hijauin'].map(k => [k, 'change skin color to green']),
+    ...['birukan', 'boruin'].map(k => [k, 'change skin color to blue']),
+    ...['ungukan', 'unguin'].map(k => [k, 'change skin color to purple']),
+    ...['gelapkan', 'gelapin'].map(k => [k, 'change skin color to dark']),
+    ...['jadibiru'].map(k => [k, 'change skin color to blue']),
+    ...['ironman'].map(k => [k, 'edit the image into Iron Man suit, helmet open showing the original face, keep the face highly accurate and similar to the input photo, cinematic lighting, detailed metallic armor, glowing arc reactor on the chest, realistic Marvel movie style']),
+    ...['chibi'].map(k => [k, 'convert the image into cute chibi anime style, small body proportions, oversized head, large sparkling eyes, colorful soft shading, kawaii expression, pastel color palette, clean line art']),
+    ...['ghibli'].map(k => [k, 'convert the image into Studio Ghibli style animation, soft hand-drawn colors, warm lighting, dreamy atmosphere, high detail background painting, expressive character design']),
+    ...['tofigur','jadifigur'].map(k => [k, 'illustration of a 1/7 scale figure, highly detailed and realistic style, placed on a computer desk. the figure is mounted on a circular transparent acrylic base (no text or logos). on the computer screen, show the 3D modeling process of the same figure. next to the monitor, place a Tamiya-style toy packaging box with the original artwork printed on it. scene should look natural, clean, and photorealistic.']),
+  ]);
 
   ev.on(
     {
-      cmd: cmds,
-      listmenu: ['irengkan', 'putihkan', 'jadibiru'],
+      cmd: Object.keys(edits),
+      listmenu: Object.keys(edits),
       tag: 'ai',
     },
     () => {
       cht.q = edits[cht.cmd];
-      ev.emit('edit');
+      ev.emit('edit', { cht });
     }
   );
+  
+  ev.on(
+    {
+      cmd: ["finding"],
+      listmenu: ["finding"],
+      args: 'Harap sertakan nama orangnya!',
+      media: {
+        type: ['image'],
+        msg: "Kirim gambar dengan caption: .finding nama_orang",
+        save: false,
+      },
+      tag: 'ai',
+    },
+    () => {
+      cht.q = `create a Pixar-style movie poster inspired by Finding Nemo, underwater ocean background, colorful corals and fishes, cinematic lighting, text on the poster should say "Finding ${cht.q}" in bold Pixar-style font`;
+      ev.emit('edit');
+    }
+  );  
+
 }

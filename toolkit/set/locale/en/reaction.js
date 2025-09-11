@@ -56,6 +56,10 @@ infos.menu = ` *[ LIST REACTION CMD ]*
     |🔗||📎||🏷️|
 > _Upload media to CDN and convert it into a link._
 
+- *Skin color changer*
+    |🟥||🟧||🟨||🟩||🟦||🟪||⬛||⬜||🟫|
+> _Change the skin color of people in images._
+
 *Guide:*
 _*React to the target message with one of the emojis above*_
 `;

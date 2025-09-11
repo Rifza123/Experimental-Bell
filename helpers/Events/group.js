@@ -6,6 +6,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
   const { id, sender } = cht;
   const { func } = Exp;
   const { archiveMemories: memories, dateFormatter } = func;
+  const dayMap = {
+    minggu: 'sunday',
+    senin: 'monday',
+    selasa: 'tuesday',
+    rabu: 'wednesday',
+    kamis: 'thursday',
+    jumat: 'friday',
+    sabtu: 'saturday',
+  };
+  const reverseDayMap = Object.fromEntries(
+    Object.entries(dayMap).map(([k, v]) => [v, k])
+  );
+  const { parseTimeString, formatDateTimeParts, getGroupMetadata } = Exp.func;
   let infos = Data.infos;
   const chatDb = Data.preferences[cht.id] || {};
 
@@ -164,7 +177,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let { status } = (
         await Exp.groupParticipantsUpdate(
           id,
-          await func.getMentions(cht, true),
+          await Promise.all(
+            cht.mention.map((a) =>
+              func.getSender(a, { lid: cht.cmd == 'kick' })
+            )
+          ),
           cht.cmd == 'kick' ? 'remove' : 'add'
         )
       )[0];
@@ -174,6 +191,53 @@ export default async function on({ cht, Exp, store, ev, is }) {
       if (status == 500) return cht.reply('Grub penuh!');
       if (status == 403)
         return cht.reply('Maaf, gabisa ditambah karna private acc');
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['blacklist', 'unblacklist'],
+      listmenu: ['unblacklist', 'blacklist'],
+      tag: 'group',
+      isMention: true,
+    },
+    async () => {
+      try {
+        let { mention, cmd } = cht;
+        let admins = mention.filter((a) => Exp.groupAdmins.includes(a));
+        let owners = mention.filter((a) =>
+          global.owner
+            .map((o) => `${String(o).split('@')[0]}@s.whatsapp.net`)
+            .includes(a)
+        );
+        let excluded = mention
+          .filter((a) => admins.includes(a) || owners.includes(a))
+          .map((a) => {
+            let roles = [];
+            if (admins.includes(a)) roles.push('admin');
+            if (owners.includes(a)) roles.push('owner');
+            return `> @${a.split('@')[0]} tidak di-blacklist karena dia adalah ${roles.join(' & ')}`;
+          });
+
+        let filteredMention = mention.filter(
+          (a) => !admins.includes(a) && !owners.includes(a) && a !== cht.sender
+        );
+
+        chatDb.blacklist ??= [];
+        chatDb.blacklist =
+          cmd === 'blacklist'
+            ? [...new Set([...chatDb.blacklist, ...filteredMention])]
+            : chatDb.blacklist.filter((id) => !filteredMention.includes(id));
+
+        cht.reply(
+          cmd === 'blacklist'
+            ? `✅ Berhasil memblacklist ${filteredMention.map((a) => `@${a.split('@')[0]}`).join(', ')}\n${excluded.join('\n')}\n\n_*Pesan apa pun yang dikirim oleh pengguna yang masuk daftar blacklist akan dihapus secara otomatis.*_`
+            : `♻️ Berhasil menghapus dari blacklist ${filteredMention.map((a) => `@${a.split('@')[0]}`).join(', ')}`,
+          { mentions: mention }
+        );
+      } catch (e) {
+        console.error(e);
+      }
     }
   );
 
@@ -198,6 +262,142 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }
   );
 
+  ev.on(
+    {
+      cmd: ['getppgc'],
+      listmenu: ['getppgc'],
+      tag: 'group',
+      isGroup: true,
+    },
+    async () => {
+      try {
+        let pp = await Exp.profilePictureUrl(cht.id);
+        Exp.sendMessage(cht.id, {
+          image: {
+            url: pp,
+          },
+        });
+      } catch {
+        cht.reply('Gabisa, keknya dia gapake pp');
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['infogc', 'infogroup'],
+      listmenu: ['infogc'],
+      tag: 'group',
+      isGroup: true,
+    },
+    async () => {
+      try {
+        let meta = Exp.groupMetdata;
+        let pref = Data.preferences[cht.id];
+
+        let topUsers = [];
+        let topEnergy = await Promise.all(
+          [
+            ...(is.group
+              ? Exp.groupMembers
+              : Object.keys(Data.users).map((a) => ({
+                  id: String(a),
+                }))),
+          ].map((a) => ({
+            id: a.id,
+            energy: memories.get(a.id)?.energy || 0,
+          }))
+        ).then((members) =>
+          members
+            .sort((a, b) => b.energy - a.energy)
+            .slice(0, 10)
+            .map((a, i) => {
+              topUsers.push(a.id);
+              let aid = a.id.includes('@') ? a.id.split('@')[0] : a.id;
+              let name = func.getName(aid);
+              let emoji =
+                i === 0 ? '(🏆)' : i === 1 ? '(🥈)' : i === 2 ? '(🥉)' : '';
+              return `${i + 1}. ${name.extractMentions().length == 0 ? name : name.slice(0, 5) + '****' + name.slice(-4)} \`${cht.cmd == 'topglobalenergy' ? aid.slice(0, 5) + '****' + aid.slice(-4) : aid}\` (${a.energy}⚡) ${emoji}`;
+            })
+            .join('\n')
+        );
+        let text = `📌 *${meta.subject || 'Tanpa Subjek'}*
+
+🆔 *ID Grup:* ${meta.id || '-'}
+🔢 *Addressing Mode:* ${meta.addressingMode || '-'}
+📅 *Dibuat pada:* ${func.dateFormatter(meta.creation * 1000, 'Asia/Jakarta') || '-'}
+👑 *Pembuat Grup:* ${meta.owner ? meta.owner.split('@')[0] : 'Tak diketahui'}
+✍️ *Penulis Subjek:* ${func.getName(meta.subjectOwner) || '-'} (${meta.subjectOwner?.split('@')[0] || '-'})
+🕒 *Terakhir Subjek Diubah:* ${func.dateFormatter(meta.subjectTime * 1000, 'Asia/Jakarta') || '-'}
+👥 *Jumlah Member:* ${meta.size || 0}
+
+*isBotAdmin*: ${is.botAdmin ? '👑' : '❌'}
+
+⚙️ *Pengaturan Grup:*
+- Restrict: ${meta.restrict ? '✅ Ya' : '❌ Tidak'}
+- Announce (Hanya Admin Bisa Chat): ${meta.announce ? '✅ Ya' : '❌ Tidak'}
+- Persetujuan Join: ${meta.joinApprovalMode ? '✅ Ya' : '❌ Tidak'}
+- Mode Tambah Member: ${meta.memberAddMode ? '✅ Ya' : '❌ Tidak'}
+- Pesan Sementara: ${meta.ephemeralDuration ? meta.ephemeralDuration / 3600 + ' jam' : '❌ Nonaktif'}
+- Antilink: ${pref.antilink ? '✅ Aktif' : '❌ Mati'}
+- AntiTagAll/Hidetag: ${pref.antitagall ? '✅ Aktif' : '❌ Mati'}
+- Welcome: ${pref.welcome ? '✅ Aktif' : '❌ Mati'}
+- Play game: ${pref.playgame ? '✅ Aktif' : '❌ Mati'}
+- Only Admin: ${pref.onlyadmin ? '✅ Aktif' : '❌ Mati'}
+- Jadwal Sholat: ${pref.jadwalsholat ? '✅ Aktif' : '❌ Mati'}
+- Mute: ${pref.mute ? '✅ Aktif' : '❌ Mati'}
+- Anti Delete: ${pref.antidelete ? '✅ Aktif' : '❌ Mati'}
+- Anti Tag Sw: ${pref.antitagsw ? '✅ Aktif' : '❌ Mati'}
+- Antibot: ${pref.antibot ? '✅ Aktif' : '❌ Mati'}
+- Auto AI: ${pref.ai_interactive ? '✅ Aktif' : '❌ Mati'}
+- Livechart: ${pref.livechart ? '✅ Aktif' : '❌ Mati'}
+- Antitoxic: ${pref.antitoxic ? '✅ Aktif' : '❌ Mati'}
+- Livechart: ${pref.livechart ? '✅ Aktif' : '❌ Mati'}
+- Autosticker: ${pref.autosticker ? '✅ Aktif' : '❌ Mati'}
+- Autodownload: ${pref.autodownload ? '✅ Aktif' : '❌ Mati'}
+
+🔗 *Grup Induk:* ${meta.linkedParent || 'Tidak ada'}
+
+*List Admin*: 
+- ${Exp.groupMembers
+          .filter((a) => a.admin)
+          .map(
+            (a) => `${a.id.split('@')[0]}${a.admin == 'superadmin' ? '👑' : ''}`
+          )
+          .join('\n- ')}
+
+📝 *Deskripsi:*
+${meta.desc || '-'}
+
+*TOP 10 ENERGY*
+${topEnergy}
+`;
+        const info = {
+          text,
+          contextInfo: {
+            externalAdReply: {
+              title: cht.pushName,
+              body: 'Info Group',
+              thumbnailUrl: await Exp.profilePictureUrl(cht.id),
+              sourceUrl: 'https://github.com/Rifza123',
+              mediaUrl:
+                'http://ẉa.me/6283110928302/' +
+                Math.floor(Math.random() * 100000000000000000),
+              renderLargerThumbnail: true,
+              mediaType: 1,
+            },
+            forwardingScore: 19,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterName: 'Termai',
+              newsletterJid: '120363301254798220@newsletter',
+            },
+          },
+        };
+        Exp.sendMessage(cht.id, info, { quoted: cht });
+      } catch {}
+    }
+  );
   ev.on(
     {
       cmd: ['tagall', 'hidetag'],
@@ -294,6 +494,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         'jadwalsholat',
         'onlyadmin',
         'antidelete',
+        'livechart',
+        'antitoxic',
+        'autosticker',
+        'autodownload',
+        'antitagsw',
       ];
       let text = `Opsi yang tersedia:\n\n- ${actions.join('\n- ')}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`;
       if (!actions.includes(input)) {
@@ -359,6 +564,9 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         if (input == 'antilink') {
           sets.links = sets.links || ['chat.whatsapp.com'];
         }
+        if (input == 'antitoxic') {
+          sets.badwords = sets.badwords || [];
+        }
         if (input == 'jadwalsholat' && cht.cmd !== 'on')
           delete jadwal.groups[id];
       }
@@ -377,8 +585,11 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
       isAdmin: true,
     },
     async ({ args }) => {
-      let [action, ...etc] = args.split(' ');
-      let value = etc?.join(' ');
+      let [action, ...etc] = args
+        ?.trim()
+        .split(/[,\s]+/)
+        .filter(Boolean);
+      let value = etc?.length > 0 ? etc : false;
       let sets = Data.preferences[cht.id];
       sets[cht.cmd] = sets[cht.cmd] || false;
       sets.links = sets.links || ['chat.whatsapp.com'];
@@ -393,12 +604,13 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         if (!value)
           return cht.reply('Please put link!\n\n' + infos.about.antilink);
         if (action == 'add') {
-          sets.links.push(value);
+          sets.links.push(...value);
           sets.links = [...new Set(sets.links)];
-          cht.reply(`Success add link ${value}`);
+          cht.reply(`✅ Success add link: ${value.join(', ')}`);
         } else {
-          sets.links = [...new Set(sets.links.filter((a) => a !== value))];
-          cht.reply(`Success delete link ${value}`);
+          sets.links = sets.links.filter((w) => !value.includes(w));
+          sets.links = [...new Set(sets.links)];
+          cht.reply(`✅ Success delete link: ${value.join(', ')}`);
         }
       } else if (action == 'list') {
         cht.reply(
@@ -407,6 +619,137 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
       } else {
         cht.reply(infos.about.antilink);
       }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['antitoxic'],
+      listmenu: ['antitoxic'],
+      tag: 'group',
+      args: infos.about.antitoxic,
+      isGroup: true,
+      isAdmin: true,
+    },
+    async ({ args }) => {
+      let [action, ...etc] = args
+        ?.trim()
+        .split(/[,\s]+/)
+        .filter(Boolean);
+      let value = etc?.length > 0 ? etc : false;
+      let sets = Data.preferences[cht.id];
+      sets[cht.cmd] = sets[cht.cmd] || false;
+      sets.badwords = sets.badwords || [];
+      if (['on', 'off'].includes(action)) {
+        if (action == 'on' && sets[cht.cmd])
+          return cht.reply(`*${cht.cmd}* sudah aktif disini!`);
+        if (action !== 'on' && !sets[cht.cmd])
+          return cht.reply(`*${cht.cmd}* sudah non-aktif disini!`);
+        sets[cht.cmd] = action == 'on';
+        cht.reply(infos.group.on(action, cht.cmd));
+      } else if (['add', 'del', 'delete'].includes(action)) {
+        if (!value)
+          return cht.reply('Please put word!\n\n' + infos.about.antitoxic);
+        if (action == 'add') {
+          sets.badwords.push(...value);
+          sets.badwords = [...new Set(sets.badwords)];
+          cht.reply(`✅ Success add word: ${value.join(', ')}`);
+        } else {
+          sets.badwords = sets.badwords.filter((w) => !value.includes(w));
+          sets.badwords = [...new Set(sets.badwords)];
+          cht.reply(`✅ Success delete word: ${value.join(', ')}`);
+        }
+      } else if (action == 'list') {
+        cht.reply(
+          `\`Group ID: ${cht.id}\`\n\n*Include toxic word*\n- ${sets.badwords.join('\n- ')}`
+        );
+      } else {
+        cht.reply(infos.about.antitoxic);
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['bancmd'],
+      listmenu: ['bancmd', 'bancmd --list'],
+      tag: 'group',
+      args: `Sertalan command yang ingin di blokir di group ini!
+
+\`Contoh\`:
+
+${cht.msg} tiktokdl, ytdl`,
+      isGroup: true,
+      isAdmin: true,
+    },
+    async ({ args }) => {
+      chatDb.cmdblocked ??= [];
+      if (args.toLowerCase().includes('--list'))
+        return cht.reply(
+          `\`LIST CMD DIBLOKIR\`:\n- ${chatDb.cmdblocked.join('\n- ')}`
+        );
+
+      let words = args
+        ?.trim()
+        .split(/[,\s]+/)
+        .filter(Boolean);
+
+      let noblock = [];
+      words.includes(cht.cmd) && unblock.push(cht.cmd);
+      words = words.filter((a) => !a.includes(cht.cmd));
+      chatDb.cmdblocked.push(...words);
+      chatDb.cmdblocked = [...new Set(chatDb.cmdblocked)];
+      let text = `Success memblokir *${words.join(', ')}* di group ini`;
+      if (noblock.length > 0)
+        text += `\n\`${noblock.join(', ')}\` tidak dapat di blokir!`;
+      text += `\n_fitur apapun yang di blokir tidak akan dapat di gunakan di group ini!_`;
+      cht.reply(text);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['unbancmd'],
+      listmenu: ['unbancmd'],
+      tag: 'group',
+      args: `Sertakan command yang ingin di unblock di group ini!
+
+  \`Contoh\`:
+
+  ${cht.msg} tiktokdl, ytdl`,
+      isGroup: true,
+      isAdmin: true,
+    },
+    async ({ args }) => {
+      let words = args
+        ?.trim()
+        .split(/[,\s]+/)
+        .filter(Boolean);
+
+      chatDb.cmdblocked ??= [];
+      let notfound = [];
+
+      let before = [...chatDb.cmdblocked];
+      chatDb.cmdblocked = chatDb.cmdblocked.filter((cmd) => {
+        if (words.includes(cmd)) return false;
+        return true;
+      });
+
+      for (let w of words) {
+        if (!before.includes(w)) notfound.push(w);
+      }
+
+      let unblocked = words.filter((w) => !notfound.includes(w));
+
+      let text = '';
+      if (unblocked.length > 0) {
+        text += `Success membuka blokir *${unblocked.join(', ')}* di group ini`;
+      }
+      if (notfound.length > 0) {
+        text += `\n\`${notfound.join(', ')}\` tidak ada di daftar blokir!`;
+      }
+      if (!text) text = 'Tidak ada command yang berhasil di unblock!';
+      cht.reply(text);
     }
   );
 
@@ -695,7 +1038,8 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       tag: 'group',
     },
     async ({ args }) => {
-      if(cht.cmd == 'topenergy' && !is.group) return cht.reply("Khusus group!")
+      if (cht.cmd == 'topenergy' && !is.group)
+        return cht.reply('Khusus group!');
       let topUsers = [];
       let topEnergy = await Promise.all(
         [
@@ -726,7 +1070,9 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
         cht.cmd !== 'topglobalenergy'
           ? `DI GROUP \`${Exp.groupMetdata.subject}\``
           : `DARI TOTAL \`${Object.keys(Data.users).length} USERS\``;
-      cht.reply(`*TOP ${args && !isNaN(args) ? parseInt(args) * 1 : 10} ENERGY TERBANYAK ${di}*\n\n${topEnergy}`);
+      cht.reply(
+        `*TOP ${args && !isNaN(args) ? parseInt(args) * 1 : 10} ENERGY TERBANYAK ${di}*\n\n${topEnergy}`
+      );
     }
   );
 
@@ -748,7 +1094,9 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
           );
         await Exp.groupParticipantsUpdate(
           id,
-          await func.getMentions(cht, true),
+          await Promise.all(
+            cht.mention.map((a) => func.getSender(a, { lid: true }))
+          ),
           cht.cmd
         );
         cht.reply(
@@ -760,6 +1108,202 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       } catch (e) {
         cht.reply(`Enggak bisa!${infos.others.readMore}\n\n${e}`);
       }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['opentime', 'closetime', 'schedule'],
+      tag: 'group',
+      isGroup: true,
+      isAdmin: true,
+      isBotAdmin: true,
+    },
+    async () => {
+      const { id, q, cmd } = cht;
+      const preferences = (Data.preferences[id] ||= {});
+      preferences.opentime ||= { weekly: {}, once: [] };
+      preferences.closetime ||= { weekly: {}, once: [] };
+
+      if (cmd === 'schedule' && q === 'info') {
+        const now = new Date();
+        const weekly = {
+          ...preferences.opentime.weekly,
+          ...preferences.closetime.weekly,
+        };
+        const once = [
+          ...preferences.opentime.once,
+          ...preferences.closetime.once,
+        ];
+
+        let info = '📅 Jadwal Mingguan:\n';
+        for (const day in dayMap) {
+          const key = dayMap[day];
+          const openTimes = preferences.opentime.weekly[key] || [];
+          const closeTimes = preferences.closetime.weekly[key] || [];
+          if (openTimes.length || closeTimes.length) {
+            info += `- ${day.charAt(0).toUpperCase() + day.slice(1)}:\n`;
+            if (openTimes.length)
+              info += `  🟢 Open: ${openTimes.join(', ')}\n`;
+            if (closeTimes.length)
+              info += `  🔴 Close: ${closeTimes.join(', ')}\n`;
+          }
+        }
+
+        info += '\n📌 Jadwal Sekali Eksekusi:\n';
+        once.forEach(({ time, action }) => {
+          const remaining = Math.max(0, new Date(time) - now);
+          const hours = Math.floor(remaining / 3600000);
+          const minutes = Math.floor((remaining % 3600000) / 60000);
+          const seconds = Math.floor((remaining % 60000) / 1000);
+          info += `- ${action === 'open' ? '🟢 Open' : '🔴 Close'} dalam ${hours} jam ${minutes} menit ${seconds} detik\n`;
+        });
+
+        let nextEvent = [...once];
+        for (const dayKey in dayMap) {
+          const weekday = dayMap[dayKey];
+          (preferences.opentime.weekly[weekday] || []).forEach((time) => {
+            const [h, m] = time.split(':').map(Number);
+            const next = new Date(now);
+            next.setHours(h, m, 0, 0);
+            if (next < now) next.setDate(next.getDate() + 1);
+            nextEvent.push({ time: next.toISOString(), action: 'open' });
+          });
+          (preferences.closetime.weekly[weekday] || []).forEach((time) => {
+            const [h, m] = time.split(':').map(Number);
+            const next = new Date(now);
+            next.setHours(h, m, 0, 0);
+            if (next < now) next.setDate(next.getDate() + 1);
+            nextEvent.push({ time: next.toISOString(), action: 'close' });
+          });
+        }
+
+        nextEvent.sort((a, b) => new Date(a.time) - new Date(b.time));
+        if (nextEvent.length) {
+          const diff = new Date(nextEvent[0].time) - now;
+          const hours = Math.floor(diff / 3600000);
+          const minutes = Math.floor((diff % 3600000) / 60000);
+          const seconds = Math.floor((diff % 60000) / 1000);
+          info += `\n⏳ Grup akan ${nextEvent[0].action === 'open' ? 'dibuka' : 'ditutup'} dalam ${hours} jam ${minutes} menit ${seconds} detik.`;
+        }
+
+        return cht.reply(info.trim());
+      }
+
+      if (cmd === 'schedule' && q.startsWith('delete')) {
+        const args = q.split(/\s+/).slice(1);
+        if (!args.length)
+          return cht.reply('⚠️ Format salah. Contoh: .schedule delete Senin');
+
+        let days = [];
+        if (args[0].toLowerCase() === 'all') {
+          days = Object.values(dayMap);
+        } else if (args[0].includes('-')) {
+          const [start, end] = args[0]
+            .split('-')
+            .map((d) => dayMap[d.toLowerCase()]);
+          const allDays = Object.values(dayMap);
+          const startIndex = allDays.indexOf(start);
+          const endIndex = allDays.indexOf(end);
+          if (startIndex < 0 || endIndex < 0)
+            return cht.reply('⚠️ Nama hari tidak valid.');
+          days = allDays.slice(startIndex, endIndex + 1);
+        } else {
+          const dayKey = dayMap[args[0].toLowerCase()];
+          if (!dayKey) return cht.reply('⚠️ Nama hari tidak valid.');
+          days = [dayKey];
+        }
+
+        const actionType = args[1]?.toLowerCase();
+        const isOpen = actionType?.includes('open');
+        const isClose = actionType?.includes('close');
+
+        let count = 0;
+        for (const day of days) {
+          if (!isClose) {
+            count += preferences.opentime.weekly[day]?.length || 0;
+            delete preferences.opentime.weekly[day];
+          }
+          if (!isOpen) {
+            count += preferences.closetime.weekly[day]?.length || 0;
+            delete preferences.closetime.weekly[day];
+          }
+        }
+
+        cht.reply(`✅ ${count} jadwal berhasil dihapus.`);
+        Data.preferences[id] = preferences;
+        return;
+      }
+
+      const action = cmd === 'opentime' ? 'opentime' : 'closetime';
+      const schedule = preferences[action];
+
+      const timeRegex = /\d{1,2}:\d{2}/;
+      const durationRegex = /(hari|jam|menit|detik)/;
+
+      if (durationRegex.test(q)) {
+        const durationMs = parseTimeString(q);
+        if (!durationMs)
+          return cht.reply(
+            '⚠️ Format durasi salah. Contoh: 1 hari 2 jam 30 menit'
+          );
+
+        const targetTime = new Date(Date.now() + durationMs);
+        schedule.once.push({
+          time: targetTime.toISOString(),
+          action: action === 'opentime' ? 'open' : 'close',
+        });
+
+        cht.reply(
+          `✅ Grup akan ${action === 'opentime' ? 'dibuka' : 'ditutup'} dalam ${q}`
+        );
+      } else if (timeRegex.test(q)) {
+        const [timePart, ...dayParts] = q.split(/\s+/);
+        const targetTime = timePart;
+
+        let targetDays = [];
+        if (dayParts.length === 0) {
+          const today = new Date();
+          const todayName = today
+            .toLocaleDateString('id-ID', { weekday: 'long' })
+            .toLowerCase();
+          targetDays.push(dayMap[todayName]);
+        } else if (dayParts[0].toLowerCase() === 'all') {
+          targetDays = Object.values(dayMap);
+        } else if (dayParts[0].includes('-')) {
+          const [start, end] = dayParts[0]
+            .split('-')
+            .map((d) => dayMap[d.toLowerCase()]);
+          const allDays = Object.values(dayMap);
+          const startIndex = allDays.indexOf(start);
+          const endIndex = allDays.indexOf(end);
+          if (startIndex < 0 || endIndex < 0)
+            return cht.reply('⚠️ Nama hari tidak valid.');
+          targetDays = allDays.slice(startIndex, endIndex + 1);
+        } else {
+          targetDays = dayParts
+            .map((d) => dayMap[d.toLowerCase()])
+            .filter(Boolean);
+          if (!targetDays.length) return cht.reply('⚠️ Nama hari tidak valid.');
+        }
+
+        for (const day of targetDays) {
+          schedule.weekly[day] ||= [];
+          if (!schedule.weekly[day].includes(targetTime)) {
+            schedule.weekly[day].push(targetTime);
+          }
+        }
+
+        cht.reply(
+          `✅ Jadwal ${action === 'opentime' ? 'buka' : 'tutup'} grup disimpan untuk: ${targetDays.map((d) => reverseDayMap[d]).join(', ')} pukul ${targetTime}`
+        );
+      } else {
+        cht.reply(
+          '⚠️ Format salah. Contoh:\n.opentime 20:00\n.closetime 20:00 senin\n.opentime 1 hari 30 menit\n.schedule info\n.schedule delete senin'
+        );
+      }
+
+      Data.preferences[id] = preferences;
     }
   );
 }

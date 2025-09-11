@@ -10,7 +10,7 @@
       ▪︎ https://xterm.tech
   */
 /*!-======[ Preparing Configuration ]======-!*/
-import './toolkit/set/string.prototype.js';
+import './toolkit/set/prototype.js';
 let { initialize } = await './toolkit/set/global.js'.r();
 
 /*!-======[ Mudules Imports ]======-!*/
@@ -114,7 +114,35 @@ async function launch() {
     });
 
     Exp.ev.on('creds.update', saveCreds);
-
+    Exp.ev.on('message-receipt.update', async (msg) => {
+      /* console.log(msg)
+     la  | [
+0|bella  |   {
+0|bella  |     key: {
+0|bella  |       remoteJid: '120363145935286949@g.us',
+0|bella  |       id: '3EB0B93C02C7C41AAE9549',
+0|bella  |       fromMe: true,
+0|bella  |       participant: '6283110928302@s.whatsapp.net'
+0|bella  |     },
+0|bella  |     receipt: {
+0|bella  |       userJid: '6283110928302@s.whatsapp.net',
+0|bella  |       readTimestamp: 1755108157
+0|bella  |     }
+0|bella  |   },
+0|bella  |   {
+0|bella  |     key: {
+0|bella  |       remoteJid: '120363145935286949@g.us',
+0|bella  |       id: '3EB0674A48121D16F94671',
+0|bella  |       fromMe: true,
+0|bella  |       participant: '6283110928302@s.whatsapp.net'
+0|bella  |     },
+0|bella  |     receipt: {
+0|bella  |       userJid: '6283110928302@s.whatsapp.net',
+0|bella  |       readTimestamp: 1755108157
+0|bella  |     }
+0|bella  |   }
+0|bella  | ]*/
+    });
     Exp.ev.on('messages.upsert', async ({ messages }) => {
       const cht = {
         ...messages[0],

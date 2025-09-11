@@ -78,6 +78,7 @@
     "menu_type": "gif+linkpreview",
     "hadiah": {
       "tebakgambar": 35,
+      "tebakanime": 35,
       "susunkata": 25,
       "family100": 75
     },
@@ -91,7 +92,7 @@
       "loras": [13077]
     },
     "call": {
-      "block": true,
+      "block": false,
       "reject": true
     },
     "proxy": "",

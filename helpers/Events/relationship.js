@@ -60,7 +60,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   let getProfile = ['getprofile', 'cekprofile'];
   let isGetProfile = getProfile.includes(cht.cmd);
-
+  
+  
   ev.on(
     {
       cmd: [...getProfile, 'status', 'profil', 'profile', 'relationship'],

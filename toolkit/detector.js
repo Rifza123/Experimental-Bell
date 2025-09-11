@@ -3,6 +3,15 @@ const chalk = 'chalk'.import();
 const path = 'path'.import();
 const fs = 'fs'.import();
 let { JadwalSholat } = await (fol[2] + 'jadwalsholat.js').r();
+global.keys['livechart'] ??= await (fol[2] + 'livechart.js').r();
+const cacheSent = new Map();
+const { default: moment } = await 'moment'.import();
+const {
+  getContentType,
+  generateWAMessage,
+  STORIES_JID,
+  generateWAMessageFromContent,
+} = 'baileys'.import();
 
 const conf = fol[3] + 'config.json';
 const db = fol[5];
@@ -34,16 +43,24 @@ export default async function detector({ Exp, store }) {
   };
 
   const setupWatcher = (path, delay, onChangeCallback, onUnlinkCallback) => {
+    let onreload = false;
+    let recentlyUnlinked = new Set();
+
     const watcher = chokidar.watch(path, {
       ignored: /(^|[\/\\])\../,
       persistent: true,
       usePolling: true,
-      interval: 1000,
+      interval: 500,
     });
 
     watcher.on('change', async (filePath) => {
       if (onreload) return;
       onreload = true;
+
+      if (recentlyUnlinked.has(filePath)) {
+        await new Promise((r) => setTimeout(r, 1000));
+        recentlyUnlinked.delete(filePath);
+      }
 
       console.log(chalk.yellow(`File changed: ${filePath}`));
       setTimeout(async () => {
@@ -54,7 +71,8 @@ export default async function detector({ Exp, store }) {
 
     if (onUnlinkCallback) {
       watcher.on('unlink', async (filePath) => {
-        console.log(chalk.yellow(`File deleted: ${filePath}`));
+        console.log(chalk.red(`File deleted: ${filePath}`));
+        recentlyUnlinked.add(filePath);
         await onUnlinkCallback(filePath);
       });
     }
@@ -90,12 +108,21 @@ export default async function detector({ Exp, store }) {
     async (filePath) => {
       const fileName = path.basename(filePath);
       const eventKeys = Object.keys(Data.events);
-
+      let exists = fs.existsSync('./helpers' + filePath.split('helpers')[1]);
       for (const key of eventKeys) {
         const { eventFile } = Data.events[key];
+
         if (eventFile.includes(fileName)) {
-          delete Data.events[key];
-          console.log(chalk.red(`[ EVENT DELETED ] => ${key}`));
+          console.log({
+            exists,
+            file: './helpers' + filePath.split('helpers')[1],
+          });
+          if (!exists) {
+            delete Data.events[key];
+          }
+          console.log(
+            chalk.red(`[ EVENT ${exists ? 'RELOADED' : 'DELETED'} ] => ${key}`)
+          );
         }
       }
     }
@@ -202,16 +229,16 @@ export default async function detector({ Exp, store }) {
         Data.notify.h = 0;
       }
     } catch (e) {
-      console.error('Error in key checker', e);
+      console.error('Error in detector.js > keyChecker', e);
     }
   }
 
   async function schedule() {
-    try {
-      let chatDb = Object.entries(Data.preferences).filter(
-        ([a, b]) => a.endsWith(from.group) && b.schedules?.length > 0
-      );
-      for (let [id, b] of chatDb) {
+    let chatDb = Object.entries(Data.preferences).filter(
+      ([a, b]) => a.endsWith(from.group) && b.schedules?.length > 0
+    );
+    for (let [id, b] of chatDb) {
+      try {
         let d;
         let n = b.schedules.findIndex((a) => {
           let {
@@ -252,17 +279,18 @@ export default async function detector({ Exp, store }) {
             s.action !== '-' && (await Exp.groupSettingUpdate(id, s.action));
           }
         }
+      } catch (e) {
+        console.error('Error in detector.js > schedule', e);
+        if (e.message.includes('forbidden')) delete Data.preferences[id];
       }
-    } catch (e) {
-      console.error('Error in schedule', e);
     }
   }
   async function sholat() {
-    try {
-      let chatDb = Object.entries(Data.preferences).filter(
-        ([a, b]) => a.endsWith(from.group) && b.jadwalsholat
-      );
-      for (let [id, b] of chatDb) {
+    let chatDb = Object.entries(Data.preferences).filter(
+      ([a, b]) => a.endsWith(from.group) && b.jadwalsholat
+    );
+    for (let [id, b] of chatDb) {
+      try {
         if (!(id in jadwal.groups)) await jadwal.init(id, b.jadwalsholat.v);
         let { status, data, db } = await jadwal.now(id);
 
@@ -344,148 +372,385 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
           Data.preferences[id].jadwalsholat = db;
         }
         await sleep(2000 + Math.floor(Math.random() * 1000));
+      } catch (e) {
+        console.error('Error in detector.js > jadwalsholat', e);
+        if (e.message.includes('forbidden')) delete Data.preferences[id];
       }
-      for (let i of Object.keys(jadwal.groups)) {
-        if (!chatDb.map((a) => a[0]).includes(i)) delete jadwal.groups[i];
-      }
-    } catch (e) {
-      console.error('Error in jadwal sholat', e);
+    }
+    for (let i of Object.keys(jadwal.groups)) {
+      if (!chatDb.map((a) => a[0]).includes(i)) delete jadwal.groups[i];
     }
   }
 
   async function saveData(name) {
-    let data = name == 'cmd' ? Data.use.cmds : Data[name];
-    if (Data.mongo) {
-      await Data.mongo.db.set(name, data);
-    } else {
-      const filepath = (name === 'users' ? fol[6] : db) + name + '.json';
-      fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
+    try {
+      let data = name == 'cmd' ? Data.use.cmds : Data[name];
+      if (Data.mongo) {
+        await Data.mongo.db.set(name, data);
+      } else {
+        const filepath =
+          (['users', 'inventories'].includes(name) ? fol[6] : db) +
+          name +
+          '.json';
+        await fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
+      }
+    } catch (e) {
+      console.error('Error in detector.js > saveData:', e);
     }
   }
 
   async function updateHargaInvestasi() {
-    /*
-        Terimakasih untuk Y*** yang telah meluangkan waktu
-        dan berkontribusi untuk karya yang indah ini.
-        Tidak ada credits, donasi, dan tidak ingin disebutkan namanya.
-      */
-    const inflasiAktif = Data.ShopRPG.inflasi?.PeningkatanInflasi;
-    const now = Date.now();
-    const selisih = now - (Data.ShopRPG.inflasi.evaluasiTerakhir || 0);
-    if (selisih < 30 * 60 * 1000) return;
+    try {
+      const inflasiAktif = cfg.rpg?.inflasi;
+      cfg.rpg ??= {};
+      cfg.rpg.target ??= 15;
+      cfg.rpg.baseNaik ??= 0.25;
+      cfg.rpg.baseTurun ??= 0.23;
+      cfg.rpg.bonusUser ??= 0.05;
+      cfg.rpg.userFactor ??= true;
 
-    const semuaUser = Object.entries(Data.users);
-    const totalUser = semuaUser.length;
-    if (totalUser === 0) return;
-    /* const inflasiBot = 1.25
-        Fungsi:
-        - Ini adalah pengali utama untuk mengatur seberapa kuat inflasi mempengaruhi harga.
-        - Semakin besar nilainya, semakin tajam perubahan harga (baik beli maupun jual).
-        Contoh:
-        # Kalau inflasiBot = 1.25, harga bisa naik 25% lebih cepat.
-        # Kalau inflasiBot = 1.05, harga hanya naik 5% → lebih stabil dan lambat.
-        Saran:
-        Ubah ke 1.05 atau 1.01 kalau kamu ingin inflasi lambat.
+      let { target, baseNaik, baseTurun, bonusUser, userFactor } =
+        cfg.rpg || {};
+      const now = Date.now();
+      const selisih = now - (Data.ShopRPG.inflasi?.evaluasiTerakhir || 0);
+      //console.log({ selisih, _selisih:selisih < 30 * 60 * 1000 })
+      if (selisih < 30 * 60 * 1000 && Object.keys(Data.ShopRPG.buy).length > 3)
+        return;
 
-        const koreksi = 1.1
-        Fungsi:
-        - Ini adalah faktor penyeimbang internal.
-        - Koreksi digunakan untuk menyesuaikan kekuatan inflasi berdasarkan target dan data pengguna.
-        - Sifatnya mirip inflasiBot, tapi lebih sebagai fine-tune agar inflasi tetap terjaga di kisaran stabil.
-        Contoh:
-        # Kalau koreksi = 1.1, hasil perhitungan akhir akan dikali 1.1 (jadi 10% lebih tinggi).
-        Kalau koreksi = 1.0, hasilnya netral.
-        Saran:
-        Untuk membuat inflasi lambat, set ke 1.05 atau bahkan 1.00.
+      const totalUser = Object.keys(Data.users).length;
+      //console.log({ totalUser })
+      if (totalUser === 0) return;
 
-        const target = 100
-        Fungsi:
-        - Ini adalah jumlah rata-rata item per user yang dianggap ideal/stabil.
-        - Jika stok rata-rata user melebihi target, harga akan turun (karena overstock).
-        - Jika stok rata-rata di bawah target, harga akan naik (karena scarcity/langka).
-        Contoh:
-        # Kalau kamu set target = 100, dan rata-rata user punya 200 item → sistem anggap itu "kelebihan stok" → harga bisa diturunkan.
-        Saran:
-        Bisa disesuaikan tergantung jenis game.
-        Misal:
+      if (!Data.ShopRPG) Data.ShopRPG = {};
+      if (!Data.ShopRPG.buy) Data.ShopRPG.buy = {};
+      if (!Data.ShopRPG.sell) Data.ShopRPG.sell = {};
+      if (!Data.ShopRPG.diskon) Data.ShopRPG.diskon = {};
+      cfg.rpg.hargaAwal ??= {
+        energy: { beli: 100 },
+        potion: { jual: 100, beli: 100 },
+        kayu: { beli: 100 },
+        diamond: { jual: 100, beli: 100 },
+      };
+      const hargaAwalCfg = cfg.rpg.hargaAwal || {};
 
-        Untuk item umum → target = 100
-        Untuk item langka → target = 10–50
-        */
-    const inflasiBot = 1.25;
-    const koreksi = 1.1;
-    const target = 100;
+      for (const item in hargaAwalCfg) {
+        const harga = hargaAwalCfg[item];
+        console.log({ harga });
+        if (!harga) continue;
+        if (!inflasiAktif) {
+          if (harga.beli) Data.ShopRPG.buy[item] = harga.beli;
+          if (harga.jual) Data.ShopRPG.sell[item] = harga.jual;
+          continue;
+        }
 
-    for (const key of Object.keys(Data.ShopRPG.buy)) {
-      if (!(key in Data.ShopRPG.hargaAwal)) delete Data.ShopRPG.buy[key];
-    }
-    for (const key of Object.keys(Data.ShopRPG.sell)) {
-      if (!(key in Data.ShopRPG.hargaAwal)) delete Data.ShopRPG.sell[key];
-    }
+        let totalBarang = 0;
+        if (['energy', 'flow', 'coins'].includes(item)) {
+          for (const [, user] of Object.entries(Data.users)) {
+            totalBarang += user[item] || 0;
+          }
+        } else {
+          for (const [, inv] of Object.entries(Data.inventories)) {
+            totalBarang += inv[item] || 0;
+          }
+        }
 
-    for (const item in Data.ShopRPG.hargaAwal) {
-      const harga = Data.ShopRPG.hargaAwal[item];
-      if (!harga || typeof harga !== 'object') continue;
+        const R = totalBarang / totalUser || 0;
+        let faktor = 1;
+        if (R < target) {
+          faktor += baseNaik + (totalUser / userFactor) * bonusUser;
+        } else if (R > target) {
+          faktor -= baseTurun;
+        }
 
-      if (!inflasiAktif) {
-        if (typeof harga.beli === 'number') Data.ShopRPG.buy[item] = harga.beli;
-        if (typeof harga.jual === 'number')
-          Data.ShopRPG.sell[item] = harga.jual;
-        continue;
+        if (typeof harga.beli === 'number') {
+          let hargaBeli = Math.max(1, Math.round(harga.beli * faktor));
+
+          const d = Data.ShopRPG.diskon?.[item];
+          if (d) {
+            const expired = d.expired || 0;
+            const sisa = d.jumlah;
+            const masihAktif =
+              (expired === 0 || expired > now) && (sisa === null || sisa > 0);
+
+            if (masihAktif) {
+              hargaBeli = Math.max(1, hargaBeli - d.potongan);
+            } else {
+              delete Data.ShopRPG.diskon[item];
+            }
+          }
+
+          Data.ShopRPG.buy[item] = hargaBeli;
+        }
+
+        if (typeof harga.jual === 'number') {
+          let hargaJual = Math.max(1, Math.round(harga.jual * faktor * 0.95));
+          Data.ShopRPG.sell[item] = hargaJual;
+        }
       }
 
-      let totalBarang = 0;
-      for (const [, data] of semuaUser) {
-        totalBarang += data[item] || 0;
-      }
-
-      const R = totalBarang / totalUser || 0;
-      const selisihR = R - target;
-
-      const F1 = Math.sqrt(Math.abs(selisihR));
-      const F2 = Math.abs(Math.sin(R / 10));
-      const F3 = Math.max(1, R / target);
-      const F4 = R > 0 ? Math.log(R) : 0;
-      const F5 = Math.tan((R / target) % (Math.PI / 2));
-      const F6 = Math.abs(selisihR * F2);
-
-      let Ftotal = F1 + F2 + F3 + F4 + F5 + F6;
-      if (!Number.isFinite(Ftotal)) Ftotal = 1;
-      const faktor = Ftotal * koreksi * inflasiBot;
-
-      const stat = Data.ShopRPG.statistik[item] || {
-        beli: 0,
-        jual: 0,
+      Data.ShopRPG.inflasi = {
+        aktif: inflasiAktif,
+        evaluasiTerakhir: now,
       };
 
-      // Harga beli: naik jika banyak permintaan
-      if (typeof harga.beli === 'number') {
-        const permintaan = (stat.beli + 1) / (stat.jual + 1);
-        const faktorBeli = Math.max(
-          0.5,
-          Math.min(faktor * permintaan, faktor * 1.5)
-        );
-        Data.ShopRPG.buy[item] = Math.ceil(harga.beli * faktorBeli);
+      Data.ShopRPG.snapshot = {
+        waktu: new Date().toISOString(),
+        ringkas: {
+          totalUser,
+          itemTerkelola: Object.keys(hargaAwalCfg).length,
+        },
+      };
+
+      const shopFile = path.join(fol[5], 'ShopRPG.json');
+      fs.writeFileSync(shopFile, JSON.stringify(Data.ShopRPG, null, 2));
+
+      // console.log("✅ updateHargaInvestasi, harga diperbarui sesuai stok.");
+    } catch (e) {
+      console.error('❌ Error in updateHargaInvestasi:', e);
+    }
+  }
+  async function executeSchedules() {
+    const now = new Date();
+    const { formatDateTimeParts } = Exp.func;
+
+    for (const [groupId, pref] of Object.entries(Data.preferences)) {
+      const opentime = pref.opentime || { weekly: {}, once: [] };
+      const closetime = pref.closetime || { weekly: {}, once: [] };
+
+      // === Jadwal sekali (once) ===
+      for (const [list, type] of [
+        [opentime.once, 'open'],
+        [closetime.once, 'close'],
+      ]) {
+        for (let i = 0; i < list.length; i++) {
+          const sched = list[i];
+          const schedTime = new Date(sched.time);
+          const diff = schedTime - now;
+
+          if (diff <= 0) {
+            await Exp.groupSettingUpdate(
+              groupId,
+              type === 'open' ? 'not_announcement' : 'announcement'
+            );
+
+            if (type === 'close') {
+              const hour = now.getHours();
+              const msg =
+                hour >= 20 || hour < 3
+                  ? 'Grup telah ditutup, selamat beristirahat oyasumi...'
+                  : 'Grup telah ditutup sesuai jadwal.';
+              await Exp.sendMessage(groupId, { text: msg });
+            }
+
+            list.splice(i, 1);
+            i--;
+          } else if (!sched.warned && diff <= 300000 && type === 'close') {
+            await Exp.sendMessage(groupId, {
+              text: 'Grup akan ditutup dalam waktu 5 menit lagi...',
+            });
+            sched.warned = true;
+          }
+        }
       }
 
-      // Harga jual: turun jika banyak yang jual (kelebihan stok)
-      if (typeof harga.jual === 'number') {
-        const kelebihan = (stat.jual + 1) / (stat.beli + 1);
-        const faktorJual = Math.max(0.3, Math.min(1 / kelebihan, 1)) * faktor;
-        Data.ShopRPG.sell[item] = Math.floor(harga.jual * faktorJual);
+      // === Jadwal mingguan (weekly) ===
+      const { h, min } = formatDateTimeParts(now);
+      const today = now
+        .toLocaleDateString('id-ID', { weekday: 'long' })
+        .toLowerCase();
+      const dayKey = {
+        minggu: 'sunday',
+        senin: 'monday',
+        selasa: 'tuesday',
+        rabu: 'wednesday',
+        kamis: 'thursday',
+        jumat: 'friday',
+        sabtu: 'saturday',
+      }[today];
+
+      for (const [schedule, type] of [
+        [opentime, 'open'],
+        [closetime, 'close'],
+      ]) {
+        const times = schedule.weekly[dayKey] || [];
+        for (let i = 0; i < times.length; i++) {
+          const [sh, sm] = times[i].split(':').map(Number);
+          const nowMinutes = h * 60 + min;
+          const schedMinutes = sh * 60 + sm;
+          const diffMinutes = schedMinutes - nowMinutes;
+
+          if (nowMinutes === schedMinutes) {
+            await Exp.groupSettingUpdate(
+              groupId,
+              type === 'open' ? 'not_announcement' : 'announcement'
+            );
+
+            if (type === 'close') {
+              const msg =
+                h >= 20 || h < 3
+                  ? 'Grup telah ditutup, selamat beristirahat oyasumi...'
+                  : 'Grup telah ditutup sesuai jadwal.';
+              await Exp.sendMessage(groupId, { text: msg });
+            }
+          } else if (diffMinutes === 0 && type === 'close') {
+            const diffSeconds =
+              schedMinutes * 60 - (h * 3600 + min * 60 + now.getSeconds());
+            if (diffSeconds > 0 && diffSeconds <= 300) {
+              await Exp.sendMessage(groupId, {
+                text: 'Grup akan ditutup dalam waktu 5 menit lagi...',
+              });
+            }
+          }
+        }
       }
     }
+  }
+  async function livechartNotifier() {
+    const data = Data.livechart || [];
+    const now = moment().tz('Asia/Jakarta');
 
-    Data.ShopRPG.inflasi.evaluasiTerakhir = now;
+    const siapKirim = data.filter((item) => {
+      const rilis = moment.tz(
+        `${item.tanggal} ${item.time}`,
+        'YYYY-MM-DD HH:mm',
+        'Asia/Jakarta'
+      );
+      return rilis.isBetween(now.clone().subtract(20, 'minutes'), now);
+    });
 
-    for (const key in Data.ShopRPG.diskon) {
-      const d = Data.ShopRPG.diskon[key];
-      const expired = d.expired || 0;
-      const jumlah = d.jumlah;
-      const isExpiredTime = expired > 0 && expired <= now;
-      const isUsedUp = expired === 0 && jumlah !== null && jumlah <= 0;
-      if (isExpiredTime || isUsedUp) {
-        delete Data.ShopRPG.diskon[key];
+    if (!siapKirim.length) return;
+    if (!Data.sent_livechart) Data.sent_livechart = {};
+
+    for (const anime of siapKirim) {
+      for (const [groupId, pref] of Object.entries(Data.preferences)) {
+        try {
+          if (!pref.livechart) continue;
+
+          const key = `${anime.tanggal}|${anime.time}|${anime.link}`;
+          if (Data.sent_livechart[groupId]?.includes(key)) continue;
+
+          // === Pesan utama === // terserah mau nambah apa lagi cek aja dlu di dbnya
+          const img = await Exp.func.uploadToServer(anime.poster);
+          const caption = [
+            `*${anime.title}*`,
+            `_*Jam tayang:* ${anime.hari}, ${anime.tanggal} | ${anime.time}_`,
+            `*Episode:* ${anime.episode}`,
+            anime.genre?.length ? `*Genre:* ${anime.genre.join(', ')}` : null,
+            anime.studio ? `*Studio:* ${anime.studio}` : null,
+            anime.season ? `*Season:* ${anime.season}` : null,
+            anime.tanggal_rilis
+              ? `*Anime Rilis:* ${anime.tanggal_rilis}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const hasVideos = anime.videos?.length > 0;
+          const buttons = hasVideos
+            ? anime.videos.slice(0, 7).map((url, i) => ({
+                name: 'cta_url',
+                buttonParamsJson: JSON.stringify({
+                  display_text:
+                    anime.videos.length === 1 ? 'Trailer' : `Trailer ${i + 1}`,
+                  url,
+                }),
+              }))
+            : [
+                {
+                  name: 'cta_url',
+                  buttonParamsJson: JSON.stringify({
+                    display_text: 'Lihat',
+                    url: 'https://tinyurl.com/Lilia-Yukine',
+                  }),
+                },
+              ];
+
+          const card = {
+            header: { imageMessage: img, hasMediaAttachment: true },
+            body: { text: caption },
+            footer: {
+              text: anime.deskripsi || '',
+            },
+            nativeFlowMessage: { buttons },
+          };
+
+          const msg = generateWAMessageFromContent(
+            groupId,
+            {
+              viewOnceMessage: {
+                message: {
+                  interactiveMessage: {
+                    body: {
+                      text: '*LIVE CHART📡*',
+                    },
+                    carouselMessage: { cards: [card], messageVersion: 1 },
+                  },
+                },
+              },
+            },
+            {}
+          );
+
+          await Exp.relayMessage(groupId, msg.message, {
+            messageId: msg.key.id,
+          });
+
+          if (!Data.sent_livechart[groupId]) Data.sent_livechart[groupId] = [];
+          Data.sent_livechart[groupId].push(key);
+
+          // === Visual === // block aja jika ga pengen di notif
+          if (Array.isArray(anime.visuals) && anime.visuals.length > 0) {
+            await new Promise((r) => setTimeout(r, 5000));
+
+            const visualCards = await Promise.all(
+              anime.visuals.map(async (vlink) => ({
+                header: {
+                  imageMessage: await Exp.func.uploadToServer(vlink),
+                  hasMediaAttachment: true,
+                },
+                body: { text: '' },
+                nativeFlowMessage: {
+                  buttons: [
+                    {
+                      name: 'cta_url',
+                      buttonParamsJson: JSON.stringify({
+                        display_text: 'Lihat',
+                        url: 'https://tinyurl.com/Lilia-Yukine',
+                      }),
+                    },
+                  ],
+                },
+              }))
+            );
+
+            const visualMsg = generateWAMessageFromContent(
+              groupId,
+              {
+                viewOnceMessage: {
+                  message: {
+                    interactiveMessage: {
+                      body: { text: 'LIVE CHART PREVIEW📡' },
+                      carouselMessage: {
+                        cards: visualCards,
+                        messageVersion: 1,
+                      },
+                    },
+                  },
+                },
+              },
+              {}
+            );
+
+            await Exp.relayMessage(groupId, visualMsg.message, {
+              messageId: visualMsg.key.id,
+            });
+          }
+
+          await new Promise((r) => setTimeout(r, 20000));
+        } catch (e) {
+          console.error('[Livechart Notifier Error]:', e);
+          if (e.message.includes('forbidden')) delete Data.preferences[groupId];
+        }
       }
     }
   }
@@ -504,8 +769,9 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
   keys['detector'] = setInterval(async () => {
     await sholat();
     await schedule();
+    await executeSchedules();
     cfg.keyChecker && (await keyChecker());
-
+    livechartNotifier();
     const DB = global._DB || [
       'cmd',
       'preferences',

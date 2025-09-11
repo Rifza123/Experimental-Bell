@@ -63,7 +63,9 @@ infos.set = `
 - apikey <apikey>
 - antitagowner <(on/off) or reply message>
 - keyChecker <on/off>
-- chid <reply message (forward from channell)
+- chid <reply message (forward from channell)>
+- replyAi <on/off>
+- register <on/off>
 
 _Example: .set public on_`;
 
@@ -298,3 +300,14 @@ Type \`.set antitagowner off\`
 Reply to the message you want to use as the response, then type:  
 \`.set antitagowner\`
 `;
+
+infos.setReplyAi = `How to Use:
+ ▪︎ .set replyAi <true/on | false/off>
+   Example: .set replyAi true
+
+_When enabled, all bot replies will be modified according to the existing logic,
+making the responses feel more natural._`;
+infos.owner.isReplyAiOn = `*Successfully enabled \`replyAi\`! Now all bot replies will be modified according to the existing logic!
+⚠️ *WARNING!* ⚠️\n\nThe *replyAi* feature may consume a large amount of GPT API quota (termai.cc).\nUse it wisely, especially if you are using a key with limited quota!`;
+
+infos.owner.isReplyAiOff = `*Successfully disabled replyAi!*`;

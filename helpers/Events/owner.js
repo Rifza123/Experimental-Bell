@@ -56,6 +56,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     editmsg: 'edit message',
     similarCmd: 'similarity command',
     antitagowner: 'Anti Tag Owner',
+    register: 'register mode',
     keyChecker: 'Auto detector apikey',
   };
 
@@ -133,7 +134,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
                                   ? true
                                   : t1 == 'chid'
                                     ? true
-                                    : false);
+                                    : t1 == 'replyAi'
+                                      ? infos.owner.setReplyAi
+                                      : false);
 
         if (!mode) return cht.reply(infos.owner.set);
 
@@ -478,6 +481,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 ? infos.owner.isModeOffSuccess
                 : infos.owner.isModeOnSuccess,
               { mode }
+            );
+          }
+        } else if (t1 == 'replyAi') {
+          if (t2) {
+            let off = ['off', 'false'];
+            let isOff = off.includes(t2);
+            let on = ['on', 'true'];
+            let isOn = on.includes(t2);
+            if (!(isOff || isOn)) return cht.reply(infos.owner.setAntiTagOwner);
+            cfg['replyAi'] = isOn;
+            return cht.reply(
+              isOn ? infos.owner.isReplyAiOn : infos.owner.isReplyAiOff
             );
           } else {
             if (!cht.quoted) return cht.reply(infos.owner.setAntiTagOwner);
@@ -1268,9 +1283,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
         } else {
           newfile += `\n- \`new\`: ${fpath}`;
         }
-        if (path.basename(fpath) === "global.js") {
-          let oldContent = fs.existsSync(fpath) ? fs.readFileSync(fpath, "utf8") : "";
-          let oldMongo = "";
+        if (path.basename(fpath) === 'global.js') {
+          let oldContent = fs.existsSync(fpath)
+            ? fs.readFileSync(fpath, 'utf8')
+            : '';
+          let oldMongo = '';
 
           let match = oldContent.match(/let\s+mongoURI\s*=\s*['"`](.*?)['"`]/);
           if (match) {
@@ -1695,6 +1712,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
       }
       cht.reply(g);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['reloadevents'],
+      listmenu: ['reloadevents'],
+      isOwner: true,
+      tag: 'owner',
+    },
+    async ({ args }) => {
+      await ev.reloadEventHandlers();
+      cht.reply('Success✅, All Events have been reloaded!');
     }
   );
 }

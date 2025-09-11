@@ -1,10 +1,5 @@
-let ghurl = 'https://raw.githubusercontent.com/Rifza123/lib/refs/heads';
-
-let raw = {
-  tebakgambar: ghurl + '/main/db/game/tebakgambar.json',
-  susunkata: ghurl + '/main/db/game/susunkata.json',
-  family100: ghurl + '/main/db/game/family100.json',
-};
+let raw =
+  'https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/game/';
 
 let { Chess } = await (fol[2] + 'chess.js').r();
 const chess = new Chess();
@@ -20,9 +15,17 @@ cfg.hadiah = cfg.hadiah || {
   tebakgambar: 35,
   susunkata: 25,
   family100: 75,
+  tebakanime: 35,
+  caklontong: 45,
+  asahotak: 40,
+  tebakjenaka: 30,
+  tebakbendera: 35,
+  tebaktebakan: 30,
+  tebakjenaka: 35,
+  tebaklirik: 40,
 };
 
-export default async function on({ Exp, cht, ev }) {
+export default async function on({ Exp, cht, ev, chatDb }) {
   const { id } = cht;
   const { func } = Exp;
   let {
@@ -79,7 +82,8 @@ _Tunggu game berakhir atau bisa dengan mengetik .cleargame atau .nyerah_
       if ('game' in metadata) return cht.reply(hasGame);
       let maxAge = 60000;
       Data[cht.cmd] =
-        Data[cht.cmd] || (await fetch(raw[cht.cmd]).then((a) => a.json()));
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
       let { img: url, answer, desc } = Data[cht.cmd].getRandom();
       metadata.game = {
         type: cht.cmd,
@@ -107,6 +111,8 @@ End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
 
 Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
 
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
 *Reply pesan game untuk menjawab*
 > (Dimulai dari pesan ini)
 `;
@@ -131,17 +137,161 @@ Jawaban: ${answer}`);
 
   ev.on(
     {
+      cmd: ['tebakbendera'],
+      listmenu: ['tebakbendera'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 30;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      let countries = await fetch(
+        'https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/countries.json'
+      ).then((a) => a.json());
+      let name = Object.values(countries).getRandom();
+      let url = `https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/image/flags/${name.slugify()}.png`;
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer: name,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let caption = `*TEBAK BENDERA*
+
+Bendera negara apa ini?
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(
+        id,
+        { image: { url }, caption },
+        { quoted: cht }
+      );
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['tebakanime'],
+      listmenu: ['tebakanime'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 35;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      let res = await fetch(
+        `${api.xterm.url}/api/random/anime?key=${api.xterm.key}`
+      );
+
+      if (!res.ok) {
+        return cht.reply(
+          `Cannot get data anime\nerr:\nRequest failed with status ${res.status}`
+        );
+      }
+
+      let json = await res.json();
+
+      let { namaCharacter, namaanime, season, tahun, sposies, linkGambar } =
+        json.data;
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer: namaCharacter.toLowerCase().split(',')[0],
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let caption = `*TEBAK KARAKTER ANIME*
+
+Siapa nama karakter anime ini?
+
+\`Petunjuk:\`
+- Anime: ${namaanime}
+- Season: ${season}
+- Tahun: ${tahun}
+- Sposies: ${sposies}
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(
+        id,
+        { image: { url: linkGambar }, caption },
+        { quoted: cht }
+      );
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${namaCharacter.toLowerCase().split(',')[0]}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
       cmd: ['susunkata'],
       listmenu: ['susunkata'],
       tag: 'game',
       energy: 10,
     },
     async () => {
-      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 100;
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 30;
       if ('game' in metadata) return cht.reply(hasGame);
       let maxAge = 60000;
       Data[cht.cmd] =
-        Data[cht.cmd] || (await fetch(raw[cht.cmd]).then((a) => a.json()));
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
       let { type, question, answer } = Data[cht.cmd].getRandom();
       metadata.game = {
         type: cht.cmd,
@@ -171,6 +321,8 @@ End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
 
 Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
 
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
 *Reply pesan game untuk menjawab*
 > (Dimulai dari pesan ini)
 `;
@@ -191,6 +343,349 @@ Jawaban: ${answer}`);
 
   ev.on(
     {
+      cmd: ['tebakjenaka'],
+      listmenu: ['tebakjenaka'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 30;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      Data[cht.cmd] =
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
+      let { type, question, jawaban: answer } = Data[cht.cmd].getRandom();
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let text = `*TEBAK JENAKA*
+
+Jawablah pertanyaan ini dengan benar:
+_${question}_
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(id, { text }, { quoted: cht });
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['tebaklirik'],
+      listmenu: ['tebaklirik'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 30;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      Data[cht.cmd] =
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
+      let { question, answer } = Data[cht.cmd].getRandom();
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let text = `*TEBAK LIRIK*
+
+Tebak kata yang hilang pada lirik berikut:
+_${question}_
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(id, { text }, { quoted: cht });
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['tebaktebakan'],
+      listmenu: ['tebaktebakan'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 30;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      Data[cht.cmd] =
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
+      let { question, answer } = Data[cht.cmd].getRandom();
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let text = `*TEBAK - TEBAKAN*
+
+Jawablah pertanyaan ini dengan benar:
+_${question}_
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(id, { text }, { quoted: cht });
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['asahotak'],
+      listmenu: ['asahotak'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 40;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      Data[cht.cmd] =
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
+      let { type, question, jawaban: answer } = Data[cht.cmd].getRandom();
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      let formatDur = func.formatDuration(maxAge);
+      let text = `*ASAH OTAK*
+
+Jawablah pertanyaan ini dengan benar:
+_${question}_
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(id, { text }, { quoted: cht });
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['hint'],
+      listmenu: ['hint'],
+      tag: 'game',
+      energy: 20,
+      onlyGame: [
+        'tebakgambar',
+        'tebakanime',
+        'susunkata',
+        'caklontong',
+        'tebakjenaka',
+        'asahotak',
+        'tebakbendera',
+        'tebakjenaka',
+        'tebaktebakan',
+        'tebaklirik',
+      ],
+    },
+    async () => {
+      let { key } = await cht.reply(
+        `Petunjuk: ${chatDb.game.answer
+          .split('')
+          .join(' ')
+          .replace(/[aiueo]/gi, '_')}`
+      );
+      chatDb.game.id_message.push(Key.id);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['caklontong'],
+      listmenu: ['caklontong'],
+      tag: 'game',
+      energy: 10,
+    },
+    async () => {
+      cfg.hadiah[cht.cmd] = cfg.hadiah[cht.cmd] || 45;
+      if ('game' in metadata) return cht.reply(hasGame);
+      let maxAge = 60000;
+      let _key = keys[cht.sender];
+      await cht.edit('Starting game...', _key);
+      Data[cht.cmd] =
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
+      let {
+        description,
+        question,
+        jawaban: answer,
+      } = Data[cht.cmd].getRandom();
+      metadata.game = {
+        type: cht.cmd,
+        startTime: Date.now(),
+        endTime: Date.now() + maxAge,
+        answer,
+        description,
+        energy: cfg.hadiah[cht.cmd],
+        creator: {
+          name: cht.pushName,
+          id: cht.sender,
+        },
+        id_message: [],
+      };
+
+      let formatDur = func.formatDuration(maxAge);
+      let text = `*CAK LONTONG*
+
+Jawablah pertanyaan ini:
+
+_${question}_
+
+Waktu menjawab: ${formatDur.minutes}menit ${formatDur.seconds}detik
+End Time: ${func.dateFormatter(metadata.game.endTime, 'Asia/Jakarta')}
+
+Hadiah: ${cfg.hadiah[cht.cmd]} Energy⚡
+
+_*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
+
+*Reply pesan game untuk menjawab*
+> (Dimulai dari pesan ini)
+`;
+      let { key } = await Exp.sendMessage(id, { text }, { quoted: cht });
+      metadata.game.id_message.push(key.id);
+      metadata.game.key = key;
+      global.timeouts[id] = setTimeout(async () => {
+        delete Data.preferences[id].game;
+        delete global.timeouts[id];
+
+        await cht.reply(`*WAKTU HABIS*
+
+Jawaban: ${answer}
+_${description}_
+`);
+        Exp.sendMessage(cht.id, { delete: key });
+      }, maxAge);
+    }
+  );
+
+  ev.on(
+    {
       cmd: ['family100'],
       listmenu: ['family100'],
       tag: 'game',
@@ -201,7 +696,8 @@ Jawaban: ${answer}`);
       if ('game' in metadata) return cht.reply(hasGame);
       let maxAge = 60000 * 5;
       Data[cht.cmd] =
-        Data[cht.cmd] || (await fetch(raw[cht.cmd]).then((a) => a.json()));
+        Data[cht.cmd] ||
+        (await fetch(raw + cht.cmd + '.json').then((a) => a.json()));
       let { question, answer } = Data[cht.cmd].getRandom();
       metadata.game = {
         type: cht.cmd,

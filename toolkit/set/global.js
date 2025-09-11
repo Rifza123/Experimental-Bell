@@ -4,6 +4,35 @@ const { fileURLToPath } = 'url'.import();
 const fs = 'fs'.import();
 const path = 'path'.import();
 
+const charMap = {
+  a: '[a4@]',
+  b: 'b',
+  c: 'c',
+  d: 'd',
+  e: '[e3]',
+  f: 'f',
+  g: 'g',
+  h: 'h',
+  i: '[i1!|]',
+  j: 'j',
+  k: '[kq]',
+  l: '[l1]',
+  m: 'm',
+  n: 'n',
+  o: '[o0]',
+  p: 'p',
+  q: 'q',
+  r: 'r',
+  s: 's',
+  t: 't',
+  u: '[u0]',
+  v: 'v',
+  w: 'w',
+  x: 'x',
+  y: 'y',
+  z: 'z',
+};
+
 /*!-======[ Path ]======-!
   !- Semua halaman folder telah di definisikan disini
 */
@@ -23,7 +52,7 @@ global['session'] = fol[8] + 'session';
 
 const { Mongo } = await `${fol[0]}mongodb.js`.r();
 
-let mongoURI = '';
+let mongoURI = ''; //'mongodb+srv://alindongh:0H0bWhfILeQpnSbc@cluster0.utkds1s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 /* Masukkan SRV URI jika ingin menggunakan database mongo
   📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
 */
@@ -51,7 +80,7 @@ for (let i of keys) {
   global[i] = config[i];
 }
 
-//Antisipasi jika dalam cfg.clgic tidak di definisikan
+//Antisipasi jika dalam cfg tidak di definisikan
 global.cfg.similarCmd =
   'similarCmd' in global.cfg ? global.cfg.similarCmd : true;
 global.cfg.welcome = global.cfg?.welcome || 'linkpreview';
@@ -65,6 +94,8 @@ global.cfg.logic =
 - Kamu harus menggunakan kata-kata yang identik dengan perempuan yang polos, baik, dan feminin, seperti: "Aku, kamu, engga, yaudh, iya, lah, bjir, iya, apa, mana kutau, hah, nggatau, gpp, emm..., males, gak mood".
 - Meskipun kadang dingin, kamu tetap bisa menunjukkan perhatian dan kepedulian.
 `;
+global.cfg.replyAi ??= false;
+global.cfg.register ??= false;
 
 /*!-======[ Global function ]======-!*/
 global['__filename'] = (imp) => fileURLToPath(imp);
@@ -108,6 +139,10 @@ global['Data'] = {
     'raiden',
     'CelzoID',
   ],
+  toxicwords: [
+    //Kalo mau tambahin regex juga bisa
+    'kontol',
+  ],
   spinner: '⠇⠋⠙⠹⠼⠦'.split(''),
 };
 
@@ -132,6 +167,32 @@ export const initialize = async () => {
   ];
 
   global._DB = DB.map((a) => a.name);
+  const words = await fetch(
+    'https://raw.githubusercontent.com/Rifza123/lib/main/db/badwords.json'
+  ).then((a) => a.json());
+
+  Data.toxicwords = [
+    ...Data.toxicwords,
+    ...words
+      .map((word) => {
+        if (word instanceof RegExp) return word;
+        if (typeof word === 'object' && word.source) {
+          return new RegExp(word.source, word.flags || '');
+        }
+        if (typeof word === 'string') {
+          const pattern = word
+            .split('')
+            .map(
+              (ch) =>
+                charMap[ch.toLowerCase()] || ch.replace(/[^a-z0-9]/g, '\\$&')
+            )
+            .join('[^a-z0-9]*');
+          return new RegExp(`(?<![a-z0-9])${pattern}(?![a-z0-9])`, 'i');
+        }
+        return null;
+      })
+      .filter(Boolean),
+  ];
 
   for (let { path: base, name, content } of DB) {
     const filepath = base + name + '.json';

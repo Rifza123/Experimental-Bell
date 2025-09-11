@@ -210,7 +210,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           },
           caption: `Result✔️`,
         },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
@@ -305,9 +305,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
              ${evaled.replace('cht.sender', 'cht.id')}
          })`);
         await sleep(3000);
-        // await cht.reply(`Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`)
+        await cht.reply(
+          `Code telah dikirimkan melalui chat pribadi!. Ketik .${random} Untuk melihat hasil`
+        );
         await sleep(3000);
-        await Exp.sendMessage(semder, { text: evaled }, { quoted: cht });
+        await Exp.sendMessage(sender, { text: evaled }, { quoted: cht });
       } catch (e) {
         console.log(cht.quoted);
       }

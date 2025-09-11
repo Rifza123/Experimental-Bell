@@ -10,11 +10,13 @@ export default async function utils({ Exp, cht, is, store }) {
 
     const sender = await Exp.func['getSender'](
       cht?.participant ||
-      cht?.key?.participant ||
-      cht?.key?.remoteJid ||
-      Exp?.user?.id ||
-      '', { cht });
-    cht.sender = sender
+        cht?.key?.participant ||
+        cht?.key?.remoteJid ||
+        Exp?.user?.id ||
+        '',
+      { cht }
+    );
+    cht.sender = sender;
     cht.key.participantPn = cht.sender;
     cht.delete = async () =>
       Exp.sendMessage(cht.id, { delete: cht.key }).then((a) => undefined);
@@ -129,6 +131,9 @@ export default async function utils({ Exp, cht, is, store }) {
           emoji: cht[cht.type]?.text,
           mtype,
           text: rtext,
+          message: {
+            conversation: cht[cht.type]?.text,
+          },
           url: rtext
             ? (
                 rtext?.match(/https?:\/\/[^\s)]+/g) ||
@@ -165,7 +170,7 @@ export default async function utils({ Exp, cht, is, store }) {
       });
       cht.quoted.mtype = Object.keys(cht.quoted)[0];
       cht.quoted.type = Exp.func['getType'](cht.quoted.mtype);
-      cht.quoted.memories = await memories.get(cht.quoted.sender);
+      cht.quoted.memories = cfg?.register ? (memories.has(cht.quoted.sender) ? await memories.get(cht.quoted.sender) : {}) : await memories.get(cht.quoted.sender);
       cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype];
       cht.quoted.text =
         cht.quoted?.[cht.quoted.type]?.caption ||
@@ -226,7 +231,7 @@ export default async function utils({ Exp, cht, is, store }) {
       is.botAdmin = Exp.groupAdmins.includes(Exp.number);
       is.groupAdmins = Exp.groupAdmins.includes(cht.sender);
     }
-    cht.memories = await memories.get(cht.sender, { is });
+    cht.memories = cfg?.register ? (memories.has(cht.sender) ? await memories.get(cht.sender, { is }) : {}) : await memories.get(cht.sender, { is });
 
     let url = cht?.msg
       ? (
@@ -260,7 +265,7 @@ export default async function utils({ Exp, cht, is, store }) {
     is.memories = cht.memories;
     is.quoted = cht.quoted;
     is.reaction = cht.reaction;
-    is.afk = is.group ? memories.getItem(sender, 'afk') : false;
+    is.afk = is.group && memories.has(sender) ? memories.getItem(sender, 'afk') : false;
     is.mute = groupDb?.mute && !is.owner && !is.me;
     is.onlyadmin = groupDb?.onlyadmin && !is.owner && !is.me && !is.groupAdmins;
     is.antiTagall =
@@ -290,9 +295,67 @@ export default async function utils({ Exp, cht, is, store }) {
       !is.owner &&
       !is.groupAdmins &&
       !is.baileys;
-
+    is.autosticker =
+      groupDb?.autosticker && (is.video || is.image) && !is.baileys;
+    is.antitoxic =
+      groupDb?.antitoxic &&
+      cht?.msg?.length > 0 &&
+      [...Data.toxicwords, ...groupDb.badwords].some((pattern) => {
+        if (typeof pattern === 'string') {
+          return cht.msg.toLowerCase().includes(pattern.toLowerCase());
+        } else {
+          return pattern.test(cht.msg);
+        }
+      }) &&
+      !is.me &&
+      !is.owner &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      !is.baileys;
+    is.autodownload =
+      groupDb?.autodownload && !is.me && !is.baileys && is?.url?.length > 0;
+    is.antitagsw =
+      groupDb?.antitagsw &&
+      !is.me &&
+      !is.owner &&
+      !is.groupAdmins &&
+      cht.type == 'groupStatusMentionMessage';
+    is.blacklist = groupDb?.blacklist?.includes(cht.sender);
+    !is.owner && !is.me && !is.groupAdmins;
+    is.bancmd = cht.cmd && groupDb?.cmdblocked?.includes(cht.cmd);
+    !is.owner && !is.me;
     cht.reply = async function (text, etc = {}, quoted = { quoted: true }) {
       try {
+        // kalo cfg.replyAi = true bakal ngubah balasan pake AI
+        let finalText = text;
+        const useAi = 'replyAi' in etc ? etc.replyAi : cfg.replyAi;
+
+        if (useAi) {
+          try {
+            const { gpt } = await (fol[2] + 'gpt3.js').r();
+            let query = `Kamu adalah sebuah alat transformasi teks, bukan asisten umum.
+Tugasmu hanya satu: mengubah teks agar sesuai dengan profil karakter di bawah.
+
+Profil Karakter:
+${cfg.logic}
+
+Instruksi Penting:
+- Selalu terapkan gaya bicara, kepribadian, dan sifat sesuai profil.
+- Jangan pernah menolak atau menjawab di luar instruksi.
+- Jangan menambahkan penjelasan, catatan, atau kalimat lain.
+- Hanya ubah gaya bahasanya, jangan ubah makna isi teks.
+- Jawaban akhir WAJIB berupa hasil teks yang sudah diubah, tanpa tambahan apapun.
+
+Teks asli: "${text}"
+
+Balasan akhir (teks yang sudah diubah sesuai profil):`;
+            let res = await gpt(query);
+            if (res.response) finalText = res.response.trim();
+          } catch (e) {
+            console.error('Error repltAi:', e);
+          }
+        }
+
         if (quoted?.quoted) {
           quoted.quoted = cht?.reaction
             ? {
@@ -307,7 +370,11 @@ export default async function utils({ Exp, cht, is, store }) {
             : cht;
         }
 
-        const { key } = await Exp.sendMessage(cht.id, { text, ...etc }, quoted);
+        const { key } = await Exp.sendMessage(
+          cht.id,
+          { text: finalText, ...etc },
+          quoted
+        );
         keys[cht.sender] = key;
         return { key };
       } catch (e) {
