@@ -1228,7 +1228,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             'raw.githubusercontent.com',
           ].includes(host);
           if (!isValidHost) {
-            failed += `\n- ${url}\n> Invalid host url`;
+            failed += `\n- ${link}\n> Invalid host url`;
             return null;
           }
           let f = (
@@ -1243,7 +1243,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           const filename = f.slice(-1)[0];
 
           if (!filename) {
-            failed += `\n- ${url}\n> File empty`;
+            failed += `\n- ${link}\n> File empty`;
             return null;
           }
 

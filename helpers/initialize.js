@@ -8,6 +8,8 @@ const {
 } = 'baileys'.import();
 const { func } = await `${fol[0]}func.js`.r();
 
+let { generateWaveform } = await './toolkit/ffmpeg.js'.r()
+
 export default async function initialize({ Exp, store }) {
   try {
     const { sendMessage, relayMessage } = Exp;
@@ -117,7 +119,7 @@ export default async function initialize({ Exp, store }) {
     Exp.sendMessage = async (id, config, etc) => {
       let msg;
 
-      if (config.ai && !id.endsWith(from.group)) {
+      if (config.ai||config.ptt == true) {
         let message = await generateWAMessageContent(config, {
           upload: Exp.waUploadToServer,
         });
@@ -130,7 +132,15 @@ export default async function initialize({ Exp, store }) {
             quotedMessage: etc.quoted,
           };
         }
-        msg = await Exp.relayMessage(id, message, {
+        
+        if(config.ptt){
+          let buff;
+          if(config?.audio?.url) buff = await Exp.func.getBuffer(config?.audio?.url)
+          buff = config?.audio
+          message[type].waveform = await generateWaveform(buff)
+        }
+        
+        msg = await Exp.relayMessage(id, message, cfg.ai && !id.endsWith(from.group) ? {
           messageId: generateMessageIDV2(Exp.user.id),
           additionalNodes: [
             {
@@ -140,7 +150,7 @@ export default async function initialize({ Exp, store }) {
               tag: 'bot',
             },
           ],
-        });
+        } : {});
       } else {
         let { showAdAttribution } = config?.contextInfo?.externalAdReply || {};
         if (showAdAttribution)
