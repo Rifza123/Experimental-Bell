@@ -1,13 +1,26 @@
 const { default: ff } = await 'fluent-ffmpeg'.import();
 const { PassThrough } = await 'stream'.import();
+/** !-======[ Experimentall ▪︎ Bell🦋 ]======-!
+      https://github.com/Rifza123/Experimental-Bell
+      
+      * Coding by @rifza.p.p *     
+      
+      🩵 Follow ️me on :
+      ▪︎ https://youtube.com/@rifza  
+      ▪︎ https://github.com/Rifza123
+      ▪︎ https://instagram.com/rifza.p.p?igshid=ZGUzMzM3NWJiOQ==
+      ▪︎ https://www.threads.net/@rifza.p.p
+      ▪︎ https://termai.cc
+*/
+
 /**
- * Apply ffmpeg filter to media buffer
- * @param {Buffer} inputBuffer - media input
- * @param {string[]} args - array argumen filter ffmpeg (tanpa -i dan -f)
- * @param {string} format - output format (default: mp3, bisa: mp3, mp4, png, jpg, webp)
+ * Convert buffer media ke format tertentu
+ * @param {Buffer} inputBuffer - buffer media input
+ * @param {string[]} args - argumen ffmpeg tambahan
+ * @param {string} format - output format (default: ogg)
  * @returns {Promise<Buffer>}
  */
-export async function processMedia(inputBuffer, args = [], format = "mp3") {
+export async function processMedia(inputBuffer, args = [], format = "ogg") {
   return new Promise((resolve, reject) => {
     const inputStream = new PassThrough();
     inputStream.end(inputBuffer);
@@ -15,17 +28,23 @@ export async function processMedia(inputBuffer, args = [], format = "mp3") {
     const outputStream = new PassThrough();
     const chunks = [];
 
-    let command = ff(inputStream).inputFormat("image2pipe");
+    const command = ff(inputStream);
 
-    command.outputOptions(args);
-
-    if (["png", "jpg", "jpeg", "webp"].includes(format)) {
-      command = command.format("image2pipe").outputOptions([`-vcodec ${format}`]);
+    if (format === "ogg") {
+      command.audioCodec("libopus");
+      command.outputOptions([
+        "-vn",
+        "-b:a 64k",
+        "-ac 2",
+        "-ar 48000",
+        ...args
+      ]);
     } else {
-      command = command.format(format);
+      command.outputOptions(args).format(format);
     }
 
     command
+      .format(format)
       .on("error", reject)
       .on("end", () => resolve(Buffer.concat(chunks)))
       .pipe(outputStream, { end: true });
@@ -40,12 +59,11 @@ export async function processMedia(inputBuffer, args = [], format = "mp3") {
  * @param {number} bars
  * @returns {Promise<string>} base64 waveform
  */
-export async function generateWaveform(inputBuffer, bars = 64) {
+export async function generateWaveform(inputBuffer, bars = 64, github='https://github.com/Rifza123') {
   return new Promise((resolve, reject) => {
     const inputStream = new PassThrough();
     inputStream.end(inputBuffer);
 
-    const outputStream = new PassThrough();
     const chunks = [];
 
     ff(inputStream)
@@ -76,8 +94,42 @@ export async function generateWaveform(inputBuffer, bars = 64) {
         let buf = Buffer.from(new Uint8Array(normalized));
         resolve(buf.toString("base64"));
       })
-      .pipe(outputStream, { end: true });
-
-    outputStream.on("data", chunk => chunks.push(chunk));
+      .pipe() 
+      .on("data", chunk => chunks.push(chunk));
   });
 }
+
+/**
+ * Convert audio buffer ke OGG/Opus (WhatsApp-compatible)
+ * @param {Buffer} inputBuffer - Audio source (mp3/wav/m4a/dsb)
+ * @returns {Promise<Buffer>} - Buffer hasil ogg/opus
+ */
+export async function convertToOpus(inputBuffer,github='https://github.com/Rifza123') {
+  return new Promise((resolve, reject) => {
+    const inStream = new PassThrough();
+    const outStream = new PassThrough();
+    const chunks = [];
+
+    inStream.end(inputBuffer);
+
+    ff(inStream)
+      .noVideo()
+      .audioCodec('libopus')
+      .format('ogg')
+      .audioBitrate('48k')
+      .audioChannels(1)
+      .audioFrequency(48000)
+      .outputOptions([
+        '-map_metadata', '-1',
+        '-application', 'voip',
+        '-compression_level', '10',
+        '-page_duration', '20000'
+      ])
+      .on('error', reject)
+      .on('end', () => resolve(Buffer.concat(chunks)))
+      .pipe(outStream, { end: true });
+
+    outStream.on('data', c => chunks.push(c));
+  });
+}
+

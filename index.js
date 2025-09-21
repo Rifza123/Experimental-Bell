@@ -1,4 +1,6 @@
 /** !-======[ Experimentall ▪︎ Bell🦋 ]======-!
+      https://github.com/Rifza123/Experimental-Bell
+      
       * Coding by @rifza.p.p *     
       
       🩵 Follow ️me on :
@@ -7,8 +9,8 @@
       ▪︎ https://instagram.com/rifza.p.p?igshid=ZGUzMzM3NWJiOQ==
       ▪︎ https://www.threads.net/@rifza.p.p
       ▪︎ https://termai.cc
-      ▪︎ https://xterm.tech
   */
+
 /*!-======[ Preparing Configuration ]======-!*/
 import './toolkit/set/prototype.js';
 let { initialize } = await './toolkit/set/global.js'.r();
@@ -78,9 +80,11 @@ async function launch() {
     let { state, saveCreds } = await useMultiFileAuthState(session);
     const Exp = makeWASocket({
       logger,
+      version: [2,3000,1027191782],
       printQRInTerminal: !global.pairingCode,
       browser: Browsers.ubuntu('Chrome'),
       auth: state,
+      defaultQueryTimeoutMs: 0
     });
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
@@ -113,7 +117,7 @@ async function launch() {
       await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });
     });
 
-    Exp.ev.on('creds.update', saveCreds);
+    //Exp.ev.on('creds.update', saveCreds);
     Exp.ev.on('message-receipt.update', async (msg) => {
       /* console.log(msg)
      la  | [
@@ -143,60 +147,65 @@ async function launch() {
 0|bella  |   }
 0|bella  | ]*/
     });
-    Exp.ev.on('messages.upsert', async ({ messages }) => {
-      const cht = {
-        ...messages[0],
-        id: messages[0].key.remoteJid,
-      };
-      let isMessage = cht?.message;
-      let isStubType = cht?.messageStubType;
-      if (!(isMessage || isStubType)) return;
-      if (cht.key.remoteJid === 'status@broadcast') {
-        if (!cfg.reactsw)
-          cfg.reactsw = {
-            on: false,
-            emojis: ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'],
+    Exp.ev.on('messages.upsert', async ({ type, messages }) => {
+      
+        for (let message of messages) {
+          const cht = {
+            ...message,
+            id: message.key.remoteJid,
           };
+          let isMessage = cht?.message;
+          let isStubType = cht?.messageStubType;
+          if (!(isMessage || isStubType)) return;
+          if (cht.key.remoteJid === 'status@broadcast') {
+            if (!cfg.reactsw)
+              cfg.reactsw = {
+                on: false,
+                emojis: ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'],
+              };
 
-        if (cfg.reactsw.on) {
-          let { emojis } = cfg.reactsw;
-          await Exp.sendMessage(
-            cht.id,
-            { react: { key: cht.key, text: emojis.getRandom() } },
-            {
-              statusJidList: [
-                cht.key.participant,
-                Exp.user.id.split(':')[0] + from.sender,
-              ],
+            if (cfg.reactsw.on) {
+              let { emojis } = cfg.reactsw;
+              await Exp.sendMessage(
+                cht.id,
+                { react: { key: cht.key, text: emojis.getRandom() } },
+                {
+                  statusJidList: [
+                    cht.key.participant,
+                    Exp.user.id.split(':')[0] + from.sender,
+                  ],
+                }
+              );
+            } else if (cfg.autoreadsw == true) {
+              await Exp.readMessages([cht.key]);
+              let typ = getContentType(cht.message);
+              console.log(
+                /protocolMessage/i.test(typ)
+                  ? `${cht.key.participant.split('@')[0]} Deleted story❗`
+                  : 'View user stories : ' + cht.key.participant.split('@')[0]
+              );
             }
-          );
-        } else if (cfg.autoreadsw == true) {
-          await Exp.readMessages([cht.key]);
-          let typ = getContentType(cht.message);
-          console.log(
-            /protocolMessage/i.test(typ)
-              ? `${cht.key.participant.split('@')[0]} Deleted story❗`
-              : 'View user stories : ' + cht.key.participant.split('@')[0]
-          );
-        }
-        return;
-      } else {
-        const exs = { cht, Exp, is: {}, store };
-        let action = await Data.utils(exs);
-        switch (action) {
-          case 'NEXT':
-            if (isStubType) {
-              Data.stubTypeMsg(exs);
-            } else {
-              await Data.helper(exs);
-            }
-            break;
+            return;
+          } else {
+            const exs = { cht, Exp, is: {}, store };
+            let action = await Data.utils(exs);
+            switch (action) {
+              case 'NEXT':
+                if (type == 'append') {
+                  Data.stubTypeMsg(exs);
+                }
+                else if (type == 'notify') {
+                  await Data.helper(exs);
+                }
+                break;
 
-          case 'ERROR':
-            console.error(
-              '\x1b[31mERROR in utils.js: cek error di atas, segera laporkan ke admin/owner\x1b[0m'
-            );
-            break;
+              case 'ERROR':
+                console.error(
+                  '\x1b[31mERROR in utils.js: cek error di atas, segera laporkan ke admin/owner\x1b[0m'
+                );
+                break;
+            }
+          
         }
       }
     });

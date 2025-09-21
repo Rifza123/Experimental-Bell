@@ -9,6 +9,7 @@ const {
 const fs = 'fs'.import();
 const axios = 'axios'.import();
 const https = 'https'.import();
+const http = await 'http'.import();
 const moment = 'timezone'.import();
 const path = 'path'.import();
 const zlib = await 'zlib'.import();
@@ -21,14 +22,15 @@ const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss');
 const { ArchiveMemories } = await (fol[0] + 'usr.js').r();
 const { Inventory } = await (fol[0] + 'inventory.js').r();
 const { color, bgcolor } = await `${fol[0]}color.js`.r();
-const Jimp = (await 'jimp'.import()).default;
-
+const { URL } = await 'url'.import();
 const groupDir = './toolkit/db/groups/';
 if (!fs.existsSync(groupDir)) {
   fs.mkdirSync(groupDir, { recursive: true });
 }
-const cache = new Map();
+/*const cache = new Map();
 const CACHE_DURATION = 1 * 60 * 1000;
+*/
+let METADATA_RETRIEVAL_DISTANCE = 15000;
 
 async function getDirectoriesRecursive(
   dir = './',
@@ -70,13 +72,31 @@ export class func {
     if (!jid) return jid;
     const { Exp } = this;
     let { user, server } = jidDecode(jid) || {};
+    let { participant, participantAlt, remoteJid, remoteJidAlt } =
+      cht?.key || {};
     if (/:\d+@/gi.test(jid)) {
       jid = user && server ? `${user}@${server}` : jid;
     }
-    //console.log({ user, server })
     const isGroup = cht?.id?.endsWith('@g.us');
+    let Alt = remoteJidAlt || participantAlt;
+    const isSenderCht = [
+      participant,
+      participantAlt,
+      remoteJid,
+      remoteJidAlt,
+    ].some((a) => a?.split('@')[0] === user);
 
     try {
+      if (cht && Alt && isSenderCht) {
+        const { server: serverAlt } = jidDecode(Alt) || {};
+        !isGroup &&
+          serverAlt === 's.whatsapp.net' &&
+          server === 'lid' &&
+          this.lid({ lid: jid, id: Alt || jid });
+
+        return server === 'lid' ? (lid ? jid : Alt || jid) : lid ? Alt : jid;
+      }
+
       let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : null;
       //console.log(meta)
       let participants =
@@ -196,6 +216,19 @@ export class func {
     ).trim();
   }
 
+  async replaceLidToPn(text, cht) {
+    const lids = text.extractMentions().map((a) => a.split('@')[0] + '@lid');
+    const results = await Promise.all(
+      lids.map(async (lid) => {
+        const id = lid.split('@')[0];
+        const newVal = (await this.getSender(lid, { cht })).split('@')[0];
+        text = text.replace(new RegExp(id, 'g'), newVal);
+        return newVal;
+      })
+    );
+    return text;
+  }
+
   metadata = {
     init: () => {
       if (!this._metadata.init) {
@@ -217,6 +250,13 @@ export class func {
 
     set: (id, data) => {
       try {
+        let meta = this._metadata[id] || { metadata: {} };
+        let { metadata: oldData } = meta;
+        let changeDetails = this.deepDiff({ oldData, data, type: 'terminal' });
+        console.log(
+          `${this.color.blue('[GROUP_METADATA_MANAGER]')}: ${id}\n${changeDetails}`
+        );
+
         this._metadata[id] = data;
         fs.writeFileSync(groupDir + id + '.json', JSON.stringify(data));
         return true;
@@ -266,15 +306,52 @@ export class func {
     },
   };
 
-  getGroupMetadata = async (chtId, Exp) => {
+  getGroupMetadata = async (chtId, Exp, update = false) => {
     this.metadata.init();
     let hasData = this.metadata.has(chtId);
+    let now = Date.now();
     let metadata = this.metadata.get(chtId);
-    const currentTime = Date.now();
-    if (hasData && currentTime - metadata.timestamp < CACHE_DURATION) {
+    /*
+      if (hasData && now - metadata.timestamp < CACHE_DURATION) {
+        return metadata.metadata;
+      }
+    */
+    if (hasData && !update) return metadata.metadata;
+    if (
+      hasData &&
+      metadata.timestamp &&
+      now - metadata.timestamp < METADATA_RETRIEVAL_DISTANCE
+    ) {
+      let index = Data.queueMetadata.findIndex((a) => a.id == chtId);
+      if (index >= 0) {
+        //biar gak duplikat, 1 grup 1x update aja
+        Data.queueMetadata[index].run = () =>
+          this.getGroupMetadata(chtId, Exp, update);
+      } else {
+        //masukin ke queue biar gak kena limit
+        Data.queueMetadata.push({
+          id: chtId,
+          run: () => this.getGroupMetadata(chtId, Exp, update),
+        });
+      }
       return metadata.metadata;
     }
-    let groupMetadata = await Exp.groupMetadata(chtId);
+
+    let groupMetadata;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        groupMetadata = await Exp.groupMetadata(chtId);
+        break;
+      } catch (err) {
+        console.error(
+          `getGroupMetadata: percobaan ${attempt} gagal saat get`,
+          err
+        );
+        if (attempt === 2) throw err;
+        await sleep(10000);
+      }
+    }
+
     if (groupMetadata.addressingMode == 'lid') {
       const group = await getBinaryNodeChild(
         await Exp.query({
@@ -302,10 +379,21 @@ export class func {
       console.log(this.lid(groupMetadata.participants));
     }
 
-    this.metadata.set(chtId, {
-      metadata: groupMetadata,
-      timestamp: currentTime,
-    });
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        this.metadata.set(chtId, {
+          metadata: groupMetadata,
+          timestamp: now,
+        });
+        break;
+      } catch (err) {
+        console.error(
+          `getGroupMetadata: percobaan ${attempt} gagal saat set metadata`,
+          err
+        );
+        if (attempt === 2) throw err;
+      }
+    }
     return groupMetadata;
   };
 
@@ -439,30 +527,40 @@ export class func {
       );
     return LIST_TOP;
   };
-  getBuffer = async (url, options) => {
+
+  async getBuffer(url, options = {}, maxRedirects = 5) {
     return new Promise((resolve, reject) => {
       const chunks = [];
+      const urlObj = new URL(url);
+      const client = urlObj.protocol === 'https:' ? https : http;
 
-      const stream = https.get(url, (response) => {
-        response.on('data', (chunk) => {
-          chunks.push(chunk);
-        });
+      const req = client.get(url, options, (response) => {
+        if (
+          response.statusCode >= 300 &&
+          response.statusCode < 400 &&
+          response.headers.location
+        ) {
+          if (maxRedirects === 0) {
+            return reject(new Error('Too many redirects'));
+          }
 
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          resolve(buffer);
-        });
+          const redirectUrl = new URL(
+            response.headers.location,
+            url
+          ).toString();
+          return resolve(
+            this.getBuffer(redirectUrl, options, maxRedirects - 1)
+          );
+        }
 
-        response.on('error', (error) => {
-          reject(error);
-        });
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
       });
 
-      stream.on('error', (error) => {
-        reject(error);
-      });
+      req.on('error', reject);
     });
-  };
+  }
 
   compareTwoStrings(first, second) {
     first = first.replace(/\s+/g, '');
@@ -1032,4 +1130,145 @@ export class func {
 
   getDirectoriesRecursive = getDirectoriesRecursive;
   inventory = Inventory;
+
+  color = {
+    reset: (str) => `\x1b[0m${str}\x1b[0m`,
+    bold: (str) => `\x1b[1m${str}\x1b[0m`,
+    dim: (str) => `\x1b[2m${str}\x1b[0m`,
+    italic: (str) => `\x1b[3m${str}\x1b[0m`,
+    underline: (str) => `\x1b[4m${str}\x1b[0m`,
+    inverse: (str) => `\x1b[7m${str}\x1b[0m`,
+    hidden: (str) => `\x1b[8m${str}\x1b[0m`,
+    strike: (str) => `\x1b[9m${str}\x1b[0m`,
+
+    black: (str) => `\x1b[30m${str}\x1b[0m`,
+    red: (str) => `\x1b[31m${str}\x1b[0m`,
+    green: (str) => `\x1b[32m${str}\x1b[0m`,
+    yellow: (str) => `\x1b[33m${str}\x1b[0m`,
+    blue: (str) => `\x1b[34m${str}\x1b[0m`,
+    magenta: (str) => `\x1b[35m${str}\x1b[0m`,
+    cyan: (str) => `\x1b[36m${str}\x1b[0m`,
+    white: (str) => `\x1b[37m${str}\x1b[0m`,
+
+    brightBlack: (str) => `\x1b[90m${str}\x1b[0m`,
+    brightRed: (str) => `\x1b[91m${str}\x1b[0m`,
+    brightGreen: (str) => `\x1b[92m${str}\x1b[0m`,
+    brightYellow: (str) => `\x1b[93m${str}\x1b[0m`,
+    brightBlue: (str) => `\x1b[94m${str}\x1b[0m`,
+    brightMagenta: (str) => `\x1b[95m${str}\x1b[0m`,
+    brightCyan: (str) => `\x1b[96m${str}\x1b[0m`,
+    brightWhite: (str) => `\x1b[97m${str}\x1b[0m`,
+  };
+
+  deepDiff({ oldData, newData, path = '', type }) {
+    const changes = [];
+
+    if (newData === undefined && oldData !== undefined) {
+      const msg = {
+        type: 'all-removed',
+        path: path || 'root',
+        old: oldData,
+      };
+
+      if (type === 'terminal') {
+        return `${this.color.red('[ALL REMOVED]')} ${this.color.cyan(msg.path)} ← ${this.color.red('{Object(' + (oldData ? Object.keys(oldData).length : 0) + ')}')}`;
+      }
+      if (type === 'json') return JSON.stringify([msg], null, 2);
+      return [msg];
+    }
+
+    const joinPath = (base, key) =>
+      base
+        ? Array.isArray(oldData)
+          ? `${base}[${key}]`
+          : `${base}.${key}`
+        : key || 'root';
+
+    const diff = (a, b, p = path, depth = 0) => {
+      if (
+        typeof a !== 'object' ||
+        a === null ||
+        typeof b !== 'object' ||
+        b === null
+      ) {
+        if (a !== b) {
+          const note = b === undefined ? ' (new is undefined)' : '';
+          changes.push({
+            type: 'changed',
+            path: p || 'root',
+            old: a,
+            new: b,
+            note,
+            depth,
+          });
+        }
+        return;
+      }
+
+      const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+
+      for (const key of keys) {
+        const oldChild = a?.[key];
+        const newChild = b?.[key];
+        const nextPath = joinPath(p, key);
+
+        if (!(key in (b || {}))) {
+          changes.push({
+            type: 'removed',
+            path: nextPath,
+            old: oldChild,
+            depth: depth + 1,
+          });
+        } else if (!(key in (a || {}))) {
+          changes.push({
+            type: 'added',
+            path: nextPath,
+            new: newChild,
+            depth: depth + 1,
+          });
+        } else {
+          diff(oldChild, newChild, nextPath, depth + 1);
+        }
+      }
+    };
+
+    diff(oldData, newData, path, 0);
+
+    if (!changes.length) {
+      if (type === 'terminal')
+        return this.color.blue('[NO CHANGES]') + ' Data sama persis';
+      if (type === 'json')
+        return JSON.stringify({ info: 'no changes' }, null, 2);
+      return [{ info: 'no changes' }];
+    }
+
+    if (type === 'terminal') {
+      const fmt = (v) => {
+        if (v === null) return 'null';
+        if (Array.isArray(v))
+          return `Array(${v.length}) ${JSON.stringify(v, 0, 2)}`;
+        if (typeof v === 'object')
+          return `Object(${Object.keys(v).length}) ${JSON.stringify(v, 0, 2)}`;
+        return JSON.stringify(v);
+      };
+
+      return changes
+        .map((c) => {
+          const indent = '  '.repeat(c.depth);
+          const note = c.note ? this.color.magenta(c.note) : '';
+          switch (c.type) {
+            case 'added':
+              return `${indent}${this.color.green('[ADDED]')} ${this.color.cyan(c.path)} → ${this.color.green(fmt(c.new))}`;
+            case 'removed':
+              return `${indent}${this.color.red('[REMOVED]')} ${this.color.cyan(c.path)} ← ${this.color.red(fmt(c.old))}`;
+            case 'changed':
+              return `${indent}${this.color.yellow('[CHANGED]')} ${this.color.cyan(c.path)} : ${this.color.red(fmt(c.old))} → ${this.color.green(fmt(c.new))}${note}`;
+          }
+        })
+        .join('\n');
+    }
+
+    if (type === 'json') return JSON.stringify(changes, null, 2);
+    return changes;
+  }
 }

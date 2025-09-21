@@ -1,6 +1,3 @@
-/*!-======[ Messages ]======-!*/
-let { messages } = Data.infos;
-
 /*!-======[ Module Imports ]======-!*/
 const { readdirSync } = 'fs'.import();
 const path = 'path'.import();
@@ -9,6 +6,10 @@ let isLoad = false;
 const { ArchiveMemories } = await (fol[0] + 'usr.js').r();
 const { bgcolor } = await (fol[0] + 'color.js').r();
 const { GeminiImage } = await (fol[2] + 'gemini.js').r();
+/*!-======[ Messages ]======-!*/
+let { messages } = Data.infos
+
+let lang = locale
 
 const timestamp = () => {
   return new Intl.DateTimeFormat('id-ID', {
@@ -32,6 +33,13 @@ export default class EventEmitter {
     this.chatDb = chatDb;
     this.eventFiles = [];
     this.dataEvents = Data.Events;
+  }
+  
+  ensure(){
+    if(lang !== locale){
+     messages = Data.infos.messages
+     lang = locale
+    }
   }
 
   getMediaType() {
@@ -102,12 +110,13 @@ export default class EventEmitter {
   }
 
   sendPremiumMsg(trial = true, trialAvailable = true) {
+    this.ensure();
     const imageMessage = {
       text: messages.onlyPremium(trial, trialAvailable),
       contextInfo: {
         externalAdReply: {
           title: '🔒Only Premium',
-          body: 'Hanya bisa digunakan oleh user premium!',
+          body: Data.infos.events.onlyPremiumBody,
           thumbnailUrl: 'https://telegra.ph/file/b9cd3e450060c58ad29d9.jpg',
           mediaUrl: 'http://ẉa.me/6283110928302/8282282',
           sourceUrl: `https://wa.me/${owner[0].split('@')[0]}?text=Hello,+I+have+buy+🔑Premium`,
@@ -145,6 +154,7 @@ export default class EventEmitter {
   }
   async emit(event, opts) {
     try {
+      this.ensure();
       !isLoad && (await this.loadEventHandlers());
       const eventFile = Data.events[event]?.eventFile;
       if (!eventFile) return;
@@ -191,7 +201,7 @@ export default class EventEmitter {
       if (cd.use >= max) {
         !cd.notice &&
           (await cht.reply(
-            `Tunggu ${func.formatDuration(cd.reset - Date.now()).seconds} detik lagi sebelum menggunakan fitur!`,
+            Data.infos.events.cooldown(func.formatDuration(cd.reset - Date.now())),
             { replyAi: false }
           ));
         cd.notice = true;
@@ -200,9 +210,7 @@ export default class EventEmitter {
       }
 
       if (this.is.bancmd)
-        return cht.reply(
-          `Command \`${cht.cmd}\` di blokir di group ini!\nUntuk membuka blokir, silahkan ketik .unbancmd ${cht.cmd} (hanya bisa dilakukan oleh admin)`
-        );
+        return cht.reply(Data.infos.events.cmdBlocked(cht.cmd));
 
       const checks = [
         {
@@ -242,7 +250,7 @@ export default class EventEmitter {
             'onlyGame' in ev &&
             Array.isArray(ev.onlyGame) &&
             !ev.onlyGame.includes(metadata.game?.type),
-          message: `Kamu ${metadata.game?.type ? '' : 'tidak '}sedang bermain game \`${metadata?.game?.type || '!'}\`, Command ini hanya bisa di gunakan ketika bermain game berikut: \n- ${ev?.onlyGame?.join('\n- ')}`,
+          message: Data.infos.events.onlyGame(metadata, ev),
         },
       ];
 

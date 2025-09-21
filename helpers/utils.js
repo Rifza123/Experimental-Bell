@@ -162,7 +162,6 @@ export default async function utils({ Exp, cht, is, store }) {
       );
       cht.reaction[mtype] = react?.message?.[rtype];
     }
-
     if (cht.quoted) {
       const quotedParticipant = cht?.message?.[type]?.contextInfo?.participant;
       cht.quoted.sender = await Exp.func['getSender'](quotedParticipant, {
@@ -378,7 +377,7 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
         keys[cht.sender] = key;
         return { key };
       } catch (e) {
-        console.error("Error in 'cht.reply'\n" + e);
+        console.error("Error in 'cht.reply'\n", e);
       }
     };
 

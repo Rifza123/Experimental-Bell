@@ -1,6 +1,6 @@
 {
   "name": "Experimental-Bell",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Artificial Intelligence, The beginning of the robot era",
   "main": "index.js",
   "type": "module",
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "^7.0.0-rc.2",
     "axios": "^1.7.8",
     "chalk": "^3.0.0",
     "cheerio": "^1.0.0-rc.12",
@@ -31,16 +31,19 @@
     "dotenv": "^16.5.0",
     "escape-string-regexp": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
-    "jimp": "^0.16.1",
     "jsdom": "^16.5.0",
     "moment-timezone": "^0.5.33",
     "mongodb": "^6.16.0",
     "node-webpmux": "^3.2.0",
     "path": "^0.12.7",
-    "qrcode-terminal": "^0.12.0",
+    "qrcode": "^1.5.4",
     "request": "^2.88.2"
   },
   "devDependencies": {
     "prettier": "^3.6.1"
+  },
+  "overrides": {
+    "file-type": "16.5.4",
+    "jimp": "0.16.1"
   }
 }

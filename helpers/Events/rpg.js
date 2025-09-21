@@ -12,7 +12,7 @@ export default async function on({ cht, ev, Exp }) {
   let { berburu, mancing, miningItems, hargaAwal } =
     func.inventory.initCfg().rpg;
 
-  ev.on({ cmd: ['daftar', 'register'], tag: 'RPG' }, async () => {
+  ev.on({ cmd: ['daftar', 'register'], tag: 'RPG', listmenu: ['daftar','register'] }, async () => {
     const input = (cht.q || '').trim();
     const parts = input.split(/[|,./#$&\s]+/).filter(Boolean);
     if (parts.length < 2)
@@ -53,6 +53,7 @@ export default async function on({ cht, ev, Exp }) {
   ev.on(
     {
       cmd: ['ceksn'],
+      listmenu: ['ceksn'],
       tag: 'RPG',
     },
     async () => {
@@ -70,6 +71,7 @@ export default async function on({ cht, ev, Exp }) {
     {
       cmd: ['unreg', 'unregister'],
       tag: 'RPG',
+      listmenu: ['unreg'],
       args: `.unreg <SN>\nContoh: .unreg JJi6hgwysv72JvsJ`,
     },
     async () => {
@@ -99,8 +101,6 @@ export default async function on({ cht, ev, Exp }) {
   ev.on(
     {
       cmd: ['infinity'],
-      listmenu: ['infinity'],
-      tag: 'Debug',
       isOwner: true,
     },
     async () => {

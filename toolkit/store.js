@@ -12,6 +12,10 @@ export const makeInMemoryStore = () => {
         ...Messages[0],
         id: Messages[0].key.remoteJid,
       };
+      let isMessage = cht?.message;
+      let isStubType = cht?.messageStubType;
+      if (!(isMessage || isStubType)) return;
+      if(isStubType == '2') return
       messages[cht.id] ||= {
         array: [],
       };

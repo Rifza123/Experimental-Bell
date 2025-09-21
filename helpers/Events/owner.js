@@ -225,19 +225,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
           cht.replyWithTag(mode, { menu: t2 });
           if (t2 == 'liveLocation') cht.reply(infos.owner.menuLiveLocationInfo);
         } else if (t1 == 'lang') {
-          let langs = fs.readdirSync(fol[9]);
+          let langs = fs.readdirSync(fol[9]).filter(a=> a.endsWith('js')).map(a => a.split(".js")[0]);
           if (!langs.includes(t2))
             return cht.reply(
               `\`List Language:\`\n\n- ${langs.join('\n- ')}\n\nExample:\n _${cht.prefix + cht.cmd} ${t1} ${langs[0]}_`
             );
           global.locale = t2;
-          const files = await fs
-            .readdirSync(fol[9] + locale + '/')
-            .filter((file) => file.endsWith('.js'));
-
-          for (const file of files) {
-            await (fol[9] + locale + '/' + file).r();
-          }
+          await (fol[9] + locale + '.js').r();
 
           cht.replyWithTag(global.Data.infos.owner.succesSetLang, { lang: t2 });
         } else if (t1 == 'voice') {

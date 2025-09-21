@@ -6,11 +6,11 @@ export default async function client({ Exp, store, cht, is }) {
   let { func } = Exp;
   try {
     const chatDb = Data.preferences[cht.id] || {};
-    let m = store.messages[cht.id];
+    /*let m = store?.messages?.[cht.id] || {};
     m.idmsg ??= [];
     if (m.idmsg.includes(cht.key.id)) return;
     m.idmsg = [...m.idmsg, cht.key.id].slice(-7);
-
+    */
     if (cht.memories?.banned && !is.owner) {
       if (cht.memories.banned * 1 > Date.now()) return;
       func.archiveMemories.delItem(cht.sender, 'banned');
@@ -68,7 +68,7 @@ export default async function client({ Exp, store, cht, is }) {
       ) {
         cht.memories.cdIsJoin = Date.now() + func.parseTimeString('10 menit');
         return cht.reply(
-          `Anda harus bergabung ke salah satu grup dibawah sebelum dapat menggunakan bot!\n\`LIST INVITELINK\`\n${list}\n\n_Setelah bergabung harap tunggu selama 2 menit sebelum menggunakan bot!, data anggota grup hanya di perbarui setiap 2 menit sekali guna mengurangi rate-limit!_`,
+          Data.infos.client.onlyJoinGc.replace('<list>', list),
           { replyAi: false }
         );
       }
@@ -112,15 +112,7 @@ export default async function client({ Exp, store, cht, is }) {
         let listText = urls.map((a) => `- ${a}`).join('\n');
 
         await cht.reply(
-          `Nomor asli Anda tidak dapat terdeteksi karena menggunakan @lid. 
-Silakan bergabung ke salah satu grup di bawah agar sistem dapat mengenali nomor Anda. 
-(Tanpa bergabung, data Anda hanya akan tersimpan sebagai @lid dan tidak lengkap)
-
-\`LIST UNDANGAN GRUP\`
-${listText}
-
-_Setelah bergabung, harap tunggu ±2 menit sebelum menggunakan bot. 
-Data anggota grup diperbarui setiap 2 menit sekali untuk mengurangi beban server dan rate-limit._`,
+          Data.infos.client.lidJoin.replace('<list>', listText),
           { replyAi: false }
         );
         await sleep(1000);
@@ -134,7 +126,7 @@ Data anggota grup diperbarui setiap 2 menit sekali untuk mengurangi beban server
     let ev = new Data.EventEmitter(exps);
     Data.ev ??= ev;
     if (!is.offline && !is.afk && (cht.cmd || cht.reaction)) {
-      if(cfg.register && !func.archiveMemories.has(cht.sender) && !['register','daftar'].includes(cht.cmd?.toLowerCase())) return cht.reply("Anda belum terdaftar di database kami!, silahkan lakukan pendaftaran dengan mengetik *.register*", { replyAi: false })
+      if(cfg.register && !func.archiveMemories.has(cht.sender) && !['register','daftar'].includes(cht.cmd?.toLowerCase())) return cht.reply(Data.infos.client.registerNeeded, { replyAi: false })
       cht.cmd &&
         (await Promise.all([
           'questionCmd' in cht.memories &&

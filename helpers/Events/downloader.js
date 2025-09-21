@@ -96,6 +96,36 @@ export default async function on({ cht, Exp, store, ev, is }) {
             api.xterm.key
         ).then((a) => a.json())
       ).data;
+
+      let text = '*!-======[ TIKTOK ]======-!*\n';
+      text += `\nTitle: ${data.title}`;
+      text += `\nAccount: ${data.author.nickname}`;
+      text += `\nLikes: ${data.stats.diggCount}`;
+      text += `\nComments: ${data.stats.commentCount}`;
+      text += `\nPostTime: ${data.createTime}`;
+      const info = {
+        text,
+        contextInfo: {
+          externalAdReply: {
+            title: cht.pushName,
+            body: 'Tiktok Downloader',
+            thumbnailUrl: data.thumbnail,
+            sourceUrl: 'https://github.com/Rifza123',
+            mediaUrl:
+              'http://ẉa.me/6283110928302/' +
+              Math.floor(Math.random() * 100000000000000000),
+            renderLargerThumbnail: true,
+            mediaType: 1,
+          },
+          forwardingScore: 19,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterName: 'Termai',
+            newsletterJid: '120363301254798220@newsletter',
+          },
+        },
+      };
+      await Exp.sendMessage(id, info, { quoted: cht });
       await cht.edit(infos.messages.sending, _key);
       let type = data.type;
       if (type == 'image') {

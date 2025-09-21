@@ -26,7 +26,7 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
   let isEnd = Date.now() >= endTime;
   if (isEnd) {
     delete metadata.game;
-    return cht.reply('Game itu sudah berakhir!');
+    return cht.reply(Data.infos.eventGame.ended);
   }
   try {
     let formatDur = func.formatDuration(endTime - Date.now());
@@ -41,14 +41,10 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
       case 'tebaklirik': {
         let userAnswer = cht.msg.trim().toLowerCase();
         if (userAnswer === answer.trim().toLowerCase()) {
-          await cht.reply(
-            `Selamat jawabanmu benar💯🥳🥳${description ? `\n_${description}_` : ''}`
-          );
+          await cht.reply(Data.infos.eventGame.correct(description));
 
           let isSmart = Date.now() - startTime < 10000;
-          let bonusMessage = isSmart
-            ? `Hebat😳, Kamu menjawab kurang dari 10 detik!\n\`Bonus x2✅\`\n\n`
-            : '';
+          let bonusMessage = isSmart ? Data.infos.eventGame.bonus : '';
           let finalEnergy = isSmart ? energy * 2 : energy;
 
           await func.archiveMemories['addEnergy'](cht.sender, finalEnergy);
@@ -60,10 +56,7 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
           delete timeouts[cht.id];
         } else {
           let { key: Key } = await cht.reply(
-            `Jawaban salah!!
-
-Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
-          );
+            Data.infos.eventGame.wrong(formatDur));
           metadata.game.id_message.push(Key.id);
         }
         break;
@@ -80,15 +73,14 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
 
         if (answered[userAnswer]) {
           return cht.reply(
-            `Sudah dijawab oleh @${answered[userAnswer].split('@')[0]}`,
-            { mentions: [answered[userAnswer]] }
-          );
+            Data.infos.eventGame.alreadyAnswered(userAnswer, answered[userAnswer]),
+             { mentions: [answered[userAnswer]] });
         }
-        let { key: key2 } = await cht.reply('Survey membuktikan!...');
+        let { key: key2 } = await cht.reply(Data.infos.eventGame.survey);
         metadata.game.id_message.push(key2.id);
         let idx = _answer.findIndex((v) => v == userAnswer);
         if (idx === -1) {
-          let { key: Key } = await cht.reply(`Jawaban tidak valid!`, {
+          let { key: Key } = await cht.reply(Data.infos.eventGame.invalidAnswer, {
             edit: key2,
           });
           metadata.game.id_message.push(Key.id);
@@ -123,9 +115,7 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
         });
         !isAnswerAll && metadata.game.id_message.push(Key.id);
         if (isAnswerAll) {
-          await cht.reply(
-            'Game berakhir!\n_Membagiakan semua hadiah yang didapat....🎁_'
-          );
+          await cht.reply(Data.infos.eventGame.gameOver);
           delete Data.preferences[cht.id].game;
           Object.entries(answered).forEach(async ([answerKey, user]) => {
             let idx = answer.findIndex((item) => item === answerKey);
@@ -149,8 +139,6 @@ Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`
     }
   } catch (error) {
     console.error('Error in eventGame.js:', error);
-    await cht.reply(
-      `Terjadi kesalahan saat memproses game. Silakan coba lagi nanti.\nError: ${error}`
-    );
+    await cht.reply(Data.infos.eventGame.error(error));
   }
 }

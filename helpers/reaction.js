@@ -16,14 +16,26 @@ let infos = Data.infos;
 
 export default async function react({ cht, Exp, store, is, ev }) {
   let { id } = cht;
+  const { func } = Exp 
   let { emoji, mtype, text, url, mention, key } = cht.reaction;
   let _url = url[0];
+
+  const emit = async(Ev, cmd, extra = {}) => {
+    let c = { cmd, msg: cht.prefix + cmd, ...extra };
+    for(let i of Object.keys(c)){
+      cht[i] = c[i]
+    }
+    return Ev.emit(cmd);
+  };
+
+
   let urltype =
     _url && Object.entries(urls).find(([keyword]) => _url.includes(keyword))
       ? urls[
           Object.entries(urls).find(([keyword]) => _url.includes(keyword))[0]
         ]
       : null;
+
   try {
     switch (emoji) {
       //hapus pesan
@@ -31,30 +43,27 @@ export default async function react({ cht, Exp, store, is, ev }) {
       case '❌':
         if (mention !== Exp.number && !is.groupAdmins && !is.owner)
           return cht.reply(infos.messages.isAdmin);
+
         if (!is.groupAdmins && !is.owner) {
           let qsender = (await store.loadMessage(id, key.id))?.message
-            ?.extendedTextMessage?.contextInfo.quotedMessage?.sender;
+            ?.extendedTextMessage?.contextInfo?.quotedMessage?.sender;
+
           if (qsender && qsender !== cht.sender)
             return cht.reply(
-              `*Anda tidak diizinkan menghapus pesan itu!*
-\`Sebab:\`
-${infos.others.readMore}
-- Quoted pesan tersebut bukan berasal dari anda
-- Anda bukan owner atau admin untuk mendapatkan izin khusus`,
+              func.tagReplacer(infos.reaction.kickNotAllowed, { readMore: infos.others.readMore }),
               { replyAi: false }
             );
         }
         return cht.reaction.delete();
-      
+
       //puter/download musik
       case '🎵':
       case '🎶':
       case '🎧':
       case '▶️':
         if (!text) return cht.reply(infos.reaction.play);
-        cht.q = text;
-        return ev.emit('play');
-      
+        return emit(ev, "play", { q: text });
+
       //downloader
       case '📥':
       case '⬇️':
@@ -65,33 +74,30 @@ ${infos.others.readMore}
               listurl: [...new Set(Object.values(urls))].join('\n- '),
             })
           );
-        is.url = url;
-        cht.q = _url;
-        let cmd = urltype == 'youtube' ? 'play' : urltype + 'dl';
-        return ev.emit(cmd);
-      
-      //Ai gemini.google.com
+        return emit(ev, urltype == 'youtube' ? "play" : urltype + "dl", {
+          q: _url,
+          url,
+          is,
+        });
+
+      //Tanya ai
       case '🔎':
       case '🔍':
-        cht.q = text;
-        return ev.emit('ai');
-      
+        return emit(ev, "ai", { q: text });
+
       //skrinsut link yg di reak
       case '📸':
       case '📷':
-        is.url = url;
-        return ev.emit('ss');
-      
+        return emit(ev, "ss", { url, is });
+
       //bacain teks pake vn(ai elevenlabs apinya bisa buy di termai.cc)
       case '🔈':
       case '🔉':
       case '🔊':
       case '🎙️':
       case '🎤':
-        cht.cmd = cfg.ai_voice || 'bella';
-        cht.q = text;
-        return ev.emit(cht.cmd);
-      
+        return emit(ev, cfg.ai_voice || "bella", { q: text });
+
       //convert image ke stiker atau sebaliknya
       case '🖨️':
       case '🖼️':
@@ -101,9 +107,8 @@ ${infos.others.readMore}
       case '🤳🏽':
       case '🤳🏾':
       case '🤳🏿':
-        if (mtype == 'sticker') return ev.emit('toimg');
-        return ev.emit('s');
-      
+        return mtype == "sticker" ? ev.emit(ev, "toimg") : emit(ev, "s");
+
       //translate ke indo (pake ai)
       case '🌐':
       case '🆔':
@@ -112,19 +117,19 @@ ${infos.others.readMore}
             Exp.func.tagReplacer(infos.reaction.translate, { emoji }),
             { replyAi: false }
           );
-        cht.q = 'Terjemahkan ke bahasa indonesia\n\n' + text;
-        return ev.emit('gpt');
-      
+        return emit(ev, "gpt", { q: "Terjemahkan ke bahasa indonesia\n\n" + text });
+
       //tourl
       case '🔗':
       case '📎':
       case '🏷️':
       case '📤':
       case '⬆️':
-        return ev.emit('tourl');
+        return emit(ev, "tourl");
+
       case '📋':
-        return ev.emit('menu');
-      
+        return ev.emit(ev, "menu");
+
       //sepak all warna
       case '🦶':
       case '🦵':
@@ -138,40 +143,20 @@ ${infos.others.readMore}
       case '🦶🏽':
       case '🦶🏾':
       case '🦶🏿':
-        cht.mention = [mention];
-        cht.cmd = 'kick';
-        return ev.emit('kick');
-      
+        return emit(ev, "kick", { mention: [mention] });
+
       //reak pengganti warna kulit orang
-      case '🟥':
-        cht.cmd = 'merahkan'
-        return ev.emit(cht.cmd)
-      case '🟧':
-        cht.cmd = 'orenkan'
-        return ev.emit(cht.cmd)
-      case '🟨':
-        cht.cmd = 'kuningkan'
-        return ev.emit(cht.cmd)
-      case '🟩':
-        cht.cmd = 'hijaukan'
-        return ev.emit(cht.cmd)
-      case '🟦':
-        cht.cmd = 'birukan'
-        return ev.emit(cht.cmd)
-      case '🟪':
-        cht.cmd = 'ungukan'
-        return ev.emit(cht.cmd)
-      case '⬛':
-        cht.cmd = 'hitamkan'
-        return ev.emit(cht.cmd)
-      case '⬜':
-        cht.cmd = 'putihkan'
-        return ev.emit(cht.cmd)
-      case '🟫':
-        cht.cmd = 'gelapkan'
-        return ev.emit(cht.cmd)
+      case '🟥': return emit(ev, "merahkan");
+      case '🟧': return emit(ev, "orenkan");
+      case '🟨': return emit(ev, "kuningkan");
+      case '🟩': return emit(ev, "hijaukan");
+      case '🟦': return emit(ev, "birukan");
+      case '🟪': return emit(ev, "ungukan");
+      case '⬛': return emit(ev, "hitamkan");
+      case '⬜': return emit(ev, "putihkan");
+      case '🟫': return emit(ev, "gelapkan");
     }
   } catch (error) {
-    console.error('Error in reaction.js:', error);
+    console.error("Error in reaction.js:", error);
   }
 }

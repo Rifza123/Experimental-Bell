@@ -2,8 +2,12 @@ const { WAMessageStubType: StubType } = 'baileys'.import();
 let infos = Data.infos;
 
 export default async function stub({ Exp, cht }) {
+
+  let { func } = Exp
+
   switch (cht?.messageStubType) {
-    case StubType.GROUP_PARTICIPANT_ADD:
+      case StubType.GROUP_PARTICIPANT_ADD:
+      await func.getGroupMetadata(cht.id, Exp, true)
       {
         if (!Data.preferences[cht.id]?.welcome) return;
         let newMember = await Promise.all(
@@ -166,8 +170,9 @@ ${group.desc}`
       }
       break;
 
-    case StubType.GROUP_PARTICIPANT_REMOVE:
-    case StubType.GROUP_PARTICIPANT_LEAVE:
+      case StubType.GROUP_PARTICIPANT_REMOVE:
+      case StubType.GROUP_PARTICIPANT_LEAVE:
+        func.getGroupMetadata(cht.id, Exp, true)
       {
         let oldMember = await Promise.all(
           cht.messageStubParameters?.map(async (a) => {
@@ -323,5 +328,54 @@ Selamat tinggal ${members}`;
           );
       }
       break;
+      
+      
+      case StubType.GROUP_CREATE:
+      case StubType.GROUP_CHANGE_SUBJECT:
+      case StubType.GROUP_CHANGE_ICON:
+      case StubType.GROUP_CHANGE_INVITE_LINK:
+      case StubType.GROUP_CHANGE_DESCRIPTION:
+      case StubType.GROUP_CHANGE_RESTRICT:
+      case StubType.GROUP_CHANGE_ANNOUNCE:
+      case StubType.GROUP_PARTICIPANT_PROMOTE:
+      case StubType.GROUP_PARTICIPANT_DEMOTE:
+      case StubType.GROUP_PARTICIPANT_INVITE:
+      case StubType.GROUP_PARTICIPANT_CHANGE_NUMBER:
+      case StubType.GROUP_ANNOUNCE_MODE_MESSAGE_BOUNCE:
+      case StubType.GROUP_CHANGE_NO_FREQUENTLY_FORWARDED:
+      case StubType.GROUP_PARTICIPANT_ADD_REQUEST_JOIN:
+      case StubType.GROUP_BOUNCED:
+      case StubType.GROUP_INVITE_LINK_GROWTH_LOCKED:
+      case StubType.COMMUNITY_LINK_PARENT_GROUP:
+      case StubType.COMMUNITY_LINK_SIBLING_GROUP:
+      case StubType.COMMUNITY_LINK_SUB_GROUP:
+      case StubType.COMMUNITY_UNLINK_PARENT_GROUP:
+      case StubType.COMMUNITY_UNLINK_SIBLING_GROUP:
+      case StubType.COMMUNITY_UNLINK_SUB_GROUP:
+      case StubType.GROUP_PARTICIPANT_ACCEPT:
+      case StubType.GROUP_PARTICIPANT_LINKED_GROUP_JOIN:
+      case StubType.GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST:
+      case StubType.GROUP_MEMBERSHIP_JOIN_APPROVAL_MODE:
+      case StubType.INTEGRITY_UNLINK_PARENT_GROUP:
+      case StubType.COMMUNITY_PARENT_GROUP_DELETED:
+      case StubType.COMMUNITY_LINK_PARENT_GROUP_MEMBERSHIP_APPROVAL:
+      case StubType.GROUP_PARTICIPANT_JOINED_GROUP_AND_PARENT_GROUP:
+      case StubType.COMMUNITY_PARENT_GROUP_SUBJECT_CHANGED:
+      case StubType.SUB_GROUP_INVITE_RICH:
+      case StubType.SUB_GROUP_PARTICIPANT_ADD_RICH:
+      case StubType.COMMUNITY_LINK_PARENT_GROUP_RICH:
+      case StubType.GROUP_MEMBER_ADD_MODE:
+      case StubType.GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD:
+      case StubType.COMMUNITY_ALLOW_MEMBER_ADDED_GROUPS:
+      case StubType.LINKED_GROUP_CALL_START:
+      case StubType.EMPTY_SUBGROUP_CREATE:
+      case StubType.SUBGROUP_ADMIN_TRIGGERED_AUTO_ADD_RICH:
+      case StubType.GROUP_CHANGE_RECENT_HISTORY_SHARING:
+      case StubType.SUGGESTED_SUBGROUP_ANNOUNCE:
+      case StubType.COMMUNITY_DEACTIVATE_SIBLING_GROUP:
+      case StubType.COMMUNITY_SUB_GROUP_VISIBILITY_HIDDEN:
+      case StubType.GROUP_MEMBER_LINK_MODE:
+        await func.getGroupMetadata(cht.id, Exp, true)
+      break
   }
 }

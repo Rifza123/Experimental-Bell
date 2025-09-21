@@ -168,9 +168,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
               return `${String(s1.target)?.split('@')[0] + from.sender}|${s1.code?.toUpperCase()}|${s1.inviter ? 'inviter' : 'participant'}|${s1.max}`;
             } else {
               await func.clearSessionConfess(_id, s1.target);
-              await cht.reply(
-                `Sessi percakapan \`${s1.code?.toUpperCase()}\` telah berakhir!`
-              );
+              await cht.reply(Data.infos.interactive.sessionEnded(s1));
               return false;
             }
           }
@@ -200,9 +198,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
         if (!(sender in tagAfk.taggedBy)) tagAfk.taggedBy[sender] = 0;
         tagAfk.taggedBy[sender]++;
         if (tagAfk.taggedBy[sender] >= maxTag) {
-          await cht.reply(
-            `Kamu telah di banned dari bot selama 1 hari karena melakukan tag hingga ${maxTag}x`
-          );
+          await cht.reply(Data.infos.interactive.bannedTagAfk(maxTag));
           delete tagAfk.taggedBy[sender];
           let tme = '1 Hari';
           let _time = parseTimeString(tme);
@@ -215,19 +211,19 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
               : Date.now();
           let bantime = date + _time;
           await Exp.sendMessage(sender, {
-            text: `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️`,
+            text: Data.infos.interactive.bannedTagAfkPm(tme, maxTag),
           });
           return memories.setItem(sender, 'banned', bantime);
         }
         //if(is.botAdmin) await cht.delete()
 
-        let rsn = `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, 'Asia/Jakarta')}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`;
+        let rsn = Data.infos.interactive.afkTagged(tagAfk, func, sender, maxTag);
         await cht.reply(rsn);
         memories.setItem(cht.mention[0], 'afk', tagAfk);
         break;
       case isAfkBack:
         let dur = func.formatDuration(Date.now() - is.afk.time);
-        let text = `@${sender.split('@')[0]} *Telah kembali dari AFK!*\nSetelah ${is.afk.reason} selama ${dur.days > 0 ? dur.days + 'hari ' : ''}${dur.hours > 0 ? dur.hours + 'jam ' : ''}${dur.minutes > 0 ? dur.minutes + 'menit ' : ''}${dur.seconds > 0 ? dur.seconds + 'detik ' : ''}${dur.milisecondss > 0 ? dur.milisecondss + 'ms ' : ''}`;
+        let text = Data.infos.interactive.afkBack(sender, is, dur);
         await cht.reply(text, {
           mentions: [sender],
         });
@@ -236,8 +232,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antibot:
         cht.warnGc({
           type: 'antibot',
-          warn: 'Bot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!',
-          kick: 'Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!',
+          warn: Data.infos.interactive.warn,
+          kick: Data.infos.interactive.kick,
           max: 5,
         });
         break;
@@ -247,7 +243,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antidelete:
         let deleted = await store.loadMessage(cht.id, cht[cht.type].key.id);
         await Data.utils({ cht: deleted, Exp, is: {}, store });
-        let bodyText = `\`ANTI DELETE❗\`\n\n- User/Name: ${cht.sender.split('@')[0]} / ${func.getName(cht.sender)}\n- Type Pesan: ${deleted.type}`;
+        let bodyText = Data.infos.interactive.antiDelete(cht, func, deleted);
         let contextInfo = {
           stanzaId: deleted.key.id,
           participant:
@@ -265,7 +261,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                     text: bodyText,
                   },
                   footer: {
-                    text: 'Untuk menonaktifkan fitur ini, ketik *.off antidelete* (Hanya bisa dilakukan oleh admin atau owner)',
+                    text: Data.infos.interactive.antiDeleteNote,
                   },
                   carouselMessage: {},
                 },
@@ -294,8 +290,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antitagsw:
         await cht.warnGc({
           type: 'antitagsw',
-          warn: 'Kamu terdeteksi melakukan mention status di group ini! Mohon ikuti aturan grup untuk tidak melakukan mention di group ini!.',
-          kick: 'Kamu dikeluarkan dari grup karena melakukan tag/mention status group hingga peringatan terakhir!',
+          warn: Data.infos.interactive.mentionWarn,
+          kick: Data.infos.interactive.mentionKick,
           max: 1,
         });
         cht.delete();
@@ -303,8 +299,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antilink:
         await cht.warnGc({
           type: 'antilink',
-          warn: 'Anda terdeteksi mengirimkan link!. Harap ikuti peraturan disini untuk tidak mengirim link!',
-          kick: 'Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirim link hingga peringatan terakhir!',
+          warn: Data.infos.interactive.antilinkWarn,
+          kick: Data.infos.interactive.antilinkKick,
           max: 3,
         });
         cht.delete();
@@ -312,8 +308,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antitoxic:
         await cht.warnGc({
           type: 'antitoxic',
-          warn: 'Kamu terdeteksi menggunakan bahasa yang kasar atau tidak pantas! Mohon ikuti aturan grup dan hindari kata-kata yang menyinggung.',
-          kick: 'Kamu dikeluarkan dari grup karena menggunakan bahasa kasar atau tidak pantas hingga peringatan terakhir!',
+          warn: Data.infos.interactive.antitoxicWarn,
+          kick: Data.infos.interactive.antitoxicKick,
           max: 3,
         });
         cht.delete();
@@ -321,8 +317,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       case is.antiTagall:
         await cht.warnGc({
           type: 'antitagall',
-          warn: 'Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!',
-          kick: 'Anda dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!',
+          warn: Data.infos.interactive.tagallWarn,
+          kick: Data.infos.interactive.tagallKick,
           max: 3,
         });
         cht.delete();
@@ -630,7 +626,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
               user?.autoai?.reset,
               'Asia/Jakarta'
             );
-            let txt = `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`;
+            let txt = Data.infos.interactive.limitExpired(formatTimeDur, resetOn);
             if (!user?.autoai?.response) {
               user.autoai.response = true;
               cht.reply(txt);
@@ -857,13 +853,13 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                 cht.q = config.cfg?.query;
                 return ev.emit('bard');
               case 'public':
-                if (!is?.owner) return cht.reply('Maaf, males nanggepin');
+                if (!is?.owner) return cht.reply(Data.infos.interactive.notOwner);
                 global.cfg.public = true;
-                return cht.reply('Berhasil mengubah mode menjadi public!');
+                return cht.reply(Data.infos.interactive.modePublic);
               case 'self':
-                if (!is?.owner) return cht.reply('Maaf, males nanggepin');
+                if (!is?.owner) return cht.reply(Data.infos.interactive.notOwner);
                 global.cfg.public = false;
-                return cht.reply('Berhasil mengubah mode menjadi self!');
+                return cht.reply(Data.infos.interactive.modeSelf);
               case 'voice':
                 try {
                   cfg.ai_voice = cfg.ai_voice || 'bella';

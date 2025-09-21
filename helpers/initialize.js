@@ -8,7 +8,8 @@ const {
 } = 'baileys'.import();
 const { func } = await `${fol[0]}func.js`.r();
 
-let { generateWaveform } = await './toolkit/ffmpeg.js'.r()
+let { generateWaveform, convertToOpus } = await './toolkit/ffmpeg.js'.r()
+const { processMedia } = await './toolkit/ffmpeg.js'.r();
 
 export default async function initialize({ Exp, store }) {
   try {
@@ -118,8 +119,17 @@ export default async function initialize({ Exp, store }) {
 
     Exp.sendMessage = async (id, config, etc) => {
       let msg;
-
+      let buff;
+      
       if (config.ai||config.ptt == true) {
+        if (config.ptt && 'audio' in config) {
+          config.mimetype = 'audio/ogg; codecs=opus';
+          const src = config?.audio?.url
+            ? await Exp.func.getBuffer(config.audio.url)
+            : config.audio;
+          buff = config.audio = await convertToOpus(Buffer.from(src));
+        }
+
         let message = await generateWAMessageContent(config, {
           upload: Exp.waUploadToServer,
         });
@@ -134,9 +144,9 @@ export default async function initialize({ Exp, store }) {
         }
         
         if(config.ptt){
-          let buff;
-          if(config?.audio?.url) buff = await Exp.func.getBuffer(config?.audio?.url)
-          buff = config?.audio
+          
+          
+          //selalu support gelombang (amplitudo)
           message[type].waveform = await generateWaveform(buff)
         }
         
@@ -164,14 +174,6 @@ export default async function initialize({ Exp, store }) {
           remoteJid: id,
         },
       };
-    };
-    Exp.relayMessage = async (id, config, etc) => {
-      let type = getContentType(config);
-      let { showAdAttribution } =
-        config[type]?.contextInfo?.externalAdReply || {};
-      if (showAdAttribution)
-        delete config[type].contextInfo.externalAdReply.showAdAttribution;
-      return relayMessage(id, config, etc);
     };
   } catch (e) {
     console.error('Error in Initialize.js: ' + e);

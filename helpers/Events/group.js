@@ -1,5 +1,11 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = 'fs'.import();
+let _git = JSON.parse(fs.readFileSync('package.json'))
+  .homepage.split('/')
+  .slice(0, 4)
+  .join('/');
+let git = { raw: _git + '/lib/raw/refs/heads/main' };
+git.daerah = git.raw + '/db/daerah.json';
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -411,7 +417,7 @@ ${topEnergy}
         return cht.reply('Tagall tidak di izinkan disini!');
       let mentions = Exp.groupMembers.map((a) => a.id);
       let text =
-        cht.cmd == 'tagall' ? `\`${cht?.q ?? 'TAG ALL'}\`\n` : cht.q || '';
+        cht.cmd == 'tagall' ? `\`${cht?.q ? await func.replaceLidToPn(cht.q, cht) :  'TAG ALL'}\`\n` : cht.q || '';
       if (cht.cmd == 'tagall') {
         for (let i = 0; i < mentions.length; i++) {
           text += `\n${i + 1}. @${mentions[i]?.split('@')[0]}`;
@@ -438,7 +444,8 @@ ${topEnergy}
       args: 'Silahkan input daerahnya!',
     },
     async ({ args }) => {
-      let { status, data, msg, timeZone, list } = await jadwal.init('no', args);
+      Data.daerah ??= (await fetch(git.daerah).then((a) => a.json()));
+      let { status, data, msg, timeZone, list } = await jadwal.init('no', func.getTopSimilar(await func.searchSimilarStrings(args,Object.values(Data.daerah).flat(), 0.6)).item || args);
       if (!status) {
         func.archiveMemories.setItem(sender, 'questionCmd', {
           emit: `${cht.cmd}`,
@@ -469,7 +476,7 @@ ${topEnergy}
       let dm = `${d}/${m}`;
       let a = data.find((a) => a.tanggal == dm);
       console.log({ data, a, dm });
-      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak || 'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map((a) => ` \n 🗓️ \`${a.tanggal}\`\n- imsak: ${a.imsak}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`;
+      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak || 'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map((a) => ` \n 🗓️ \`${a.tanggal}\`${a.imsak ? `\n- imsak: ${a.imsak}`:''}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`;
       cht.reply(text);
     }
   );
@@ -513,6 +520,7 @@ ${topEnergy}
       sets[input] = sets[input] || false;
       let sholat = {};
       if (input == 'jadwalsholat' && cht.cmd == 'on') {
+        Data.daerah ??= (await fetch(git.daerah).then((a) => a.json()));
         if (!v)
           return cht.reply(`*Harap sertakan daerahnya!*
 - Contoh: ${cht.prefix + cht.cmd + ' jadwalsholat kab-bungo'}
@@ -548,7 +556,7 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
             sholat[i] = true;
           }
         }
-        let { status, msg, data, list, db } = await jadwal.init(id, v, sholat);
+        let { status, msg, data, list, db } = await jadwal.init(id, func.getTopSimilar(await func.searchSimilarStrings(v,Object.values(Data.daerah).flat(), 0.6)).item || v, sholat);
         if (!status)
           return cht.reply(
             `*${msg}*${list ? `\n\nList daerah:\n- ${list.join('\n- ')}` : ''}`

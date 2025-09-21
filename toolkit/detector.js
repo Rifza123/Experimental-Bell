@@ -24,6 +24,7 @@ Data.notify = Data.notify || {
   h: 0,
   first: !1,
 };
+Data.queueMetadata ??=[]
 
 export default async function detector({ Exp, store }) {
   const { func } = Exp;
@@ -435,7 +436,6 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
       for (const item in hargaAwalCfg) {
         const harga = hargaAwalCfg[item];
-        console.log({ harga });
         if (!harga) continue;
         if (!inflasiAktif) {
           if (harga.beli) Data.ShopRPG.buy[item] = harga.beli;
@@ -798,6 +798,8 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
       await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
       await updateHargaInvestasi();
+      let queue = Data.queueMetadata.shift()
+      typeof queue == 'function' && await queue.run()
     } catch (error) {
       console.error('Terjadi kesalahan dalam penulisan file', error);
     }

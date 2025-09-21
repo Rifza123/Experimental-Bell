@@ -310,6 +310,7 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
     },
     async ({ media, args }) => {
       try {
+        let output = args?.split('--output=')?.[1]?.split(' ')?.[0];
         let { quoted, type: mtype } = ev.getMediaType();
         let type =
           mtype == 'sticker'
@@ -320,7 +321,11 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
                 ? 'mp4'
                 : 'mp3';
 
-        const res = await processMedia(media, normalizeArgs(args), type);
+        const res = await processMedia(
+          media,
+          normalizeArgs(output ? args.replace('--output=' + output, '') : args),
+          output || type
+        );
         return Exp.sendMessage(
           cht.id,
           {
@@ -329,9 +334,9 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
           },
           { quoted: cht }
         );
-      } catch (e){
-        cht.reply(String(e))
+      } catch (e) {
+        cht.reply(String(e));
       }
-    }      
+    }
   );
 }

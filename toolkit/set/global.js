@@ -52,7 +52,7 @@ global['session'] = fol[8] + 'session';
 
 const { Mongo } = await `${fol[0]}mongodb.js`.r();
 
-let mongoURI = ''; //'mongodb+srv://alindongh:0H0bWhfILeQpnSbc@cluster0.utkds1s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+let mongoURI = ''; 
 /* Masukkan SRV URI jika ingin menggunakan database mongo
   📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
 */
@@ -243,12 +243,7 @@ export const initialize = async () => {
   }
 
   /*!-======[ Definition of Infos ]======-!*/
-  const files = fs
-    .readdirSync(fol[9] + locale + '/')
-    .filter((file) => file.endsWith('.js'));
-  for (const file of files) {
-    await (fol[9] + locale + '/' + file).r();
-  }
+  await (fol[9] + locale + '.js').r()
 };
 
 const originalConsoleError = console.error;

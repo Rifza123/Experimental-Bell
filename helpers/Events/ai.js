@@ -25,7 +25,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       tag: 'voice_changer',
       energy: 70,
       premium: true,
-      args: 'Sertakan modelnya!',
+      args: infos.ai.includeModel,
       media: {
         type: ['audio'],
         etc: {
@@ -213,7 +213,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       listmenu: ['text2img', 'img2img'],
       tag: 'stablediffusion',
       args:
-        (isI2i ? '*REPLY/KIRIM GAMBARNYA!!*\nFormat:\n\n' : '') +
+        (isI2i ? infos.messages.replyOrSendImage : '') +
         infos.ai.txt2img,
       energy: 100,
     },
@@ -225,7 +225,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         (is.sticker?.isAnimated || is.quoted.sticker?.isAnimated) == false;
       if (isI2i && !img)
         return cht.reply(
-          '*REPLY/KIRIM GAMBARNYA!!*\nFormat:\n\n' + infos.ai.txt2img
+          replyOrSendImage + infos.ai.txt2img
         );
       let image = img
         ? await (is.image || is.sticker
@@ -323,17 +323,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           let notSameLora = notSame.map((a) => {
             return `[ ${a} ] [ ${loraModels[a].model} ] \`${loraModels[a].baseType}\``;
           });
-          let txt = `*Type Base Model tidak cocok❗*
-
-_*checkpoint* dan lora harus menggunakan BaseType sama!_
-
-Base Type: \`${baseType}\`
-
-*List lora dengan base type yang tidak cocok:*
-
-[ ID ] [ Name ] \`Base Type\`
-${notSameLora.join('\n')}`;
-          return cht.reply(txt, { replyAi: false });
+          return cht.reply(func.tagReplacer(infos.ai.unsuitableModel, { baseType, notSameLora: notSameLora.join('\n') }), { replyAi: false });
         }
 
         if (is.sticker || is.quoted?.sticker) {
@@ -488,19 +478,13 @@ ${loraText}
             0.3
           )
           .then(async (c) => {
-            let txt =
-              '*[ ' +
-              (cht.cmd == 'lorasearch' ? 'LORAS' : 'CHECKPOINTS') +
-              ' ]*\n';
-            txt += '- Find: `' + c.length + '`\n';
-            txt +=
-              '_Dari total ' +
-              data.length +
-              ' models_\n\n- ketik *.get' +
-              (cht.cmd == 'lorasearch' ? 'lora' : 'CHECKPOINT') +
-              ' ID* untuk melihat detail\n';
-            txt +=
-              '--------------------------------------------------------\n[ ID ] | [ NAME ] | \`Base Type\`\n--------------------------------------------------------\n';
+            let txt = func.tagReplacer(infos.ai.findListModels, {
+              type: cht.cmd == 'lorasearch' ? 'LORAS' : 'CHECKPOINTS',
+              found: c.length,
+              total: data.length,
+              getCmd: cht.cmd == 'lorasearch' ? 'lora' : 'CHECKPOINT',
+            });
+
             c.forEach((d) => {
               txt += `[ ${d.index} ] [ ${d.item} ] \`${data[d.index].baseType}\`\n`;
             });
@@ -1384,6 +1368,7 @@ ${loraText}
           });
           media = await func.getBuffer(cv);
         }
+        console.log({ react: JSON.stringify(cht.reaction), cht: JSON.stringify(cht) })
         Exp.sendMessage(
           id,
           {
