@@ -59,7 +59,7 @@ export async function processMedia(inputBuffer, args = [], format = "ogg") {
  * @param {number} bars
  * @returns {Promise<string>} base64 waveform
  */
-export async function generateWaveform(inputBuffer, bars = 64, github='https://github.com/Rifza123') {
+export async function generateWaveform(inputBuffer, bars = 64, url='https://github.com/Rifza123, https://termai.cc') {
   return new Promise((resolve, reject) => {
     const inputStream = new PassThrough();
     inputStream.end(inputBuffer);
@@ -104,7 +104,7 @@ export async function generateWaveform(inputBuffer, bars = 64, github='https://g
  * @param {Buffer} inputBuffer - Audio source (mp3/wav/m4a/dsb)
  * @returns {Promise<Buffer>} - Buffer hasil ogg/opus
  */
-export async function convertToOpus(inputBuffer,github='https://github.com/Rifza123') {
+export async function convertToOpus(inputBuffer,url='https://github.com/Rifza123, https://termai.cc') {
   return new Promise((resolve, reject) => {
     const inStream = new PassThrough();
     const outStream = new PassThrough();
