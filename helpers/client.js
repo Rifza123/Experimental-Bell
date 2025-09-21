@@ -6,11 +6,11 @@ export default async function client({ Exp, store, cht, is }) {
   let { func } = Exp;
   try {
     const chatDb = Data.preferences[cht.id] || {};
-    /*let m = store?.messages?.[cht.id] || {};
+    let m = store?.messages?.[cht.id] || {};
     m.idmsg ??= [];
     if (m.idmsg.includes(cht.key.id)) return;
     m.idmsg = [...m.idmsg, cht.key.id].slice(-7);
-    */
+    
     if (cht.memories?.banned && !is.owner) {
       if (cht.memories.banned * 1 > Date.now()) return;
       func.archiveMemories.delItem(cht.sender, 'banned');
