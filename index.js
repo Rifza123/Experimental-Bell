@@ -1,6 +1,4 @@
 /** !-======[ Experimentall ▪︎ Bell🦋 ]======-!
-      https://github.com/Rifza123/Experimental-Bell
-      
       * Coding by @rifza.p.p *     
       
       🩵 Follow ️me on :
@@ -9,8 +7,8 @@
       ▪︎ https://instagram.com/rifza.p.p?igshid=ZGUzMzM3NWJiOQ==
       ▪︎ https://www.threads.net/@rifza.p.p
       ▪︎ https://termai.cc
+      ▪︎ https://xterm.tech
   */
-
 /*!-======[ Preparing Configuration ]======-!*/
 import './toolkit/set/prototype.js';
 let { initialize } = await './toolkit/set/global.js'.r();
@@ -80,11 +78,10 @@ async function launch() {
     let { state, saveCreds } = await useMultiFileAuthState(session);
     const Exp = makeWASocket({
       logger,
-      version: [2,3000,1027191782],
+      version: [2,3000,1025150051],
       printQRInTerminal: !global.pairingCode,
       browser: Browsers.ubuntu('Chrome'),
-      auth: state,
-      defaultQueryTimeoutMs: 0
+      auth: state
     });
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
@@ -117,7 +114,7 @@ async function launch() {
       await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });
     });
 
-    //Exp.ev.on('creds.update', saveCreds);
+    Exp.ev.on('creds.update', saveCreds);
     Exp.ev.on('message-receipt.update', async (msg) => {
       /* console.log(msg)
      la  | [
@@ -154,6 +151,9 @@ async function launch() {
             ...message,
             id: message.key.remoteJid,
           };
+          let { messageTimestamp } = cht
+          if(typeof messageTimestamp == 'object' && messageTimestamp.unsigned) continue 
+          
           let isMessage = cht?.message;
           let isStubType = cht?.messageStubType;
           if (!(isMessage || isStubType)) return;

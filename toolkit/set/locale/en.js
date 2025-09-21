@@ -957,7 +957,7 @@ Data.infos.events = {
 /*
   ====== Interactive.js ======
 */
-Data.infos.Interactive = {
+Data.infos.interactive = {
   sessionEnded: (s1) =>
   `Conversation session \`${s1.code?.toUpperCase()}\` has ended!`,
   bannedTagAfk: (maxTag) =>
