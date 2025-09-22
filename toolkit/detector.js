@@ -126,6 +126,7 @@ export default async function detector({ Exp, store }) {
           );
         }
       }
+      await Data?.ev?.reloadEventHandlers();
     }
   );
 
@@ -754,6 +755,77 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       }
     }
   }
+  
+  async function autoBackup() {
+    try {
+      if (!cfg?.autoBackup) return;
+
+      const now = new Date(
+         new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+      );
+      
+      const jam = now.getHours();
+      const menit = now.getMinutes();
+      const hari = now.getDate();
+
+      if (jam === 21 && menit === 0) {
+        
+        if (cfg?.lastDayBackup == hari) return;
+        cfg.lastDayBackup = hari;
+        
+        let b = './backup.tar.gz';
+        let s = await Exp.func.createTarGz('./', b);
+        if (!s.status) return console.log('[ AUTO BACKUP ] gagal:', s.msg);        
+        
+        const dateStr = func.dateFormatter(Date.now(), 'Asia/Jakarta');
+        const fileName = `${botnickname} || ${dateStr}.tar.gz`;
+
+        const stats = fs.statSync(b);
+        const fileSize = String(stats.size).toFormat()
+        const caption = "乂  *A U T O  B A C K U P*\n\n" +
+        `• *File name* : ${fileName}\n` +
+        `• *File size* : ${fileSize}\n` +
+        `• *Status* : ✅Suksess`
+        for(let i of owner){
+          try {
+            let own = String(i).split('@')[0] + from.sender
+            await Exp.sendMessage(
+              own,
+              {
+                document: { url: b },
+                mimetype: 'application/zip',
+                fileName,
+                caption
+              }
+            );
+            await sleep(5000)
+          } catch(e) {
+            console.warn(`Cannot send backupnya file to: ${i}`, e)
+            continue
+          }
+        }
+
+        fs.unlinkSync(b);
+        console.log(
+          chalk.cyan(
+            `[ AUTO BACKUP ] sukses mengirim backup (${fileName}, ${fileSize})`
+          )
+        );
+      }
+    } catch (e) {
+      console.error('Error auto backup:', e);
+      const text = "乂  *A U T O  B A C K U P*\n\n" + 
+      `*Error*:\n` +
+      `- ${e.message}`
+      
+      await Exp.sendMessage(
+        own,
+        {
+          text
+        }
+      )
+    }
+  }
 
   //initialize available setup group jadwalsholat
   let jdwl = {};
@@ -768,6 +840,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
   cfg.keyChecker ??= true;
   keys['detector'] = setInterval(async () => {
     await sholat();
+    autoBackup();
     await schedule();
     await executeSchedules();
     cfg.keyChecker && (await keyChecker());

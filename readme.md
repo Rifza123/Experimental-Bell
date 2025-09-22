@@ -78,7 +78,6 @@ const fs = 'fs'.import();
 // Atau bisa gunakan await untuk mengatasi promise
 //const fs = await "fs".import()
 ```
-
 ---
 
 ### Cara Mengimpor Fungsi
@@ -93,9 +92,15 @@ const events = await './tolkit/events.js'.r();
 
 ---
 
-### Penggunaan Event Emitter
 
-Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomatis terdeteksi.
+## ✨ Fitur Event Emitter Lanjutan
+
+Eksperimen terbaru menambahkan kemampuan **rekayasa command** dengan memanfaatkan `ev.on()` dan `ev.emit()`.  
+Fitur ini memungkinkan Anda **menjalankan event secara manual**, memodifikasi input secara dinamis, dan membuat alur **command interaktif** yang sangat berguna untuk sistem AI yang hemat code.
+
+---
+
+## 🚀 Menambahkan Event Baru
 
 Berikut adalah bagian-bagian yang tersedia dalam events ini:
 
@@ -126,7 +131,8 @@ ev.on(
       msg: true, //respon message or msg: 'isi pesan balasan'
     },
     isMention: true, //Membutuhkan mention (tag/reply/input nomor)
-    isQuoted: false, //membutuhkan quoted
+    isQuoted: false, //membutuhkan quoted,
+    onlyGame: [ 'tebakgambar', 'tebakanime' ], //Jika anda menambahkan onlyGame, event ini hanya bisa digunakan saat bermain salah satu game dalam array
   },
   ({ media }) => {
     // media adalah kembalian dari media yang di-download,
@@ -136,26 +142,109 @@ ev.on(
 );
 ```
 
+Tambahkan file baru di `./helpers/Events/` atau gunakan pola berikut di file mana saja:
+Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomatis terdeteksi.
+
+```javascript
+ev.on(
+  {
+    cmd: ['ai'],        // Command pemicu
+    listmenu: ['ai'],   // Tampil di menu dengan nama AI
+    tag: 'tools',       // Kategori menu
+    energy: 5,          // Energi yang digunakan
+  },
+  async ({ cht }) => {
+    await cht.reply('Hai! Ini adalah balasan dari event ai.');
+  }
+);
+```
+
+## ⚡ Menjalankan Emit & Memodifikasi Input
+
+Anda bisa **memanggil event lain secara paksa** menggunakan `ev.emit()`.
+Misalnya, kita ingin mengganti command dan pertanyaan (`cht.cmd` dan `cht.q`) sebelum menjalankan ulang event:
+
+```javascript
+// Ubah command & input
+cht.cmd = 'ai';
+cht.q   = 'Hai';
+
+// Jalankan event 'ai' dengan data yang sudah dimodifikasi
+ev.emit('ai', { cht });
+```
+
+Dengan cara ini, Anda bisa:
+
+* **Mengalihkan** user ke command lain.
+* Menyusun **alur percakapan interaktif**.
+* Membuat sistem **multi-step AI** atau chatbot yang fleksibel.
+
+---
+
+## 🧩 Contoh: AI Interactive
+
+Berikut contoh nyata bagaimana event lain bisa memicu event tambahan:
+//code ini diterapkan di ./helpers/interactive.js
+
+```javascript
+let _ai = await bell(text)
+let config = _ai?.data || {};
+
+switch (config?.cmd) {
+  case 'sticker':
+    await cht.reply(config?.msg || 'ok', { replyAi: false });
+    return ev.emit('s');
+
+  case 'afk':
+    await cht.reply(config?.msg || 'ok', { replyAi: false });
+    cht.q = config?.cfg?.reason;
+    return ev.emit('afk');
+
+  case 'bard':
+    await cht.reply(config?.msg || 'ok', { replyAi: false });
+    cht.q = config.cfg?.query;
+    return ev.emit('bard');
+}
+```
+
+Contoh di atas menunjukkan:
+
+* **Rekayasa command**: `config.cmd` menentukan event mana yang dijalankan.
+* **Pengubahan input**: `cht.q` bisa diisi ulang untuk menyesuaikan pertanyaan.
+
+---
+
+## 💡 Manfaat Utama
+
+* 🔄 **Dynamic Flow**: Alihkan perintah ke event lain dengan input yang disesuaikan.
+* 🕹️ **Command Engineering**: Mengatur logika kompleks (AI, game, dsb.) tanpa duplikasi kode.
+* 🎯 **Interaktif**: Buat chatbot multi-tahap atau sistem cerdas.
+
+---
+
 ## 🙌 Thanks to All Contributors
 
 Terima kasih kepada semua yang telah berkontribusi dan mendukung pengembangan project ini.  
 Setiap masukan, ide, dan bantuan sangat berarti!
 
-[![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)
-
-Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau hubungi kami.
-
----
-
-## Kontributor
-
+### 🏆 Kontributor Utama
 - **Azfir (rifza.p.p)**  
-  [Instagram](https://www.instagram.com/rifza.p.p) • [GitHub](https://github.com/Rifza123) • [YouTube](https://www.youtube.com/@rifza) • [WhatsappChannel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
-  (All contributions)
+  - [Instagram](https://www.instagram.com/rifza.p.p)  
+  - [GitHub](https://github.com/Rifza123)  
+  - [YouTube](https://www.youtube.com/@rifza)  
+  - [WhatsApp Channel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)  
+  - **Peran:** Semua kontribusi utama, pengelolaan dan pengembangan penuh proyek.
 
-- **Hanif skizo**  
-  [Instagram](https://instagram.com/htr.ox)
-  (Berkontribusi dalam: penambahan game chess.js)
+### 🤝 Kontributor Lain
+- **Hanif Skizo**  
+  - [Instagram](https://instagram.com/htr.ox)  
+  - **Kontribusi:** Penambahan fitur game *chess.js*.
+
+- **Barr**  
+  - [Instagram](https://www.instagram.com/pler.curutt)  
+  - **Kontribusi:** Pembuatan modul **autoBackup (detector.js)** dan **listUser (owner.js)**.
+
+[![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)
 
 ## 📄 License
 

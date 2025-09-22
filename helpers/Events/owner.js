@@ -58,6 +58,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     antitagowner: 'Anti Tag Owner',
     register: 'register mode',
     keyChecker: 'Auto detector apikey',
+    autoBackup: 'Auto Backup (21.00 WIB)'
   };
 
   function sendPremInfo({ _text, text }, cust = false, number) {
@@ -476,6 +477,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 : infos.owner.isModeOnSuccess,
               { mode }
             );
+          } else {
+            if (!cht.quoted) return cht.reply(infos.owner.setAntiTagOwner);
+            let res = (await store.loadMessage(id, cht.quoted.stanzaId))
+              ?.message;
+            Data.response['tagownerresponse'] = res || {...cht.quoted};
+            cht.reply(`Success set antitagowner!\nType: ${cht.quoted.type}`);
           }
         } else if (t1 == 'replyAi') {
           if (t2) {
@@ -489,11 +496,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
               isOn ? infos.owner.isReplyAiOn : infos.owner.isReplyAiOff
             );
           } else {
-            if (!cht.quoted) return cht.reply(infos.owner.setAntiTagOwner);
-            let res = (await store.loadMessage(id, cht.quoted.stanzaId))
-              .message;
-            Data.response['tagownerresponse'] = res;
-            cht.reply(`Success set antitagowner!\nType: ${cht.quoted.type}`);
+            await cht.reply('on/off ?');
+            func.archiveMemories.setItem(sender, 'questionCmd', {
+              emit: `${cht.cmd} ${t1}`,
+              exp: Date.now() + 60000,
+              accepts: ['on', 'off', 'true', 'false'],
+            });
           }
         } else {
           if (t2 === 'on' || t2 === 'true') {
@@ -1726,4 +1734,96 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cht.reply('Success✅, All Events have been reloaded!');
     }
   );
+  
+  ev.on(
+    {
+      cmd: ['listuser'],
+      listmenu: ['listuser'],
+      tag: 'owner',
+      isOwner: true,
+      args: "Mau liat list user apa? user *premium* atau user *afk*"
+    }, 
+    async ({ args }) => {
+    
+      let now = Date.now()
+      let mode = args.includes('afk') ? 'afk' : args.includes('premium') ? 'premium' : null
+      
+      if (!mode) return cht.reply(
+        "*❗ Berikut list user yang tersedia*\n\n" +
+        "⟡ listuser premium\n" +
+        "⟡ listuser afk\n\n" +
+        "Contoh:\n" +
+        ".listuser afk"
+      )
+      
+      let validMode = ['afk', 'premium']
+      
+      if (!validMode.includes(mode)) {
+        return cht.reply(
+          "❗ Untuk list " + mode + " belum ada di database"
+        )
+      }
+      
+      let list = []
+      for (const [id, user] of Object.entries(Data.users)) {
+        if (mode === 'afk' && user.afk?.time) {
+          let dur = func.formatDuration(now - user.afk.time)
+          let lamaAfk =
+            `${dur.days > 0 ? dur.days + 'd ' : ''}` +
+            `${dur.hours > 0 ? dur.hours + 'h ' : ''}` +
+            `${dur.minutes > 0 ? dur.minutes + 'm ' : ''}` +
+            `${dur.seconds > 0 ? dur.seconds + 's ' : ''}`
+ 
+          list.push(
+            {
+              id,
+              name: user.name || id,
+              reason: user.afk.reason,
+              lamaAfk: lamaAfk.trim()
+            }
+          )
+        }
+        
+        if (mode === 'premium' && user.premium?.time > now) {
+          list.push(
+            {
+              id,
+              name: user.name || id,
+              role: user.role,
+              expPrem: new Date(user.premium.time).toLocaleString("id-ID")
+            }
+          )
+        }
+      }
+
+      if (list.length === 0) {
+        return cht.reply(mode === 'afk' 
+          ? "❌ Tidak ada user yang sedang afk" 
+          : "❌ User premium belum ada satu pun"
+        )
+      }
+
+      let teks = mode === 'afk'
+        ? `Berikut list user yang sedang afk\n\n`
+        : `Berikut list user yang telah upgrade ke premium\n\n`
+
+      list.forEach(
+        (u, i) => {
+          teks += `${i + 1}. ${u.id}\n`
+          teks += `    • Nama : ${u.name}\n`
+          if (mode === 'afk') {
+            teks += `    • Lama afk : ${u.lamaAfk}\n`
+            teks += `    • Alasan : ${u.reason}\n\n`
+          } else {
+            teks += `    • Role : ${u.role?.split(",")[0] || "-"}\n`
+            teks += `    • Expired : ${u.expPrem}\n\n`
+          }
+        }
+      )
+
+      teks += `Terdapat \`${list.length} user\``
+
+      await cht.reply(teks)
+    }
+  )
 }

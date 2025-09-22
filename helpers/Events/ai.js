@@ -92,6 +92,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     }
   );
 
+  /* DELETED 
   ev.on(
     {
       cmd: ['lora', 'sdlora'],
@@ -124,7 +125,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         { quoted: cht }
       );
     }
-  );
+  );*/
 
   ev.on(
     {

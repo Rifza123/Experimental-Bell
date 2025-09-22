@@ -513,6 +513,7 @@ Data.infos.owner = {
 - chid <reply message (forward from channel)>
 - replyAi <on/off>
 - register <on/off>
+- autoBackup <on/off>
 
 _Example: .set public on_`,
 
