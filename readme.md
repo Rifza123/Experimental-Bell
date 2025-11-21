@@ -242,7 +242,7 @@ Setiap masukan, ide, dan bantuan sangat berarti!
 
 - **Barr**  
   - [Instagram](https://www.instagram.com/pler.curutt)  
-  - **Kontribusi:** Pembuatan modul **autoBackup (detector.js)** dan **listUser (owner.js)**.
+  - **Kontribusi:** Pembuatan modul **autoBackup (detector.js)**, **listUser (owner.js)** dan **antiimg/antivid/antidoct/antistk/antistkpck/antivoice**.
 
 [![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)
 
