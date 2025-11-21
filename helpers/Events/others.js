@@ -32,7 +32,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         head +
         `${args.includes('reaction') ? '' : func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`;
       let menu = {};
-      if (cfg?.menu_type == 'buttonListImage') {
+      if (cfg.button && cfg?.menu_type == 'buttonListImage') {
         let imageMessage = await func.uploadToServer(
           fs.readFileSync(fol[3] + 'bell.jpg')
         );
@@ -50,7 +50,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
           });
         }
 
-        console.log(quick_reply);
         let _m = {
           interactiveMessage: {
             header: {
