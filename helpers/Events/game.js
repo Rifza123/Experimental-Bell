@@ -1,5 +1,4 @@
-let raw =
-  'https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/game/';
+let raw = 'https://c.termai.cc/json/';
 
 let { Chess } = await (fol[2] + 'chess.js').r();
 const chess = new Chess();

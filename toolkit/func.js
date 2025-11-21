@@ -34,7 +34,7 @@ let METADATA_RETRIEVAL_DISTANCE = 15000;
 
 async function getDirectoriesRecursive(
   dir = './',
-  ignoredDirs = ['node_modules', '.git', '.config', '.npm', '.pm2']
+  ignoredDirs = ['node_modules', '.git', '.config', '.npm', '.pm2', 'test.fio']
 ) {
   const items = await fs.promises.readdir(dir, { withFileTypes: true });
 
@@ -67,6 +67,18 @@ export class func {
       init: false,
     };
   }
+  
+  init(config){
+    if(typeof config !== 'object') return 'Invalid Object!'
+    for(let i of Object.keys(config)){
+      this[i] = config[i]
+    }
+    return this
+  }
+
+  normalizeSender(jid) {
+    return jid.split('@')[0].split(':')[0] + '@' + jid.split('@')[1];
+  }
 
   async getSender(jid, { cht, lid = false }) {
     if (!jid) return jid;
@@ -94,7 +106,9 @@ export class func {
           server === 'lid' &&
           this.lid({ lid: jid, id: Alt || jid });
 
-        return server === 'lid' ? (lid ? jid : Alt || jid) : lid ? Alt : jid;
+        return this.normalizeSender(
+          server === 'lid' ? (lid ? jid : Alt || jid) : lid ? Alt : jid
+        );
       }
 
       let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : null;
@@ -118,12 +132,12 @@ export class func {
         //console.log({ v2: v })
       }
 
-      if (!v) return jid;
-      if (lid) return v.lid || jid;
-      return v.id || jid;
+      if (!v) return this.normalizeSender(jid);
+      if (lid) return this.normalizeSender(v.lid || jid);
+      return this.normalizeSender(v.id || jid);
     } catch (e) {
       console.error('Error in func > getSender:', e);
-      return jid;
+      return this.normalizeSender(jid);
     }
   }
 
@@ -182,6 +196,8 @@ export class func {
     let skipped = 0;
     let errors = [];
 
+    const oldData = JSON.parse(JSON.stringify(Data.lids));
+
     for (let item of items) {
       if (!item || typeof item !== 'object') {
         errors.push('❌ Input harus object { lid, id } atau array object');
@@ -197,10 +213,11 @@ export class func {
         continue;
       }
 
-      const exists = Data.lids.some(
+      const exists = Data.lids.findIndex(
         (x) => x.lid === item.lid && x.id === item.id
       );
-      if (!exists) {
+
+      if (exists === -1) {
         Data.lids.push({ lid: item.lid, id: item.id });
         added++;
       } else {
@@ -208,12 +225,28 @@ export class func {
       }
     }
 
-    return (
+    const newData = Data.lids;
+    const diffResult = this.deepDiff({
+      oldData,
+      newData,
+      type: 'terminal',
+    });
+
+    const summary =
       `\x1b[36m[LID Manager]\x1b[0m ` +
       `${added > 0 ? `\x1b[32m✅ Ditambahkan: ${added}\x1b[0m` : ''}` +
       `${skipped > 0 ? ` \x1b[34m➜ Dilewati: ${skipped}\x1b[0m` : ''}` +
-      `${errors.length ? ` \x1b[33m⚠️ Error: ${errors.length}\x1b[0m` : ''}`
-    ).trim();
+      `${errors.length ? ` \x1b[33m⚠️ Error: ${errors.length}\x1b[0m` : ''}`;
+
+    if (
+      diffResult &&
+      typeof diffResult === 'string' &&
+      diffResult.includes('[CHANGED')
+    ) {
+      console.log(diffResult);
+    }
+
+    return summary.trim();
   }
 
   async replaceLidToPn(text, cht) {
@@ -252,7 +285,12 @@ export class func {
       try {
         let meta = this._metadata[id] || { metadata: {} };
         let { metadata: oldData } = meta;
-        let changeDetails = this.deepDiff({ oldData, data, type: 'terminal' });
+        console.log(oldData);
+        let changeDetails = this.deepDiff({
+          oldData,
+          newData: data.metadata,
+          type: 'terminal',
+        });
         console.log(
           `${this.color.blue('[GROUP_METADATA_MANAGER]')}: ${id}\n${changeDetails}`
         );
@@ -307,7 +345,6 @@ export class func {
   };
 
   getGroupMetadata = async (chtId, Exp, update = false) => {
-    this.metadata.init();
     let hasData = this.metadata.has(chtId);
     let now = Date.now();
     let metadata = this.metadata.get(chtId);
@@ -428,6 +465,9 @@ export class func {
     return text.replace(/<([^>]+)>/g, (_, tag) => {
       return obj[tag] !== undefined ? obj[tag] : `<${tag}>`;
     });
+  }
+  getListTag(text) {
+    return [...text.matchAll(/<([^>]+)>/g)].map((m) => m[1]);
   }
 
   menuFormatter(data, frames, tags) {
@@ -959,10 +999,13 @@ export class func {
     );
   }
 
-  async uploadToServer(url, type = 'image') {
+  async uploadToServer(media, type = 'image') {
+    media = typeof media == 'string' && media.startsWith('http') 
+      ? { url: media }
+      : media
     return Object.values(
       await generateWAMessageContent(
-        { [type]: { url } },
+        { [type]: media },
         { upload: this.Exp.waUploadToServer }
       )
     )[0];
@@ -1160,115 +1203,127 @@ export class func {
     brightWhite: (str) => `\x1b[97m${str}\x1b[0m`,
   };
 
-  deepDiff({ oldData, newData, path = '', type }) {
+  deepDiff({ oldData, newData, path = 'root', type }) {
     const changes = [];
 
+    const joinPath = (base, key, isArray) =>
+      isArray ? `${base}[${key}]` : `${base}.${key}`;
+
+    const isObject = (v) => typeof v === 'object' && v !== null;
+
+    // === Handle missing root ===
     if (newData === undefined && oldData !== undefined) {
-      const msg = {
-        type: 'all-removed',
-        path: path || 'root',
+      changes.push({
+        type: 'removed',
+        path,
         old: oldData,
+        note: '[Root missing in newData]',
+      });
+    } else if (oldData === undefined && newData !== undefined) {
+      changes.push({
+        type: 'added',
+        path,
+        new: newData,
+        note: '[Root added]',
+      });
+    } else {
+      // === recursive diff ===
+      const diff = (a, b, p) => {
+        if (!isObject(a) || !isObject(b)) {
+          if (a !== b) {
+            changes.push({ type: 'changed', path: p, old: a, new: b });
+          }
+          return;
+        }
+
+        // ARRAY
+        if (Array.isArray(a) || Array.isArray(b)) {
+          const maxLen = Math.max(a?.length || 0, b?.length || 0);
+          for (let i = 0; i < maxLen; i++) {
+            const oldChild = a?.[i];
+            const newChild = b?.[i];
+            const nextPath = joinPath(p, i, true);
+
+            if (i >= (a?.length || 0)) {
+              changes.push({ type: 'added', path: nextPath, new: newChild });
+            } else if (i >= (b?.length || 0)) {
+              changes.push({ type: 'removed', path: nextPath, old: oldChild });
+            } else if (isObject(oldChild) && isObject(newChild)) {
+              diff(oldChild, newChild, nextPath);
+            } else if (oldChild !== newChild) {
+              changes.push({
+                type: 'changed',
+                path: nextPath,
+                old: oldChild,
+                new: newChild,
+              });
+            }
+          }
+          return;
+        }
+
+        // OBJECT
+        const keys = new Set([
+          ...Object.keys(a || {}),
+          ...Object.keys(b || {}),
+        ]);
+        for (const key of keys) {
+          const oldChild = a?.[key];
+          const newChild = b?.[key];
+          const nextPath = joinPath(p, key, false);
+
+          if (!(key in (b || {}))) {
+            changes.push({ type: 'removed', path: nextPath, old: oldChild });
+          } else if (!(key in (a || {}))) {
+            changes.push({ type: 'added', path: nextPath, new: newChild });
+          } else if (isObject(oldChild) && isObject(newChild)) {
+            diff(oldChild, newChild, nextPath);
+          } else if (oldChild !== newChild) {
+            changes.push({
+              type: 'changed',
+              path: nextPath,
+              old: oldChild,
+              new: newChild,
+            });
+          }
+        }
       };
 
-      if (type === 'terminal') {
-        return `${this.color.red('[ALL REMOVED]')} ${this.color.cyan(msg.path)} ← ${this.color.red('{Object(' + (oldData ? Object.keys(oldData).length : 0) + ')}')}`;
-      }
-      if (type === 'json') return JSON.stringify([msg], null, 2);
-      return [msg];
+      diff(oldData, newData, path);
     }
 
-    const joinPath = (base, key) =>
-      base
-        ? Array.isArray(oldData)
-          ? `${base}[${key}]`
-          : `${base}.${key}`
-        : key || 'root';
+    // === OUTPUT ===
+    if (!changes.length) {
+      console.log(this.color.blue('[NO CHANGES] Data sama persis'));
+      return;
+    }
 
-    const diff = (a, b, p = path, depth = 0) => {
-      if (
-        typeof a !== 'object' ||
-        a === null ||
-        typeof b !== 'object' ||
-        b === null
-      ) {
-        if (a !== b) {
-          const note = b === undefined ? ' (new is undefined)' : '';
-          changes.push({
-            type: 'changed',
-            path: p || 'root',
-            old: a,
-            new: b,
-            note,
-            depth,
-          });
-        }
-        return;
-      }
-
-      const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
-
-      for (const key of keys) {
-        const oldChild = a?.[key];
-        const newChild = b?.[key];
-        const nextPath = joinPath(p, key);
-
-        if (!(key in (b || {}))) {
-          changes.push({
-            type: 'removed',
-            path: nextPath,
-            old: oldChild,
-            depth: depth + 1,
-          });
-        } else if (!(key in (a || {}))) {
-          changes.push({
-            type: 'added',
-            path: nextPath,
-            new: newChild,
-            depth: depth + 1,
-          });
-        } else {
-          diff(oldChild, newChild, nextPath, depth + 1);
-        }
-      }
+    const fmt = (v) => {
+      if (v === null) return 'null';
+      if (Array.isArray(v)) return `Array(${v.length})`;
+      if (typeof v === 'object') return `Object(${Object.keys(v).length})`;
+      return JSON.stringify(v);
     };
 
-    diff(oldData, newData, path, 0);
-
-    if (!changes.length) {
-      if (type === 'terminal')
-        return this.color.blue('[NO CHANGES]') + ' Data sama persis';
-      if (type === 'json')
-        return JSON.stringify({ info: 'no changes' }, null, 2);
-      return [{ info: 'no changes' }];
+    console.log(this.color.yellow('=== DIFF RESULT ==='));
+    for (const c of changes) {
+      switch (c.type) {
+        case 'added':
+          console.log(
+            `${this.color.green('[ADDED]')} ${this.color.cyan(c.path)} → ${this.color.green(fmt(c.new))}`
+          );
+          break;
+        case 'removed':
+          console.log(
+            `${this.color.red('[REMOVED]')} ${this.color.cyan(c.path)} ← ${this.color.red(fmt(c.old))} ${c.note ? this.color.magenta(c.note) : ''}`
+          );
+          break;
+        case 'changed':
+          console.log(
+            `${this.color.yellow('[CHANGED]')} ${this.color.cyan(c.path)} : ${this.color.red(fmt(c.old))} → ${this.color.green(fmt(c.new))}`
+          );
+          break;
+      }
     }
-
-    if (type === 'terminal') {
-      const fmt = (v) => {
-        if (v === null) return 'null';
-        if (Array.isArray(v))
-          return `Array(${v.length}) ${JSON.stringify(v, 0, 2)}`;
-        if (typeof v === 'object')
-          return `Object(${Object.keys(v).length}) ${JSON.stringify(v, 0, 2)}`;
-        return JSON.stringify(v);
-      };
-
-      return changes
-        .map((c) => {
-          const indent = '  '.repeat(c.depth);
-          const note = c.note ? this.color.magenta(c.note) : '';
-          switch (c.type) {
-            case 'added':
-              return `${indent}${this.color.green('[ADDED]')} ${this.color.cyan(c.path)} → ${this.color.green(fmt(c.new))}`;
-            case 'removed':
-              return `${indent}${this.color.red('[REMOVED]')} ${this.color.cyan(c.path)} ← ${this.color.red(fmt(c.old))}`;
-            case 'changed':
-              return `${indent}${this.color.yellow('[CHANGED]')} ${this.color.cyan(c.path)} : ${this.color.red(fmt(c.old))} → ${this.color.green(fmt(c.new))}${note}`;
-          }
-        })
-        .join('\n');
-    }
-
-    if (type === 'json') return JSON.stringify(changes, null, 2);
-    return changes;
   }
 }

@@ -13,19 +13,19 @@ export class ArchiveMemories {
   static set(userJid, data) {
     if (!data) return 'Data required';
     const userId = String(userJid).replace(/[+ -]/g, '').split('@')[0];
-    if(cfg.register && !this.has(userId)) return false
+    if (cfg.register && !this.has(userId)) return false;
     global.Data.users[userId] = data;
     return data;
   }
-  
+
   static has(userJid) {
     const userId = String(userJid).replace(/[+ -]/g, '').split('@')[0];
-    return userId in Data.users
+    return userId in Data.users;
   }
 
   static get(userJid, { is } = {}) {
     const userId = String(userJid).replace(/[+ -]/g, '').split('@')[0];
-    if(cfg.register && !this.has(userId)) return {}
+    if (cfg.register && !this.has(userId)) return {};
     let userData = this.init(userJid);
     let aut = cfg.first.autoai;
     if (!userData) {

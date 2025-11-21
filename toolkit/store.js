@@ -15,7 +15,7 @@ export const makeInMemoryStore = () => {
       let isMessage = cht?.message;
       let isStubType = cht?.messageStubType;
       if (!(isMessage || isStubType)) return;
-      if(isStubType == '2') return
+      if (isStubType == '2') return;
       messages[cht.id] ||= {
         array: [],
       };

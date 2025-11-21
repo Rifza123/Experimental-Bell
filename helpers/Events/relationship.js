@@ -12,6 +12,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     clearSessionConfess,
     findSenderCodeConfess,
     formatDuration,
+    inventory,
   } = func;
   const infos = Data.infos;
   let time = '3 hari';
@@ -60,18 +61,25 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   let getProfile = ['getprofile', 'cekprofile'];
   let isGetProfile = getProfile.includes(cht.cmd);
-  
-  
+
   ev.on(
     {
-      cmd: [...getProfile, 'status', 'profil', 'profile', 'relationship'],
-      listmenu: ['getprofile', 'profile'],
+      cmd: [
+        ...getProfile,
+        'status',
+        'profil',
+        'profile',
+        'relationship',
+        'inventory',
+      ],
+      listmenu: ['getprofile', 'profile', 'inventory'],
       energy: isGetProfile ? 25 : undefined,
       tag: 'relationship',
       isMention: isGetProfile,
     },
     async () => {
       let Sender = isGetProfile ? cht.mention[0] : sender;
+      let inv = await inventory.get(Sender);
       let user = await memories.get(Sender);
       if (!('premium' in user)) {
         user.premium = { time: 0 };
@@ -97,15 +105,50 @@ export default async function on({ cht, Exp, store, ev, is }) {
       txt += '\nRole: ' + user.role;
       txt += '\nChatting: ' + user.chat;
       txt += '\n⚡Energy: ' + user.energy;
-      //    txt += "\n🌀Flow: " + user.flow //(coming soon)
-      //    txt += "\n🪙Coins : " + user.coins //(coming soon)
+      txt += '\n🌀Flow: ' + user.flow;
+      txt += '\n🪙Coins : ' + user.coins;
+      txt += `\n❤️Health: ${inv.healt || 0}`;
+      txt += `\n🍎Apel: ${inv.apel || 0}`;
+      txt += `\n🐟Ikan: ${inv.ikan || 0}`;
+      txt += `\n🥩Babi: ${inv.babi || 0}`;
+      txt += `\n🦀Kepiting: ${inv.kepiting || 0}`;
+      txt += `\n🐙Gurita: ${inv.gurita || 0}`;
+      txt += `\n🦞Lobster: ${inv.lobster || 0}`;
+      txt += `\n🦐Udang: ${inv.udang || 0}`;
+      txt += `\n🐄Sapi: ${inv.sapi || 0}`;
+      txt += `\n🐐Kambing: ${inv.kambing || 0}`;
+      txt += `\n🐑Domba: ${inv.domba || 0}`;
+      txt += `\n🐔Ayam: ${inv.ayam || 0}`;
+      txt += `\n- Potion: ${inv.potion || 0}`;
+      txt += `\n- Kayu: ${inv.kayu || 0}`;
+      txt += `\n- Coal: ${inv.coal || 0}`;
+      txt += `\n- Perak: ${inv.perak || 0}`;
+      txt += `\n- Iron: ${inv.iron || 0}`;
+      txt += `\n- Gold: ${inv.gold || 0}`;
+      txt += `\n- Diamond: ${inv.diamond || 0}`;
       txt += `\n🔑Premium: ${user.premium.time >= Date.now() ? 'yes' : 'no'}`;
+
       if (user.premium.time >= Date.now()) {
         txt += `\n⏱️Expired after: ${formatDur.days}hari ${formatDur.hours}jam ${formatDur.minutes}menit ${formatDur.seconds}detik ${formatDur.milliseconds}ms`;
         txt += `\n🗓️Expired on: ${func.dateFormatter(user.premium.time, 'Asia/Jakarta')}`;
       } else {
         txt += `\n⏱️Expired after: false`;
         txt += `\n🗓️Expired on: false`;
+      }
+      if (inv.crate) {
+        txt += '\n- Crate:';
+        for (const tipe in inv.crate) {
+          txt += ` ${tipe}=${inv.crate[tipe]}`;
+        }
+      }
+      if (inv.item.pickaxe) {
+        txt += `\n- Pickaxe (Lv.${inv.item.pickaxe.level || 1}, Dur: ${inv.item.pickaxe.durability}/${inv.item.pickaxe.maxDurability})`;
+      }
+      if (inv.item.sword) {
+        txt += `\n- Sword (Lv.${inv.item.sword.level || 1}, Dur: ${inv.item.sword.durability}/${inv.item.sword.maxDurability})`;
+      }
+      if (inv.item.armor) {
+        txt += `\n- Armor (Ketahanan: ${inv.item.armor.ketahanan}, Dur: ${inv.item.armor.durability}/${inv.item.armor.maxDurability})`;
       }
       txt += '\n\n ▪︎ *[🔋] Energy*';
       txt += `\n- Status: ${user.charging ? '🟢Charging' : ' ⚫Discharging'}`;
@@ -1087,6 +1130,77 @@ _Code ${code} akan dihapus dalam kurun waktu ${time}_
         { text: txt, mentions: cht.mention },
         { quoted: cht }
       );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['qris'],
+      listmenu: ['qris'],
+      tag: 'owner',
+      isOwner: true,
+    },
+    async () => {
+      try {
+        const { createCanvas, loadImage } = await 'canvas'.import();
+
+        const [bg, qr] = await Promise.all([
+          loadImage(fol[3] + 'qris.jpg'),
+          loadImage(fol[3] + 'qr.jpg'),
+        ]);
+
+        const canvas = createCanvas(bg.width, bg.height);
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(bg, 0, 0, bg.width, bg.height);
+
+        const drawRotated = (cb, x, y, angle) => {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate((angle * Math.PI) / 180);
+          cb();
+          ctx.restore();
+        };
+
+        let qrX = 398,
+          qrY = 208,
+          qrW = 297,
+          qrH = 297,
+          qrAngle = 8;
+        drawRotated(
+          () => ctx.drawImage(qr, -qrW / 2, -qrH / 2, qrW, qrH),
+          qrX + qrW / 2,
+          qrY + qrH / 2,
+          qrAngle
+        );
+
+        let nomor = '08Xxxx',
+          textX = 513,
+          textY = 560,
+          fontSize = 40,
+          textAngle = 8;
+        drawRotated(
+          () => {
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillStyle = '#ffcce6';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(nomor, 0, 0);
+          },
+          textX,
+          textY,
+          textAngle
+        );
+
+        await Exp.sendMessage(
+          cht.id,
+          { image: canvas.toBuffer('image/png'), caption: 'Kuru kuru' },
+          { quoted: cht }
+        );
+      } catch (e) {
+        console.error(e);
+        cht.reply('❌ Gagal membuat QRIS: ' + e.message);
+      }
     }
   );
 }

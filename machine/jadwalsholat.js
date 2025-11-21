@@ -17,24 +17,18 @@ const cheerio = await 'cheerio'.import();
  * Silakan pakai function ini agar member kalian tidak lupa beribadah.
  * Semoga bermanfaat!
  */
-
-let _git = JSON.parse(fs.readFileSync('package.json'))
-  .homepage.split('/')
-  .slice(0, 4)
-  .join('/');
-let git = { raw: _git + '/lib/raw/refs/heads/main' };
-git.daerah = git.raw + '/db/daerah.json';
+let cdn = 'https://c.termai.cc';
 Data.audio = {
   ...Data.audio,
   adzan: 'adzan.'
     .repeat(4)
     .split('.')
-    .map((a, i) => git.raw + '/db/audio/' + a + (i + 1) + '.mp3')
+    .map((a, i) => cdn + '/audio/' + a + (i + 1) + '.mp3')
     .slice(0, -1),
   adzan_subuh: 'adzan_subuh.'
     .repeat(4)
     .split('.')
-    .map((a, i) => git.raw + '/db/audio/' + a + (i + 1) + '.mp3')
+    .map((a, i) => cdn + '/audio/' + a + (i + 1) + '.mp3')
     .slice(0, -1),
 };
 
@@ -52,8 +46,7 @@ export class JadwalSholat {
 
   async init(id, v = 'kab-bungo', opts = { ramadhan: false }) {
     try {
-      Data.daerah =
-        Data.daerah || (await fetch(git.daerah).then((a) => a.json()));
+      Data.daerah = Data.daerah || (await fetch(cdn).then((a) => a.json()));
       if (!Object.values(Data.daerah).flat().includes(v))
         return {
           status: false,
@@ -130,7 +123,8 @@ export class JadwalSholat {
 
   async now(id) {
     Data.daerah =
-      Data.daerah || (await fetch(git.daerah).then((a) => a.json()));
+      Data.daerah ||
+      (await fetch(cdn + '/json/daerah.json').then((a) => a.json()));
     if (!id || !(id in this.groups))
       return {
         status: false,

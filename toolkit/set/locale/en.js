@@ -9,7 +9,7 @@ Data.infos ??= {};
 
 Data.infos.about = {
   help: `Include the question you want to ask about this bot to get help`,
-  
+
   helpList: `\`HELP/GUIDE LIST\`\n\n<keys>`,
 
   helpNotfound: `*Oops, we couldn’t find the help you are looking for!*
@@ -132,15 +132,20 @@ Data.infos.ai = {
   interactiveOn: 'Success! ai_interactive has been enabled in this chat!',
   interactiveOff: 'Success! ai_interactive has been disabled in this chat!',
   interactiveOnGroup: 'Success! ai_interactive has been enabled in all groups!',
-  interactiveOffGroup: 'Success! ai_interactive has been disabled in all group chats!',
-  interactiveOnPrivate: 'Success! ai_interactive has been enabled in all private chats!',
-  interactiveOffPrivate: 'Success! ai_interactive has been disabled in all private chats!',
+  interactiveOffGroup:
+    'Success! ai_interactive has been disabled in all group chats!',
+  interactiveOnPrivate:
+    'Success! ai_interactive has been enabled in all private chats!',
+  interactiveOffPrivate:
+    'Success! ai_interactive has been disabled in all private chats!',
   interactiveOnAll: 'Success! ai_interactive has been enabled in all chats!',
   interactiveOffAll: 'Success! ai_interactive has been disabled in all chats!',
   interactiveOnEnergy: 'Success! now energy can be obtained from interaction!',
-  interactiveOffEnergy: 'Success! now energy cannot be obtained from interaction!',
+  interactiveOffEnergy:
+    'Success! now energy cannot be obtained from interaction!',
   interactiveOffPartResponse: 'Successfully disabled AI partResponse!',
-  interactiveOnPartResponse: 'Successfully enabled AI part-response! Now AI can reply gradually, creating a more realistic impression.',
+  interactiveOnPartResponse:
+    'Successfully enabled AI part-response! Now AI can reply gradually, creating a more realistic impression.',
   failTryImage: 'Sorry, an error occurred. Try using another image!',
   payInstruction: '*Please pay attention to the following instructions!*',
 
@@ -148,7 +153,8 @@ Data.infos.ai = {
   noSessionFaceswap: 'No faceswap session found',
   successResetSessionFaceswap: 'Successfully reset faceswap session!',
   cannotChangeFace: 'Cannot swap, only 1 image available in swap session!',
-  successChangeFace: 'Successfully swapped target image with the last image you sent as face!',
+  successChangeFace:
+    'Successfully swapped target image with the last image you sent as face!',
 
   // ------- Lora -------
   lora_models: [
@@ -498,7 +504,6 @@ Data.infos.owner = {
 - premium_mode <on/off>
 - editmsg <on/off>
 - fquoted <name> <object or reply quoted>
-- welcome <type>
 - logic <logic>
 - lang <country code>
 - voice <model name>
@@ -514,6 +519,10 @@ Data.infos.owner = {
 - replyAi <on/off>
 - register <on/off>
 - autoBackup <on/off>
+- font <style>
+- didYouMean <on/off>
+- energy_mode <on/off>
+- button <on/off>
 
 _Example: .set public on_`,
 
@@ -595,8 +604,7 @@ Example: .set call reject+block
 
 _You can add unlimited emojis_
 `,
-  successSetAutoreactSw:
-    'Successfully set Autoreact SW!\nEmoji: <action>',
+  successSetAutoreactSw: 'Successfully set Autoreact SW!\nEmoji: <action>',
   successOffAutoreactSw: 'Successfully disabled Autoreact SW!',
 
   setHadiah: `
@@ -750,6 +758,15 @@ making replies feel more natural._`,
 ⚠️ *WARNING!* ⚠️\n\n*replyAi* feature may consume a lot of GPT API quota.\nUse wisely, especially if using limited key!`,
 
   isReplyAiOff: `Successfully disabled *replyAi!*`,
+  listusermode: '📋 Here’s the list of users with <mode> status',
+  listusernull: '❌ No users with <mode> status yet',
+  listuserhelp:
+    '*❗ Here is a list of users available*\n\n' +
+    '⟡ listuser premium\n' +
+    '⟡ listuser banned\n' +
+    '⟡ listuser afk\n\n' +
+    'Example:\n' +
+    '.listuser afk',
 };
 
 /*
@@ -758,11 +775,14 @@ making replies feel more natural._`,
 Data.infos.reaction = {
   play: 'To play YouTube using react, please react to a message that contains text',
 
-  download: 'Currently we cannot download url <url>\nSupported list:\n- <listurl>',
+  download:
+    'Currently we cannot download url <url>\nSupported list:\n- <listurl>',
 
-  translate: 'Please react with <emoji> to a text message to translate into Indonesian',
+  translate:
+    'Please react with <emoji> to a text message to translate into Indonesian',
 
-  delete: 'Deleting messages using react is only for admin if the target is not my own message',
+  delete:
+    'Deleting messages using react is only for admin if the target is not my own message',
 
   menu: ` *[ LIST REACTION CMD ]*
 
@@ -855,8 +875,15 @@ _Wait until game ends or type .cleargame or .nyerah_
 `,
 
   starting: `Starting the game...`,
-  
-  tebakGambar: (desc, formatDur, metadata, func, cfg, cht) => `*GUESS THE PICTURE*
+
+  tebakGambar: (
+    desc,
+    formatDur,
+    metadata,
+    func,
+    cfg,
+    cht
+  ) => `*GUESS THE PICTURE*
 
 What is the answer for this question?
 
@@ -872,7 +899,7 @@ _*You can use .hint to get answer hint*_
 *Reply to game message to answer*
 > (Starts from this message)
 `,
-  
+
   timeUp: (answer) => `*TIME'S UP*
 
 Answer: ${answer}`,
@@ -926,20 +953,19 @@ Data.infos.eventGame = {
 
 Remaining time: ${formatDur.minutes} minutes ${formatDur.seconds} seconds`,
 
-  alreadyAnswered: (ans, user) =>
-  `Already answered by @${user.split('@')[0]}`,
-  
+  alreadyAnswered: (ans, user) => `Already answered by @${user.split('@')[0]}`,
+
   survey: `Survey says!...`,
-  
+
   invalidAnswer: `Invalid answer!`,
-  
+
   remainingTime: (formatDur) =>
-  `\n\nRemaining time: ${formatDur.minutes} minutes ${formatDur.seconds} seconds`,
-  
+    `\n\nRemaining time: ${formatDur.minutes} minutes ${formatDur.seconds} seconds`,
+
   gameOver: `Game over!\n_Distributing all rewards obtained....🎁_`,
-  
+
   error: (err) =>
-  `An error occurred while processing game. Please try again later.\nError: ${err}`,
+    `An error occurred while processing game. Please try again later.\nError: ${err}`,
 };
 
 /*
@@ -949,9 +975,9 @@ Data.infos.events = {
   cooldown: (formatDur) =>
     `Wait ${formatDur.seconds} more seconds before using this feature!`,
   cmdBlocked: (cmd) =>
-  `Command \`${cmd}\` is blocked in this group!\nTo unblock, type .unbancmd ${cmd} (only admin can do this)`,
+    `Command \`${cmd}\` is blocked in this group!\nTo unblock, type .unbancmd ${cmd} (only admin can do this)`,
   onlyGame: (metadata, ev) =>
-  `You are ${metadata.game?.type ? '' : 'not '}playing game \`${metadata?.game?.type || '!'}\`, This command can only be used while playing these games:\n- ${ev?.onlyGame?.join('\n- ')}`,
+    `You are ${metadata.game?.type ? '' : 'not '}playing game \`${metadata?.game?.type || '!'}\`, This command can only be used while playing these games:\n- ${ev?.onlyGame?.join('\n- ')}`,
   onlyPremiumBody: `Only available for premium users!`,
 };
 
@@ -960,19 +986,20 @@ Data.infos.events = {
 */
 Data.infos.interactive = {
   sessionEnded: (s1) =>
-  `Conversation session \`${s1.code?.toUpperCase()}\` has ended!`,
+    `Conversation session \`${s1.code?.toUpperCase()}\` has ended!`,
   bannedTagAfk: (maxTag) =>
-  `You have been banned from the bot for 1 day because you tagged ${maxTag}x`,
+    `You have been banned from the bot for 1 day because you tagged ${maxTag}x`,
   bannedTagAfkPm: (tme, maxTag) =>
-  `You have been banned for ${tme} because you kept tagging up to ${maxTag} times❗️`,
+    `You have been banned for ${tme} because you kept tagging up to ${maxTag} times❗️`,
   afkTagged: (tagAfk, func, sender, maxTag) =>
-  \`DO NOT TAG HIM❗\`\nHe is *AFK* with reason: *${tagAfk.reason}*\nSince ${func.dateFormatter(tagAfk.time, 'Asia/Jakarta')}\n\n*[ ⚠️INFO ]*\n_Do not reply/tag someone who is afk!._\n_*You already tagged him ${tagAfk.taggedBy[sender]}x!*_\n_If you continue until ${maxTag}x, you will be banned for 1 day!_`,
+    `\`DO NOT TAG HIM❗\`\nHe is *AFK* for the reason: *${tagAfk.reason}*\nSince ${func.dateFormatter(tagAfk.time, 'Asia/Jakarta')}\n\n*[ ⚠️ INFO ]*\n_Do not reply or tag someone who is AFK!_\n_*You have tagged him ${tagAfk.taggedBy[sender]}x!*_\n_If you continue up to ${maxTag}x, you will be banned for 1 day!_`,
+
   afkBack: (sender, is, dur) =>
-  `@${sender.split('@')[0]} *Has returned from AFK!*\nAfter ${is.afk.reason} for ${dur.days > 0 ? dur.days + 'd ' : ''}${dur.hours > 0 ? dur.hours + 'h ' : ''}${dur.minutes > 0 ? dur.minutes + 'm ' : ''}${dur.seconds > 0 ? dur.seconds + 's ' : ''}${dur.milisecondss > 0 ? dur.milisecondss + 'ms ' : ''}`,
+    `@${sender.split('@')[0]} *has returned from AFK!*\nReason: ${is.afk.reason}\nDuration: ${dur.days > 0 ? dur.days + 'd ' : ''}${dur.hours > 0 ? dur.hours + 'h ' : ''}${dur.minutes > 0 ? dur.minutes + 'm ' : ''}${dur.seconds > 0 ? dur.seconds + 's ' : ''}${dur.milliseconds > 0 ? dur.milliseconds + 'ms ' : ''}`,
   warn: `Bot detected! please enable mute in this group or change mode to self!`,
   kick: `You will be removed because you didn’t disable bot until last warning!`,
   antiDelete: (cht, func, deleted) =>
-  \`ANTI DELETE❗\`\n\n- User/Name: ${cht.sender.split('@')[0]} / ${func.getName(cht.sender)}\n- Message Type: ${deleted.type}`,
+    `\`ANTI DELETE❗\`\n\n- User / Name: ${cht.sender.split('@')[0]} / ${func.getName(cht.sender)}\n- Message Type: ${deleted.type}\n- Message has been deleted but recovered by anti-delete system.`,
   antiDeleteNote: `To disable this feature, type *.off antidelete* (Only admin/owner can do this)`,
   mentionWarn: `You were detected mentioning status in this group! Please follow group rules not to mention in this group!`,
   mentionKick: `You were kicked from group for tagging/mentioning group status until last warning!`,
@@ -982,8 +1009,11 @@ Data.infos.interactive = {
   antitoxicKick: `You were kicked from group for using rude or inappropriate language until last warning!`,
   tagallWarn: `You were detected using tagall/hidetag. Please follow rules not to use tagall/hidetag because it disturbs members!`,
   tagallKick: `You were kicked from group for breaking rules by using tagall/hidetag until last warning!`,
+  antiMediaWarn: `You are detected sending <mediaType>. Please follow the rules here and do not send <mediaType> in this group!`,
+  antiMediaKick: `You have been removed for violating the group rules by sending <mediaType> after the final warning!`,
+
   limitExpired: (formatTimeDur, resetOn) =>
-  `*Interaction limit expired!*\n\n*Waiting time:*\n- ${formatTimeDur.days}d ${formatTimeDur.hours}h ${formatTimeDur.minutes}m ${formatTimeDur.seconds}s ${formatTimeDur.milliseconds}ms\n🗓*Reset On:* ${resetOn}\n\n*Want unlimited interaction?*\nGet premium!, type *.premium* for more info`,
+    `*Interaction limit expired!*\n\n*Waiting time:*\n- ${formatTimeDur.days}d ${formatTimeDur.hours}h ${formatTimeDur.minutes}m ${formatTimeDur.seconds}s ${formatTimeDur.milliseconds}ms\n🗓*Reset On:* ${resetOn}\n\n*Want unlimited interaction?*\nGet premium!, type *.premium* for more info`,
   notOwner: `Sorry, not gonna respond`,
   modePublic: `Successfully changed mode to public!`,
   modeSelf: `Successfully changed mode to self!`,

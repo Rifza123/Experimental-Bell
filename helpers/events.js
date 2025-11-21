@@ -7,9 +7,9 @@ const { ArchiveMemories } = await (fol[0] + 'usr.js').r();
 const { bgcolor } = await (fol[0] + 'color.js').r();
 const { GeminiImage } = await (fol[2] + 'gemini.js').r();
 /*!-======[ Messages ]======-!*/
-let { messages } = Data.infos
+let { messages } = Data.infos;
 
-let lang = locale
+let lang = locale;
 
 const timestamp = () => {
   return new Intl.DateTimeFormat('id-ID', {
@@ -34,11 +34,11 @@ export default class EventEmitter {
     this.eventFiles = [];
     this.dataEvents = Data.Events;
   }
-  
-  ensure(){
-    if(lang !== locale){
-     messages = Data.infos.messages
-     lang = locale
+
+  ensure() {
+    if (lang !== locale) {
+      messages = Data.infos.messages;
+      lang = locale;
     }
   }
 
@@ -77,6 +77,7 @@ export default class EventEmitter {
   }
 
   async loadEventHandler(file) {
+    if (!file) return;
     try {
       let on = Data.Events.get(file);
       if (!on) {
@@ -156,11 +157,10 @@ export default class EventEmitter {
     try {
       this.ensure();
       !isLoad && (await this.loadEventHandlers());
-      const eventFile = Data.events[event]?.eventFile;
-      if (!eventFile) return;
-      await this.loadEventHandler(eventFile);
-      const ev = Data.events[event];
-      if (!ev) return;
+      let ev = Data.events[event];
+      if (!ev) return 'NOTFOUND';
+      await this.loadEventHandler(ev.eventFile);
+      ev = Data.events[event];
       let cht = opts?.cht || this.cht;
 
       let urls =
@@ -201,7 +201,9 @@ export default class EventEmitter {
       if (cd.use >= max) {
         !cd.notice &&
           (await cht.reply(
-            Data.infos.events.cooldown(func.formatDuration(cd.reset - Date.now())),
+            Data.infos.events.cooldown(
+              func.formatDuration(cd.reset - Date.now())
+            ),
             { replyAi: false }
           ));
         cd.notice = true;
@@ -402,7 +404,7 @@ export default class EventEmitter {
                 */
       }
 
-      if (ev.energy) {
+      if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
         await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
         await cht.reply(`-${ev.energy} Energy⚡`, { replyAi: false });
         await sleep(100);

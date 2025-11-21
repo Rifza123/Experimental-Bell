@@ -1,14 +1,8 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = 'fs'.import();
-let _git = JSON.parse(fs.readFileSync('package.json'))
-  .homepage.split('/')
-  .slice(0, 4)
-  .join('/');
-let git = { raw: _git + '/lib/raw/refs/heads/main' };
-git.daerah = git.raw + '/db/daerah.json';
 
 /*!-======[ Default Export Function ]======-!*/
-export default async function on({ cht, Exp, store, ev, is }) {
+export default async function on({ cht, Exp, store, ev, is, chatDb }) {
   const { id, sender } = cht;
   const { func } = Exp;
   const { archiveMemories: memories, dateFormatter } = func;
@@ -26,7 +20,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
   );
   const { parseTimeString, formatDateTimeParts, getGroupMetadata } = Exp.func;
   let infos = Data.infos;
-  const chatDb = Data.preferences[cht.id] || {};
 
   ev.on(
     {
@@ -417,7 +410,9 @@ ${topEnergy}
         return cht.reply('Tagall tidak di izinkan disini!');
       let mentions = Exp.groupMembers.map((a) => a.id);
       let text =
-        cht.cmd == 'tagall' ? `\`${cht?.q ? await func.replaceLidToPn(cht.q, cht) :  'TAG ALL'}\`\n` : cht.q || '';
+        cht.cmd == 'tagall'
+          ? `\`${cht?.q ? await func.replaceLidToPn(cht.q, cht) : 'TAG ALL'}\`\n`
+          : cht.q || '';
       if (cht.cmd == 'tagall') {
         for (let i = 0; i < mentions.length; i++) {
           text += `\n${i + 1}. @${mentions[i]?.split('@')[0]}`;
@@ -444,8 +439,19 @@ ${topEnergy}
       args: 'Silahkan input daerahnya!',
     },
     async ({ args }) => {
-      Data.daerah ??= (await fetch(git.daerah).then((a) => a.json()));
-      let { status, data, msg, timeZone, list } = await jadwal.init('no', func.getTopSimilar(await func.searchSimilarStrings(args,Object.values(Data.daerah).flat(), 0.6)).item || args);
+      Data.daerah ??= await fetch('https://c.termai.cc/json/daerah.json').then(
+        (a) => a.json()
+      );
+      let { status, data, msg, timeZone, list } = await jadwal.init(
+        'no',
+        func.getTopSimilar(
+          await func.searchSimilarStrings(
+            args,
+            Object.values(Data.daerah).flat(),
+            0.6
+          )
+        ).item || args
+      );
       if (!status) {
         func.archiveMemories.setItem(sender, 'questionCmd', {
           emit: `${cht.cmd}`,
@@ -476,7 +482,7 @@ ${topEnergy}
       let dm = `${d}/${m}`;
       let a = data.find((a) => a.tanggal == dm);
       console.log({ data, a, dm });
-      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak || 'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map((a) => ` \n 🗓️ \`${a.tanggal}\`${a.imsak ? `\n- imsak: ${a.imsak}`:''}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`;
+      let text = `*JADWAL SHOLAT*\n\nHari ini: *${func.dateFormatter(Date.now(), timeZone)}*\n- imsak: ${a.imsak || 'only ramadhan'}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n\n*Jadwal bulan ini*:\n${infos.others.readMore}\n${data.map((a) => ` \n 🗓️ \`${a.tanggal}\`${a.imsak ? `\n- imsak: ${a.imsak}` : ''}\n- subuh: ${a.subuh}\n- dzuhur: ${a.dzuhur}\n- ashar: ${a.ashar}\n- magrib: ${a.magrib}\n- isya: ${a.isya}\n`).join('\n')}`;
       cht.reply(text);
     }
   );
@@ -490,13 +496,22 @@ ${topEnergy}
       isAdmin: true,
     },
     async () => {
+      let isOn = cht.cmd == 'on';
       let [input, v, ...etc] = cht.q?.trim().toLowerCase().split(' ');
       let actions = [
         'welcome',
+        'leave',
         'antilink',
         'antitagall',
         'mute',
         'antibot',
+        'antiimg',
+        'antivid',
+        'antivoice',
+        'antidoct',
+        'antistk',
+        'antistkpck',
+        'antiaud',
         'playgame',
         'jadwalsholat',
         'onlyadmin',
@@ -519,8 +534,8 @@ ${topEnergy}
       let sets = Data.preferences[id];
       sets[input] = sets[input] || false;
       let sholat = {};
-      if (input == 'jadwalsholat' && cht.cmd == 'on') {
-        Data.daerah ??= (await fetch(git.daerah).then((a) => a.json()));
+      if (input == 'jadwalsholat' && isOn) {
+        Data.daerah ??= await fetch(git.daerah).then((a) => a.json());
         if (!v)
           return cht.reply(`*Harap sertakan daerahnya!*
 - Contoh: ${cht.prefix + cht.cmd + ' jadwalsholat kab-bungo'}
@@ -556,7 +571,17 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
             sholat[i] = true;
           }
         }
-        let { status, msg, data, list, db } = await jadwal.init(id, func.getTopSimilar(await func.searchSimilarStrings(v,Object.values(Data.daerah).flat(), 0.6)).item || v, sholat);
+        let { status, msg, data, list, db } = await jadwal.init(
+          id,
+          func.getTopSimilar(
+            await func.searchSimilarStrings(
+              v,
+              Object.values(Data.daerah).flat(),
+              0.6
+            )
+          ).item || v,
+          sholat
+        );
         if (!status)
           return cht.reply(
             `*${msg}*${list ? `\n\nList daerah:\n- ${list.join('\n- ')}` : ''}`
@@ -564,11 +589,20 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         sets['jadwalsholat'] = db;
         return await cht.reply(_txt);
       } else {
-        if (cht.cmd == 'on' && sets[input])
+        if (isOn && sets[input])
           return cht.reply(`*${input}* sudah aktif disini!`);
         if (cht.cmd !== 'on' && !sets[input])
           return cht.reply(`*${input}* sudah non-aktif disini!`);
-        sets[input] = cht.cmd == 'on';
+        if (input == 'welcome') {
+          if (isOn) {
+            sets.welcome = true;
+            sets.leave = true;
+          } else {
+            sets.welcome = false;
+          }
+          return cht.reply(infos.group.on(cht.cmd, input));
+        }
+        sets[input] = isOn;
         if (input == 'antilink') {
           sets.links = sets.links || ['chat.whatsapp.com'];
         }
@@ -579,6 +613,18 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
           delete jadwal.groups[id];
       }
 
+      let subInfo = '\n';
+      if (input === 'leave' && !isOn) {
+        subInfo +=
+          '> 🔕 Mode *Leave* dinonaktifkan.\n' +
+          '> Bot tidak akan mengirimkan pesan notifikasi saat ada anggota keluar dari grup.\n' +
+          '> Gunakan kembali perintah ini untuk mengaktifkannya.';
+      } else if (input === 'leave' && isOn) {
+        subInfo +=
+          '> 🔔 Mode *Leave* diaktifkan.\n' +
+          '> Bot akan otomatis mengirim pesan saat ada anggota keluar grup,\n' +
+          '> bahkan jika fitur *Welcome* sedang nonaktif.';
+      }
       cht.reply(infos.group.on(cht.cmd, input));
     }
   );
@@ -774,6 +820,8 @@ ${cht.msg} tiktokdl, ytdl`,
         return cht.reply('Alasan tidak boleh menggunakan link/promosi!');
       if (alasan.length > 100)
         return cht.reply('Alasan tidak boleh lebih dari 100 karakter!');
+      if (args.extractMentions().length > 0 && args.includes('@'))
+        return cht.reply('Ngapain afk alasannya sambil ngetag gitu?!');
       func.archiveMemories.setItem(sender, 'afk', {
         time: Date.now(),
         reason: alasan,
@@ -1126,6 +1174,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       isGroup: true,
       isAdmin: true,
       isBotAdmin: true,
+      listmenu: ['opentime', 'closetime', 'schedule'],
     },
     async () => {
       const { id, q, cmd } = cht;
@@ -1312,6 +1361,79 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
       }
 
       Data.preferences[id] = preferences;
+    }
+  );
+  ev.on(
+    {
+      cmd: ['setwelcome', 'setleave'],
+      listmenu: ['setwelcome', 'setleave'],
+      tag: 'group',
+      isGroup: true,
+      isAdmin: true,
+      args: `format:
+.setwelcome <type> <text>
+.setleave <type> <text>
+
+contoh:
+.setwelcome image \`[ WELCOME ]\`
+
+Hai <members>
+
+Selamat datang di group 
+> _*<subject>*_
+
+<desc>
+
+.setleave text \`[ GOOD BYE ]\`
+
+Selamat tinggal <members>
+
+List type yang tersedia:
+- text
+- image
+- linkpreview
+- order
+- product
+
+List tag yang bisa digunakan:
+- <members> = mention anggota
+- <subject> = nama group
+- <desc> = deskripsi group
+`,
+    },
+    async ({ args, cht }) => {
+      let [type, ...etc] = args.split(' '),
+        text = etc.join(' '),
+        list = ['linkpreview', 'order', 'product', 'image', 'text'],
+        validTag = ['subject', 'members', 'desc'],
+        tlist = `\`List type yang tersedia:\`\n\n- ${list.join('\n- ')}`,
+        cmdType = cht.cmd.includes('leave') ? 'leave' : 'welcome';
+
+      if (!list.includes(type))
+        return cht.reply(
+          `❌ Type tidak tersedia\n\n${tlist}\ncontoh: .${cht.cmd} type textnya`
+        );
+
+      let taglist = func.getListTag(text);
+      let ntfnd = taglist.filter((i) => !validTag.includes(i));
+
+      if (ntfnd.length)
+        return cht.reply(
+          `⚠️ Tag *${ntfnd.join(', ')}* tidak valid!\n\nList tag yang tersedia:\n- ${validTag.join('\n- ')}`
+        );
+
+      if (cmdType === 'welcome') {
+        chatDb.wtype = type.toLowerCase();
+        if (etc.length > 0) chatDb.wtxt = text;
+      } else {
+        chatDb.ltype = type.toLowerCase();
+        if (etc.length > 0) chatDb.ltxt = text;
+      }
+
+      cht.reply(
+        `✅ Berhasil mengatur ${cmdType.charAt(0).toUpperCase() + cmdType.slice(1)}\n- Type: ${type}` +
+          (etc.length > 0 ? `\n- Text: ${text}` : '')
+      );
     }
   );
 }

@@ -77,6 +77,43 @@ export default async function on({ cht, Exp, store, ev, is }) {
           messageId: msg.key.id,
         });
       } else {
+        if (cfg.button) {
+          let imageMessage = await func.uploadToServer(data.getRandom());
+
+          let _m = {
+            interactiveMessage: {
+              header: {
+                title: '',
+                imageMessage,
+                hasMediaAttachment: true,
+              },
+              body: {
+                text: '🔍 Pinterest Search'.font('bold'),
+              },
+              footer: {
+                text: `Query: ${query}`,
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: 'quick_reply',
+                    buttonParamsJson: {
+                      display_text: 'Next ➡️',
+                      id: `.pin ${query}`,
+                    }.String(),
+                  },
+                ],
+              },
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.key.participant,
+                quotedMessage: cht,
+              },
+            },
+          };
+
+          return Exp.relayMessage(cht.id, _m, {});
+        }
         Exp.sendMessage(
           id,
           { image: { url: data.slice(0, 10).getRandom() } },
@@ -157,6 +194,44 @@ export default async function on({ cht, Exp, store, ev, is }) {
           if (!res?.data) throw new Error('Response missing data');
           return res.data.getRandom();
         });
+
+        if (cfg.button) {
+          let imageMessage = await func.uploadToServer(url);
+
+          let _m = {
+            interactiveMessage: {
+              header: {
+                title: '',
+                imageMessage,
+                hasMediaAttachment: true,
+              },
+              body: {
+                text: '🔍 Google Image Search'.font('bold'),
+              },
+              footer: {
+                text: `Query: ${cht.q}`,
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: 'quick_reply',
+                    buttonParamsJson: {
+                      display_text: 'Next ➡️',
+                      id: `.image ${cht.q}`,
+                    }.String(),
+                  },
+                ],
+              },
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.key.participant,
+                quotedMessage: cht,
+              },
+            },
+          };
+
+          return Exp.relayMessage(cht.id, _m, {});
+        }
 
         await Exp.sendMessage(
           id,
@@ -275,6 +350,45 @@ export default async function on({ cht, Exp, store, ev, is }) {
             ).then((a) => a.json())
           ).data;
           let _pin = Object.values(p.videos)[0].url;
+          if (cfg.button) {
+            let videoMessage = await func.uploadToServer(_pin, 'video');
+
+            let _m = {
+              interactiveMessage: {
+                header: {
+                  title: '',
+                  videoMessage,
+                  hasMediaAttachment: true,
+                },
+                body: {
+                  text:
+                    '🔍 Pinterest Video Search'.font('bold') +
+                    `\nTitle: *${pin.title}*`,
+                },
+                footer: {
+                  text: `Query: ${query}`,
+                },
+                nativeFlowMessage: {
+                  buttons: [
+                    {
+                      name: 'quick_reply',
+                      buttonParamsJson: {
+                        display_text: 'Next ➡️',
+                        id: `.${cht.cmd} ${query}`,
+                      }.String(),
+                    },
+                  ],
+                },
+                contextInfo: {
+                  stanzaId: cht.key.id,
+                  participant: cht.key.participant,
+                  quotedMessage: cht,
+                },
+              },
+            };
+
+            return Exp.relayMessage(cht.id, _m, {});
+          }
           Exp.sendMessage(
             id,
             { video: { url: _pin }, caption: pin.title, mimetype: 'video/mp4' },

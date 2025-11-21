@@ -14,13 +14,13 @@ const { PassThrough } = await 'stream'.import();
 */
 
 /**
- * Convert buffer media ke format tertentu
- * @param {Buffer} inputBuffer - buffer media input
- * @param {string[]} args - argumen ffmpeg tambahan
- * @param {string} format - output format (default: ogg)
+ * Apply ffmpeg filter to media buffer
+ * @param {Buffer} inputBuffer - media input
+ * @param {string[]} args - array argumen filter ffmpeg (tanpa -i dan -f)
+ * @param {string} format - output format (default: mp3, bisa: mp3, mp4, png, jpg, webp)
  * @returns {Promise<Buffer>}
  */
-export async function processMedia(inputBuffer, args = [], format = "ogg") {
+export async function processMedia(inputBuffer, args = [], format = 'mp3') {
   return new Promise((resolve, reject) => {
     const inputStream = new PassThrough();
     inputStream.end(inputBuffer);
@@ -28,28 +28,38 @@ export async function processMedia(inputBuffer, args = [], format = "ogg") {
     const outputStream = new PassThrough();
     const chunks = [];
 
-    const command = ff(inputStream);
+    let command = ff(inputStream);
 
-    if (format === "ogg") {
-      command.audioCodec("libopus");
-      command.outputOptions([
-        "-vn",
-        "-b:a 64k",
-        "-ac 2",
-        "-ar 48000",
-        ...args
-      ]);
+    if (['png', 'jpg', 'jpeg', 'webp'].includes(format)) {
+      command = command.inputFormat('image2pipe');
+    }
+
+    if (Array.isArray(args) && args.length > 0) {
+      command = command.outputOptions(args);
+    }
+
+    if (['png', 'jpg', 'jpeg', 'webp'].includes(format)) {
+      command
+        .videoCodec('png')
+        .format('image2pipe')
+        .outputOptions(['-frames:v', '1']);
+    } else if (['mp3', 'ogg'].includes(format)) {
+      command
+        .noVideo()
+        .audioCodec('libmp3lame')
+        .outputOptions(['-b:a', '128k', '-ar', '44100']);
+    } else if (['mp4', 'mov'].includes(format)) {
+      command.videoCodec('libx264').outputOptions(['-preset', 'fast']);
     } else {
-      command.outputOptions(args).format(format);
+      command.format(format);
     }
 
     command
-      .format(format)
-      .on("error", reject)
-      .on("end", () => resolve(Buffer.concat(chunks)))
+      .on('error', (err) => reject(err))
+      .on('end', () => resolve(Buffer.concat(chunks)))
       .pipe(outputStream, { end: true });
 
-    outputStream.on("data", chunk => chunks.push(chunk));
+    outputStream.on('data', (chunk) => chunks.push(chunk));
   });
 }
 
@@ -59,7 +69,11 @@ export async function processMedia(inputBuffer, args = [], format = "ogg") {
  * @param {number} bars
  * @returns {Promise<string>} base64 waveform
  */
-export async function generateWaveform(inputBuffer, bars = 64, url='https://github.com/Rifza123, https://termai.cc') {
+export async function generateWaveform(
+  inputBuffer,
+  bars = 64,
+  url = 'https://github.com/Rifza123, https://termai.cc'
+) {
   return new Promise((resolve, reject) => {
     const inputStream = new PassThrough();
     inputStream.end(inputBuffer);
@@ -69,9 +83,9 @@ export async function generateWaveform(inputBuffer, bars = 64, url='https://gith
     ff(inputStream)
       .audioChannels(1)
       .audioFrequency(16000)
-      .format("s16le")
-      .on("error", reject)
-      .on("end", () => {
+      .format('s16le')
+      .on('error', reject)
+      .on('end', () => {
         const rawData = Buffer.concat(chunks);
         const samples = rawData.length / 2;
 
@@ -89,13 +103,13 @@ export async function generateWaveform(inputBuffer, bars = 64, url='https://gith
         }
 
         let max = Math.max(...avg);
-        let normalized = avg.map(v => Math.floor((v / max) * 100));
+        let normalized = avg.map((v) => Math.floor((v / max) * 100));
 
         let buf = Buffer.from(new Uint8Array(normalized));
-        resolve(buf.toString("base64"));
+        resolve(buf.toString('base64'));
       })
-      .pipe() 
-      .on("data", chunk => chunks.push(chunk));
+      .pipe()
+      .on('data', (chunk) => chunks.push(chunk));
   });
 }
 
@@ -104,7 +118,10 @@ export async function generateWaveform(inputBuffer, bars = 64, url='https://gith
  * @param {Buffer} inputBuffer - Audio source (mp3/wav/m4a/dsb)
  * @returns {Promise<Buffer>} - Buffer hasil ogg/opus
  */
-export async function convertToOpus(inputBuffer,url='https://github.com/Rifza123, https://termai.cc') {
+export async function convertToOpus(
+  inputBuffer,
+  url = 'https://github.com/Rifza123, https://termai.cc'
+) {
   return new Promise((resolve, reject) => {
     const inStream = new PassThrough();
     const outStream = new PassThrough();
@@ -120,16 +137,19 @@ export async function convertToOpus(inputBuffer,url='https://github.com/Rifza123
       .audioChannels(1)
       .audioFrequency(48000)
       .outputOptions([
-        '-map_metadata', '-1',
-        '-application', 'voip',
-        '-compression_level', '10',
-        '-page_duration', '20000'
+        '-map_metadata',
+        '-1',
+        '-application',
+        'voip',
+        '-compression_level',
+        '10',
+        '-page_duration',
+        '20000',
       ])
       .on('error', reject)
       .on('end', () => resolve(Buffer.concat(chunks)))
       .pipe(outStream, { end: true });
 
-    outStream.on('data', c => chunks.push(c));
+    outStream.on('data', (c) => chunks.push(c));
   });
 }
-

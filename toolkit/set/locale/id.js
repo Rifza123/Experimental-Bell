@@ -9,7 +9,7 @@ Data.infos ??= {};
 
 Data.infos.about = {
   help: `Sertakan pertanyaan yang ingin Anda tanyakan terkait bot ini untuk mendapatkan bantuan`,
-  
+
   helpList: `\`LIST PANDUAN/BANTUAN\`\n\n<keys>`,
 
   helpNotfound: `*Ups, kami tidak menemukan bantuan yang anda cari!*
@@ -131,16 +131,23 @@ Data.infos.ai = {
   includeModel: 'Sertakan modelnya!',
   interactiveOn: 'Berhasil!, ai_interactive telah diaktifkan dalam chat ini!',
   interactiveOff: 'Berhasil!, ai_interactive telah dimatikan dalam chat ini!',
-  interactiveOnGroup: 'Berhasil!, ai_interactive telah diaktifkan di semua grup!',
-  interactiveOffGroup: 'Berhasil!, ai_interactive telah dimatikan di semua chat group!',
-  interactiveOnPrivate: 'Berhasil!, ai_interactive telah diaktifkan di semua chat private!',
-  interactiveOffPrivate: 'Berhasil!, ai_interactive telah dimatikan di semua chat private!',
+  interactiveOnGroup:
+    'Berhasil!, ai_interactive telah diaktifkan di semua grup!',
+  interactiveOffGroup:
+    'Berhasil!, ai_interactive telah dimatikan di semua chat group!',
+  interactiveOnPrivate:
+    'Berhasil!, ai_interactive telah diaktifkan di semua chat private!',
+  interactiveOffPrivate:
+    'Berhasil!, ai_interactive telah dimatikan di semua chat private!',
   interactiveOnAll: 'Berhasil!, ai_interactive telah diaktifkan di semua chat!',
   interactiveOffAll: 'Berhasil!, ai_interactive telah dimatikan di semua chat!',
-  interactiveOnEnergy: 'Berhasil!, sekarang energy bisa didapatkan dari interaksi!',
-  interactiveOffEnergy: 'Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!',
+  interactiveOnEnergy:
+    'Berhasil!, sekarang energy bisa didapatkan dari interaksi!',
+  interactiveOffEnergy:
+    'Berhasil!, sekarang energy tidak akan bisa di dapat dari interaksi!',
   interactiveOffPartResponse: 'Berhasil menonaktifkan partResponse ai!',
-  interactiveOnPartResponse: 'Berhasil mengaktifkan part-response ai!, sekarang AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis.',
+  interactiveOnPartResponse:
+    'Berhasil mengaktifkan part-response ai!, sekarang AI dapat memberikan balasan secara bertahap, menciptakan kesan yang lebih realistis.',
   failTryImage: 'Maaf terjadi kesalhan. coba gunakan gambar lain!',
   payInstruction: '*Perhatikan petunjuk berikut!*',
 
@@ -148,7 +155,8 @@ Data.infos.ai = {
   noSessionFaceswap: 'Tidak ada sesi faceswap',
   successResetSessionFaceswap: 'Berhasil mereset session faceswap!',
   cannotChangeFace: 'Tidak dapat merubah, hanya ada 1 gambar dalam sesi swap!',
-  successChangeFace: 'Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!',
+  successChangeFace:
+    'Berhasil menukar gambar target dengan gambar yang terakhir anda kirimkan sebagai face!',
 
   // ------- Lora -------
   lora_models: [
@@ -191,7 +199,7 @@ _*silahkan lihat list model yang tersedia:*_
     }
     return text;
   },
-  
+
   unsuitableModel: `*Type Base Model tidak cocok❗*
 
 _*checkpoint* dan lora harus menggunakan BaseType sama!_
@@ -518,7 +526,6 @@ Data.infos.owner = {
 - premium_mode <on/of>
 - editmsg <on/off>
 - fquoted <name> <objek oratau quoted>
-- welcome <tipe>
 - logic <logic>
 - lang <kode negara>
 - voice <nama model>
@@ -534,6 +541,10 @@ Data.infos.owner = {
 - replyAi <on/off>
 - register <on/off>
 - autoBackup <on/off>
+- font <style>
+- didYouMean <on/off>
+- energy_mode <on/off>
+- button <on/off>
 
 _Example: .set public on_`,
 
@@ -615,8 +626,7 @@ Contoh: .set call reject+block
 
 _Anda bisa menambahkan emoji sebanyak-banyaknya_
 `,
-  successSetAutoreactSw:
-    'Berhasil mengatur Autoreact SW!\nEmoji: <action>',
+  successSetAutoreactSw: 'Berhasil mengatur Autoreact SW!\nEmoji: <action>',
   successOffAutoreactSw: 'Berhasil menonaktifkan Autoreact SW!',
 
   setHadiah: `
@@ -777,6 +787,15 @@ sehingga membuat reply terasa lebih natural._`,
 ⚠️ *WARNING!* ⚠️\n\nFitur *replyAi* mungkin akan banyak menghabiskan kuota API GPT (termai.cc).\nGunakan dengan bijak, terutama jika memakai key dengan limit terbatas!`,
 
   isReplyAiOff: `Berhasil menonaktifkan *replyAi!*`,
+  listusermode: '📋 Berikut daftar user dengan status <mode>',
+  listusernull: '❌ Belum ada user dengan status <mode>',
+  listuserhelp:
+    '*❗ Berikut adalah daftar user yang tersedia*\n\n' +
+    '⟡ listuser premium\n' +
+    '⟡ listuser banned\n' +
+    '⟡ listuser afk\n\n' +
+    'Contoh:\n' +
+    '.listuser afk',
 };
 
 /*
@@ -785,11 +804,14 @@ sehingga membuat reply terasa lebih natural._`,
 Data.infos.reaction = {
   play: 'Untuk melakukan play youtube menggunakan react, harap beri react kepada pesan yang berisi teks',
 
-  download: 'Saat ini kami belum bisa mengunduh url <url>\nList yang didukung:\n- <listurl>',
+  download:
+    'Saat ini kami belum bisa mengunduh url <url>\nList yang didukung:\n- <listurl>',
 
-  translate: 'Harap beri reaksi <emoji> ke pesan teks untuk menerjemahkan ke bahasa indonesia',
+  translate:
+    'Harap beri reaksi <emoji> ke pesan teks untuk menerjemahkan ke bahasa indonesia',
 
-  delete: 'Manghapus pesan menggunakan react khusus hanya untuk admin jika target bukan pesan yang saya kirimkan',
+  delete:
+    'Manghapus pesan menggunakan react khusus hanya untuk admin jika target bukan pesan yang saya kirimkan',
 
   menu: ` *[ LIST REACTION CMD ]*
 
@@ -843,7 +865,7 @@ _*Beri reaksi ke pesan target dengan salah satu emoji di atas*_`,
 \`Sebab:\`
 <readMore>
 - Quoted pesan tersebut bukan berasal dari anda
-- Anda bukan owner atau admin untuk mendapatkan izin khusus`
+- Anda bukan owner atau admin untuk mendapatkan izin khusus`,
 };
 
 /*
@@ -887,7 +909,7 @@ _Tunggu game berakhir atau bisa dengan mengetik .cleargame atau .nyerah_
 `,
 
   starting: `Memulai Permainan...`,
-  
+
   tebakGambar: (desc, formatDur, metadata, func, cfg, cht) => `*TEBAK GAMBAR*
 
 Apa jawaban dari soal ini
@@ -904,7 +926,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
 *Reply pesan game untuk menjawab*
 > (Dimulai dari pesan ini)
 `,
-  
+
   timeUp: (answer) => `*WAKTU HABIS*
 
 Jawaban: ${answer}`,
@@ -958,23 +980,21 @@ Data.infos.eventGame = {
 
 Waktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`,
 
-  alreadyAnswered: (ans, user) =>
-  `Sudah dijawab oleh @${user.split('@')[0]}`,
-  
-  alreadyAnswered: (ans, user) =>
-  `Sudah dijawab oleh @${user.split('@')[0]}`,
-  
+  alreadyAnswered: (ans, user) => `Sudah dijawab oleh @${user.split('@')[0]}`,
+
+  alreadyAnswered: (ans, user) => `Sudah dijawab oleh @${user.split('@')[0]}`,
+
   survey: `Survey membuktikan!...`,
-  
+
   invalidAnswer: `Jawaban tidak valid!`,
-  
+
   remainingTime: (formatDur) =>
-  `\n\nWaktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`,
-  
+    `\n\nWaktu tersisa: ${formatDur.minutes} menit ${formatDur.seconds} detik`,
+
   gameOver: `Game berakhir!\n_Membagiakan semua hadiah yang didapat....🎁_`,
-  
+
   error: (err) =>
-  `Terjadi kesalahan saat memproses game. Silakan coba lagi nanti.\nError: ${err}`,
+    `Terjadi kesalahan saat memproses game. Silakan coba lagi nanti.\nError: ${err}`,
 };
 
 /*
@@ -984,9 +1004,9 @@ Data.infos.events = {
   cooldown: (formatDur) =>
     `Tunggu ${formatDur.seconds} detik lagi sebelum menggunakan fitur!`,
   cmdBlocked: (cmd) =>
-  `Command \`${cmd}\` di blokir di group ini!\nUntuk membuka blokir, silahkan ketik .unbancmd ${cmd} (hanya bisa dilakukan oleh admin)`,
+    `Command \`${cmd}\` di blokir di group ini!\nUntuk membuka blokir, silahkan ketik .unbancmd ${cmd} (hanya bisa dilakukan oleh admin)`,
   onlyGame: (metadata, ev) =>
-  `Kamu ${metadata.game?.type ? '' : 'tidak '}sedang bermain game \`${metadata?.game?.type || '!'}\`, Command ini hanya bisa digunakan ketika bermain game berikut:\n- ${ev?.onlyGame?.join('\n- ')}`,
+    `Kamu ${metadata.game?.type ? '' : 'tidak '}sedang bermain game \`${metadata?.game?.type || '!'}\`, Command ini hanya bisa digunakan ketika bermain game berikut:\n- ${ev?.onlyGame?.join('\n- ')}`,
   onlyPremiumBody: `Hanya bisa digunakan oleh user premium!`,
 };
 
@@ -995,19 +1015,19 @@ Data.infos.events = {
 */
 Data.infos.interactive = {
   sessionEnded: (s1) =>
-  `Sessi percakapan \`${s1.code?.toUpperCase()}\` telah berakhir!`,
+    `Sessi percakapan \`${s1.code?.toUpperCase()}\` telah berakhir!`,
   bannedTagAfk: (maxTag) =>
-  `Kamu telah di banned dari bot selama 1 hari karena melakukan tag hingga ${maxTag}x`,
+    `Kamu telah di banned dari bot selama 1 hari karena melakukan tag hingga ${maxTag}x`,
   bannedTagAfkPm: (tme, maxTag) =>
-  `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️`,
+    `Anda telah di baned selama ${tme} karena terus melakuka tag hingga ${maxTag} kali❗️`,
   afkTagged: (tagAfk, func, sender, maxTag) =>
-  `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, 'Asia/Jakarta')}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`,
+    `\`JANGAN TAG DIA❗\`\nDia sedang *AFK* dengan alasan: *${tagAfk.reason}*\nSejak ${func.dateFormatter(tagAfk.time, 'Asia/Jakarta')}\n\n*[ ⚠️INFO ]*\n_Jangan me-reply/tag orang yang sedang afk!._\n_*Kamu sudah mengetag dia sebanyak ${tagAfk.taggedBy[sender]}x!*_\n_Jika terus melakukan tag hingga ${maxTag}x, jika kamu melakukan tag atau balasan akan dibanned selama 1 hari!_`,
   afkBack: (sender, is, dur) =>
-  `@${sender.split('@')[0]} *Telah kembali dari AFK!*\nSetelah ${is.afk.reason} selama ${dur.days > 0 ? dur.days + 'hari ' : ''}${dur.hours > 0 ? dur.hours + 'jam ' : ''}${dur.minutes > 0 ? dur.minutes + 'menit ' : ''}${dur.seconds > 0 ? dur.seconds + 'detik ' : ''}${dur.milisecondss > 0 ? dur.milisecondss + 'ms ' : ''}`,
+    `@${sender.split('@')[0]} *Telah kembali dari AFK!*\nSetelah ${is.afk.reason} selama ${dur.days > 0 ? dur.days + 'hari ' : ''}${dur.hours > 0 ? dur.hours + 'jam ' : ''}${dur.minutes > 0 ? dur.minutes + 'menit ' : ''}${dur.seconds > 0 ? dur.seconds + 'detik ' : ''}${dur.milisecondss > 0 ? dur.milisecondss + 'ms ' : ''}`,
   warn: `Bot terdeteksi!, harap aktifkan mute di group ini atau ubah mode menjadi self!`,
   kick: `Anda akan dikeluarkan karena tidak menonaktifkan bot hingga peringatan terakhir!`,
   antiDelete: (cht, func, deleted) =>
-  `\`ANTI DELETE❗\`\n\n- User/Name: ${cht.sender.split('@')[0]} / ${func.getName(cht.sender)}\n- Type Pesan: ${deleted.type}`,
+    `\`ANTI DELETE❗\`\n\n- User/Name: ${cht.sender.split('@')[0]} / ${func.getName(cht.sender)}\n- Type Pesan: ${deleted.type}`,
   antiDeleteNote: `Untuk menonaktifkan fitur ini, ketik *.off antidelete* (Hanya bisa dilakukan oleh admin atau owner)`,
   mentionWarn: `Kamu terdeteksi melakukan mention status di group ini! Mohon ikuti aturan grup untuk tidak melakukan mention di group ini!.`,
   mentionKick: `Kamu dikeluarkan dari grup karena melakukan tag/mention status group hingga peringatan terakhir!`,
@@ -1017,9 +1037,11 @@ Data.infos.interactive = {
   antitoxicKick: `Kamu dikeluarkan dari grup karena menggunakan bahasa kasar atau tidak pantas hingga peringatan terakhir!`,
   tagallWarn: `Anda terdeteksi melakukan tagall/hidetag. Harap ikuti peraturan disini untuk tidak melakukan tagall/hidetag karena akan mengganggu member disini!`,
   tagallKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!`,
+  antiMediaWarn: `Anda terdeteksi mengirimkan <mediaType>. Harap ikuti peraturan disini untuk tidak mengirimkan <mediaType> di grub ini!`,
+  antiMediaKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirimkan <mediaType> hingga peringatan terakhir!`,
   limitExpired: (formatTimeDur, resetOn) =>
-  `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`,
+    `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`,
   notOwner: `Maaf, males nanggepin`,
   modePublic: `Berhasil mengubah mode menjadi public!`,
   modeSelf: `Berhasil mengubah mode menjadi public!`,
-}
+};

@@ -56,7 +56,8 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
           delete timeouts[cht.id];
         } else {
           let { key: Key } = await cht.reply(
-            Data.infos.eventGame.wrong(formatDur));
+            Data.infos.eventGame.wrong(formatDur)
+          );
           metadata.game.id_message.push(Key.id);
         }
         break;
@@ -73,16 +74,23 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
 
         if (answered[userAnswer]) {
           return cht.reply(
-            Data.infos.eventGame.alreadyAnswered(userAnswer, answered[userAnswer]),
-             { mentions: [answered[userAnswer]] });
+            Data.infos.eventGame.alreadyAnswered(
+              userAnswer,
+              answered[userAnswer]
+            ),
+            { mentions: [answered[userAnswer]] }
+          );
         }
         let { key: key2 } = await cht.reply(Data.infos.eventGame.survey);
         metadata.game.id_message.push(key2.id);
         let idx = _answer.findIndex((v) => v == userAnswer);
         if (idx === -1) {
-          let { key: Key } = await cht.reply(Data.infos.eventGame.invalidAnswer, {
-            edit: key2,
-          });
+          let { key: Key } = await cht.reply(
+            Data.infos.eventGame.invalidAnswer,
+            {
+              edit: key2,
+            }
+          );
           metadata.game.id_message.push(Key.id);
         } else {
           answered[userAnswer] = cht.sender;

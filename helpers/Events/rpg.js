@@ -12,43 +12,74 @@ export default async function on({ cht, ev, Exp }) {
   let { berburu, mancing, miningItems, hargaAwal } =
     func.inventory.initCfg().rpg;
 
-  ev.on({ cmd: ['daftar', 'register'], tag: 'RPG', listmenu: ['daftar','register'] }, async () => {
-    const input = (cht.q || '').trim();
-    const parts = input.split(/[|,./#$&\s]+/).filter(Boolean);
-    if (parts.length < 2)
-      return cht.reply(`❌ Gunakan format: .daftar Nama Umur`, { replyAi: false });
+  ev.on(
+    {
+      cmd: ['daftar', 'register'],
+      tag: 'RPG',
+      listmenu: ['daftar', 'register'],
+    },
+    async () => {
+      try {
+        const input = (cht.q || '').trim();
+        const invData = await inventory.get(sender);
+        if (invData && invData.sn) {
+          const namaExist = invData.nama || 'Tidak diketahui';
+          const umurExist = invData.umur || 'Tidak diketahui';
+          const snExist = invData.sn;
 
-    const umur = parseInt(parts.pop());
-    const nama = parts.join(' ').trim();
+          return cht.reply(
+            `❗ Kamu sudah Terdaftar\n\n` +
+              `╭━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙\n` +
+              `│ *Nama* : *${namaExist}*\n` +
+              `│ *Umur* : *${umurExist}* Tahun\n` +
+              `│ *Nomor* : *${sender.split('@')[0]}*\n` +
+              `│ *Nomor SN* : *${snExist}*\n` +
+              `╰━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙`
+          );
+        }
 
-    if (umur < 8)
-      return cht.reply(`❌ Umur anda terlalu muda untuk mendaftar.`, { replyAi: false });
-    if (umur > 50)
-      return cht.reply(`❌ Umur anda terlalu tua untuk mendaftar.`, { replyAi: false });
+        const parts = input.split(/[|,./#$&\s]+/).filter(Boolean);
+        if (parts.length < 2) {
+          return cht.reply(
+            `❌ Gunakan format: .daftar Nama Umur\nContoh: .daftar Lilia Yukine 17`
+          );
+        }
 
-    const sn = await func.generateSN();
-    await memories.add(sender)
-    await memories.setItem(sender, 'nama', nama);
-    await memories.setItem(sender, 'umur', umur);
-    await memories.setItem(sender, 'sn', sn);
+        const umur = parseInt(parts.pop());
+        const nama = parts.join(' ').trim();
 
-    await inventory.setItem(sender, 'nama', nama);
-    await inventory.setItem(sender, 'umur', umur);
-    await inventory.setItem(sender, 'sn', sn);
+        if (isNaN(umur)) return cht.reply(`❌ Umur harus berupa angka.`);
+        if (umur < 8)
+          return cht.reply(`❌ Umur kamu terlalu muda untuk mendaftar.`);
+        if (umur > 50)
+          return cht.reply(`❌ Umur kamu terlalu tua untuk mendaftar.`);
 
-    cht.reply(
-      ` ╭━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙
- │ *「 VERIFIKASI BERHASIL 」*
- │ Kamu berhasil terdaftar!
- ╰┬────────────┈ ⳹
- ┌┤◦➛ *Nama* : *${nama}*
- ││◦➛ *Umur* : *${umur}* Tahun
- ││◦➛ *Nomor* : *${sender.split('@')[0]}*
- ││◦➛ *Nomor SN* : *${sn}*
- ││◦➛ *Total User* : ${Object.keys(Data.users).length} Orang
- ╰━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙`, { replyAi: false }
-    );
-  });
+        const sn = await func.generateSN();
+        await memories.add(sender);
+        await memories.setItem(sender, 'nama', nama);
+        await memories.setItem(sender, 'umur', umur);
+        await memories.setItem(sender, 'sn', sn);
+
+        await inventory.setItem(sender, 'nama', nama);
+        await inventory.setItem(sender, 'umur', umur);
+        await inventory.setItem(sender, 'sn', sn);
+        return cht.reply(
+          `╭━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙\n` +
+            `│ *「 VERIFIKASI BERHASIL 」*\n` +
+            `│ Kamu berhasil terdaftar!\n` +
+            `╰┬────────────┈ ⳹\n` +
+            `┌┤◦➛ *Nama* : *${nama}*\n` +
+            `││◦➛ *Umur* : *${umur}* Tahun\n` +
+            `││◦➛ *Nomor* : *${sender.split('@')[0]}*\n` +
+            `││◦➛ *Nomor SN* : *${sn}*\n` +
+            `╰━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙`
+        );
+      } catch (err) {
+        console.error('Error di .daftar:', err);
+        return cht.reply('❌ Terjadi kesalahan saat pendaftaran.');
+      }
+    }
+  );
 
   ev.on(
     {
@@ -57,141 +88,61 @@ export default async function on({ cht, ev, Exp }) {
       tag: 'RPG',
     },
     async () => {
-      const user = Data.users[sender];
+      const user = Data.inventories[sender];
       if (!user || !user.sn) {
         return cht.reply(
-          `❌ Kamu belum punya SN. Silakan daftar dulu dengan .daftar`, { replyAi: false }
+          `❌ Kamu belum punya SN. Silakan daftar dulu dengan .daftar`,
+          { replyAi: false }
         );
       }
       return cht.reply(`🔑 SN Kamu: *${user.sn}*\nJaga baik-baik SN ini!`);
     }
   );
 
-  ev.on(
-    {
-      cmd: ['unreg', 'unregister'],
-      tag: 'RPG',
-      listmenu: ['unreg'],
-      args: `.unreg <SN>\nContoh: .unreg JJi6hgwysv72JvsJ`,
-    },
-    async () => {
-      const user = Data.users[sender];
-      if (!user || !user.sn) {
-        return cht.reply(`❌ Kamu belum terdaftar.`);
+  ev.on({ cmd: ['unreg'], tag: 'RPG' }, async () => {
+    try {
+      const userInv = await inventory.get(sender);
+      const userGlobal = Data.users?.[sender.split('@')[0]];
+
+      if (!userInv || !userInv.sn) {
+        return cht.reply(
+          `kamu belum terdaftar.\nGunakan perintah *.daftar Nama Umur* untuk mendaftar.`
+        );
       }
 
       const inputSN = (cht.q || '').trim();
       if (!inputSN) {
-        return cht.reply(`❌ SN belum dimasukkan.\nContoh: .unreg ${user.sn}`);
+        return cht.reply(`SN belum dimasukkan.\nContoh: .unreg ${userInv.sn}`);
+      }
+      if (inputSN !== userInv.sn) {
+        return cht.reply(
+          `nomor SN tidak cocok!\nGunakan SN yang benar: *${userInv.sn}*`
+        );
       }
 
-      if (inputSN !== user.sn) {
-        return cht.reply(`❌ SN belum dimasukkan.\nContoh: .unreg ${user.sn}`);
-      }
-
-      const nama = user.name || sender.split('@')[0];
-      delete Data.users[sender];
+      const nama = userInv.nama || userGlobal?.name || 'Tidak diketahui';
+      const sn = userInv.sn;
+      delete Data.inventories[sender];
+      const key = sender.split('@')[0];
+      if (Data.users?.[key]) delete Data.users[key];
 
       return cht.reply(
-        `✅ Akun dengan nama *${nama}* berhasil dihapus dari database.`
+        `╭━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙\n` +
+          `│ *「 DATA DIHAPUS 」*\n` +
+          `│ Data kamu telah dihapus dari Database!\n` +
+          `│\n` +
+          `│◦➛ *Nama* : *${nama}*\n` +
+          `│◦➛ *Nomor SN* : *${sn}*\n` +
+          `│\n` +
+          `│ Gunakan *.daftar Nama Umur* untuk mendaftar kembali.\n` +
+          `╰━━━━━━━━━━━━┈ ❋ཻུ۪۪⸙`
       );
+    } catch (err) {
+      console.error('Error di .unreg:', err);
+      return cht.reply(`❌ Terjadi kesalahan saat menghapus akun.`);
     }
-  );
+  });
   ///////////
-  ev.on(
-    {
-      cmd: ['infinity'],
-      isOwner: true,
-    },
-    async () => {
-      const inf = 999999999999999999;
-
-      let user = (await func.archiveMemories.get(sender)) || {};
-      user.coins = inf;
-      user.flow = inf;
-      user.energy = inf;
-
-      await func.archiveMemories.setItem(sender, 'coins', user.coins);
-      await func.archiveMemories.setItem(sender, 'flow', user.flow);
-      await func.archiveMemories.setItem(sender, 'energy', user.energy);
-
-      let inv = (await func.inventory.get(sender)) || {};
-      const resources = [
-        'healt',
-        'potion',
-        'kayu',
-        'iron',
-        'gold',
-        'diamond',
-        'apel',
-        'ikan',
-        'babi',
-        'kepiting',
-        'gurita',
-        'lobster',
-        'udang',
-        'sapi',
-        'kambing',
-        'domba',
-        'ayam',
-      ];
-
-      for (const r of resources) {
-        inv[r] = inf;
-        await func.inventory.setItem(sender, r, inf);
-      }
-      inv.crate ??= {};
-      for (const tipe in inv.crate) {
-        inv.crate[tipe] = inf;
-      }
-      await func.inventory.setItem(sender, 'crate', inv.crate);
-
-      inv.item ??= {};
-
-      const defaultItems = {
-        pickaxe: {
-          maxDurability: Number(inf),
-          durability: Number(inf),
-          level: Number(inf),
-          lucky: Number(inf),
-          cooldown: 1,
-        },
-        sword: {
-          maxDurability: Number(inf),
-          durability: Number(inf),
-          level: Number(inf),
-          cooldown: 1,
-        },
-        ax: {
-          maxDurability: Number(inf),
-          durability: Number(inf),
-          level: Number(inf),
-          cooldown: 1,
-        },
-        fishing_hook: {
-          maxDurability: Number(inf),
-          durability: Number(inf),
-          level: Number(inf),
-          cooldown: 1,
-        },
-        armor: {
-          maxDurability: Number(inf),
-          durability: Number(inf),
-          ketahanan: Number(inf),
-        },
-      };
-
-      for (const alat in defaultItems) {
-        inv.item[alat] = defaultItems[alat];
-      }
-
-      await func.inventory.setItem(sender, 'item', inv.item);
-
-      return cht.reply(
-        '♾️ Infinity mode aktif!\nSemua coins, flow, energy, resource, crate, dan item (pickaxe, sword, ax, fishing_hook, armor) sudah di-set ke infinity.'
-      );
-    }
-  );
 
   ev.on(
     {

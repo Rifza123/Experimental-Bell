@@ -284,17 +284,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['colong'],
       tag: 'tools',
       premium: true,
+      isQuoted:
+        'Reply pesan yang ingin anda colong(pesan button, sticker, document, atau pesan apaapun itu)!',
     },
     async ({ cht }) => {
       try {
         if (!cht.quoted) return;
-        let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message;
-        let evaled =
-          `(async()=>{let msg = await generateWAMessageFromContent(cht.sender, ${JSON.stringify(res, null, 2)}, {})` +
-          `\n  await Exp.relayMessage(msg.key.remoteJid, msg.message, {` +
-          `\n      messageId: msg.key.id` +
-          `\n  })` +
-          `\n})()`;
+        let res = ((await store.loadMessage(cht.id, cht.quoted.stanzaId)) || {})
+          ?.message;
+        if (!res)
+          return cht.reply(
+            'Pesan tersebut tidak ada dalam store!, pesan tersebut mungkin di kirimkan sebelum bot di restart'
+          );
+        let evaled = `Exp.relayMessage(cht.id, ${JSON.stringify(res, null, 2)}, {})`;
 
         let random = Math.floor(Math.random() * 10000);
         await eval(`ev.on({ 
@@ -302,7 +304,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
              listmenu: ['${random}'],
              tag: 'other'
          }, async({ cht }) => {
-             ${evaled.replace('cht.sender', 'cht.id')}
+             ${evaled}
          })`);
         await sleep(3000);
         await cht.reply(

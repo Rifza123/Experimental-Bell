@@ -15,7 +15,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['menu'],
       tag: 'other',
     },
-    async ({ args }) => {
+    async ({ args: v }) => {
+      let [args, type] = v?.split('--');
       let hit = func.getTotalCmd();
       let topcmd = func.topCmd(2);
       let events = Object.fromEntries(
@@ -27,9 +28,78 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let eventKey = Object.keys(events);
       let totalCmd = eventKey.length;
       let head = `*[ INFO ]*\n- *${hit.total}* Hit Emitter\n- *${hit.ai_response}* Ai response\n\n*[ Relationship ]*\n- Status: *${cht.memories.role}*\n- Mood: ${cht.memories.energy}${cht.memories.energy < 10 ? '😪' : '⚡'}\n\n ▪︎ 『 \`Events On\` 』\n- Total: ${totalCmd}\n\n ▪︎ 『 \`Top Cmd \`』\n> ${'`'}${topcmd.join('`\n> `')}${'`'}\n\n`;
-      let text = head + `${args.includes('reaction') ? '': func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`
+      let text =
+        head +
+        `${args.includes('reaction') ? '' : func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`;
       let menu = {};
-      if (cfg?.menu_type == 'text') {
+      if (cfg?.menu_type == 'buttonListImage') {
+        let imageMessage = await func.uploadToServer(
+          fs.readFileSync(fol[3] + 'bell.jpg')
+        );
+        let quick_reply = [];
+        for (let i of Object.values(Data.events)
+          .map((a) => a.tag)
+          .removeDuplicate()
+          .clean()) {
+          quick_reply.push({
+            name: 'quick_reply',
+            buttonParamsJson: {
+              display_text: cfg.menu.tags[i],
+              id: `.menu ${i} --content`,
+            }.String(),
+          });
+        }
+
+        console.log(quick_reply);
+        let _m = {
+          interactiveMessage: {
+            header: {
+              title: '',
+              imageMessage,
+              hasMediaAttachment: true,
+            },
+            body: {
+              text:
+                type == 'content'
+                  ? func.menuFormatter(events, { ...cfg.menu, ...cht })
+                  : head,
+            },
+            footer: {
+              text: '',
+            },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: { has_multiple_buttons: true }.String(),
+                },
+                ...quick_reply,
+              ],
+              messageParamsJson: {
+                limited_time_offer: {
+                  text: 'Artificial Intelligence, The beginning of the robot era',
+                  url: 'https://termai.cc',
+                  copy_code: 'Termai',
+                  expiration_time: Date.now() + func.parseTimeString('1 hari'),
+                },
+                bottom_sheet: {
+                  in_thread_buttons_limit: 2,
+                  divider_indices: [1, 2, 3, 4, 5, 999],
+                  list_title: 'All Tag',
+                  button_title: 'View List',
+                },
+              }.String(),
+            },
+            contextInfo: {
+              stanzaId: cht.key.id,
+              participant: cht.key.participant,
+              quotedMessage: cht,
+            },
+          },
+        };
+
+        Exp.relayMessage(cht.id, _m, {});
+      } else if (cfg?.menu_type == 'text') {
         menu.text = text;
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'image') {

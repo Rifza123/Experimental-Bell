@@ -1,6 +1,6 @@
 {
   "name": "Experimental-Bell",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "description": "Artificial Intelligence, The beginning of the robot era",
   "main": "index.js",
   "type": "module",
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Rifza123/Experimental-Bell#readme",
   "dependencies": {
-    "@whiskeysockets/baileys": "^7.0.0-rc.2",
+    "@whiskeysockets/baileys": "github:Rifza123/Baileys",
     "axios": "^1.7.8",
     "chalk": "^3.0.0",
     "cheerio": "1.0.0-rc.12",

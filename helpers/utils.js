@@ -62,12 +62,20 @@ export default async function utils({ Exp, cht, is, store }) {
                   )?.id
                 : null,
             },
+            {
+              type: 'templateButtonReplyMessage',
+              msg: cht?.message?.[type]?.selectedId,
+            },
+            {
+              type: 'buttonsResponseMessage',
+              msg: cht?.message?.[type]?.selectedButtonId,
+            },
           ].find((entry) => type === entry.type)?.msg ||
           null;
 
     cht.prefix = /^[.#‽٪]/.test(cht.msg) ? cht?.msg?.match(/^[.#‽٪]/gi) : '#';
     global.prefix = cht.prefix;
-
+    //cht.msg = cht?.msg?.startsWith(cht.prefix) ? cht.msg: cht.prefix + cht.msg
     cht.cmd = cht?.msg?.startsWith(cht.prefix)
       ? await (async () => {
           let cmd = cht?.msg
@@ -77,7 +85,7 @@ export default async function utils({ Exp, cht, is, store }) {
             ?.split(/ +/)
             .shift();
           if (
-            cfg.similarCmd &&
+            (cfg.similarCmd || cfg.didYouMean) &&
             Object.keys(Data.events).length !== 0 &&
             Data.events[cmd] === undefined
           ) {
@@ -85,22 +93,24 @@ export default async function utils({ Exp, cht, is, store }) {
               (a) =>
                 cmd.length >= a.length && Math.abs(cmd.length - a.length) <= 2
             );
-            let similar =
-              cmd.length <= 4
+            let similar = cfg.didYouMean
+              ? 0.5
+              : cmd.length <= 4
                 ? 0.3
                 : cmd.length <= 7
                   ? 0.4
                   : cmd.length <= 10
                     ? 0.5
                     : 0.6;
-            return func.getTopSimilar(
-              await func.searchSimilarStrings(cmd, events, similar)
-            ).item;
+            return cfg.didYouMean
+              ? cmd
+              : func.getTopSimilar(
+                  await func.searchSimilarStrings(cmd, events, similar)
+                ).item;
           }
           return cmd;
         })()
       : null;
-
     cht.download = async () =>
       Exp.func.download(cht?.message?.[type], cht.type);
 
@@ -169,7 +179,11 @@ export default async function utils({ Exp, cht, is, store }) {
       });
       cht.quoted.mtype = Object.keys(cht.quoted)[0];
       cht.quoted.type = Exp.func['getType'](cht.quoted.mtype);
-      cht.quoted.memories = cfg?.register ? (memories.has(cht.quoted.sender) ? await memories.get(cht.quoted.sender) : {}) : await memories.get(cht.quoted.sender);
+      cht.quoted.memories = cfg?.register
+        ? memories.has(cht.quoted.sender)
+          ? await memories.get(cht.quoted.sender)
+          : {}
+        : await memories.get(cht.quoted.sender);
       cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype];
       cht.quoted.text =
         cht.quoted?.[cht.quoted.type]?.caption ||
@@ -230,7 +244,11 @@ export default async function utils({ Exp, cht, is, store }) {
       is.botAdmin = Exp.groupAdmins.includes(Exp.number);
       is.groupAdmins = Exp.groupAdmins.includes(cht.sender);
     }
-    cht.memories = cfg?.register ? (memories.has(cht.sender) ? await memories.get(cht.sender, { is }) : {}) : await memories.get(cht.sender, { is });
+    cht.memories = cfg?.register
+      ? memories.has(cht.sender)
+        ? await memories.get(cht.sender, { is })
+        : {}
+      : await memories.get(cht.sender, { is });
 
     let url = cht?.msg
       ? (
@@ -264,7 +282,10 @@ export default async function utils({ Exp, cht, is, store }) {
     is.memories = cht.memories;
     is.quoted = cht.quoted;
     is.reaction = cht.reaction;
-    is.afk = is.group && memories.has(sender) ? memories.getItem(sender, 'afk') : false;
+    is.afk =
+      is.group && memories.has(sender)
+        ? memories.getItem(sender, 'afk')
+        : false;
     is.mute = groupDb?.mute && !is.owner && !is.me;
     is.onlyadmin = groupDb?.onlyadmin && !is.owner && !is.me && !is.groupAdmins;
     is.antiTagall =
@@ -319,6 +340,56 @@ export default async function utils({ Exp, cht, is, store }) {
       !is.owner &&
       !is.groupAdmins &&
       cht.type == 'groupStatusMentionMessage';
+    is.antiImage =
+      groupDb?.antiimg &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'image';
+    is.antiVideo =
+      groupDb?.antivid &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'video';
+    is.antiSticker =
+      groupDb?.antistk &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'sticker';
+    is.antiStickerPack =
+      groupDb?.antistipck &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'stickerPackMessage';
+    is.antiAudio =
+      groupDb?.antiaudio &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'audio';
+    is.antiVoice =
+      groupDb?.antivoice &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'audio' &&
+      cht[cht.type]?.ptt;
+    is.antiDoc =
+      groupDb?.antidoct &&
+      !is.owner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      cht.type == 'document';
     is.blacklist = groupDb?.blacklist?.includes(cht.sender);
     !is.owner && !is.me && !is.groupAdmins;
     is.bancmd = cht.cmd && groupDb?.cmdblocked?.includes(cht.cmd);
@@ -326,7 +397,10 @@ export default async function utils({ Exp, cht, is, store }) {
     cht.reply = async function (text, etc = {}, quoted = { quoted: true }) {
       try {
         // kalo cfg.replyAi = true bakal ngubah balasan pake AI
-        let finalText = text;
+        let finalText =
+          typeof cfg.font == 'string' && cfg.font !== 'normal'
+            ? text.font(cfg.font)
+            : text;
         const useAi = 'replyAi' in etc ? etc.replyAi : cfg.replyAi;
 
         if (useAi) {
@@ -403,6 +477,19 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
         await Exp.sendMessage(cht.id, msg, { quoted: cht });
       } catch (e) {
         console.error("Error in 'cht.edit'\n" + e);
+      }
+    };
+
+    cht.react = async function (text, _cht = null) {
+      try {
+        return Exp.sendMessage(cht.id, {
+          react: {
+            text,
+            key: _cht ? _cht.key : cht.key,
+          },
+        });
+      } catch (e) {
+        console.error("Error in 'cht.react'\n" + e);
       }
     };
 

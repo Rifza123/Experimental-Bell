@@ -23,6 +23,7 @@ const { Boom } = 'boom'.import();
 const { Connecting } = await `${fol[8]}systemConnext.js`.r();
 const Event = (await 'events'.import()).default;
 let { makeInMemoryStore } = await `${fol[0]}store.js`.r();
+let { func } = await `${fol[0]}func.js`.r();
 
 Event.defaultMaxListeners = 25;
 
@@ -76,20 +77,32 @@ async function launch() {
     }
 
     let { state, saveCreds } = await useMultiFileAuthState(session);
+    let Func = new func({ store }); 
+        
     const Exp = makeWASocket({
       logger,
-      version: [2,3000,1025150051],
+      version: [2, 3000, 1029700657],
       printQRInTerminal: !global.pairingCode,
       browser: Browsers.ubuntu('Chrome'),
-      auth: state
+      auth: state,
+      retryRequestDelayMs: 5000,
+      maxMsgRetryCount: 2,
+      getMessage: async () => undefined,
+      cachedGroupMetadata: (jid) => Func.metadata.get(jid),
+      syncFullHistory : false
     });
+
+    Func.init({ Exp });
+    Func.metadata.init();
+    Exp.func = Func;
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
       const phoneNumber = await question(
         chalk.yellow('Please type your WhatsApp number : ')
       );
       let code = await Exp.requestPairingCode(
-        phoneNumber.replace(/[+ -]/g, '')
+        phoneNumber.replace(/[+ -]/g, ''),
+        'SYAHRONI'
       );
       console.log(
         chalk.bold.rgb(
@@ -144,68 +157,72 @@ async function launch() {
 0|bella  |   }
 0|bella  | ]*/
     });
+
     Exp.ev.on('messages.upsert', async ({ type, messages }) => {
-      
-        for (let message of messages) {
-          const cht = {
-            ...message,
-            id: message.key.remoteJid,
-          };
-          let { messageTimestamp } = cht
-          if(typeof messageTimestamp == 'object' && messageTimestamp.unsigned) continue 
-          
-          let isMessage = cht?.message;
-          let isStubType = cht?.messageStubType;
-          if (!(isMessage || isStubType)) return;
-          if (cht.key.remoteJid === 'status@broadcast') {
-            if (!cfg.reactsw)
-              cfg.reactsw = {
-                on: false,
-                emojis: ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'],
-              };
+      for (let message of messages) {
+        const cht = {
+          ...message,
+          id: message?.key?.remoteJid,
+        };
+        const chatDb = Data.preferences[cht.id] || {};
 
-            if (cfg.reactsw.on) {
-              let { emojis } = cfg.reactsw;
-              await Exp.sendMessage(
-                cht.id,
-                { react: { key: cht.key, text: emojis.getRandom() } },
-                {
-                  statusJidList: [
-                    cht.key.participant,
-                    Exp.user.id.split(':')[0] + from.sender,
-                  ],
-                }
-              );
-            } else if (cfg.autoreadsw == true) {
-              await Exp.readMessages([cht.key]);
-              let typ = getContentType(cht.message);
-              console.log(
-                /protocolMessage/i.test(typ)
-                  ? `${cht.key.participant.split('@')[0]} Deleted story❗`
-                  : 'View user stories : ' + cht.key.participant.split('@')[0]
-              );
-            }
-            return;
-          } else {
-            const exs = { cht, Exp, is: {}, store };
-            let action = await Data.utils(exs);
-            switch (action) {
-              case 'NEXT':
-                if (type == 'append') {
-                  Data.stubTypeMsg(exs);
-                }
-                else if (type == 'notify') {
-                  await Data.helper(exs);
-                }
-                break;
+        let isMessage = cht?.message;
+        let isStubType = cht?.messageStubType;
+        let { messageTimestamp } = cht;
+        if (
+          typeof messageTimestamp == 'object' &&
+          messageTimestamp.unsigned &&
+          !isStubType
+        )
+          continue;
+        if (!(isMessage || isStubType)) return;
+        if (cht.key.remoteJid === 'status@broadcast') {
+          if (!cfg.reactsw)
+            cfg.reactsw = {
+              on: false,
+              emojis: ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'],
+            };
 
-              case 'ERROR':
-                console.error(
-                  '\x1b[31mERROR in utils.js: cek error di atas, segera laporkan ke admin/owner\x1b[0m'
-                );
-                break;
-            }
+          if (cfg.reactsw.on) {
+            let { emojis } = cfg.reactsw;
+            await Exp.sendMessage(
+              cht.id,
+              { react: { key: cht.key, text: emojis.getRandom() } },
+              {
+                statusJidList: [
+                  cht.key.participant,
+                  Exp.user.id.split(':')[0] + from.sender,
+                ],
+              }
+            );
+          } else if (cfg.autoreadsw == true) {
+            await Exp.readMessages([cht.key]);
+            let typ = getContentType(cht.message);
+            console.log(
+              /protocolMessage/i.test(typ)
+                ? `${cht.key.participant.split('@')[0]} Deleted story❗`
+                : 'View user stories : ' + cht.key.participant.split('@')[0]
+            );
+          }
+          return;
+        } else {
+          let exs = { cht: { ...cht }, Exp, is: {}, store, chatDb };
           
+          switch (await Data.utils(exs)) {
+            case 'NEXT':
+              type == 'append'
+                ? Data.stubTypeMsg(exs)
+                : type == 'notify'
+                  ? await Data.helper(exs)
+                  : console.log(`Unknown Type:${type}`, message);
+              break;
+
+            case 'ERROR':
+              console.error(
+                '\x1b[31mERROR in utils.js: cek error di atas, segera laporkan ke admin/owner\x1b[0m'
+              );
+              break;
+          }
         }
       }
     });

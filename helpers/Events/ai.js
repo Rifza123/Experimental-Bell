@@ -213,9 +213,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       cmd: ['txt2img', 'text2img', 'stablediffusion', ...i2i],
       listmenu: ['text2img', 'img2img'],
       tag: 'stablediffusion',
-      args:
-        (isI2i ? infos.messages.replyOrSendImage : '') +
-        infos.ai.txt2img,
+      args: (isI2i ? infos.messages.replyOrSendImage : '') + infos.ai.txt2img,
       energy: 100,
     },
     async () => {
@@ -224,10 +222,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         is.quoted.image ||
         is.image ||
         (is.sticker?.isAnimated || is.quoted.sticker?.isAnimated) == false;
-      if (isI2i && !img)
-        return cht.reply(
-          replyOrSendImage + infos.ai.txt2img
-        );
+      if (isI2i && !img) return cht.reply(replyOrSendImage + infos.ai.txt2img);
       let image = img
         ? await (is.image || is.sticker
             ? cht.download()
@@ -324,7 +319,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           let notSameLora = notSame.map((a) => {
             return `[ ${a} ] [ ${loraModels[a].model} ] \`${loraModels[a].baseType}\``;
           });
-          return cht.reply(func.tagReplacer(infos.ai.unsuitableModel, { baseType, notSameLora: notSameLora.join('\n') }), { replyAi: false });
+          return cht.reply(
+            func.tagReplacer(infos.ai.unsuitableModel, {
+              baseType,
+              notSameLora: notSameLora.join('\n'),
+            }),
+            { replyAi: false }
+          );
         }
 
         if (is.sticker || is.quoted?.sticker) {
@@ -853,20 +854,55 @@ ${loraText}
       energy: 17,
       badword: true,
     },
-    async () => {
-      let [text1, text2] = cht.q ? cht.q.split('|') : [];
+    async ({ args }) => {
       await cht.edit(infos.messages.wait, keys[sender]);
+      let url = api.xterm.url +
+              '/api/text2img/dalle3?prompt=' +
+              args +
+              '&key=' +
+              api.xterm.key
+      if (cfg.button) {
+          let imageMessage = await func.uploadToServer(url);
+
+          let _m = {
+            interactiveMessage: {
+              header: {
+                title: '',
+                imageMessage,
+                hasMediaAttachment: true,
+              },
+              body: {
+                text: '🖌️Dalle 3'.font('bold'),
+              },
+              footer: {
+                text: `Prompt: ${args}`,
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: 'quick_reply',
+                    buttonParamsJson: {
+                      display_text: 'Re-Generate🔄 ',
+                      id: `.dalle3 ${args}`,
+                    }.String(),
+                  },
+                ],
+              },
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.key.participant,
+                quotedMessage: cht,
+              },
+            },
+          };
+
+          return Exp.relayMessage(cht.id, _m, {});
+        }
       await Exp.sendMessage(
         id,
         {
           image: {
-            url:
-              api.xterm.url +
-              '/api/text2img/dalle3?prompt=' +
-              text1 +
-              '&key=' +
-              api.xterm.key +
-              (text2 ? '&prompt=' + text2 : ''),
+            url
           },
           ai: true,
         },
@@ -1369,7 +1405,10 @@ ${loraText}
           });
           media = await func.getBuffer(cv);
         }
-        console.log({ react: JSON.stringify(cht.reaction), cht: JSON.stringify(cht) })
+        console.log({
+          react: JSON.stringify(cht.reaction),
+          cht: JSON.stringify(cht),
+        });
         Exp.sendMessage(
           id,
           {
@@ -1413,20 +1452,38 @@ ${loraText}
   );
 
   let edits = Object.fromEntries([
-    ...['hitamkan', 'irengkan', 'irengin'].map(k => [k, 'change skin color to black']),
-    ...['putihkan', 'putihin'].map(k => [k, 'change skin color to white']),
-    ...['merahkan', 'merahin'].map(k => [k, 'change skin color to red']),
-    ...['orenkan', 'orenin','orany oranyekan'].map(k => [k, 'change skin color to orange']),
-    ...['kuningkan', 'kuningin'].map(k => [k, 'change skin color to yellow']),
-    ...['hijaukan', 'hijauin'].map(k => [k, 'change skin color to green']),
-    ...['birukan', 'boruin'].map(k => [k, 'change skin color to blue']),
-    ...['ungukan', 'unguin'].map(k => [k, 'change skin color to purple']),
-    ...['gelapkan', 'gelapin'].map(k => [k, 'change skin color to dark']),
-    ...['jadibiru'].map(k => [k, 'change skin color to blue']),
-    ...['ironman'].map(k => [k, 'edit the image into Iron Man suit, helmet open showing the original face, keep the face highly accurate and similar to the input photo, cinematic lighting, detailed metallic armor, glowing arc reactor on the chest, realistic Marvel movie style']),
-    ...['chibi'].map(k => [k, 'convert the image into cute chibi anime style, small body proportions, oversized head, large sparkling eyes, colorful soft shading, kawaii expression, pastel color palette, clean line art']),
-    ...['ghibli'].map(k => [k, 'convert the image into Studio Ghibli style animation, soft hand-drawn colors, warm lighting, dreamy atmosphere, high detail background painting, expressive character design']),
-    ...['tofigur','jadifigur'].map(k => [k, 'illustration of a 1/7 scale figure, highly detailed and realistic style, placed on a computer desk. the figure is mounted on a circular transparent acrylic base (no text or logos). on the computer screen, show the 3D modeling process of the same figure. next to the monitor, place a Tamiya-style toy packaging box with the original artwork printed on it. scene should look natural, clean, and photorealistic.']),
+    ...['hitamkan', 'irengkan', 'irengin'].map((k) => [
+      k,
+      'change skin color to black',
+    ]),
+    ...['putihkan', 'putihin'].map((k) => [k, 'change skin color to white']),
+    ...['merahkan', 'merahin'].map((k) => [k, 'change skin color to red']),
+    ...['orenkan', 'orenin', 'orany oranyekan'].map((k) => [
+      k,
+      'change skin color to orange',
+    ]),
+    ...['kuningkan', 'kuningin'].map((k) => [k, 'change skin color to yellow']),
+    ...['hijaukan', 'hijauin'].map((k) => [k, 'change skin color to green']),
+    ...['birukan', 'boruin'].map((k) => [k, 'change skin color to blue']),
+    ...['ungukan', 'unguin'].map((k) => [k, 'change skin color to purple']),
+    ...['gelapkan', 'gelapin'].map((k) => [k, 'change skin color to dark']),
+    ...['jadibiru'].map((k) => [k, 'change skin color to blue']),
+    ...['ironman'].map((k) => [
+      k,
+      'edit the image into Iron Man suit, helmet open showing the original face, keep the face highly accurate and similar to the input photo, cinematic lighting, detailed metallic armor, glowing arc reactor on the chest, realistic Marvel movie style',
+    ]),
+    ...['chibi'].map((k) => [
+      k,
+      'convert the image into cute chibi anime style, small body proportions, oversized head, large sparkling eyes, colorful soft shading, kawaii expression, pastel color palette, clean line art',
+    ]),
+    ...['ghibli'].map((k) => [
+      k,
+      'convert the image into Studio Ghibli style animation, soft hand-drawn colors, warm lighting, dreamy atmosphere, high detail background painting, expressive character design',
+    ]),
+    ...['tofigur', 'jadifigur'].map((k) => [
+      k,
+      'illustration of a 1/7 scale figure, highly detailed and realistic style, placed on a computer desk. the figure is mounted on a circular transparent acrylic base (no text or logos). on the computer screen, show the 3D modeling process of the same figure. next to the monitor, place a Tamiya-style toy packaging box with the original artwork printed on it. scene should look natural, clean, and photorealistic.',
+    ]),
   ]);
 
   ev.on(
@@ -1440,15 +1497,15 @@ ${loraText}
       ev.emit('edit', { cht });
     }
   );
-  
+
   ev.on(
     {
-      cmd: ["finding"],
-      listmenu: ["finding"],
+      cmd: ['finding'],
+      listmenu: ['finding'],
       args: 'Harap sertakan nama orangnya!',
       media: {
         type: ['image'],
-        msg: "Kirim gambar dengan caption: .finding nama_orang",
+        msg: 'Kirim gambar dengan caption: .finding nama_orang',
         save: false,
       },
       tag: 'ai',
@@ -1457,6 +1514,5 @@ ${loraText}
       cht.q = `create a Pixar-style movie poster inspired by Finding Nemo, underwater ocean background, colorful corals and fishes, cinematic lighting, text on the poster should say "Finding ${cht.q}" in bold Pixar-style font`;
       ev.emit('edit');
     }
-  );  
-
+  );
 }

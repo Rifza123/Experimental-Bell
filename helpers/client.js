@@ -2,15 +2,14 @@
 const chalk = 'chalk'.import();
 
 /*!-======[ Default Export Function ]======-!*/
-export default async function client({ Exp, store, cht, is }) {
+export default async function client({ Exp, store, cht, is, chatDb }) {
   let { func } = Exp;
   try {
-    const chatDb = Data.preferences[cht.id] || {};
     let m = store?.messages?.[cht.id] || {};
     m.idmsg ??= [];
     if (m.idmsg.includes(cht.key.id)) return;
     m.idmsg = [...m.idmsg, cht.key.id].slice(-7);
-    
+
     if (cht.memories?.banned && !is.owner) {
       if (cht.memories.banned * 1 > Date.now()) return;
       func.archiveMemories.delItem(cht.sender, 'banned');
@@ -18,7 +17,11 @@ export default async function client({ Exp, store, cht, is }) {
 
     chatDb.ai_interactive ??= Data.preferences[cht.id].ai_interactive =
       cfg.ai_interactive[is.group ? 'group' : 'private'];
-    let frmtEdMsg = cht.reaction ? cht.reaction.emoji : cht?.msg?.length > 50 ? `\n${cht.msg}` : cht.msg;
+    let frmtEdMsg = cht.reaction
+      ? cht.reaction.emoji
+      : cht?.msg?.length > 50
+        ? `\n${cht.msg}`
+        : cht.msg;
 
     if (cht.msg || cht.reaction) {
       cfg['autotyping'] && (await Exp.sendPresenceUpdate('composing', cht.id));
@@ -67,10 +70,9 @@ export default async function client({ Exp, store, cht, is }) {
         (!cht.memories.cdIsJoin || cht.memories.cdIsJoin >= Date.now())
       ) {
         cht.memories.cdIsJoin = Date.now() + func.parseTimeString('10 menit');
-        return cht.reply(
-          Data.infos.client.onlyJoinGc.replace('<list>', list),
-          { replyAi: false }
-        );
+        return cht.reply(Data.infos.client.onlyJoinGc.replace('<list>', list), {
+          replyAi: false,
+        });
       }
     }
 
@@ -111,27 +113,50 @@ export default async function client({ Exp, store, cht, is }) {
         cht.memories.cdIsJLid = Date.now() + func.parseTimeString('10 menit');
         let listText = urls.map((a) => `- ${a}`).join('\n');
 
-        await cht.reply(
-          Data.infos.client.lidJoin.replace('<list>', listText),
-          { replyAi: false }
-        );
+        await cht.reply(Data.infos.client.lidJoin.replace('<list>', listText), {
+          replyAi: false,
+        });
         await sleep(1000);
       }
     }
 
     let except = is.antiTagall || is.antibot || is.antilink;
     if ((is.baileys || is.mute || is.onlyadmin) && !except) return;
-    
-    let exps = { Exp, store, cht, is, chatDb };
-    let ev = new Data.EventEmitter(exps);
+
+    const exps = { Exp, store, cht, is, chatDb };
+    const ev = new Data.EventEmitter({ ...exps });
     Data.ev ??= ev;
     if (!is.offline && !is.afk && (cht.cmd || cht.reaction)) {
-      if(cfg.register && !func.archiveMemories.has(cht.sender) && !['register','daftar'].includes(cht.cmd?.toLowerCase())) return cht.reply(Data.infos.client.registerNeeded, { replyAi: false })
+      if (
+        cfg.register &&
+        !func.archiveMemories.has(cht.sender) &&
+        !['register', 'daftar'].includes(cht.cmd?.toLowerCase()) &&
+        !cht.reaction
+      )
+        return cht.reply(Data.infos.client.registerNeeded, { replyAi: false });
       cht.cmd &&
         (await Promise.all([
           'questionCmd' in cht.memories &&
             func.archiveMemories.delItem(cht.sender, 'questionCmd'),
-          ev.emit(cht.cmd, exps),
+          (await ev.emit(cht.cmd, exps)) == 'NOTFOUND' &&
+            cfg.didYouMean &&
+            (async (cht) => {
+              let didYouMean = await func
+                .searchSimilarStrings(cht.cmd, Object.keys(Data.events), 0.5)
+                .then((a) =>
+                  a.map(
+                    (res, idx) =>
+                      `${idx + 1}. ${res.item} (kemiripan: ${(res.similarity * 100).toFixed(2)}%)`
+                  )
+                );
+
+              didYouMean.length > 0 &&
+                (await cht.react('🤔')) &&
+                (await sleep(1000));
+              cht.reply(
+                `Maaf, command \`${cht.cmd}\` tidak ada dalam menu.\nMungkin yang kamu maksud:\n${didYouMean.join('\n')}`
+              );
+            })(cht),
         ]));
       cht.reaction && (await Data.reaction({ ev, ...exps }));
     } else {

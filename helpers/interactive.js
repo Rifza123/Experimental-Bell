@@ -139,6 +139,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       (cht.quoted ? true : cht.msg.includes('@')) &&
       cht.mention?.some((a) => memories.getItem(a, 'afk') && a !== sender) &&
       !is.me &&
+      !is.owner &&
       is.group;
 
     let isGame =
@@ -217,7 +218,12 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
         }
         //if(is.botAdmin) await cht.delete()
 
-        let rsn = Data.infos.interactive.afkTagged(tagAfk, func, sender, maxTag);
+        let rsn = Data.infos.interactive.afkTagged(
+          tagAfk,
+          func,
+          sender,
+          maxTag
+        );
         await cht.reply(rsn);
         memories.setItem(cht.mention[0], 'afk', tagAfk);
         break;
@@ -319,6 +325,37 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
           type: 'antitagall',
           warn: Data.infos.interactive.tagallWarn,
           kick: Data.infos.interactive.tagallKick,
+          max: 3,
+        });
+        cht.delete();
+        break;
+      case is.antiVideo:
+      case is.antiImage:
+      case is.antiSticker:
+      case is.antiStickerPack:
+      case is.antiAudio:
+      case is.antiDoc:
+        await cht.warnGc({
+          type: 'anti' + cht.type,
+          warn: func.tagReplacer(Data.infos.interactive.antiMediaWarn, {
+            mediaType: cht.type,
+          }),
+          kick: func.tagReplacer(Data.infos.interactive.antiMediaKick, {
+            mediaType: cht.type,
+          }),
+          max: 3,
+        });
+        cht.delete();
+        break;
+      case is.antiVoice:
+        await cht.warnGc({
+          type: 'antivoice',
+          warn: func.tagReplacer(Data.infos.interactive.antiMediaWarn, {
+            mediaType: 'voice',
+          }),
+          kick: func.tagReplacer(Data.infos.interactive.antiMediaKick, {
+            mediaType: 'voice',
+          }),
           max: 3,
         });
         cht.delete();
@@ -626,7 +663,10 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
               user?.autoai?.reset,
               'Asia/Jakarta'
             );
-            let txt = Data.infos.interactive.limitExpired(formatTimeDur, resetOn);
+            let txt = Data.infos.interactive.limitExpired(
+              formatTimeDur,
+              resetOn
+            );
             if (!user?.autoai?.response) {
               user.autoai.response = true;
               cht.reply(txt);
@@ -853,11 +893,13 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                 cht.q = config.cfg?.query;
                 return ev.emit('bard');
               case 'public':
-                if (!is?.owner) return cht.reply(Data.infos.interactive.notOwner);
+                if (!is?.owner)
+                  return cht.reply(Data.infos.interactive.notOwner);
                 global.cfg.public = true;
                 return cht.reply(Data.infos.interactive.modePublic);
               case 'self':
-                if (!is?.owner) return cht.reply(Data.infos.interactive.notOwner);
+                if (!is?.owner)
+                  return cht.reply(Data.infos.interactive.notOwner);
                 global.cfg.public = false;
                 return cht.reply(Data.infos.interactive.modeSelf);
               case 'voice':

@@ -459,7 +459,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       }
     }
   );
-  
+
   ev.on(
     {
       cmd: ['pinkgreen'],
@@ -473,7 +473,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async ({ media }) => {
       cht.q = `[ "-vf", "format=gray,lutrgb=r='255*pow(val/255,0.6)':g='100+(5*pow(val/255,0.6))':b='180*pow(val/255,0.6)'" ]`;
-      ev.emit("ffmpeg")
+      ev.emit('ffmpeg');
     }
   );
 

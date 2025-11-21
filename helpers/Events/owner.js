@@ -58,7 +58,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
     antitagowner: 'Anti Tag Owner',
     register: 'register mode',
     keyChecker: 'Auto detector apikey',
-    autoBackup: 'Auto Backup (21.00 WIB)'
+    autoBackup: 'Auto Backup (21.00 WIB)',
+    didYouMean: 'DidYouMean',
+    font: 'font style',
+    energy_mode: 'Energy Mode',
+    button: 'Button',
   };
 
   function sendPremInfo({ _text, text }, cust = false, number) {
@@ -111,33 +115,31 @@ export default async function on({ cht, Exp, store, ev, is }) {
           options[t1] ||
           (t1 == 'fquoted'
             ? `Success ${fquotedKeys.includes(t2) ? 'change' : 'add'} fake quoted ${t2}\n\nList fake quoted:\n\n- ${!fquotedKeys.includes(t2) ? [...fquotedKeys, t2].join('\n- ') : fquotedKeys.join('\n- ')}`
-            : t1 == 'welcome'
-              ? `Successfully set welcome with type ${t2}`
-              : t1 == 'voice'
-                ? infos.owner.successSetVoice
-                : t1 == 'logic'
-                  ? infos.owner.successSetLogic
-                  : t1 == 'menu'
-                    ? infos.owner.successSetMenu
-                    : t1 == 'lang'
-                      ? true
-                      : t1 == 'call'
-                        ? infos.owner.setCall
-                        : t1 == 'hadiah'
-                          ? infos.owner.setHadiah
-                          : t1 == 'autoreactsw'
-                            ? infos.owner.setAutoreactSw
-                            : t1 == 'lora'
-                              ? `Example: .${cht.cmd} ${t1} 2067`
-                              : t1 == 'checkpoint'
-                                ? `Example: .${cht.cmd} ${t1} 1552`
-                                : t1 == 'apikey'
+            : t1 == 'voice'
+              ? infos.owner.successSetVoice
+              : t1 == 'logic'
+                ? infos.owner.successSetLogic
+                : t1 == 'menu'
+                  ? infos.owner.successSetMenu
+                  : t1 == 'lang'
+                    ? true
+                    : t1 == 'call'
+                      ? infos.owner.setCall
+                      : t1 == 'hadiah'
+                        ? infos.owner.setHadiah
+                        : t1 == 'autoreactsw'
+                          ? infos.owner.setAutoreactSw
+                          : t1 == 'lora'
+                            ? `Example: .${cht.cmd} ${t1} 2067`
+                            : t1 == 'checkpoint'
+                              ? `Example: .${cht.cmd} ${t1} 1552`
+                              : t1 == 'apikey'
+                                ? true
+                                : t1 == 'chid'
                                   ? true
-                                  : t1 == 'chid'
-                                    ? true
-                                    : t1 == 'replyAi'
-                                      ? infos.owner.setReplyAi
-                                      : false);
+                                  : t1 == 'replyAi'
+                                    ? infos.owner.setReplyAi
+                                    : false);
 
         if (!mode) return cht.reply(infos.owner.set);
 
@@ -174,14 +176,6 @@ export default async function on({ cht, Exp, store, ev, is }) {
               rm: infos.others.readMore,
             });
           }
-        } else if (t1 == 'welcome') {
-          let list = ['linkpreview', 'order', 'product', 'image', 'text'];
-          let tlist = `\`List type welcome yang tersedia:\`\n\n- ${list.join('\n- ')}`;
-          if (!t2) return cht.reply(tlist);
-          if (!list.includes(t2))
-            return cht.reply(`*Type welcome _${t2}_ notfound!*\n\n${tlist}`);
-          global.cfg.welcome = t2;
-          cht.reply(mode);
         } else if (t1 == 'logic') {
           if (!t2)
             return cht.replyWithTag(infos.owner.setLogic, {
@@ -215,6 +209,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             'liveLocation',
             'image',
             'text',
+            'buttonListImage',
           ];
           let tlist = func.tagReplacer(infos.owner.listSetmenu, {
             list: list.join('\n- '),
@@ -222,11 +217,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
           if (!t2) return cht.reply(tlist);
           if (!list.includes(t2))
             return cht.reply(`*Type menu _${t2}_ notfound!*\n\n${tlist}`);
+          if (t2.includes('button') && !cfg.button)
+            return cht.reply(
+              'Anda belum mengaktifkan button!, silahkan ketik *.set button on* untuk mengaktifkan!'
+            );
           global.cfg.menu_type = t2;
           cht.replyWithTag(mode, { menu: t2 });
           if (t2 == 'liveLocation') cht.reply(infos.owner.menuLiveLocationInfo);
         } else if (t1 == 'lang') {
-          let langs = fs.readdirSync(fol[9]).filter(a=> a.endsWith('js')).map(a => a.split(".js")[0]);
+          let langs = fs
+            .readdirSync(fol[9])
+            .filter((a) => a.endsWith('js'))
+            .map((a) => a.split('.js')[0]);
           if (!langs.includes(t2))
             return cht.reply(
               `\`List Language:\`\n\n- ${langs.join('\n- ')}\n\nExample:\n _${cht.prefix + cht.cmd} ${t1} ${langs[0]}_`
@@ -481,7 +483,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             if (!cht.quoted) return cht.reply(infos.owner.setAntiTagOwner);
             let res = (await store.loadMessage(id, cht.quoted.stanzaId))
               ?.message;
-            Data.response['tagownerresponse'] = res || {...cht.quoted};
+            Data.response['tagownerresponse'] = res || { ...cht.quoted };
             cht.reply(`Success set antitagowner!\nType: ${cht.quoted.type}`);
           }
         } else if (t1 == 'replyAi') {
@@ -503,14 +505,37 @@ export default async function on({ cht, Exp, store, ev, is }) {
               accepts: ['on', 'off', 'true', 'false'],
             });
           }
+        } else if (t1 == 'font') {
+          let style = [
+            'normal',
+            'script',
+            'bold',
+            'italic',
+            'boldItalic',
+            'bubble',
+            'double',
+            'monospace',
+          ];
+          if (!style.includes(t2))
+            return cht.reply(`List style: ${style.join(', ')}`);
+          cfg.font = t2;
+          return cht.reply(`Success set font style: _${t2}_`);
         } else {
           if (t2 === 'on' || t2 === 'true') {
+            if (
+              t1 == 'button' &&
+              !(await '@whiskeysockets/baileys/lib/Socket/messages-send.js'
+                .import()
+                .then((a) => a.makeMessagesSocket + '')
+                .then((a) => a.includes('interactiveMessage')))
+            )
+              return cht.reply('Your baileys not support interactive button!');
             if (global.cfg[t1])
               return cht.replyWithTag(infos.owner.isModeOn, { mode });
             global.cfg[t1] = true;
             return cht.replyWithTag(infos.owner.isModeOnSuccess, { mode });
           } else if (t2 === 'off' || t2 === 'false') {
-            if (!global.cfg[t1])
+            if (!global.cfg[t1] && t1 in cfg)
               return cht.replyWithTag(infos.owner.isModeOff, { mode });
             global.cfg[t1] = false;
             return cht.replyWithTag(
@@ -1039,7 +1064,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         let b = './backup.tar.gz';
         let s = await Exp.func.createTarGz('./', b);
         if (!s.status) return cht.reply(s.msg);
-          await cht.edit(
+        await cht.edit(
           `File backup sedang dikirim${is.group ? ' melalui private chat...' : '...'}`,
           keys[sender]
         );
@@ -1057,9 +1082,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
           `*Proses backup selesai✅️*${is.group ? '\nFile telah dikirimkan melalui chat pribadi' : ''}`
         );
         fs.unlinkSync(b);
-      } catch(e) {
-        console.error(e)
-        cht.reply(JSON.stringify(e,0,2))
+      } catch (e) {
+        console.error(e);
+        cht.reply(JSON.stringify(e, 0, 2));
       }
     }
   );
@@ -1734,96 +1759,211 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cht.reply('Success✅, All Events have been reloaded!');
     }
   );
-  
+
+  ev.on(
+    {
+      cmd: ['resetenergy'],
+      listmenu: ['resetenergy'],
+      isOwner: true,
+      tag: 'owner',
+    },
+    async ({ args, cht }) => {
+      let act = {
+        y: `✅ Berhasil mereset semua *energy user* menjadi default (⚡${cfg.first.energy}).`,
+        n: '❌ Ok gajadi, energi tidak direset.',
+      };
+
+      let cmd = (args || '').trim().toLowerCase();
+
+      switch (cmd) {
+        case 'y':
+          let count = 0;
+          for (let id in Data.users) {
+            try {
+              Data.users[id].energy = cfg.first.energy;
+              count++;
+            } catch {
+              continue;
+            }
+          }
+          cht.reply(`${act.y}\nTotal user direset: *${count}*`);
+          break;
+
+        case 'n':
+          cht.reply(act.n);
+          break;
+
+        default:
+          cht.reply(
+            `⚡ *Reset Energy Confirmation*\n\nReply dan Ketik:\n- *y* untuk mengonfirmasi reset energi semua user.\n- *n* untuk membatalkan.`
+          );
+          func.archiveMemories.setItem(sender, 'questionCmd', {
+            emit: `${cht.cmd}`,
+            exp: Date.now() + 60000,
+            accepts: ['y', 'n'],
+          });
+          break;
+      }
+    }
+  );
+
   ev.on(
     {
       cmd: ['listuser'],
       listmenu: ['listuser'],
       tag: 'owner',
       isOwner: true,
-      args: "Mau liat list user apa? user *premium* atau user *afk*"
-    }, 
+      args: 'Mau liat list user apa sayang? user premium, user afk atau user banned',
+    },
     async ({ args }) => {
-    
-      let now = Date.now()
-      let mode = args.includes('afk') ? 'afk' : args.includes('premium') ? 'premium' : null
-      
-      if (!mode) return cht.reply(
-        "*❗ Berikut list user yang tersedia*\n\n" +
-        "⟡ listuser premium\n" +
-        "⟡ listuser afk\n\n" +
-        "Contoh:\n" +
-        ".listuser afk"
-      )
-      
-      let validMode = ['afk', 'premium']
-      
-      if (!validMode.includes(mode)) {
-        return cht.reply(
-          "❗ Untuk list " + mode + " belum ada di database"
-        )
+      let now = Date.now();
+      let mode = args.includes('afk')
+        ? 'afk'
+        : args.includes('premium')
+          ? 'premium'
+          : args.includes('banned')
+            ? 'banned'
+            : null;
+
+      if (!mode) {
+        return reply(infos.owner.listuserhelp);
       }
-      
-      let list = []
+
+      let afkInf = func.tagReplacer(infos.owner.listusermode, { mode: 'afk' });
+      let premInf = func.tagReplacer(infos.owner.listusermode, {
+        mode: 'premium',
+      });
+      let banInf = func.tagReplacer(infos.owner.listusermode, {
+        mode: 'banned',
+      });
+
+      let nullAfk = func.tagReplacer(infos.owner.listusernull, { mode: 'afk' });
+      let nullPrem = func.tagReplacer(infos.owner.listusernull, {
+        mode: 'premium',
+      });
+      let nullBan = func.tagReplacer(infos.owner.listusernull, {
+        mode: 'banned',
+      });
+
+      let list = [];
       for (const [id, user] of Object.entries(Data.users)) {
         if (mode === 'afk' && user.afk?.time) {
-          let dur = func.formatDuration(now - user.afk.time)
+          let dur = func.formatDuration(now - user.afk.time);
           let lamaAfk =
             `${dur.days > 0 ? dur.days + 'd ' : ''}` +
             `${dur.hours > 0 ? dur.hours + 'h ' : ''}` +
             `${dur.minutes > 0 ? dur.minutes + 'm ' : ''}` +
-            `${dur.seconds > 0 ? dur.seconds + 's ' : ''}`
- 
-          list.push(
-            {
-              id,
-              name: user.name || id,
-              reason: user.afk.reason,
-              lamaAfk: lamaAfk.trim()
-            }
-          )
+            `${dur.seconds > 0 ? dur.seconds + 's ' : ''}`;
+
+          list.push({
+            id,
+            name: user.name || id,
+            reason: user.afk.reason,
+            lamaAfk: lamaAfk.trim(),
+          });
         }
-        
+
         if (mode === 'premium' && user.premium?.time > now) {
-          list.push(
-            {
-              id,
-              name: user.name || id,
-              role: user.role,
-              expPrem: new Date(user.premium.time).toLocaleString("id-ID")
-            }
-          )
+          list.push({
+            id,
+            name: user.name || id,
+            role: user.role,
+            expPrem: new Date(user.premium.time).toLocaleString('id-ID'),
+          });
+        }
+
+        if (mode === 'banned' && user.banned && user.banned > now) {
+          let dur = func.formatDuration(user.banned - now);
+          let sisa =
+            `${dur.days > 0 ? dur.days + 'd ' : ''}` +
+            `${dur.hours > 0 ? dur.hours + 'h ' : ''}` +
+            `${dur.minutes > 0 ? dur.minutes + 'm ' : ''}` +
+            `${dur.seconds > 0 ? dur.seconds + 's ' : ''}`;
+          list.push({
+            id,
+            name: user.name || id,
+            until: new Date(user.banned).toLocaleString('id-ID'),
+            remaining: sisa.trim(),
+          });
         }
       }
 
       if (list.length === 0) {
-        return cht.reply(mode === 'afk' 
-          ? "❌ Tidak ada user yang sedang afk" 
-          : "❌ User premium belum ada satu pun"
-        )
+        return reply(
+          mode === 'afk'
+            ? `${nullAfk}`
+            : mode === 'premium'
+              ? `${nullPrem}`
+              : `${nullBan}`
+        );
       }
 
-      let teks = mode === 'afk'
-        ? `Berikut list user yang sedang afk\n\n`
-        : `Berikut list user yang telah upgrade ke premium\n\n`
+      let teks =
+        mode === 'afk'
+          ? `${afkInf}\n\n`
+          : mode === 'premium'
+            ? `${premInf}\n\n`
+            : `${banInf}\n\n`;
 
-      list.forEach(
-        (u, i) => {
-          teks += `${i + 1}. ${u.id}\n`
-          teks += `    • Nama : ${u.name}\n`
-          if (mode === 'afk') {
-            teks += `    • Lama afk : ${u.lamaAfk}\n`
-            teks += `    • Alasan : ${u.reason}\n\n`
-          } else {
-            teks += `    • Role : ${u.role?.split(",")[0] || "-"}\n`
-            teks += `    • Expired : ${u.expPrem}\n\n`
-          }
+      list.forEach((u, i) => {
+        teks += `${i + 1}. ${u.id}\n`;
+        teks += `    • Nama : ${u.name}\n`;
+        if (mode === 'afk') {
+          teks += `    • Lama afk : ${u.lamaAfk}\n`;
+          teks += `    • Alasan : ${u.reason}\n\n`;
+        } else if (mode === 'premium') {
+          teks += `    • Role : ${u.role?.split(',')[0]}\n`;
+          teks += `    • Expired : ${u.expPrem}\n\n`;
+        } else if (mode === 'banned') {
+          teks += `    • Banned sampai : ${u.until}\n`;
+          teks += `    • Sisa waktu : ${u.remaining}\n\n`;
         }
-      )
+      });
 
-      teks += `Terdapat \`${list.length} user\``
+      teks += `Total \`${list.length} user\``;
 
-      await cht.reply(teks)
+      await cht.reply(teks);
     }
-  )
+  );
+
+  ev.on(
+    {
+      cmd: ['getcmd', 'getevents'],
+      listmenu: ['getevents'],
+      tag: 'owner',
+      isOwner: true,
+      args: 'Mau ambil code events apa?',
+    },
+    async ({ args }) => {
+      let cmd = args.trim().toLowerCase();
+      let event = Data.events[cmd];
+      let didYouMean =
+        !event &&
+        (await func
+          .searchSimilarStrings(cmd, Object.keys(Data.events), 0.4)
+          .then((a) =>
+            a.map(
+              (res, idx) =>
+                `${idx + 1}. ${res.item} (kemiripan: ${(res.similarity * 100).toFixed(2)}%)`
+            )
+          ));
+      if (!event)
+        return cht.reply(
+          `Event Code "${cmd}" tidak ada!` +
+            (didYouMean?.length > 0
+              ? `\n\n*Mungkin yang kamu maksud:*\n- ${didYouMean.join('\n- ')}`
+              : '')
+        );
+      let eventKeys = Object.keys(event).filter(
+          (a) => !['eventFile', 'resolve'].includes(a)
+        ),
+        eventObj = { cmd: [cmd] };
+      for (var key of eventKeys) {
+        eventObj[key] = event[key];
+      }
+      let text =
+        `ev.on(${eventObj.String()},\n` + String(event.resolve) + `\n)`;
+      cht.reply(text);
+    }
+  );
 }

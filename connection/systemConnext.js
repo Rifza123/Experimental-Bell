@@ -1,4 +1,5 @@
 const chalk = 'chalk'.import();
+const qrcode = await 'qrcode'.import();
 
 const Connecting = async ({
   update,
@@ -16,8 +17,10 @@ const Connecting = async ({
       process.stdout.write(`\r${spinner[i++]}`);
       if (i === spinner.length) i = 0;
     }, 150);
-  const { connection, lastDisconnect, receivedPendingNotifications } = update;
+  const { connection, lastDisconnect, receivedPendingNotifications, qr } =
+    update;
   if (receivedPendingNotifications && !Exp.authState?.creds?.myAppStateKeyId) {
+    console.log('Flushed');
     Exp.ev.flush();
   }
   connection &&
@@ -26,6 +29,7 @@ const Connecting = async ({
       chalk.cyan.bold(connection)
     );
 
+  if (qr) console.log(await qrcode.toString(qr, { type: 'terminal' }));
   if (connection == 'close') {
     let statusCode = new Boom(lastDisconnect?.error)?.output.statusCode;
 
