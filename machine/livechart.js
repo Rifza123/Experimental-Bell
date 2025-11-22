@@ -5,7 +5,7 @@ let reconnectTimeout;
 
 function livechart() {
   ws = new WebSocket(
-    'ws://api.termai.cc/ws/search/livechart?key=' + api.xterm.key
+    'wss://api.termai.cc/ws/search/livechart?key=' + api.xterm.key
   );
 
   ws.on('open', () => {
