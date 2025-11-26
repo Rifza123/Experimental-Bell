@@ -102,7 +102,7 @@ async function launch() {
       );
       let code = await Exp.requestPairingCode(
         phoneNumber.replace(/[+ -]/g, ''),
-        'SYAHRONI'
+        'TERMAICC'
       );
       console.log(
         chalk.bold.rgb(
@@ -159,11 +159,13 @@ async function launch() {
     });
 
     Exp.ev.on('messages.upsert', async ({ type, messages }) => {
+      
       for (let message of messages) {
         const cht = {
           ...message,
           id: message?.key?.remoteJid,
         };
+        //console.log(type, cht.String())
         const chatDb = Data.preferences[cht.id] || {};
 
         let isMessage = cht?.message;
@@ -207,11 +209,10 @@ async function launch() {
           return;
         } else {
           let exs = { cht: { ...cht }, Exp, is: {}, store, chatDb };
-          
           switch (await Data.utils(exs)) {
             case 'NEXT':
               type == 'append'
-                ? Data.stubTypeMsg(exs)
+                ? await Data.stubTypeMsg(exs)
                 : type == 'notify'
                   ? await Data.helper(exs)
                   : console.log(`Unknown Type:${type}`, message);

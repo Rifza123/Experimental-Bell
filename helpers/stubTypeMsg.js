@@ -1,25 +1,44 @@
 const { WAMessageStubType: StubType } = 'baileys'.import();
 let infos = Data.infos;
 
-export default async function stub({ Exp, cht }) {
+export default async function stubTypeMsg({ Exp, cht }) {
+  //console.log('stubTypeMsg', cht)
   let { func } = Exp,
     chatDb = Data.preferences[cht.id],
     { wtype, ltype } = chatDb;
   const group = await Exp.groupMetadata(cht.id);
-  const getSenders = async () =>
+  //console.log({ group })
+  const getSenders = async (cht) =>
     Promise.all(
-      cht.messageStubParameters?.map((a) => Exp.func.getSender(a, { cht })) ||
-        []
+      (cht.messageStubParameters || []).map((a) => {
+        let _a = a;
+        if (typeof a === 'string') {
+          try {
+            const parsed = JSON.parse(a);
+            _a = parsed?.phoneNumber || parsed?.id || parsed;
+          } catch {
+            _a = a;
+          }
+        }
+
+        if (typeof a === 'object' && a !== null) {
+          _a = a.phoneNumber || a.id || a;
+        }
+  
+        return func.getSender(_a, { cht });
+      })
     );
-  const oldMember = await getSenders(),
-    newMember = await getSenders();
-  let members = oldMember.map((a) => `@${a?.split('@')[0]}`).join(', ');
-  let pp = await Exp.profilePictureUrl(oldMember[0]).catch(
+  
+  //console.log({ getSenders: await getSenders(cht) })
+  const _members = await getSenders(cht);
+  let members = _members.map((a) => `@${a?.split('@')[0]}`).join(', ');
+  //console.log({ _members, members })
+  let pp = await Exp.profilePictureUrl(_members[0]).catch(
     () => 'https://files.catbox.moe/7e4y9f.jpg'
   );
 
   const sendMsg = async (id, msg, q = Data.fquoted?.welcome) =>
-    Exp.sendMessage(id, msg, { quoted: q });
+    Exp.sendMessage(id, msg, q ?? { quoted: q });
   const relayMsg = (id, msg) => Exp.relayMessage(id, msg, {});
   const thumb = async () =>
     Buffer.from(await fetch(pp).then((a) => a.arrayBuffer())).toString(
@@ -33,7 +52,7 @@ export default async function stub({ Exp, cht }) {
           : `\`[ GOOD BYE ]\`\n\nSelamat tinggal <members>`),
       { members, subject, desc: desc ? `\n${infos.readMore}\n${desc}` : '' }
     );
-
+  //console.log({ genText: genText(wtype, members, group.subject, group.desc, 'welcome') })
   let stubType =
     typeof cht.messageStubType == 'string'
       ? StubType[cht.messageStubType]
@@ -45,11 +64,11 @@ export default async function stub({ Exp, cht }) {
       if (!Data.preferences[cht.id]?.welcome) return;
       let text = genText(wtype, members, group.subject, group.desc, 'welcome');
       const msgBase = {
-        mentions: newMember,
+        mentions: _members,
         contextInfo: {
           externalAdReply: {
             title:
-              'Hai ' + newMember.map((a) => Exp.func.getName(a)).join(', '),
+              'Hai ' + _members.map((a) => Exp.func.getName(a)).join(', '),
             body: `Selamat datang di group ${group.subject}`,
             thumbnailUrl: pp,
             sourceUrl: 'https://github.com/Rifza123',
@@ -69,7 +88,7 @@ export default async function stub({ Exp, cht }) {
       if (wtype == 'text')
         cht.reply(
           text,
-          { mentions: newMember },
+          { mentions: _members },
           { quoted: Data.fquoted?.welcome }
         );
       else if (wtype == 'linkpreview')
@@ -78,7 +97,7 @@ export default async function stub({ Exp, cht }) {
         await sendMsg(cht.id, {
           image: { url: pp },
           caption: text,
-          mentions: newMember,
+          mentions: _members,
         });
       else if (wtype == 'order')
         relayMsg(cht.id, {
@@ -129,7 +148,7 @@ export default async function stub({ Exp, cht }) {
     case StubType.GROUP_PARTICIPANT_REMOVE:
     case StubType.GROUP_PARTICIPANT_LEAVE: {
       func.getGroupMetadata(cht.id, Exp, true);
-      if (oldMember.includes(Exp.number))
+      if (_members.includes(Exp.number))
         return delete Data.preferences[cht.id];
       if (
         'leave' in chatDb ? !chatDb?.leave : !Data.preferences[cht.id]?.welcome
@@ -138,11 +157,11 @@ export default async function stub({ Exp, cht }) {
       let text = genText(ltype, members, group.subject, group.desc, 'leave');
       ltype ||= 'linkpreview';
       const msgBase = {
-        mentions: oldMember,
+        mentions: _members,
         contextInfo: {
           externalAdReply: {
             title:
-              'Byee ' + oldMember.map((a) => Exp.func.getName(a)).join(', '),
+              'Byee ' + _members.map((a) => Exp.func.getName(a)).join(', '),
             body: `Selamat tinggal dari group ${group.subject}`,
             thumbnailUrl: pp,
             sourceUrl: 'https://github.com/Rifza123',
@@ -162,7 +181,7 @@ export default async function stub({ Exp, cht }) {
       if (ltype == 'text')
         cht.reply(
           text,
-          { mentions: oldMember },
+          { mentions: _members },
           { quoted: Data.fquoted?.welcome }
         );
       else if (ltype == 'linkpreview')
@@ -171,7 +190,7 @@ export default async function stub({ Exp, cht }) {
         await sendMsg(cht.id, {
           image: { url: pp },
           caption: text,
-          mentions: oldMember,
+          mentions: _members,
         });
       else if (ltype == 'order')
         relayMsg(cht.id, {
@@ -263,7 +282,15 @@ export default async function stub({ Exp, cht }) {
     case StubType.COMMUNITY_DEACTIVATE_SIBLING_GROUP:
     case StubType.COMMUNITY_SUB_GROUP_VISIBILITY_HIDDEN:
     case StubType.GROUP_MEMBER_LINK_MODE:
-      console.log('StubType', cht.messageStubType);
+      const stubName =
+        typeof cht.messageStubType === 'string'
+        ? cht.messageStubType
+        : Object.keys(StubType).find(k => StubType[k] === cht.messageStubType);
+      console.log(
+        `${func.color.blue('[GROUP_METADATA_TRIGGER]')} ` +
+        `${func.color.white('Event:')} ${func.color.cyan(stubName)}`
+      );
+      
       await func.getGroupMetadata(cht.id, Exp, true);
       break;
   }

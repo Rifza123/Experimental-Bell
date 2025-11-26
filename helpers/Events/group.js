@@ -199,6 +199,8 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
       listmenu: ['unblacklist', 'blacklist'],
       tag: 'group',
       isMention: true,
+      isBotAdmin: true,
+      isAdmin: true
     },
     async () => {
       try {
