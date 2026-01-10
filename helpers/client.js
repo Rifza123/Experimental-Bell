@@ -90,6 +90,7 @@ export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
         });
       }
     }
+    if (is.group && cfg.sewa && !Data.sewa[cht.id] && !is.owner) return
     if (
       is.group &&
       cfg.sewa &&
