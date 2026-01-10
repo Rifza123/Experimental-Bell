@@ -153,67 +153,82 @@ export default async function on({ cht, ev, Exp }) {
     async () => {
       try {
         const lines = [];
+        const now = Date.now();
 
-        lines.push(`🏦 *Toko RPG - Shop Menu*\n`);
+        lines.push(`🏦 *Toko RPG — Shop Menu*\n`);
         lines.push(
           `Perintah:\n.buy / .beli <item> <jumlah>\n.sell / .jual <item> <jumlah>\n.shop untuk melihat semua daftar\n`
         );
+
         lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐁𝐞𝐥𝐢 』═══════╗`);
+
         for (const item in Data.ShopRPG.buy) {
           let harga = Data.ShopRPG.buy[item];
           if (!harga) continue;
 
-          const diskon = Data.ShopRPG.diskon?.[item];
+          const d = Data.ShopRPG.diskon?.[item];
           let line = `║ ${item} = `;
 
-          if (diskon) {
-            const expired = diskon.expired || 0;
-            const sisa = diskon.jumlah;
-            const aktif =
-              (expired === 0 || expired > Date.now()) &&
-              (sisa === null || sisa > 0);
+          let diskonAktif = false;
 
-            if (aktif) {
-              const hargaDiskon = Math.max(1, harga - diskon.potongan);
+          if (d) {
+            const expired = d.expired ?? 0;
+            const sisa = d.jumlah ?? null;
+            const potongan = d.potongan ?? 0;
+
+            diskonAktif =
+              (expired === 0 || expired > now) && (sisa === null || sisa > 0);
+
+            if (
+              (expired > 0 && expired <= now) ||
+              (sisa !== null && sisa <= 0)
+            ) {
+              delete Data.ShopRPG.diskon[item];
+            }
+
+            if (diskonAktif) {
+              const hargaDiskon = Math.max(1, harga - potongan);
               const persenDiskon = Math.round(
                 100 - (hargaDiskon / harga) * 100
               );
 
-              let sisaStr = '';
-              if (expired > 0) {
-                const dur = func.formatDuration(expired - Date.now());
-                sisaStr = ` (sisa: ${dur.hours} jam ${dur.minutes} menit)`;
-              }
+              let waktuStr =
+                expired === 0
+                  ? 'Permanent'
+                  : (() => {
+                      const dur = func.formatDuration(expired - now);
+                      return `${dur.hours}j ${dur.minutes}m`;
+                    })();
 
-              line += `~${harga}~ ➯ *${hargaDiskon}* (Diskon ${persenDiskon}%)${sisaStr}`;
+              let sisaStr = sisa === null ? '∞' : sisa;
+
+              line += `~${harga}~ ➯ *${hargaDiskon}* (-${persenDiskon}% | ${sisaStr} | ${waktuStr})`;
               lines.push(line);
               continue;
-            } else {
-              delete Data.ShopRPG.diskon[item];
             }
           }
 
           line += `*${harga}*`;
           lines.push(line);
         }
+
         lines.push(`╚════════════════════════╝\n`);
+
         lines.push(`╔═══════『 𝐇𝐚𝐫𝐠𝐚 𝐉𝐮𝐚𝐥 』═══════╗`);
+
         for (const item in Data.ShopRPG.sell) {
           let harga = Data.ShopRPG.sell[item];
           if (!harga) continue;
 
           lines.push(`║ ${item} = *${harga}*`);
         }
+
         lines.push(`╚════════════════════════╝`);
 
         return Exp.sendMessage(
           cht.id,
-          {
-            text: lines.join('\n'),
-          },
-          {
-            quoted: cht,
-          }
+          { text: lines.join('\n') },
+          { quoted: cht }
         );
       } catch (e) {
         console.error('❌ Error di .shop:', e);
@@ -221,7 +236,6 @@ export default async function on({ cht, ev, Exp }) {
       }
     }
   );
-
   ev.on(
     {
       cmd: ['buy', 'beli', 'sell', 'jual'],
@@ -229,71 +243,123 @@ export default async function on({ cht, ev, Exp }) {
       tag: 'RPG',
     },
     async () => {
+      if (!cht.q) {
+        let now = Date.now();
+
+        let shopBuy = Object.entries(Data.ShopRPG.buy)
+          .map(([item, base]) => {
+            let d = Data.ShopRPG.diskon?.[item];
+
+            if (!d) return `• ${item} — ${base} coins`;
+
+            let expired = Number(d.expired ?? 0);
+            let sisa = d.jumlah != null ? Number(d.jumlah) : null;
+            let potongan = Number(d.potongan ?? 0);
+
+            let aktif =
+              (expired === 0 || expired > now) && (sisa === null || sisa > 0);
+
+            if (!aktif) return `• ${item} — ${base} coins`;
+
+            let diskon = Math.max(1, base - potongan);
+            let persen = Math.round(100 - (diskon / base) * 100);
+
+            return `• ${item} — ~${base}~ → *${diskon}* coins (-${persen}%)`;
+          })
+          .join('\n');
+
+        let shopSell = Object.entries(Data.ShopRPG.sell)
+          .map(([k, v]) => `• ${k} — ${v} coins`)
+          .join('\n');
+
+        return cht.reply(
+          `🛒 *SHOP RPG — BELI & JUAL*\n\n` +
+            `✨ Cara pakai:\n` +
+            `• .buy potion 3\n` +
+            `• .sell diamond 2\n` +
+            `• .buy iron all\n\n` +
+            `📥 Bisa dibeli:\n${shopBuy}\n\n` +
+            `📤 Bisa dijual:\n${shopSell}\n\n` +
+            `Gunakan angka atau "all" ✨`
+        );
+      }
+
       const [itemRaw, jumlahRaw] = (cht.q || '').trim().split(/[\s|.,]+/);
       const jumlahStr = jumlahRaw?.toLowerCase();
       const item = itemRaw?.toLowerCase();
+
       if (!item) return cht.reply(`Contoh: .${cht.cmd} potion 2`);
 
       const isBuy = ['buy', 'beli'].includes(cht.cmd);
-      const HargaAwal = hargaAwal[item];
-      if (!hargaAwal || typeof HargaAwal !== 'object')
-        return cht.reply(`Item "${item}" tidak tersedia.`);
 
-      const harga = isBuy ? Data.ShopRPG.buy[item] : Data.ShopRPG.sell[item];
-      if (!harga)
+      const hargaNormal = isBuy
+        ? Data.ShopRPG.buy[item]
+        : Data.ShopRPG.sell[item];
+
+      if (!hargaNormal)
         return cht.reply(
-          `Item "${item}" tidak bisa di${isBuy ? 'beli' : 'jual'}.`
+          `⚠️ Item *"${item}"* tidak tersedia untuk di${
+            isBuy ? 'beli' : 'jual'
+          }.`
         );
 
       let user = (await func.archiveMemories.get(cht.sender)) || {};
       let inv = (await func.inventory.get(cht.sender)) || {};
+
       user.coins ??= 0;
       user.flow ??= 0;
       user.energy ??= 0;
+
       const isUserItem = ['coins', 'flow', 'energy'].includes(item);
       if (!isUserItem) inv[item] ??= 0;
 
       let jumlah;
       if (jumlahStr === 'all') {
         jumlah = isBuy
-          ? Math.floor(user.coins / harga)
+          ? Math.floor(user.coins / hargaNormal)
           : isUserItem
             ? user[item]
             : inv[item];
-      } else {
-        jumlah = Math.max(1, parseInt(jumlahStr) || 1);
-      }
+      } else jumlah = Math.max(1, parseInt(jumlahStr) || 1);
 
       if (jumlah < 1)
         return cht.reply(
           `Jumlah ${isBuy ? 'pembelian' : 'penjualan'} tidak valid.`
         );
-
-      // === BELI ===
       if (isBuy) {
         let total = 0;
-        let sisaDiskon = Data.ShopRPG.diskon[item]?.jumlah;
-        const potongan = Data.ShopRPG.diskon[item]?.potongan || 0;
-        const expired = Data.ShopRPG.diskon[item]?.expired || 0;
+        let diskonInfo = '';
+
+        let diskon = Data.ShopRPG.diskon?.[item];
+
+        let sisa =
+          diskon && typeof diskon.jumlah === 'number' ? diskon.jumlah : null;
+
+        let expired = diskon?.expired ?? 0;
+        let potongan = diskon?.potongan ?? 0;
 
         for (let i = 0; i < jumlah; i++) {
-          const pakaiDiskon =
-            sisaDiskon &&
-            (sisaDiskon > 0 || sisaDiskon === null) &&
-            (expired === 0 || expired > Date.now());
-          const hargaSatuan = pakaiDiskon
-            ? Math.max(1, harga - potongan)
-            : harga;
-          total += hargaSatuan;
-          if (pakaiDiskon && sisaDiskon !== null) sisaDiskon--;
+          let aktif =
+            diskon &&
+            (expired === 0 || expired > Date.now()) &&
+            (sisa === null || sisa > 0);
+
+          let hargaItem = aktif
+            ? Math.max(1, hargaNormal - potongan)
+            : hargaNormal;
+
+          total += hargaItem;
+
+          if (aktif && sisa !== null) sisa--;
         }
 
         if (user.coins < total)
           return cht.reply(
-            `Koinmu tidak cukup untuk membeli ${jumlah} ${item}.\nCoins: ${user.coins}, Harga total: ${total}`
+            `💸 Coins kamu kurang.\nCoins: *${user.coins}*\nTotal harga: *${total}*`
           );
 
         user.coins -= total;
+
         if (isUserItem) {
           user[item] += jumlah;
           await func.archiveMemories.setItem(cht.sender, item, user[item]);
@@ -308,20 +374,35 @@ export default async function on({ cht, ev, Exp }) {
 
         await func.archiveMemories.setItem(cht.sender, 'coins', user.coins);
 
+        if (diskon) {
+          if (sisa !== null && sisa <= 0) delete Data.ShopRPG.diskon[item];
+          else Data.ShopRPG.diskon[item].jumlah = sisa;
+        }
+
+        if (diskon)
+          diskonInfo = `\n🎁 Diskon aktif\nPotongan: *${potongan} coins*\nSisa kuota: *${sisa ?? '∞'}*`;
+
         return cht.reply(
-          `✨ *Pembelian Berhasil!*
-Kamu membeli *${jumlah}* ${item}, Menggunakan: *${total}* coins, coins kamu sekarang Tersisa: *${user.coins}*, Sekarang kamu Memiliki *${isUserItem ? user[item] : inv[item]}* ${item} `
+          `✨ *Pembelian Berhasil!*\n\n` +
+            `🛒 Item: *${item}*\n` +
+            `📦 Jumlah: *${jumlah}*\n` +
+            `💰 Total: *${total} coins*\n\n` +
+            `Coins sekarang: *${user.coins}*\n` +
+            `Stok: *${isUserItem ? user[item] : inv[item]}* ${item}\n` +
+            diskonInfo +
+            `\n\nSelamat ya~ (⁠｡⁠•̀⁠ᴗ⁠-⁠)⁠✧`
         );
       }
 
-      // === JUAL ===
       const stok = isUserItem ? user[item] : inv[item];
+
       if (stok < jumlah)
         return cht.reply(
-          `Kamu hanya punya ${stok} ${item}, tidak cukup untuk dijual.`
+          `⚠️ Stok kamu kurang.\nPunya: *${stok}* ${item}\nButuh: *${jumlah}*`
         );
 
-      const total = harga * jumlah;
+      const total = hargaNormal * jumlah;
+
       if (isUserItem) {
         user[item] -= jumlah;
         await func.archiveMemories.setItem(cht.sender, item, user[item]);
@@ -329,6 +410,7 @@ Kamu membeli *${jumlah}* ${item}, Menggunakan: *${total}* coins, coins kamu seka
         inv[item] -= jumlah;
         await func.inventory.setItem(cht.sender, item, inv[item]);
       }
+
       user.coins += total;
 
       Data.ShopRPG.statistik ??= {};
@@ -338,11 +420,13 @@ Kamu membeli *${jumlah}* ${item}, Menggunakan: *${total}* coins, coins kamu seka
       await func.archiveMemories.setItem(cht.sender, 'coins', user.coins);
 
       return cht.reply(
-        `✅ *Penjualan Berhasil!*
-Kamu menjual *${jumlah}* ${item}
-Mendapatkan: *${total}* coins
-Total coins kamu sekarang: *${user.coins}*
-*${item}* kamu sekarang Tersisa: *${isUserItem ? user[item] : inv[item]}*`
+        `💵 *Penjualan Berhasil!*\n\n` +
+          `📤 Item: *${item}*\n` +
+          `📦 Jumlah: *${jumlah}*\n` +
+          `💰 Diterima: *${total} coins*\n\n` +
+          `Coins sekarang: *${user.coins}*\n` +
+          `Sisa stok: *${isUserItem ? user[item] : inv[item]}* ${item}\n\n` +
+          `Lumayan kan~ ʕ⁠っ⁠•⁠ᴥ⁠•⁠ʔ⁠っ`
       );
     }
   );
@@ -677,6 +761,124 @@ Hanya berlaku untuk:
       }
 
       return cht.reply(pesan);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['hapusdiskon', 'deldiskon'],
+      listmenu: ['hapusdiskon', 'deldiskon'],
+      tag: 'owner',
+      isOwner: true,
+    },
+    async () => {
+      try {
+        const item = (cht.q || '').trim().toLowerCase();
+
+        if (!item)
+          return cht.reply(
+            `Format:\n.hapusdiskon <item>\n\nContoh:\n• .hapusdiskon potion\n• .hapusdiskon all`
+          );
+
+        Data.ShopRPG.diskon ??= {};
+
+        let keys = Object.keys(Data.ShopRPG.diskon);
+
+        if (!keys.length)
+          return cht.reply(`❌ Saat ini tidak ada diskon yang aktif.`);
+
+        if (item === 'all') {
+          Data.ShopRPG.diskon = {};
+          return cht.reply(
+            `🗑️ Semua diskon berhasil dihapus.\nToko kembali ke harga normal.`
+          );
+        }
+
+        if (!Data.ShopRPG.diskon[item])
+          return cht.reply(
+            `⚠️ Tidak ada diskon yang aktif untuk item "${item}".`
+          );
+
+        delete Data.ShopRPG.diskon[item];
+
+        return cht.reply(
+          `✅ Diskon untuk item "${item}" berhasil dihapus.\nSekarang kembali ke harga normal.`
+        );
+      } catch (e) {
+        console.error('❌ Error di hapusdiskon:', e);
+        return cht.reply(`Terjadi error saat menghapus diskon.`);
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['cekdiskon', 'diskonlist'],
+      listmenu: ['cekdiskon', 'diskonlist'],
+      tag: 'RPG',
+    },
+    async () => {
+      try {
+        let data = Data.ShopRPG.diskon || {};
+        let keys = Object.keys(data);
+
+        if (!keys.length)
+          return cht.reply(`❌ Saat ini tidak ada diskon yang aktif.`);
+
+        let lines = [];
+        lines.push(`🎁 *Daftar Diskon Aktif di Toko RPG*\n`);
+
+        let now = Date.now();
+        let countValid = 0;
+
+        for (let item of keys) {
+          let d = data[item];
+          if (!d) continue;
+
+          let expired = d.expired || 0;
+          let sisa = d.jumlah;
+          let potongan = d.potongan || 0;
+
+          let base = Data.ShopRPG.buy[item];
+          if (!base) continue;
+
+          let aktif =
+            (expired === 0 || expired > now) && (sisa === null || sisa > 0);
+
+          if (!aktif) {
+            delete Data.ShopRPG.diskon[item];
+            continue;
+          }
+
+          countValid++;
+
+          let hargaDiskon = Math.max(1, base - potongan);
+          let persen = Math.round(100 - (hargaDiskon / base) * 100);
+
+          let waktuStr = `∞`;
+          if (expired > 0) {
+            let dur = func.formatDuration(expired - now);
+            waktuStr = `${dur.hours}j ${dur.minutes}m`;
+          }
+
+          let sisaStr = sisa === null ? '∞' : sisa;
+
+          lines.push(
+            `• *${item}*\n` +
+              `  Harga: ~${base}~ → *${hargaDiskon}* (-${persen}%)\n` +
+              `  Sisa kuota: *${sisaStr}*\n` +
+              `  Sisa waktu: *${waktuStr}*\n`
+          );
+        }
+
+        if (!countValid)
+          return cht.reply(`❌ Semua diskon sudah habis / expired.`);
+
+        return cht.reply(lines.join('\n'));
+      } catch (e) {
+        console.error('❌ Error di cekdiskon:', e);
+        return cht.reply(`Terjadi error saat membaca daftar diskon.`);
+      }
     }
   );
 
@@ -1500,293 +1702,121 @@ Daftar: pickaxe, ax, sword, fishing_hook, armor`,
   );
 
   ev.on(
-    {
-      cmd: [
-        'ikhlaskan',
-        'tembak',
-        'terima',
-        'tolak',
-        'mylove',
-        'pacarku',
-        'gembok',
-        'putus',
-      ],
-      listmenu: [
-        'gembok',
-        'ikhlaskan',
-        'pacarku',
-        'tembak',
-        'terima',
-        'tolak',
-        'putus',
-      ],
-      tag: 'fun',
-      isGroup: true,
-    },
+    { cmd: ['opencrate', 'open'], listmenu: true, tag: 'RPG' },
     async ({ args }) => {
-      /** |=====[ Experimental Bella ▫️🦋 ]=====|
-📛 *Nama Fitur* ′: intinya pacaran (have fun)
-✍️ *Create by* ′: Barr
-📣 *Sumber* ′: /** |=====[ Experimental Bella ▫️🦋 ]=====|
-📛 *Nama Fitur* ′: intinya pacaran (have fun)
-✍️ *Create by* ′: Barr
-📣 *Sumber* ′: https://whatsapp.com/channel/0029VbAPgdQGpLHLMCcgwT1j
-🗒️ *Note* ′: jika ada Error tanya aja ke wa.me/6282238228919
-**/
-      let user = Data.users[sender.split('@')[0]];
-      let cd = cht.cmd;
+      let inv = await func.inventory.get(sender);
+      let usr = await func.archiveMemories.get(sender);
 
-      if (!user.pasangan) user.pasangan = {};
+      inv.crate ??= {};
 
-      if (cd === 'pacarku' || cd === 'mylove') {
-        if (!user.pasangan.she)
-          return cht.reply('Kamu belum punya pasangan wkwkwkk');
+      let crates = Object.keys(inv.crate);
+      let hasCrate = crates.length > 0;
 
-        if (user.pasangan.status === 'gantung')
-          return cht.reply(
-            'Kamu masih menunggu jawaban dari seseorang, alias masih di gantung wkwkwk'
-          );
+      let txtcrate = hasCrate
+        ? `📦 *Crate yang kamu punya*\n\n` +
+          crates.map((a) => `• ${a} (${inv.crate[a]})`).join('\n') +
+          `\n\nContoh:\n${cht.prefix + cht.cmd} ${crates[0]} 3`
+        : `❗ Kamu belum punya crate apapun`;
 
-        let pacarnya = user.pasangan.she;
-        let sejak = user.pasangan.waktuTerima;
+      if (!hasCrate) return cht.reply(txtcrate);
 
-        let teks = `乂  *P A S A N G A N  K A M U*\n\n`;
-        teks += `Kamu sudah pacaran dengan @${pacarnya.split('@')[0]} sejak \`${sejak}\`\n\n`;
-        teks += `🥰 Semoga langgeng sampai pelaminan yah...`;
+      let [t, a] = (args || '').toLowerCase().split(/\s+/);
+      if (!t) return cht.reply(txtcrate);
 
-        return Exp.sendMessage(
-          id,
-          {
-            text: teks,
-            contextInfo: {
-              ...contextInfo,
-              mentionedJid: [pacarnya],
-            },
-          },
-          { quoted: cht }
-        );
-      }
+      let pool = cfg.rpg.cratePool?.[t];
+      if (!pool) return cht.reply('⚠️ Crate tidak ditemukan.');
 
-      if (cd === 'gembok') {
-        let act = ['on', 'off'];
-        let action = args.toLowerCase();
+      let owned = inv.crate[t] || 0;
+      if (owned < 1) return cht.reply('❗ Crate kamu kurang.');
 
-        if (!act.includes(action))
-          return cht.reply(
-            '*❗ Pilih salah satu dari on/off*\n\n' +
-              '- on\n> Membuat seseorang ga bisa nembak kamu\n' +
-              '- off\n> Buka hati lagi'
-          );
+      let n = a === 'all' ? owned : Math.min(+a || 1, owned);
 
-        if (action === 'on') {
-          if (user.pasangan.gembok === true)
-            return cht.reply('Kamu udah menutup hati sebelumnya...');
+      if (n < 1) return cht.reply('❗ Jumlah tidak valid.');
 
-          if (user.pasangan.she)
-            return cht.reply('💔 Putusin pacarmu dulu kalau mau kunci hati');
+      let results = {};
+      let bonusScore = 0;
 
-          user.pasangan = {
-            she: null,
-            level: 0,
-            gembok: true,
-            status: null,
-            waktuNembak: null,
-            waktuTerima: null,
-          };
-          return cht.reply(
-            '♥️ Kini kamu telah nutup pintu hati mu, dan ga bakal nerima siapapun...'
-          );
-        } else {
-          if (user.pasangan.gembok === false)
-            return cht.reply('Hati Kamu sudah terbuka sebelumnya...');
+      let txt = `📦 *OPEN CRATE — ${t.toUpperCase()} x${n}*\n\n🎉 Hadiah yang kamu dapet:\n`;
 
-          user.pasangan = {};
+      while (n--) {
+        let r = Math.random() * 100,
+          s = 0,
+          o;
 
-          return cht.reply(
-            '♥️ Kini kamu telah membuka pintu hati untuk siapapun lagi...'
-          );
-        }
-      }
+        for (let i of pool)
+          if ((s += i.rate) >= r) {
+            o = i;
+            break;
+          }
 
-      if (cd === 'tembak') {
-        let she = cht.mention[0];
+        if (!o?.item) continue;
 
-        if (!she) return cht.reply('*❗ Tag orang yang ingin kamu tembak*');
+        let q = ((Math.random() * (o.max - o.min + 1)) | 0) + o.min;
+        let k = o.item;
 
-        let sheMen = she.split('@')[0];
+        if (o.rate <= 15) bonusScore += 3;
+        else if (o.rate <= 30) bonusScore += 2;
+        else bonusScore += 1;
 
-        if (!Data.users[sheMen]) Data.users[sheMen] = {};
+        if (k === 'premium') {
+          usr.premium ??= {};
+          usr.premium.time =
+            Math.max(Date.now(), usr.premium.time || 0) + q * 60000;
 
-        let sheData = Data.users[sheMen];
-
-        if (she === sender)
-          return cht.reply(
-            'Ngapain nembak diri sendiri, ga ada yg mau yah? wkwkw'
-          );
-
-        if (user.pasangan?.status === 'gantung')
-          return cht.reply('Kamu sedang menunggu jawaban dari seseorang');
-
-        if (she === user.pasangan.she)
-          return cht.reply('Kamu sudah pacaran sama dia');
-
-        if (user.pasangan.she)
-          return cht.reply('Kamu udah punya pacar, jangan selingkuh dongo');
-
-        if (sheData.pasangan?.gembok === true)
-          return cht.reply(
-            '💔 Dia sedang nutup pintu hatinya, jadi ga bisa...'
-          );
-
-        if (sheData.pasangan?.status === 'gantung')
-          return cht.reply(
-            'Dia udah di tembak oleh seseorang, tapi belum memberi jawaban'
-          );
-
-        if (sheData.pasangan?.status === 'pacaran')
-          return cht.reply('Dia sudah punya pacar...');
-
-        let klmt = [
-          `💘 @${she.split('@')[0]}, aku nggak pandai merangkai kata... tapi aku tau aku mau kamu ada di sisiku. Mau nggak jadi pasangan aku? ❤️`,
-          `🥺 @${she.split('@')[0]}, setiap hari aku kepikiran kamu... sekarang aku berani ngomong, maukah kamu jadi pacarku? 💕`,
-          `Kamu tau ga @${she.split('@')[0]}?, kamu itu alasanku senyum tiap hari. Boleh nggak aku jadi alasannya kamu juga? 💖`,
-          `@${she.split('@')[0]}, aku nggak janji sempurna... tapi aku janji setia. Mau nggak kamu jadi pasangan aku? 💞`,
-        ];
-
-        let kalimat = klmt[Math.floor(Math.random() * klmt.length)];
-        let now = new Date().toLocaleString('id-ID', {
-          timeZone: 'Asia/Jakarta',
-        });
-
-        user.pasangan = {
-          she,
-          level: 0,
-          gembok: false,
-          status: 'gantung',
-          penembak: true,
-          waktuNembak: now,
-          waktuTerima: null,
-        };
-
-        sheData.pasangan = {
-          she: sender,
-          level: 0,
-          gembok: false,
-          status: 'gantung',
-          penembak: false,
-          waktuNembak: now,
-          waktuTerima: null,
-        };
-
-        return cht.reply(kalimat, {
-          mentions: [she],
-        });
-      }
-
-      if (cd === 'terima') {
-        let mention = cht.mention[0];
-
-        if (!mention) return cht.reply('*❗ Tag atau cht.reply target*');
-
-        if (mention === sender)
-          return replt('Tag orang yang nembak kamu, malah tag diri sendiri');
-
-        if (user.pasangan?.status !== 'gantung')
-          return cht.reply('Ga ada yang nembak kamu wkwkwk');
-
-        if (user.pasangan.penembak)
-          return cht.reply(`Tunggu dia yang ngetik \`.${cht.cmd}\``);
-
-        let now = new Date().toLocaleString('id-ID', {
-          timeZone: 'Asia/Jakarta',
-        });
-        let she = user.pasangan.she;
-        let sheData = Data.users[she.split('@')[0]];
-
-        if (mention !== she)
-          return cht.reply('Dia bukan orang yang nembak kamu wkwkwk');
-
-        user.pasangan.status = 'pacaran';
-        user.pasangan.waktuTerima = now;
-
-        if (sheData?.pasangan) {
-          sheData.pasangan.status = 'pacaran';
-          sheData.pasangan.waktuTerima = now;
+          results[`⭐ Premium (${q}m)`] =
+            (results[`⭐ Premium (${q}m)`] || 0) + 1;
+          continue;
         }
 
-        return cht.reply(
-          `💞 Kini kamu resmi pacaran dengan @${she.split('@')[0]}`,
-          {
-            mentions: [she],
-          }
-        );
-      }
+        if (k.startsWith('crate_')) {
+          let x = k.slice(6);
+          inv.crate[x] = (inv.crate[x] || 0) + q;
 
-      if (cd === 'tolak') {
-        if (user.pasangan?.status !== 'gantung')
-          return cht.reply('Ga ada yang nembak kamu wkkkwkwkk');
-
-        if (user.pasangan.penembak)
-          return cht.reply(`Tunggu dia yang ngetik \`.${cht.cmd}\``);
-
-        let she = user.pasangan.she;
-        let sheData = Data.users[she.split('@')[0]];
-
-        user.pasangan = {};
-        if (sheData?.pasangan) sheData.pasangan = {};
-
-        return cht.reply(`💔 Kamu menolak cinta dari @${she.split('@')[0]}`, {
-          mentions: [she],
-        });
-      }
-
-      if (cd === 'ikhlaskan') {
-        if (user.pasangan?.status !== 'gantung')
-          return cht.reply('Kamu tidak sedang menunggu jawaban dari siapapun');
-
-        if (user.pasangan.status === 'pacaran')
-          return cht.reply(
-            'Kamu udah pacaran dengan dia, berarti kamu ga di gantung'
-          );
-
-        let she = user.pasangan.she;
-        let sheData = Data.users[she.split('@')[0]];
-
-        user.pasangan = {};
-        if (sheData?.pasangan) sheData.pasangan = {};
-
-        return cht.reply(
-          `Karena @${she.split('@')[0]} tidak memberikan jawaban nya, dan kamu putuskan untuk mengikhlaskannya...`,
-          {
-            mentions: [she],
-          }
-        );
-      }
-
-      if (cd === 'putus') {
-        if (!user.pasangan.she)
-          return cht.reply('Kamu belum punya pacar wkwkwk');
-
-        let she = user.pasangan.she;
-        let sheData = Data.users[she.split('@')[0]];
-
-        let exName = `@${she.split('@')[0]}`;
-
-        user.pasangan = {};
-
-        if (sheData?.pasangan) {
-          sheData.pasangan = {};
+          results[`📦 ${x}`] = (results[`📦 ${x}`] || 0) + q;
+          continue;
         }
 
-        return cht.reply(
-          `💔 Kamu resmi putus dengan ${exName}.\nGapapa, jodoh ga kemana kok :)`,
-          {
-            mentions: [she],
-          }
-        );
+        (k in usr ? usr : inv)[k] = ((k in usr ? usr[k] : inv[k]) || 0) + q;
+
+        let icon =
+          k === 'coins'
+            ? '💰'
+            : k === 'diamond'
+              ? '💎'
+              : k === 'gold'
+                ? '🥇'
+                : k === 'iron'
+                  ? '⛏️'
+                  : k === 'flow'
+                    ? '🔥'
+                    : k === 'potion'
+                      ? '🧪'
+                      : '🎁';
+
+        results[`${icon} ${k}`] = (results[`${icon} ${k}`] || 0) + q;
       }
+
+      inv.crate[t] -= Math.min(inv.crate[t], +a || 1, owned);
+
+      for (let [k, v] of Object.entries(results)) txt += `• ${k} +${v}\n`;
+
+      txt += `\n`;
+
+      let mood =
+        bonusScore >= 10
+          ? `Gila sih… hoki banget kamu hari ini ༎ຶ⁠‿⁠༎ຶ`
+          : bonusScore >= 6
+            ? `Lumayan hoki juga ya (⁠｡⁠•̀⁠ᴗ⁠-⁠)⁠✧`
+            : bonusScore >= 3
+              ? `Masih aman lah ʕ⁠´⁠•⁠ ⁠ᴥ⁠•̥⁠\`⁠ʔ`
+              : `Gapapa ya cuma dapet itu… coba lagi nanti (⁠ ⁠；⁠∀⁠；⁠)`;
+
+      txt += `Selamat ya~ ✨\n${mood}`;
+
+      await func.inventory.set(sender, inv);
+      await func.archiveMemories.set(sender, usr);
+
+      Exp.sendMessage(id, { text: txt }, { quoted: cht });
     }
   );
-
-  //
 }

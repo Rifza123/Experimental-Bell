@@ -3,6 +3,8 @@ const axios = 'axios'.import();
 
 /*!-======[ Function Imports ]======-!*/
 const { mediafireDl } = await (fol[0] + 'mediafire.js').r();
+const { processMedia } = await './toolkit/ffmpeg.js'.r();
+const fs = 'fs'.import();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -75,8 +77,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
-      cmd: ['tiktok', 'tiktokdl', 'tt'],
-      listmenu: ['tiktok', 'ttdl'],
+      cmd: [
+        'tiktok',
+        'tiktokdl',
+        'tt',
+        'ttaudio',
+        'tiktokaudio',
+        'ttvn',
+        'tiktokvn',
+      ],
+      listmenu: ['tiktok', 'tiktokaudio'],
       tag: 'downloader',
       urls: {
         formats: ['tiktok', 'douyin'],
@@ -87,6 +97,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     async ({ urls }) => {
       const _key = keys[sender];
       await cht.edit(infos.messages.wait, _key);
+      let isAudio = /^(vn|audio)/.test(cht.cmd);
       let data = (
         await fetch(
           api.xterm.url +
@@ -128,7 +139,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await Exp.sendMessage(id, info, { quoted: cht });
       await cht.edit(infos.messages.sending, _key);
       let type = data.type;
-      if (type == 'image') {
+      if (!isAudio && type == 'image') {
         for (let image of data.media) {
           await Exp.sendMessage(
             id,
@@ -136,7 +147,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
             { quoted: cht }
           );
         }
-      } else if (type == 'video') {
+      }
+      if (!isAudio && type == 'video') {
         await Exp.sendMessage(
           id,
           { video: { url: data.media[1].url } },
@@ -145,7 +157,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
       }
       await Exp.sendMessage(
         id,
-        { audio: { url: data.audio.url }, mimetype: 'audio/mpeg' },
+        {
+          audio: { url: data.audio.url },
+          mimetype: 'audio/mpeg',
+          ptt: cht.cmd.includes('vn'),
+        },
         { quoted: cht.reaction || cht }
       );
     }
@@ -295,7 +311,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
-      cmd: ['ytmp3', 'ytm4a', 'play', 'ytmp4', 'playvn'],
+      cmd: [
+        'ytmp3',
+        'ytm4a',
+        'play',
+        'ytmp4',
+        'playvn',
+        'dlvlink',
+        'yts',
+        'ytsearch',
+      ],
       listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
       tag: 'downloader',
       badword: true,
@@ -304,49 +329,123 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async ({ args, urls }) => {
       const _key = keys[sender];
+      let isDl = cht.cmd == 'dlvlink';
+      let isYts = ['yts', 'ytsearch', 'play'].includes(cht.cmd);
       let q = urls?.[0] || args || null;
+      let [dlink, json] = args.split('|||||');
+      let item = json ? JSON.parse(json) : {};
       if (!q) return cht.reply('Harap sertakan url/judul videonya!');
       try {
-        await cht.edit('Searching...', _key);
-        let search = (
+        if (!isDl) {
+          await cht.edit('Searching...', _key);
+          let search = (
+            await fetch(
+              `${api.xterm.url}/api/search/youtube?query=${q}&key=${api.xterm.key}`
+            ).then((a) => a.json())
+          ).data;
+          item = search.items[0];
+          if (cfg.button && isYts) {
+            let imageMessage = await func.uploadToServer(item.thumbnail);
+            let paramJson = {
+              title: `🔎Click and see all search results➡️`,
+              has_multiple_buttons: true,
+              sections: search.items.map((v, i) => ({
+                title: `#${i + 1}. ${v.title}`,
+                highlight_label: `${v.duration}`,
+                rows: [
+                  {
+                    title: 'Download Audio/M4A 🎵',
+                    description: 'Audio Biasa',
+                    id: `.ytm4a ${v.url}`,
+                  },
+                  {
+                    title: 'Download Audio/WAV 🎙️',
+                    description: 'Voice Note',
+                    id: `.playvn ${v.url}`,
+                  },
+                  {
+                    title: 'Download Audio/MP4 📹',
+                    description: 'Video',
+                    id: `.ytmp4 ${v.url}`,
+                  },
+                  {
+                    title: 'Download Audio/MP3 💽',
+                    description: 'Audio MP3 (dalam bentuk dokumen)',
+                    id: `.ytmp3 ${v.url}`,
+                  },
+                ],
+              })),
+            };
+
+            let _m = {
+              interactiveMessage: {
+                header: {
+                  title: '',
+                  imageMessage,
+                  hasMediaAttachment: true,
+                },
+                body: {
+                  text: `🔍 YouTube Search\n${item.title}`.font('bold'),
+                },
+
+                footer: {
+                  text: `👤 Channel: ${item.author?.name}\n⏱ Duration: ${item.duration}\n📅 Rilis: ${item.publishedAt}\n👁️ Views: ${item.viewCount.toLocaleString()}\n🔗 ${item.url}`,
+                },
+                nativeFlowMessage: {
+                  buttons: [
+                    {
+                      name: 'single_select',
+                      buttonParamsJson: '{"has_multiple_buttons":true}',
+                    },
+                    {
+                      name: 'single_select',
+                      buttonParamsJson: paramJson.String(),
+                    },
+                  ],
+                },
+                contextInfo: {
+                  stanzaId: cht.key.id,
+                  participant: cht.key.participant,
+                  quotedMessage: cht,
+                },
+              },
+            };
+
+            return Exp.relayMessage(cht.id, _m, {});
+          }
+        }
+        let data = (
           await fetch(
-            `${api.xterm.url}/api/search/youtube?query=${q}&key=Bell409`
+            api.xterm.url +
+              '/api/downloader/youtube?key=' +
+              api.xterm.key +
+              '&url=https://www.youtube.com/watch?v=' +
+              item.id +
+              '&type=' +
+              (cht.cmd === 'ytmp4' ? 'mp4' : 'mp3')
           ).then((a) => a.json())
         ).data;
-        let item = search.items[0];
-        if (cfg.button && cht.cmd == 'play') {
-          let imageMessage = await func.uploadToServer(item.thumbnail);
+
+        if (cfg.button && !isDl && cht.cmd == 'ytmp4') {
+          let downloads = data?.downloads || [];
+          let imageMessage = await func.uploadToServer(data.thumb);
           let paramJson = {
-            title: `🔎Click and see all search results➡️`,
+            title: `📥 Pilih format download`,
             has_multiple_buttons: true,
-            sections: search.items.map((v, i) => ({
-              title: `#${i + 1}. ${v.title}`,
-              highlight_label: `${v.duration}`,
-              rows: [
-                {
-                  title: 'Download Audio/M4A 🎵',
-                  description: 'Audio Biasa',
-                  id: `.ytm4a ${v.url}`,
-                },
-                {
-                  title: 'Download Audio/WAV 🎙️',
-                  description: 'Voice Note',
-                  id: `.playvn ${v.url}`,
-                },
-                {
-                  title: 'Download Audio/MP4 📹',
-                  description: 'Video',
-                  id: `.ytmp4 ${v.url}`,
-                },
-                {
-                  title: 'Download Audio/MP3 💽',
-                  description: 'Audio MP3 (dalam bentuk dokumen)',
-                  id: `.ytmp3 ${v.url}`,
-                },
-              ],
-            })),
+            sections: [
+              {
+                title: `🎬 Video (MP4)`,
+                rows: downloads.map((v) => ({
+                  title:
+                    `${v.resolution} ${v.ext.toUpperCase()} ${v.hasAudio ? '🔊' : ''}`.trim(),
+                  description: `ITag: ${v.format_id} • FPS: ${v.fps} • ${v.note || ''}`,
+                  id: `.dlvlink ${v.dlink}|||||${JSON.stringify(item)}`,
+                })),
+              },
+            ],
           };
 
+          // compose interactive message
           let _m = {
             interactiveMessage: {
               header: {
@@ -355,11 +454,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 hasMediaAttachment: true,
               },
               body: {
-                text: `🔍 YouTube Search\n${item.title}`.font('bold'),
+                text: `🎞 ${data.caption}`.font('bold'),
               },
-
               footer: {
-                text: `👤 Channel: ${item.author?.name}\n⏱ Duration: ${item.duration}\n📅 Rilis: ${item.publishedAt}\n👁️ Views: ${item.viewCount.toLocaleString()}\n🔗 ${item.url}`,
+                text: `⏱ Durasi: ${data.duration}\n📺 Source: YouTube\n🔗 ${data.link}`,
               },
               nativeFlowMessage: {
                 buttons: [
@@ -381,35 +479,36 @@ export default async function on({ cht, Exp, store, ev, is }) {
             },
           };
 
-          Exp.relayMessage(cht.id, _m, {});
+          return Exp.relayMessage(cht.id, _m, {});
         }
 
         await cht.edit('Downloading...', _key);
-        let data = (
-          await fetch(
-            api.xterm.url +
-              '/api/downloader/youtube?key=' +
-              'Bell409' +
-              '&url=https://www.youtube.com/watch?v=' +
-              item.id +
-              '&type=' +
-              (cht.cmd === 'ytmp4' ? 'mp4' : 'mp3')
-          ).then((a) => a.json())
-        ).data;
 
+        let saved = isDl
+          ? await func.saveToFile(dlink + '&isBaileys=true')
+          : false;
+        isDl && (await cht.edit('Converting...', _key));
+        let converted = saved
+          ? await processMedia(saved, ['-c:v', 'libx264', '-an'], 'mp4')
+          : null;
+        console.log(converted);
         let audio = {
-          [cht.cmd === 'ytmp4'
+          [cht.cmd === 'ytmp4' || isDl
             ? 'video'
             : cht.cmd === 'ytmp3'
               ? 'document'
-              : 'audio']: { url: data.dlink },
+              : 'audio']: isDl
+            ? { url: converted }
+            : await func.getBuffer(data.dlink),
           mimetype:
-            cht.cmd === 'ytmp4'
+            isDl || cht.cmd === 'ytmp4'
               ? 'video/mp4'
               : cht.cmd === 'ytmp3'
                 ? 'audio/mp3'
                 : 'audio/mpeg',
-          fileName: item.title + (cht.cmd === 'ytmp4' ? '.mp4' : '.mp3'),
+          fileName:
+            item.title +
+            (cht.cmd === 'ytmp4' || cht.cmd == 'dlvlink' ? '.mp4' : '.mp3'),
           ptt: cht.cmd === 'playvn',
           contextInfo: {
             externalAdReply: {
@@ -426,8 +525,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
             },
           },
         };
+        console.log(audio);
         await cht.edit('Sending...', _key);
-        await Exp.sendMessage(id, audio, { quoted: cht.reaction || cht });
+        await Exp.sendMessage(cht.id, audio, { quoted: cht.reaction || cht });
+        await cht.edit('Success...', _key);
+        //  fs.unlinkSync(saved);
+        //fs.unlinkSync(converted);
       } catch (e) {
         console.log(e);
         cht.reply("Can't download from that url!");

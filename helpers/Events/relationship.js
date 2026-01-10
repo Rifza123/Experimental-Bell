@@ -328,18 +328,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: ['confess', 'confes', 'menfess', 'menfess'],
       listmenu: ['confess'],
       tag: 'relationship',
+      args: exconfes,
     },
     async ({ args }) => {
-      if (!args) {
-        let { key } = await cht.reply(exconfes);
-        let qcmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
-        qcmds[key.id] = {
-          emit: `${cht.cmd}`,
-          exp: Date.now() + 30000,
-          accepts: [],
-        };
-        memories.setItem(sender, 'quotedQuestionCmd', qcmds);
-      }
       const _key = keys[sender];
       const [AB, BC, ...CD] = args?.split('|') || [];
       let _name = AB?.trim()?.toLowerCase();
@@ -357,14 +348,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
           */
         case 'block':
           try {
-            if (!BC) {
-              memories.setItem(sender, 'questionCmd', {
+            if (!BC)
+              return cht.question('Kirimkan code nya!', {
                 emit: `${cht.cmd} block|`,
-                exp: Date.now() + 30000,
-                accepts: [],
               });
-              return cht.reply('Kirimkan code nya!', _key);
-            }
             if (!_Sender)
               return cht.reply('Code salah atau mungkin sudah kadaluarsa');
             if (!(await energy(10))) return;
@@ -389,14 +376,10 @@ _Untuk membuka blokir bisa mengetik .confess unblock|code atau nomor telepon_
           */
         case 'unblock':
           try {
-            if (!BC) {
-              memories.setItem(sender, 'questionCmd', {
+            if (!BC)
+              return cht.question('Kirimkan code/nomor nya!', {
                 emit: `${cht.cmd} unblock|`,
-                exp: Date.now() + 30000,
-                accepts: [],
               });
-              return cht.reply('Kirimkan code/nomor nya!', _key);
-            }
             let Sender = Boolean(_Sender)
               ? _Sender
               : !isNaN(trgt) || String(trgt).length > 6
@@ -566,14 +549,8 @@ _Untuk membuka blokir bisa mengetik .confess unblock|code atau nomor telepon_
         case 'balas':
         case 'reply':
           {
-            if (!BC) {
-              memories.setItem(sender, 'questionCmd', {
-                emit: `${cht.cmd} balas|`,
-                exp: Date.now() + 60000,
-                accepts: [],
-              });
-              return cht.reply('Kirimkan code nya!', _key);
-            }
+            if (!BC)
+              return cht.question(TEXTTTT, { emit: `${cht.cmd} balas|` });
             if (!_Sender)
               return cht.reply('Code salah atau mungkin sudah kadaluarsa');
             let t1 = _Sender.split('@')[0] + from.sender;
@@ -600,14 +577,10 @@ _Untuk membuka blokir bisa mengetik .confess unblock|code atau nomor telepon_
             if (isFound.reply)
               return cht.reply('Pesan tersebut sudah anda balas!');
 
-            if (!_message) {
-              memories.setItem(sender, 'questionCmd', {
+            if (!_message)
+              return cht.question('Silahkan tuliskan pesan balasannya', {
                 emit: `${cht.cmd} balas|${trgt}|`,
-                exp: Date.now() + 120000,
-                accepts: [],
               });
-              return cht.reply('Silahkan tuliskan pesan balasannya');
-            }
 
             await memories.get(t1); //detect and added
             let { quoted, type } = ev.getMediaType();
@@ -661,14 +634,10 @@ ${_message}
         case 'connect':
           {
             try {
-              if (!BC) {
-                memories.setItem(sender, 'questionCmd', {
+              if (!BC)
+                return cht.question('Kirimkan code/nomor nya!', {
                   emit: `${cht.cmd} connect|`,
-                  exp: Date.now() + 30000,
-                  accepts: [],
                 });
-                return cht.reply('Kirimkan code/nomor nya!', _key);
-              }
               let Sender = Boolean(_Sender)
                 ? _Sender
                 : !isNaN(trgt) || String(trgt).length > 6
@@ -875,24 +844,24 @@ _Kami akan menunggu balasan anda selama 5 menit_
           let isOnWhatsapp = BC && (await Exp.onWhatsApp(trgt)).length > 0;
           if (cht.isQuestionCmd) {
             if (!BC) {
-              memories.setItem(sender, 'questionCmd', {
-                emit: `${cht.cmd} ${AB}|`,
-                exp: Date.now() + 120000,
-                accepts: [],
-              });
-              return cht.reply(
-                'Kirimkan nomor target yang akan dikirimi pesan rahasia!'
+              return cht.question(
+                'Kirimkan nomor target yang akan dikirimi pesan rahasia!',
+                {
+                  emit: `${cht.cmd} ${AB}|`,
+                  exp: Date.now() + 120000,
+                  accepts: [],
+                }
               );
             } else if (!_message) {
               if (!isOnWhatsapp)
                 return cht.reply('Nomor tersebut tidak terdaftar di whatsapp!');
-              memories.setItem(sender, 'questionCmd', {
-                emit: `${cht.cmd} ${AB}|${BC}|`,
-                exp: Date.now() + 120000,
-                accepts: [],
-              });
-              return cht.reply(
-                'Baik silahkan tulis pesan yang akan dikirimkan\n_Anda juga bisa menyertakan media seperti video/gambar dengan mereply pesan ini_'
+              return cht.question(
+                'Baik silahkan tulis pesan yang akan dikirimkan\n_Anda juga bisa menyertakan media seperti video/gambar dengan mereply pesan ini_',
+                {
+                  emit: `${cht.cmd} ${AB}|${BC}|`,
+                  exp: Date.now() + 120000,
+                  accepts: [],
+                }
               );
             }
           }
@@ -1012,14 +981,13 @@ _Code ${code} akan dihapus dalam kurun waktu ${time}_
       trial: false,
     },
     async ({ args }) => {
-      if (!args) {
-        memories.setItem(sender, 'questionCmd', {
+      if (!args)
+        return cht.question('Silahkan input code nya!', {
           emit: `${cht.cmd}`,
           exp: Date.now() + 30000,
           accepts: [],
         });
-        return cht.reply('Silahkan input code nya!');
-      }
+
       let Sender = findSenderCodeConfess(args.trim().toUpperCase());
       let user = memories.get(Sender);
 

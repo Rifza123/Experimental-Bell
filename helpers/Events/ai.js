@@ -53,8 +53,14 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
             const eventData = eventString.match(/data: (.+)/);
 
             if (eventData) {
-              const data = JSON.parse(eventData[1]);
-              console.log(data);
+              let data;
+              try {
+                data = JSON.parse(eventData[1]);
+                console.log(data);
+              } catch {
+                data = {};
+                await cht.reply(JSON.stringify(eventData, 0, 2));
+              }
               switch (data.status) {
                 case 'searching':
                 case 'separating':
@@ -246,7 +252,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         let loras = loraPart
           ? loraPart
               .split(',')
-              .map((a) => ({ [a.split(':')[0]]: a.split(':')[1] || 0.65 }))
+              .map((a) => ({ [a.split(':')[0]]: a.split(':')[1] || 0.7 }))
           : [];
         let as = model.split(']')[1];
         let asp = [
@@ -349,7 +355,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           sampling: 'DPM++ 2M Karras',
           samplingSteps: 30,
           imageStrength: json.imageStrength || 0.45,
-          cfgScale: json.cfgScale || 8.5,
+          cfgScale: json.cfgScale || 8,
+          hiresFix: true,
           image: image ? await func.minimizeImage(image) : null,
         };
 
@@ -856,53 +863,54 @@ ${loraText}
     },
     async ({ args }) => {
       await cht.edit(infos.messages.wait, keys[sender]);
-      let url = api.xterm.url +
-              '/api/text2img/dalle3?prompt=' +
-              args +
-              '&key=' +
-              api.xterm.key
+      let url =
+        api.xterm.url +
+        '/api/text2img/dalle3?prompt=' +
+        args +
+        '&key=' +
+        api.xterm.key;
       if (cfg.button) {
-          let imageMessage = await func.uploadToServer(url);
+        let imageMessage = await func.uploadToServer(url);
 
-          let _m = {
-            interactiveMessage: {
-              header: {
-                title: '',
-                imageMessage,
-                hasMediaAttachment: true,
-              },
-              body: {
-                text: '🖌️Dalle 3'.font('bold'),
-              },
-              footer: {
-                text: `Prompt: ${args}`,
-              },
-              nativeFlowMessage: {
-                buttons: [
-                  {
-                    name: 'quick_reply',
-                    buttonParamsJson: {
-                      display_text: 'Re-Generate🔄 ',
-                      id: `.dalle3 ${args}`,
-                    }.String(),
-                  },
-                ],
-              },
-              contextInfo: {
-                stanzaId: cht.key.id,
-                participant: cht.key.participant,
-                quotedMessage: cht,
-              },
+        let _m = {
+          interactiveMessage: {
+            header: {
+              title: '',
+              imageMessage,
+              hasMediaAttachment: true,
             },
-          };
+            body: {
+              text: '🖌️Dalle 3'.font('bold'),
+            },
+            footer: {
+              text: `Prompt: ${args}`,
+            },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'quick_reply',
+                  buttonParamsJson: {
+                    display_text: 'Re-Generate🔄 ',
+                    id: `.dalle3 ${args}`,
+                  }.String(),
+                },
+              ],
+            },
+            contextInfo: {
+              stanzaId: cht.key.id,
+              participant: cht.key.participant,
+              quotedMessage: cht,
+            },
+          },
+        };
 
-          return Exp.relayMessage(cht.id, _m, {});
-        }
+        return Exp.relayMessage(cht.id, _m, {});
+      }
       await Exp.sendMessage(
         id,
         {
           image: {
-            url
+            url,
           },
           ai: true,
         },
@@ -924,6 +932,7 @@ ${loraText}
     },
     async ({ media }) => {
       let res = await GeminiImage(await func.minimizeImage(media), cht.q);
+      console.log({ res });
       cht.reply(res, { ai: true, replyAi: false });
     }
   );

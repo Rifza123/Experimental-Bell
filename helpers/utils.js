@@ -2,7 +2,7 @@ const { proto, getContentType, generateWAMessage } = 'baileys'.import();
 
 export default async function utils({ Exp, cht, is, store }) {
   try {
-    Data.preferences[cht.id] ??= {};
+    Data.preferences[cht?.id] ??= {};
     Data.setCmd ??= {};
 
     const { func } = Exp;
@@ -144,20 +144,7 @@ export default async function utils({ Exp, cht, is, store }) {
           message: {
             conversation: cht[cht.type]?.text,
           },
-          url: rtext
-            ? (
-                rtext?.match(/https?:\/\/[^\s)]+/g) ||
-                rtext?.match(
-                  /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
-                ) ||
-                []
-              ).map((url) =>
-                (url.startsWith('http') ? url : 'https://' + url).replace(
-                  /['"`]/g,
-                  ''
-                )
-              )
-            : [],
+          url: rtext ? func.parseLink(rtext) : [],
           mention: await Exp.func['getSender'](
             react?.participant ||
               react?.key?.participant ||
@@ -190,30 +177,23 @@ export default async function utils({ Exp, cht, is, store }) {
         cht.quoted?.[cht.quoted.type]?.text ||
         cht.quoted?.conversation ||
         false;
-      cht.quoted.url = cht.quoted.text
-        ? (
-            cht?.quoted?.text?.match(/https?:\/\/[^\s)]+/g) ||
-            cht?.quoted?.text?.match(
-              /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
-            ) ||
-            []
-          ).map((url) =>
-            (url.startsWith('http') ? url : 'https://' + url).replace(
-              /['"`]/g,
-              ''
-            )
-          )
-        : [];
+      cht.quoted.url = cht.quoted.text ? func.parseLink(cht?.quoted?.text) : [];
       cht.quoted.download = async () =>
         Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type);
       cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId;
-      cht.quoted.delete = async () =>
+      cht.quoted.delete = cht.quoted.del = async () =>
         Exp.sendMessage(cht.id, {
           delete: {
             ...(await store.loadMessage(cht.id, cht.quoted.stanzaId)).key,
             participant: cht.quoted.sender,
           },
         });
+      cht.quoted.key = {
+        remoteJid: cht.id,
+        fromMe: cht.quoted.sender.includes(Exp.number),
+        id: cht.quoted.stanzaId,
+        participant: cht.quoted.sender,
+      };
     }
 
     const args = cht?.msg?.trim()?.split(/ +/)?.slice(1);
@@ -232,11 +212,16 @@ export default async function utils({ Exp, cht, is, store }) {
           ?.replace(/[^0-9]/g, '');
         return jid && jid + from.sender === cht.sender;
       }) || is.me;
-
+    is.coowner = global.coowner.some((a) => {
+        const jid = String(a)
+          ?.split('@')[0]
+          ?.replace(/[^0-9]/g, '');
+        return jid && jid + from.sender === cht.sender;
+      })
     is.group = cht.id?.endsWith(from.group);
     const groupDb = is.group ? Data.preferences[cht.id] : {};
     if (is.group) {
-      const groupMetadata = await Exp.func.getGroupMetadata(cht.id, Exp);
+      const groupMetadata = await Exp.groupMetadata(cht.id);
       Exp.groupMetdata = groupMetadata;
       Exp.groupMembers = groupMetadata.participants;
       Exp.groupName = groupMetadata.subject;
@@ -250,20 +235,7 @@ export default async function utils({ Exp, cht, is, store }) {
         : {}
       : await memories.get(cht.sender, { is });
 
-    let url = cht?.msg
-      ? (
-          cht?.msg?.match(/https?:\/\/[^\s)]+/g) ||
-          cht?.msg?.match(
-            /(https?:\/\/)?[^\s]+\.(com|watch|net|org|it|xyz|id|co|io|ru|uk|kg|gov|edu|dev|tech|codes|ai|shop|me|info|online|store|biz|pro|aka|moe)(\/[^\s]*)?/gi
-          ) ||
-          []
-        ).map((url) =>
-          (url.startsWith('http') ? url : 'https://' + url).replace(
-            /['"`]/g,
-            ''
-          )
-        )
-      : [];
+    let url = cht?.msg ? func.parseLink(cht?.msg) : [];
 
     is.baileys = /^(3EB|BAE5|BELL409|Laurine|B1E)/.test(cht.key.id);
     is.botMention = cht?.mention?.includes(Exp.number);
@@ -292,11 +264,13 @@ export default async function utils({ Exp, cht, is, store }) {
       groupDb?.antitagall &&
       cht.mention?.length >= 5 &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       url?.length < 1;
     is.antibot =
       groupDb?.antibot &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       is.baileys &&
       is.botAdmin;
@@ -306,6 +280,7 @@ export default async function utils({ Exp, cht, is, store }) {
       url.some((a) => groupDb?.links?.some((b) => a.includes(b))) &&
       !is.me &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       is.botAdmin;
     is.antidelete =
@@ -313,6 +288,7 @@ export default async function utils({ Exp, cht, is, store }) {
       isDelete &&
       !is.me &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       !is.baileys;
     is.autosticker =
@@ -329,6 +305,7 @@ export default async function utils({ Exp, cht, is, store }) {
       }) &&
       !is.me &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       is.botAdmin &&
       !is.baileys;
@@ -338,11 +315,13 @@ export default async function utils({ Exp, cht, is, store }) {
       groupDb?.antitagsw &&
       !is.me &&
       !is.owner &&
+      !is.coowner &&
       !is.groupAdmins &&
       cht.type == 'groupStatusMentionMessage';
     is.antiImage =
       groupDb?.antiimg &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
@@ -350,6 +329,7 @@ export default async function utils({ Exp, cht, is, store }) {
     is.antiVideo =
       groupDb?.antivid &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
@@ -357,13 +337,15 @@ export default async function utils({ Exp, cht, is, store }) {
     is.antiSticker =
       groupDb?.antistk &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
       cht.type == 'sticker';
     is.antiStickerPack =
-      groupDb?.antistipck &&
+      groupDb?.antistcpck &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
@@ -371,6 +353,7 @@ export default async function utils({ Exp, cht, is, store }) {
     is.antiAudio =
       groupDb?.antiaudio &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
@@ -378,6 +361,7 @@ export default async function utils({ Exp, cht, is, store }) {
     is.antiVoice =
       groupDb?.antivoice &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
@@ -386,14 +370,50 @@ export default async function utils({ Exp, cht, is, store }) {
     is.antiDoc =
       groupDb?.antidoct &&
       !is.owner &&
+      !is.coowner &&
       !is.me &&
       !is.groupAdmins &&
       is.botAdmin &&
       cht.type == 'document';
-    is.blacklist = groupDb?.blacklist?.includes(cht.sender);
-    !is.owner && !is.me && !is.groupAdmins;
-    is.bancmd = cht.cmd && groupDb?.cmdblocked?.includes(cht.cmd);
-    !is.owner && !is.me;
+
+    is.antich = Boolean(
+      groupDb?.antich &&
+        !is.owner &&
+        !is.coowner &&
+        !is.me &&
+        !is.groupAdmins &&
+        is.botAdmin &&
+        (Object.values(cht?.message || {})?.[0]?.contextInfo
+          ?.forwardedNewsletterMessageInfo ||
+          is.url.find(
+            (a) => a.includes('whatsapp.com') && a.includes('/channel')
+          ))
+    );
+
+    is.bypassOnlyGC =
+      !is.group &&
+      (['confess', 'confessinfo'].includes(cht.cmd) ||
+        cht.memories?.confess?.sess?.acc);
+
+    is.blacklist =
+      groupDb?.blacklist?.includes(cht.sender) &&
+      !is.owner &&
+      !is.coowner &&
+      !is.me &&
+      !is.groupAdmins;
+    is.bancmd =
+      cht.cmd && groupDb?.cmdblocked?.includes(cht.cmd) && !is.owner && !is.coowner && !is.me;
+
+    is.spam =
+      groupDb?.antispam &&
+      !is.me &&
+      !is.owner &&
+      !is.coowner &&
+      !is.groupAdmins &&
+      is.group &&
+      Data.antispam?.[cht.id]?.[cht.sender] &&
+      Data.antispam[cht.id][cht.sender].count > 6 &&
+      Date.now() - Data.antispam[cht.id][cht.sender].time <= 10000;
     cht.reply = async function (text, etc = {}, quoted = { quoted: true }) {
       try {
         // kalo cfg.replyAi = true bakal ngubah balasan pake AI
@@ -516,6 +536,30 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
         groupDb.warn[jid][t].value++;
       }
       Data.preferences[cht.id] = groupDb;
+    };
+    cht.question = async (
+      text,
+      { emit, sender, exp, accepts, Keys, maxUse = 1 },
+      etc = {}
+    ) => {
+      try {
+        let { key } = await cht.reply(text, etc);
+        let qcmds =
+          memories.getItem(sender || cht.sender, 'quotedQuestionCmd') || {};
+        qcmds[key.id] = {
+          emit: emit || `${cht.cmd}`,
+          exp: exp || Date.now() + 60000,
+          Keys,
+          use: 0,
+          maxUse: Number(maxUse),
+          accepts: accepts || [],
+        };
+        memories.setItem(sender || cht.sender, 'quotedQuestionCmd', qcmds);
+        return qcmds[key.id];
+      } catch (e) {
+        console.error('cht.question', e);
+        return String(e);
+      }
     };
     return 'NEXT';
   } catch (error) {

@@ -523,6 +523,9 @@ Data.infos.owner = {
 - didYouMean <on/off>
 - energy_mode <on/off>
 - button <on/off>
+- inflasi <on/off>
+- remoteReaction <on/off>
+- linkpreview <on/off>
 
 _Example: .set public on_`,
 

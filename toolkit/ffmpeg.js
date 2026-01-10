@@ -13,49 +13,74 @@ const { PassThrough } = await 'stream'.import();
       ▪︎ https://termai.cc
 */
 
+import fs from 'fs';
+
 /**
- * Apply ffmpeg filter to media buffer
- * @param {Buffer} inputBuffer - media input
- * @param {string[]} args - array argumen filter ffmpeg (tanpa -i dan -f)
- * @param {string} format - output format (default: mp3, bisa: mp3, mp4, png, jpg, webp)
- * @returns {Promise<Buffer>}
+ * processMedia
+ * - input: Buffer | string (filepath)
+ * - output:
+ *    - return Buffer (default)
+ *    - atau tulis ke file jika outputPath diberikan
+ *
+ * @param {Buffer|string} input
+ * @param {string[]} args
+ * @param {string} format
+ * @param {string|null} outputPath
+ * @returns {Promise<Buffer|void>}
  */
-export async function processMedia(inputBuffer, args = [], format = 'mp3') {
+export async function processMedia(
+  input,
+  args = [],
+  format = 'mp3',
+  outputPath = null
+) {
   return new Promise((resolve, reject) => {
-    const inputStream = new PassThrough();
-    inputStream.end(inputBuffer);
+    let command;
+    if (typeof input == 'string')
+      outputPath = input.replace(
+        input.split('/').last(),
+        'output_' + input.split('/').last()
+      );
 
-    const outputStream = new PassThrough();
-    const chunks = [];
-
-    let command = ff(inputStream);
-
-    if (['png', 'jpg', 'jpeg', 'webp'].includes(format)) {
-      command = command.inputFormat('image2pipe');
+    if (Buffer.isBuffer(input)) {
+      const inputStream = new PassThrough();
+      inputStream.end(input);
+      command = ff(inputStream);
+    } else if (typeof input === 'string') {
+      if (!fs.existsSync(input)) {
+        return reject(new Error(`Input file not found: ${input}`));
+      }
+      command = ff(input);
+    } else {
+      return reject(new Error('Invalid input type (Buffer | filepath only)'));
     }
 
     if (Array.isArray(args) && args.length > 0) {
-      command = command.outputOptions(args);
+      command.outputOptions(args);
     }
 
     if (['png', 'jpg', 'jpeg', 'webp'].includes(format)) {
       command
-        .videoCodec('png')
+        .videoCodec(format === 'jpg' ? 'mjpeg' : format)
         .format('image2pipe')
         .outputOptions(['-frames:v', '1']);
-    } else if (['mp3', 'ogg'].includes(format)) {
-      command
-        .noVideo()
-        .audioCodec('libmp3lame')
-        .outputOptions(['-b:a', '128k', '-ar', '44100']);
-    } else if (['mp4', 'mov'].includes(format)) {
-      command.videoCodec('libx264').outputOptions(['-preset', 'fast']);
     } else {
       command.format(format);
     }
 
+    if (outputPath && typeof outputPath === 'string') {
+      command
+        .on('error', reject)
+        .on('end', () => resolve(outputPath))
+        .save(outputPath);
+      return;
+    }
+
+    const outputStream = new PassThrough();
+    const chunks = [];
+
     command
-      .on('error', (err) => reject(err))
+      .on('error', reject)
       .on('end', () => resolve(Buffer.concat(chunks)))
       .pipe(outputStream, { end: true });
 

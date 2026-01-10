@@ -545,6 +545,9 @@ Data.infos.owner = {
 - didYouMean <on/off>
 - energy_mode <on/off>
 - button <on/off>
+- inflasi <on/off>
+- remoteReaction <on/off>
+- linkpreview <on/off>
 
 _Example: .set public on_`,
 
@@ -1039,6 +1042,8 @@ Data.infos.interactive = {
   tagallKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak melakukan tagall/hidetag hingga peringatan terakhir!`,
   antiMediaWarn: `Anda terdeteksi mengirimkan <mediaType>. Harap ikuti peraturan disini untuk tidak mengirimkan <mediaType> di grub ini!`,
   antiMediaKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirimkan <mediaType> hingga peringatan terakhir!`,
+  antiChWarn: `Anda terdeteksi mengirimkan pesan/link channel, harap ikuti peraturan group untuk tidak mengirimkan pesan/link channel!`,
+  antiChKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirimkan pesan/link channel! hingga peringatan terakhir.`,
   limitExpired: (formatTimeDur, resetOn) =>
     `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`,
   notOwner: `Maaf, males nanggepin`,

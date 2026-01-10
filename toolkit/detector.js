@@ -1,9 +1,9 @@
 const chokidar = 'chokidar'.import();
 const chalk = 'chalk'.import();
 const path = 'path'.import();
+const { exec } = 'child'.import();
 const fs = 'fs'.import();
 let { JadwalSholat } = await (fol[2] + 'jadwalsholat.js').r();
-global.keys['livechart'] ??= await (fol[2] + 'livechart.js').r();
 const cacheSent = new Map();
 const { default: moment } = await 'moment'.import();
 const {
@@ -17,7 +17,7 @@ const conf = fol[3] + 'config.json';
 const db = fol[5];
 let config = JSON.parse(fs.readFileSync(conf));
 let keys = Object.keys(config);
-
+let livechart = await (fol[2] + 'livechart.js').r();
 let onreload = false;
 Data.notify = Data.notify || {
   every: 60,
@@ -28,6 +28,7 @@ Data.queueMetadata ??= [];
 
 export default async function detector({ Exp, store }) {
   const { func } = Exp;
+  livechart.default({ Exp });
   const reloadData = async (files) => {
     try {
       for (const [key, filePath] of Object.entries(files)) {
@@ -139,9 +140,11 @@ export default async function detector({ Exp, store }) {
   /*!-======[ Toolkit Update detector ]======-!*/
   setupWatcher(path.resolve(fol[0], '**/*.js'), 1000, async (filePath) => {
     try {
+      let groupMetadata = Exp.func.groupMetadata;
       Exp.func = new (await `${fol[0]}func.js`.r()).func({
         Exp,
         store,
+        groupMetadata,
       });
       console.log(chalk.green('Toolkit reloaded successfully!'));
     } catch (error) {
@@ -386,21 +389,27 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
   async function saveData(name) {
     try {
-      let data = name == 'cmd' ? Data.use.cmds : Data[name];
+      let data = name === 'cmd' ? Data.use.cmds : Data[name];
+
       if (Data.mongo) {
         await Data.mongo.db.set(name, data);
-      } else {
-        const filepath =
-          (['users', 'inventories'].includes(name) ? fol[6] : db) +
-          name +
-          '.json';
-        await fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
+        return;
       }
+
+      const baseDir = ['users', 'inventories'].includes(name) ? fol[6] : db;
+      const filepath = path.resolve(baseDir, `${name}.json`);
+
+      const raw = JSON.stringify(data);
+      const size = Buffer.byteLength(raw);
+
+      const content = size > 50 * 1024 ? raw : JSON.stringify(data, null, 2);
+
+      await fs.promises.writeFile(filepath, content);
     } catch (e) {
       console.error('Error in detector.js > saveData:', e);
+      throw e;
     }
   }
-
   async function updateHargaInvestasi() {
     try {
       const inflasiAktif = cfg.rpg?.inflasi;
@@ -502,12 +511,13 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
         },
       };
 
-      const shopFile = path.join(fol[5], 'ShopRPG.json');
+      const shopFile = path.resolve(fol[5], 'ShopRPG.json');
       fs.writeFileSync(shopFile, JSON.stringify(Data.ShopRPG, null, 2));
 
       // console.log("✅ updateHargaInvestasi, harga diperbarui sesuai stok.");
     } catch (e) {
       console.error('❌ Error in updateHargaInvestasi:', e);
+      throw new Error(e);
     }
   }
   async function executeSchedules() {
@@ -607,6 +617,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     }
   }
   async function livechartNotifier() {
+    if (!('livechart' in Data)) return;
     const data = Data.livechart || [];
     const now = moment().tz('Asia/Jakarta');
 
@@ -817,10 +828,68 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       await Exp.sendMessage(own, {
         text,
       });
+      throw new Error(e);
     }
   }
 
-  //initialize available setup group jadwalsholat
+  async function cekSewa() {
+    try {
+      const now = Date.now();
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+
+      for (const id of Object.keys(Data.sewa)) {
+        const d = Data.sewa[id];
+        if (!d?.exp) continue;
+
+        if (d.exp > now) {
+          if (d.granceUntil) delete d.granceUntil;
+          d.status = 'active';
+          continue;
+        }
+
+        if (!d.graceUntil) {
+          d.graceUntil = now + ONE_DAY;
+          d.status = 'grace';
+          let { participants } = await func.getGroupMetadata(id, Exp);
+          await Exp.sendMessage(id, {
+            text:
+              `⏳ *Masa Sewa Berakhir*\n\n` +
+              `Sewa bot di grup ini telah *habis*.\n` +
+              `Saat ini grup masuk *masa suspend selama 1 hari*.\n\n` +
+              `📌 *Catatan penting:*\n` +
+              `• Selama masa suspend, bot *tidak dapat digunakan*\n` +
+              `• Silakan lakukan perpanjangan sebelum grace berakhir\n\n` +
+              `Jika masa grace habis dan belum diperpanjang,\n` +
+              `akses bot akan *dinonaktifkan sepenuhnya*.`,
+            mentions: participants.map(a => a.id),
+          });
+
+          continue;
+        }
+
+        if (d.graceUntil && now > d.graceUntil) {
+          if (d.status !== 'expired') {
+            d.status = 'expired';
+            let { participants } = await func.getGroupMetadata(id, Exp);
+            await Exp.sendMessage(id, {
+              text:
+                `⛔ *Sewa Berakhir Sepenuhnya*\n\n` +
+                `Masa suspend telah *habis* dan sewa bot *tidak diperpanjang*.\n\n` +
+                `❌ *Bot otomatis keluar dari grup ini!!*\n`,
+              footer: `💬 Silakan hubungi owner untuk melakukan perpanjangan.`,
+              mentions: participants.map(a => a.id),
+            });
+            await sleep(1000);
+            await func.metadata.delete(id);
+            await Exp.groupLeave(id);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error in detector.js > cekSewa:', e);
+    }
+  }
+
   let jdwl = {};
   Object.entries(Data.preferences)
     .filter(([a, b]) => a.endsWith(from.group) && b.jadwalsholat)
@@ -832,12 +901,35 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
   cfg.keyChecker ??= true;
   keys['detector'] = setInterval(async () => {
-    await sholat();
-    autoBackup();
-    await schedule();
-    await executeSchedules();
-    cfg.keyChecker && (await keyChecker());
-    livechartNotifier();
+    let total = 0;
+    const errors = [];
+    const success = [];
+
+    const safeExec = async (fn, label) => {
+      total++;
+      const name = label || fn.name || 'anonymous';
+      try {
+        await fn();
+        success.push(name);
+        return true;
+      } catch (err) {
+        errors.push({ name, msg: err.message });
+        return false;
+      }
+    };
+
+    await safeExec(sholat);
+    await safeExec(autoBackup);
+    await safeExec(schedule);
+    await safeExec(executeSchedules);
+    await safeExec(() => cfg.keyChecker && keyChecker(), 'keyChecker');
+
+    await safeExec(() => livechartNotifier(), 'livechartNotifier');
+
+    await safeExec(() => {
+      for (let i of keys) config[i] = global[i];
+    }, 'syncKeys');
+
     const DB = global._DB || [
       'cmd',
       'preferences',
@@ -853,21 +945,44 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       'lids',
     ];
 
-    try {
-      for (let i of keys) {
-        config[i] = global[i];
-      }
+    for (const name of DB) {
+      const saved = await safeExec(() => saveData(name), `saveData:${name}`);
+    }
 
-      for (const name of DB) {
-        await saveData(name);
-      }
+    await safeExec(
+      () =>
+        fs.writeFileSync(path.resolve(conf), JSON.stringify(config, null, 2)),
+      'writeConfig'
+    );
 
-      await fs.writeFileSync(conf, JSON.stringify(config, null, 2));
-      await updateHargaInvestasi();
+    cfg.sewa && (await safeExec(cekSewa));
+    await safeExec(updateHargaInvestasi);
+
+    await safeExec(() => {
       let queue = Data.queueMetadata.shift();
-      typeof queue == 'function' && (await queue.run());
-    } catch (error) {
-      console.error('Terjadi kesalahan dalam penulisan file', error);
+      if (typeof queue === 'function') return queue.run();
+    }, 'queue.run');
+    exec(
+      `find . toolkit -type f \\( -name "output_*" -o -name "*.tmp" -o -name "*.bin" \\) -delete`,
+      (err, stdout, stderr) => {
+        if (err) {
+          console.error('Error hapus file:', err.message);
+          return;
+        }
+        if (stderr) console.log(stderr);
+      }
+    );
+    if (errors.length > 0) {
+      console.log(chalk.red(`\n[DETECTOR] ${errors.length} ERROR:`));
+      for (let err of errors) {
+        console.log(chalk.red(` - ${err.name}: ${err.msg}`));
+      }
+    } else {
+      /* console.log(
+        chalk.green(
+          `[DETECTOR] OK (${success.length == total ? 'All' : success.length} tasks)`
+        )
+      );*/
     }
   }, 20000);
 }

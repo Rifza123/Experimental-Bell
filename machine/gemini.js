@@ -16,6 +16,7 @@ async function GeminiImage(image, query) {
     }
 
     const data = await response.json();
+    !data.response && console.log({ data });
     return data.response;
   } catch (e) {
     console.error('Error in gemini.js :' + e.message);

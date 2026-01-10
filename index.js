@@ -77,8 +77,8 @@ async function launch() {
     }
 
     let { state, saveCreds } = await useMultiFileAuthState(session);
-    let Func = new func({ store }); 
-        
+    let Func = new func({ store });
+
     const Exp = makeWASocket({
       logger,
       version: [2, 3000, 1029700657],
@@ -89,11 +89,12 @@ async function launch() {
       maxMsgRetryCount: 2,
       getMessage: async () => undefined,
       cachedGroupMetadata: (jid) => Func.metadata.get(jid),
-      syncFullHistory : false
+      syncFullHistory: false,
     });
-
-    Func.init({ Exp });
+    const { groupMetadata } = Exp;
+    Func.init({ Exp, groupMetadata });
     Func.metadata.init();
+    Exp.groupMetadata = (id) => Func.getGroupMetadata(id, Exp);
     Exp.func = Func;
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
@@ -159,15 +160,14 @@ async function launch() {
     });
 
     Exp.ev.on('messages.upsert', async ({ type, messages }) => {
-      
       for (let message of messages) {
         const cht = {
           ...message,
           id: message?.key?.remoteJid,
         };
-        //console.log(type, cht.String())
-        const chatDb = Data.preferences[cht.id] || {};
-
+        // console.log(type, cht.String());
+        let chatDb = Data.preferences[cht.id] || {};
+        let sewaDb = Data.sewa[cht.id];
         let isMessage = cht?.message;
         let isStubType = cht?.messageStubType;
         let { messageTimestamp } = cht;
@@ -208,8 +208,9 @@ async function launch() {
           }
           return;
         } else {
-          let exs = { cht: { ...cht }, Exp, is: {}, store, chatDb };
-          switch (await Data.utils(exs)) {
+          let exs = { cht: { ...cht }, Exp, is: {}, store, chatDb, sewaDb };
+          let util = await Data.utils(exs);
+          switch (util) {
             case 'NEXT':
               type == 'append'
                 ? await Data.stubTypeMsg(exs)
@@ -223,6 +224,8 @@ async function launch() {
                 '\x1b[31mERROR in utils.js: cek error di atas, segera laporkan ke admin/owner\x1b[0m'
               );
               break;
+            default:
+            //console.log(util);
           }
         }
       }

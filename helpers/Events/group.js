@@ -200,7 +200,7 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
       tag: 'group',
       isMention: true,
       isBotAdmin: true,
-      isAdmin: true
+      isAdmin: true,
     },
     async () => {
       try {
@@ -327,8 +327,8 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
 🆔 *ID Grup:* ${meta.id || '-'}
 🔢 *Addressing Mode:* ${meta.addressingMode || '-'}
 📅 *Dibuat pada:* ${func.dateFormatter(meta.creation * 1000, 'Asia/Jakarta') || '-'}
-👑 *Pembuat Grup:* ${meta.owner ? meta.owner.split('@')[0] : 'Tak diketahui'}
-✍️ *Penulis Subjek:* ${func.getName(meta.subjectOwner) || '-'} (${meta.subjectOwner?.split('@')[0] || '-'})
+👑 *Pembuat Grup:* ${meta.owner ? (await func.getSender(meta.owner, { cht })).split('@')[0] : 'Tak diketahui'}
+✍️ *Penulis Subjek:* ${func.getName(await func.getSender(meta.subjectOwner, { cht })) || '-'} (${(await func.getSender(meta.subjectOwner, { cht }))?.split('@')[0] || '-'})
 🕒 *Terakhir Subjek Diubah:* ${func.dateFormatter(meta.subjectTime * 1000, 'Asia/Jakarta') || '-'}
 👥 *Jumlah Member:* ${meta.size || 0}
 
@@ -351,11 +351,20 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
 - Anti Tag Sw: ${pref.antitagsw ? '✅ Aktif' : '❌ Mati'}
 - Antibot: ${pref.antibot ? '✅ Aktif' : '❌ Mati'}
 - Auto AI: ${pref.ai_interactive ? '✅ Aktif' : '❌ Mati'}
-- Livechart: ${pref.livechart ? '✅ Aktif' : '❌ Mati'}
+- LiveChart: ${pref.livechart ? '✅ Aktif' : '❌ Mati'}
+- Anti Image: ${pref.antiimg ? '✅ Aktif' : '❌ Mati'}
+- Anti Video: ${pref.antivid ? '✅ Aktif' : '❌ Mati'}
+- Anti Voice: ${pref.antivoice ? '✅ Aktif' : '❌ Mati'}
+- Anti Document: ${pref.antidoct ? '✅ Aktif' : '❌ Mati'}
+- Anti Sticker Pack: ${pref.antistkpck ? '✅ Aktif' : '❌ Mati'}
+- Anti Audio: ${pref.antiaud ? '✅ Aktif' : '❌ Mati'}
 - Antitoxic: ${pref.antitoxic ? '✅ Aktif' : '❌ Mati'}
 - Livechart: ${pref.livechart ? '✅ Aktif' : '❌ Mati'}
 - Autosticker: ${pref.autosticker ? '✅ Aktif' : '❌ Mati'}
-- Autodownload: ${pref.autodownload ? '✅ Aktif' : '❌ Mati'}
+- Auto Download: ${pref.autodownload ? '✅ Aktif' : '❌ Mati'}
+- Anti Channel: ${pref.antich ? '✅ Aktif' : '❌ Mati'}
+- Anti Spam: ${pref.antspam ? '✅ Aktif' : '❌ Mati'}
+- Auto Back: ${pref.autoback ? '✅ Aktif' : '❌ Mati'}
 
 🔗 *Grup Induk:* ${meta.linkedParent || 'Tidak ada'}
 
@@ -523,6 +532,9 @@ ${topEnergy}
         'autosticker',
         'autodownload',
         'antitagsw',
+        'antich',
+        'antispam',
+        'autoback',
       ];
       let text = `Opsi yang tersedia:\n\n- ${actions.join('\n- ')}\n\n> Contoh:\n> ${cht.prefix + cht.cmd} welcome`;
       if (!actions.includes(input)) {
@@ -537,7 +549,9 @@ ${topEnergy}
       sets[input] = sets[input] || false;
       let sholat = {};
       if (input == 'jadwalsholat' && isOn) {
-        Data.daerah ??= await fetch(git.daerah).then((a) => a.json());
+        Data.daerah ??= await fetch(
+          'https://c.termai.cc/json/daerah.json'
+        ).then((a) => a.json());
         if (!v)
           return cht.reply(`*Harap sertakan daerahnya!*
 - Contoh: ${cht.prefix + cht.cmd + ' jadwalsholat kab-bungo'}
@@ -618,16 +632,22 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
       let subInfo = '\n';
       if (input === 'leave' && !isOn) {
         subInfo +=
-          '> 🔕 Mode *Leave* dinonaktifkan.\n' +
-          '> Bot tidak akan mengirimkan pesan notifikasi saat ada anggota keluar dari grup.\n' +
-          '> Gunakan kembali perintah ini untuk mengaktifkannya.';
+          ' 🔕 Mode *Leave* dinonaktifkan.\n' +
+          '-  Bot tidak akan mengirimkan pesan notifikasi saat ada anggota keluar dari grup.\n' +
+          '- Gunakan kembali perintah ini untuk mengaktifkannya.';
       } else if (input === 'leave' && isOn) {
         subInfo +=
-          '> 🔔 Mode *Leave* diaktifkan.\n' +
-          '> Bot akan otomatis mengirim pesan saat ada anggota keluar grup,\n' +
-          '> bahkan jika fitur *Welcome* sedang nonaktif.';
+          ' 🔔 Mode *Leave* diaktifkan.\n' +
+          '- Bot akan otomatis mengirim pesan saat ada anggota keluar grup,\n' +
+          '- bahkan jika fitur *Welcome* sedang nonaktif.';
+      } else if (input == 'autoback') {
+        subInfo +=
+          '-  🔔 *AutoBack* diaktifkan.\n' +
+          '- Jika ada member yang mengirim link grup WhatsApp, bot akan otomatis join ke grup tersebut, membalas dengan link grup ini, lalu keluar kembali.';
+      } else {
+        subInfo = false;
       }
-      cht.reply(infos.group.on(cht.cmd, input));
+      cht.reply(infos.group.on(cht.cmd, input), { footer: subInfo });
     }
   );
 
@@ -1436,6 +1456,431 @@ List tag yang bisa digunakan:
         `✅ Berhasil mengatur ${cmdType.charAt(0).toUpperCase() + cmdType.slice(1)}\n- Type: ${type}` +
           (etc.length > 0 ? `\n- Text: ${text}` : '')
       );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['pinchat', 'pinpesan'],
+      listmenu: ['pinchat'],
+      tag: 'group',
+      isGroup: true,
+      isAdmin: true,
+      isQuoted: true,
+      arg: 'Mau di pin berapa lama?',
+      isBotAdmin: true,
+    },
+    async ({ args }) => {
+      try {
+        Exp.sendMessage(cht.id, {
+          pin: cht.quoted.key,
+          type: 1,
+          time: func.parseTimeString(args) / 1000,
+        });
+      } catch (e) {
+        cht.reply(`Enggak bisa!${infos.others.readMore}\n\n${e}`);
+      }
+    }
+  );
+
+  ev.on(
+    { cmd: ['listsewa'], tag: 'owner', listmenu: true, isOwner: true },
+    async () => {
+      if (!cfg.sewa)
+        return cht.reply(
+          'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
+        );
+      Data.sewa ??= {};
+      const now = Date.now();
+
+      const entries = Object.entries(Data.sewa);
+      if (!entries.length) return cht.reply('Belum ada data sewa aktif.');
+
+      let text = `📋 *DAFTAR SEWA BOT*\n` + `──────────────────\n\n`;
+
+      for (const [gid, v] of entries) {
+        const md = func.metadata.get(gid)?.metadata;
+        const name = md?.subject || gid;
+
+        if (v.status === 'grace' && v.graceUntil) {
+          const sisa = v.graceUntil - now;
+          if (sisa <= 0) continue;
+
+          const d = func.formatDuration(sisa);
+          text +=
+            `• ${name}\n` +
+            `  ⏳ Status : *SUSPENDED ⚠️*\n` +
+            `  🔒 Bot    : Nonaktif\n` +
+            `  ⌛ Sisa   : ${d.days}h ${d.hours}j ${d.minutes}m ${d.seconds}d\n\n`;
+          continue;
+        }
+
+        if (v.exp > now) {
+          const sisa = v.exp - now;
+          const d = func.formatDuration(sisa);
+
+          text +=
+            `• ${name}\n` +
+            `  ✅ Status : *AKTIF*\n` +
+            `  🔓 Bot    : Aktif\n` +
+            `  ⌛ Sisa   : ${d.days}h ${d.hours}j ${d.minutes}m ${d.seconds}d\n\n`;
+        }
+      }
+
+      cht.reply(text.trim());
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['addsewa', 'kurangisewa', 'delsewa'],
+      listmenu: true,
+      tag: 'owner',
+      isOwner: true,
+    },
+    async ({ args }) => {
+      if (!cfg.sewa)
+        return cht.reply(
+          'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
+        );
+      try {
+        let argsText = `*Panduan untuk menambahkan/menghapus/mengurangiwaktu/melihat list sewa (Hanya bisa digunakan oleh owner!)*
+
+*Opsi terdiri dari:*
+- .addsewa (menambahkan sewa)
+- .kurangisewa (mengurangi waktu sewa)
+- .delsewa (menghapus sewa)
+- .listsewa (melihat list sewa)
+
+*Bagaimana cara menggunakannya?*
+
+> _AddSewa: *Sertakan id@g.us/link_grup* waktunya(contoh: 1jam)_
+> _KurangiSewa: *Sertakan id@g.us/link_grup* waktunya(contoh: 1jam)_
+> _DelSewa: *Sertakan id@g.us/link_grup/nama_grup*_
+
+Example: 
+ - *#1* => _Dengan menggunakan link_
+- .addsewa https://chat.whatsapp.com/JLQVgObv8No5jNMIr38rc2 1hari12jam
+- .kurangisewa https://chat.whatsapp.com/JLQVgObv8No5jNMIr38rc2 1hari12jam
+- .delsewa https://chat.whatsapp.com/JLQVgObv8No5jNMIr38rc2
+
+ - *#2* => _Dengan id grup yang akan di sewakan_
+- .addsewa 120363030069992317@g.us 1hari12jam
+- .kurangisewa 120363030069992317@g.us 1hari12jam
+- .delsewa 120363030069992317@g.us
+ 
+ - *#3* => _Dengan nama grup_
+> Ini hanya bisa digunakan di fitur delsewa, karena metadata grub pasti tersimpan saat bot sudah join ke grub yang di sewakan sebelumnya.
+- .delsewa Experimental-Bell
+
+ - *#4* => _Tanpa menggunakan salah satu dari ketiga opsi diatas_
+> Ini hanya bisa digunakan di dalam grup
+- .addsewa 1hari12jam
+- .kurangisewa 1hari12jam
+- .delsewa
+
+*Unit Waktu yang Didukung:*
+- s, second, seconds, detik
+- m, minute, minutes, menit
+- h, hour, hours, jam
+- d, day, days, hari
+- w, week, weeks, minggu
+
+*Contoh lain terkait cara menggunakan dengan unit waktu yang berbeda:*
+- .addsewa <linkgroup> 30 detik 
+    ➡️ Menambahkan 30 detik.
+-  .addsewa <linkgroup> 1 menit 
+    ➡️ Menambahkan 1 menit.
+-  .addsewa <linkgroup> 1 jam 15 detik 
+    ➡️ Menambahkan 1 jam 15 detik.
+- .addsewa <linkgroup> 2 hari 4 jam 
+    ➡️ Menambahkan 2 hari 4 jam.
+-  .addsewa <linkgroup> 1 minggu 
+    ➡️ Menambahkan 1 minggu.
+-  .addsewa <linkgroup> 1w 2d 3h 
+    ➡️ Menambahkan 1 minggu 2 hari 3 jam.
+-  .addsewa <linkgroup> 1d 2h 30m 15s 
+    ➡️ Menambahkan 1 hari 2 jam 30 menit 15 detik.
+
+*_Bot otomatis bergabung ke grub sewa saat .addsewa pertamakali, jika sudah di sewakan maka akan menambah masa aktif sewa nya!_*
+
+\`Semoga panduan ini dibaca dengan teiti agar tidak lagi menanyakan kepada admin terkait cara penggunaanya, terimakasih\`
+`;
+        args ||= '';
+        let _id = null,
+          groupInfo = null,
+          groupName = null,
+          now = Date.now(),
+          inviteMatch = args.match(/chat\.whatsapp\.com\/([\w-]+)/),
+          gusMatch = args.match(/(\d+@g\.us)/);
+
+        if (inviteMatch) {
+          try {
+            groupInfo = await Exp.groupGetInviteInfo(inviteMatch[1]);
+            _id = groupInfo?.id;
+          } catch (e) {
+            return await cht.reply(
+              `Gagal mendapatkan rata group!\nErr: ${e.message}${e.message.includes('not-authorized') ? '\n> Bot di kick, jadi gabisa ngambil id dari linknya karena akses di blokir, delsewa pake id/nama grub aja kalo masih kesimpen metadata nya!' : ''}`
+            );
+          }
+        } else if (gusMatch) {
+          _id = gusMatch[1];
+        } else if (cht.cmd === 'delsewa' && args) {
+          await func.metadata.init();
+          let vMeta = Object.values(func.metadata.all());
+          const found = vMeta.find(
+            (a) =>
+              a?.metadata?.subject &&
+              a.metadata.subject
+                .trim()
+                .toLowerCase()
+                .includes(args.trim().toLowerCase())
+          );
+          _id = found?.metadata?.id || null;
+          if (!_id) {
+            let similar = await func.searchSimilarStrings(
+              args.trim(),
+              vMeta.map((a) => a.metadata.subject),
+              0.5
+            );
+
+            if (!similar.length) {
+              return cht.reply(`Grup *${args}* tidak ditemukan dalam data!`);
+            }
+
+            let list = similar
+              .map((v, i) => {
+                let percent = Math.round(v.similarity * 100);
+                return `${i + 1}. ${v.item} (${percent}%)`;
+              })
+              .join('\n');
+
+            return cht.reply(
+              `Grup *${args}* tidak ditemukan dalam data!\n*Mungkin yang kamu maksud:*\n\n${list}`
+            );
+          }
+        } else if (is.group) {
+          _id = cht.id;
+        }
+
+        if (!_id) return cht.reply(argsText);
+
+        const timestamp = func.parseTimeString(args);
+        if (!timestamp && cht.cmd !== 'delsewa')
+          return cht.reply('Waktu tidak valid!\n\n' + argsText);
+
+        Data.sewa ??= {};
+        let dataSewa = Data.sewa[_id];
+        const metaDataObj = func.metadata.get(_id) || {},
+          metadata = metaDataObj.metadata,
+          lastMetadata = metaDataObj.timestamp,
+          dur = cht.cmd == 'delsewa' ? {} : func.formatDuration(timestamp),
+          waktu =
+            `${dur.days ? `${dur.days}hari ` : ''}` +
+            `${dur.hours ? `${dur.hours}jam ` : ''}` +
+            `${dur.minutes ? `${dur.minutes}menit ` : ''}` +
+            `${dur.seconds ? `${dur.seconds}detik` : ''}`.trim();
+        function updateSewa(Data, _id, timestamp, now = Date.now()) {
+          const sewa = Data.sewa[_id];
+
+          if (sewa?.exp) {
+            sewa.exp = now > sewa.exp ? now + timestamp : sewa.exp + timestamp;
+
+            sewa.status = 'active';
+            delete sewa.graceUntil;
+          } else {
+            Data.sewa[_id] = {
+              exp: now + timestamp,
+              status: 'active',
+            };
+          }
+
+          return Data.sewa[_id];
+        }
+
+        switch (cht.cmd) {
+          case 'addsewa': {
+            const botInGroup = metadata?.participants?.some(
+              (p) => p.id === Exp.number
+            );
+
+            if (!botInGroup) {
+              if (!inviteMatch)
+                return cht.reply(
+                  'Sertakan link group!, bot belum tergabung di grup tersebut.'
+                );
+              updateSewa(Data, _id, timestamp);
+              await Exp.groupAcceptInvite(inviteMatch[1]);
+              await cht.reply('Berhasil bergabung✅');
+              const expTime = dataSewa?.exp || now + timestamp;
+              const endDate = new Date(expTime);
+              const sisa = expTime - now;
+              const dur = func.formatDuration(sisa);
+
+              return await Exp.sendMessage(_id, {
+                text:
+                  `📌 *INFO BOT*\n\n` +
+                  `Bot telah berhasil bergabung ke grup ini.\n\n` +
+                  `🔒 Status: *Grup dalam masa sewa*\n` +
+                  `🗓️ Tanggal berakhir: *${endDate.toLocaleString('id-ID')}*\n` +
+                  `⏳ Berakhir dalam: *${
+                    `${dur.days ? dur.days + ' hari ' : ''}` +
+                    `${dur.hours ? dur.hours + ' jam ' : ''}` +
+                    `${dur.minutes ? dur.minutes + ' menit ' : ''}` +
+                    `${dur.seconds ? dur.seconds + ' detik' : ''}`.trim()
+                  }*\n\n` +
+                  `⚠️ *Catatan Penting:*\n` +
+                  `Bot akan *otomatis keluar dari grup* setelah masa sewa berakhir.\n\n` +
+                  `Jika ingin memperpanjang masa sewa,\n` +
+                  `silakan hubungi *Owner Bot* sebelum waktu habis.`,
+              });
+            }
+
+            updateSewa(Data, _id, timestamp);
+            delete chatDb.mute;
+
+            break;
+          }
+
+          case 'kurangisewa': {
+            if (!dataSewa?.exp)
+              return cht.reply('Grup ini belum memiliki sewa.');
+
+            Data.sewa[_id].exp -= timestamp;
+            break;
+          }
+          case 'delsewa': {
+            if (!dataSewa) return cht.reply('Data sewa tidak ditemukan.');
+            const expTime = Data.sewa[_id].exp;
+            const expiredAt = new Date(expTime).toLocaleString('id-ID', {
+              timeZone: 'Asia/Jakarta',
+            });
+            try {
+              await Exp.sendMessage(_id, {
+                text:
+                  `📢 *INFO BOT*\n\n` +
+                  `Masa sewa grup ini telah *di akhiri*.\n\n` +
+                  `🗓️ Tanggal berakhir:\n` +
+                  `• ${expiredAt}\n\n` +
+                  `🔒 Bot akan otomatis keluar dari grup ini.\n` +
+                  `Terima kasih telah menggunakan layanan bot.\n\n` +
+                  `Jika ingin memperpanjang sewa,\n` +
+                  `silakan hubungi *Owner Bot*.`,
+              });
+
+              await Exp.groupLeave(_id);
+            } catch (e) {
+              console.error(e);
+            }
+            delete Data.sewa[_id];
+            func.metadata.delete(_id);
+
+            break;
+          }
+        }
+
+        if (!groupName) {
+          if (groupInfo) groupName = groupInfo.subject;
+          else if (metadata) groupName = metadata.subject;
+          else groupName = _id;
+        }
+
+        cht.reply(
+          cht.cmd === 'delsewa'
+            ? `Sewa grup *${groupName}* berhasil dihapus.`
+            : `Berhasil ${cht.cmd === 'addsewa' ? 'menambahkan' : 'mengurangi'} sewa di grub *${groupName}* selama *${waktu.trim()}*.`
+        );
+      } catch (e) {
+        cht.reply(`Terjadi Kesalahan${infos.others.readMore}\n\n${e}`);
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['ceksewa'],
+      listmenu: true,
+      isGroup: true,
+      isAdmin: true,
+      tag: 'group',
+    },
+    async () => {
+      if (!cfg.sewa)
+        return cht.reply(
+          'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
+        );
+
+      try {
+        Data.sewa ??= {};
+        const now = Date.now();
+        const id = cht.id;
+
+        let sewa = Data.sewa[id];
+
+        if (!sewa) {
+          return cht.reply(
+            `🛑 *Grup ini tidak terdaftar sebagai sewa bot*\n\n` +
+              `Silakan hubungi *Owner Bot* untuk menyewa.`
+          );
+        }
+
+        let exp = sewa.exp;
+        let graceUntil = sewa.graceUntil;
+
+        if (exp <= now && !graceUntil) {
+          return cht.reply(
+            `⚠️ *Sewa grup ini sudah berakhir!*\n\n` +
+              `Bot akan segera keluar dari grup ini.\n\n` +
+              `Silakan hubungi *Owner Bot* untuk memperpanjang.`
+          );
+        }
+
+        if (graceUntil && now <= graceUntil) {
+          const sisaGrace = graceUntil - now;
+          const durGrace = func.formatDuration(sisaGrace);
+
+          return cht.reply(
+            `⏳ *Status Sewa: Grace Period*\n\n` +
+              `🔒 Akses bot sementara *dibatasi*\n` +
+              `🗓️ Grace berakhir dalam:\n` +
+              `• ${durGrace.days ? durGrace.days + ' hari ' : ''}` +
+              `${durGrace.hours ? durGrace.hours + ' jam ' : ''}` +
+              `${durGrace.minutes ? durGrace.minutes + ' menit ' : ''}` +
+              `${durGrace.seconds ? durGrace.seconds + ' detik' : ''}`.trim() +
+              `\n\nSilakan perpanjang sebelum grace habis 🙏`
+          );
+        }
+
+        if (graceUntil && now > graceUntil) {
+          return cht.reply(
+            `❌ *Sewa & Grace Period Telah Berakhir*\n\n` +
+              `Bot seharusnya sudah keluar dari grup ini.\n\n` +
+              `Jika belum, silakan hubungi owner.`
+          );
+        }
+
+        const sisa = exp - now;
+        const dur = func.formatDuration(sisa);
+        const endDate = new Date(exp).toLocaleString('id-ID', {
+          timeZone: 'Asia/Jakarta',
+        });
+
+        return cht.reply(
+          `✅ *STATUS SEWA GRUP*\n\n` +
+            `🟢 Status: *Aktif*\n\n` +
+            `🗓️ Berakhir pada:\n` +
+            `• ${endDate}\n\n` +
+            `⏳ Sisa waktu:\n` +
+            `• ${dur.days ? dur.days + ' hari ' : ''}` +
+            `${dur.hours ? dur.hours + ' jam ' : ''}` +
+            `${dur.minutes ? dur.minutes + ' menit ' : ''}` +
+            `${dur.seconds ? dur.seconds + ' detik' : ''}`.trim() +
+            `\n\nTerima kasih telah menggunakan bot ini 🙏`
+        );
+      } catch (e) {
+        console.error(e);
+        cht.reply('Terjadi kesalahan saat memeriksa status sewa.');
+      }
     }
   );
 }

@@ -46,7 +46,9 @@ export class JadwalSholat {
 
   async init(id, v = 'kab-bungo', opts = { ramadhan: false }) {
     try {
-      Data.daerah = Data.daerah || (await fetch(cdn).then((a) => a.json()));
+      Data.daerah =
+        Data.daerah ||
+        (await fetch(cdn + '/json/daerah.json').then((a) => a.json()));
       if (!Object.values(Data.daerah).flat().includes(v))
         return {
           status: false,

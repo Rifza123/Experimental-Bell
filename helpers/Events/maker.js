@@ -267,16 +267,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
-      cmd: ['brat', 'bart', 'bratgenerator'],
-      listmenu: ['brat'],
+      cmd: ['brat', 'brathd', 'bart', 'bratgenerator'],
+      listmenu: ['brat', 'brathd'],
       tag: 'maker',
       energy: 5,
       args: `Example: ${cht.msg} halo --emoji=whatsapp or ios`,
     },
     async ({ args }) => {
+      let hd = cht.cmd.includes('hd');
       let text = args.split('--')?.[0]?.trim();
       let emoji = args.split('--emoji=')?.[1]?.split('--')?.[0] || 'ios';
-      let brat = [`https://brat.termai.cc/?emojiType=${emoji}&text=`];
+      let brat = [`https://brat.termai.cc/?emojiType=${emoji}&hd=${hd}&text=`];
       let token = String(Date.now())
         .to('base64')
         .to('charCode')
@@ -380,18 +381,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
       cmd: [
         'bratv',
         'bratvid',
+        'bratvidhd',
         'bartvideo',
         'bratvideogenerator',
         'bratvideo',
         'bartv',
         'bartvideogenerator',
       ],
-      listmenu: ['bratvideo'],
+      listmenu: ['bratvid', 'bratvid'],
       tag: 'maker',
       energy: 20,
       args: `Example: ${cht.msg} halo aku bella --emoji=whatsapp or ios`,
     },
     async ({ args }) => {
+      let hd = cht.cmd.includes('hd');
       let text = args.split('--')?.[0]?.trim();
       let emoji = args.split('--emoji=')?.[1]?.split('--')?.[0] || 'ios';
       let token = String(Date.now())
@@ -401,7 +404,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         .to('utf16le');
 
       let buff = await func.getBuffer(
-        `https://brat.termai.cc/animate?text=${encodeURIComponent(text)}&token=${token}&emojiType=${emoji}`
+        `https://brat.termai.cc/animate?text=${encodeURIComponent(text)}&hd=${hd}&token=${token}&emojiType=${emoji}`
       );
       let res = await exif['writeExifVid'](buff, {
         packname: 'My brat sticker',
@@ -484,7 +487,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'maker',
       energy: 20,
       media: {
-        type: ['image'],
+        type: ['image', 'sticker'],
         save: false,
       },
     },

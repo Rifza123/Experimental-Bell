@@ -24,7 +24,7 @@ let urls = {
   'spotify.com': 'spotify',
 };
 
-export default async function In({ cht, Exp, store, is, ev, chatDb }) {
+export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
   const { func } = Exp;
   let { archiveMemories: memories, parseTimeString } = func;
   let { sender } = cht;
@@ -117,7 +117,15 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
           !cht?.me) ||
         (is?.owner && is?.botMention));
     let usr = sender.split('@')[0];
-
+    let _url = is.url[0];
+    let downCmd =
+      _url &&
+      is.autodownload &&
+      Object.entries(urls).find(([keyword]) => _url.includes(keyword))
+        ? urls[
+            Object.entries(urls).find(([keyword]) => _url.includes(keyword))[0]
+          ]
+        : null;
     let usr_swap = memories.getItem(usr, 'fswaps');
     let isSwap =
       usr_swap &&
@@ -139,9 +147,10 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
       (cht.quoted ? true : cht.msg.includes('@')) &&
       cht.mention?.some((a) => memories.getItem(a, 'afk') && a !== sender) &&
       !is.me &&
-      !is.owner &&
+      !is.owner && 
+      !is.coowner &&
       is.group;
-
+    let isAntilink = is.antilink && (downCmd ? is.url.length > 1 : true);
     let isGame =
       'game' in chatDb && chatDb.game.id_message.includes(cht.quoted?.stanzaId);
 
@@ -181,6 +190,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
     let isAntiTagOwner =
       cfg.antitagowner &&
       !is.owner &&
+      !is.coowner &&
       cht?.msg?.includes('@') &&
       cht.mention.some((m) => owner.some((o) => m.includes(o)));
     let Response = cht.msg
@@ -302,14 +312,16 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
         });
         cht.delete();
         break;
-      case is.antilink:
+      case isAntilink:
         await cht.warnGc({
           type: 'antilink',
           warn: Data.infos.interactive.antilinkWarn,
           kick: Data.infos.interactive.antilinkKick,
           max: 3,
         });
-        cht.delete();
+        await cht.delete();
+        await sleep(1000);
+
         break;
       case is.antitoxic:
         await cht.warnGc({
@@ -318,6 +330,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
           kick: Data.infos.interactive.antitoxicKick,
           max: 3,
         });
+
         cht.delete();
         break;
       case is.antiTagall:
@@ -359,6 +372,26 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
           max: 3,
         });
         cht.delete();
+        break;
+      case is.antich:
+        await cht.warnGc({
+          type: 'antich',
+          warn: Data.infos.interactive.antiChWarn,
+          kick: Data.infos.interactive.antiChKick,
+          max: 3,
+        });
+        cht.delete();
+        break;
+      case is.spam:
+        Data.antispam[cht.id][cht.sender].count = 0;
+        Data.antispam[cht.id][cht.sender].time = Date.now();
+
+        cht.warnGc({
+          type: 'antispam',
+          warn: Data.infos.interactive.warn,
+          kick: Data.infos.interactive.kick,
+          max: 5,
+        });
         break;
       case isEvalSync:
         if (!is?.owner) return;
@@ -426,14 +459,21 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
         let [cmd, ...q] = questionCmd.emit.split` `;
         cht.cmd = cmd;
         cht.isQuestionCmd = true;
+        let quotedQData = quotedQuestionCmd?.[cht?.quoted?.stanzaId];
+        let quotedQ = quotedQData?.Keys?.[cht.msg?.trim()] || cht.msg?.trim();
+        cht.url = func.parseLink(quotedQ);
         cht.q =
-          q && q.length > 0
-            ? `${q.join(' ')} ${cht.msg?.trim()}`.trim()
-            : `${cht.msg?.trim()}`.trim();
+          q && q.length > 0 ? `${q.join(' ')} ${quotedQ}`.trim() : `${quotedQ}`;
+        for (let i of Object.keys(questionCmd.etc || {})) {
+          cht[i] = questionCmd.etc?.[i];
+        }
         ev.emit(cmd);
         memories.delItem(sender, 'questionCmd');
-        if (quotedQuestionCmd?.[cht?.quoted?.stanzaId]) {
-          delete quotedQuestionCmd[cht.quoted.stanzaId];
+
+        if (quotedQData) {
+          quotedQData.use++;
+          if (quotedQData.use > quotedQData.maxUse)
+            delete quotedQuestionCmd[cht.quoted.stanzaId];
           memories.setItem(sender, 'quotedQuestionCmd', quotedQuestionCmd);
         } else {
           memories.delItem(sender, 'questionCmd');
@@ -706,7 +746,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
               senderName: cht?.pushName,
               ownerName: ownername,
               date: func.newDate(),
-              role: cht?.memories?.role,
+              role: cht?.memories?.role?.split(',')[0],
               msgtype: cht?.type,
               custom_profile: func.tagReplacer(cfg.logic, {
                 botfullname,
@@ -781,7 +821,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                     cmd: 'lora',
                     cfg: {
                       prompt:
-                        'isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang selfie ((tulis prompt dalam bahasa inggris))',
+                        'isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang selfie ((tulis prompt dalam bahasa inggris, wajib menggunakan bahasa inggris!!))',
                     },
                   },
                 },
@@ -875,11 +915,31 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                     },
                   },
                 },
+                {
+                  description: `Jika ${botnickname} merasa sangat muak atau sangat tidak nyaman dengan lawan bicara karena perilaku yang sangat mengganggu (contoh: hinaan berat, tuduhan keterlaluan, maksa, toxic, melecehkan, atau membuat ${botnickname} merasa jijik, tersinggung parah, atau terancam secara emosional), dan ${botnickname} sudah tidak ingin melanjutkan percakapan lagi.`,
+                  output: {
+                    cmd: 'block',
+                    msg: `respon natural ${botnickname} yang menunjukkan ketidaknyamanan dan penolakan dengan tegas (tetap dengan gaya bicara karakter).`,
+                  },
+                },
               ],
             });
             let config = _ai?.data || {};
             await func.addAiResponse();
             let noreply = false;
+            console.log('ai_response', config);
+            if (
+              config.newRole &&
+              config.newRole !== cht?.memories?.role?.split(',')[0]
+            ) {
+              memories.setItem(sender, 'role', config.newRole);
+              await cht.reply(
+                `Status hubungan diperbarui menjadi: *${config.newRole}* ${config.cfg?.emoji || ''}`,
+                {
+                  replyAi: false,
+                }
+              );
+            }
             switch (config?.cmd) {
               case 'sticker':
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
@@ -958,7 +1018,9 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                   loras: [2067],
                 };
                 let { checkpoint, loras } = cfg.models;
-                cht.q = `${checkpoint}${JSON.stringify(loras)}|${config?.cfg?.prompt}|blurry, low quality, low resolution, deformed, distorted, poorly drawn, bad anatomy, bad proportions, unrealistic, oversaturated, underexposed, overexposed, watermark, text, logo, cropped, cluttered background, cartoonish, bad face, double face, abnormal`;
+                cht.q = `${checkpoint}${JSON.stringify(loras)}|${config?.cfg?.prompt}, soft shading, natural proportions, cinematic lighting|nsfw, nude, naked, cleavage, lingerie, bikini, underwear, sexy, erotic, lewd, seductive, suggestive, provocative,stockings, corset, fishnet, short skirt, exposed body, fat, overweight, bad anatomy, mutation, extra limbs, distorted body, blurry, low quality(02-A2[芩潇功能]修手02真人版修手-ng_deepnegative_v1_75t:1.5),(worst quality, low quality:2),monochrome,zombie,overexposure,watermark,text,bad anatomy,bad hand,extra hands,((extra fingers)),too many fingers,fused fingers,((bad fingers)),bad arm,distorted arm,((extra arms)),fused arms,extra legs,missing leg,disembodied leg,extra nipples,detached arm,liquid hand,inverted hand,disembodied limb,oversized head,extra body,extra navel,EasyNegative,(hair between eyes),sketch,duplicate,ugly,huge eyes,text,logo,worst face,(blurry:2),horror,geometry,bad_prompt,(bad hands),(missing fingers),multiple limbs,bad anatomy,(interlocked fingers:1.2),Ugly Fingers,(extra digit and hands and fingers and legs and arms:1.4),(deformed fingers:1.2),(long fingers:1.2),bad-artist,bad hand,extra legs,(ng_deepnegative_v1_75t),(badhandv4:1.2),(By bad artist -neg),(bad-picture-chill-75v)`;
+                cht.quoted = {};
+                is.quoted = {};
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('txt2img');
               case 'txt2img':
@@ -986,6 +1048,32 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
                 cht.q = config?.cfg?.prompt || '';
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
                 return ev.emit('i2v');
+              case 'block':
+                noreply = true;
+                await cht.reply(config.msg);
+                await sleep(500);
+                let text =
+                  '⚠️ *KAMU TELAH DI BLOKIR!* ⚠️\n' +
+                  '\n' +
+                  'Interaksi dihentikan, kamu di banned dari bot selama 1hari dan nomormu di blokir karena adanya perilaku yang membuat AI sangat tidak nyaman.\n' +
+                  '\n' +
+                  'Jika kamu merasa ini hanya kesalahpahaman dan ingin membuka blokir, silakan hubungi owner melalui kontak di yang sudah saya kirimkan di private chat.';
+
+                await cht.reply(text, { replyAi: false });
+                await Exp.sendContacts({ id: cht.sender }, owner);
+                await sleep(1000);
+                try {
+                  await Exp.updateBlockStatus(cht.sender, 'block');
+                } catch (e) {
+                  console.error('Exp.updateBlockStatus:', e);
+                }
+                await func.archiveMemories.setItem(
+                  cht.sender,
+                  'banned',
+                  Date.now() + 1 * 60 * 60 * 24 * 1000
+                );
+
+                break;
             }
 
             if (config?.energy && cfg.ai_interactive.energy) {
@@ -1097,32 +1185,55 @@ export default async function In({ cht, Exp, store, is, ev, chatDb }) {
 
       case is.autodownload:
         {
-          let _url = is.url[0];
-          let cmd =
-            _url &&
-            Object.entries(urls).find(([keyword]) => _url.includes(keyword))
-              ? urls[
-                  Object.entries(urls).find(([keyword]) =>
-                    _url.includes(keyword)
-                  )[0]
-                ]
-              : null;
-          cmd &&
+          downCmd &&
             (await cht.reply(
-              `*AUTO DOWNLOAD*\n _Link *${cmd.slice(0, 1).toUpperCase() + cmd.slice(1)}* terdeteksi!_`
+              `*AUTO DOWNLOAD*\n _Link *${downCmd.slice(0, 1).toUpperCase() + downCmd.slice(1)}* terdeteksi!_`
             ));
-          cmd &&
+          downCmd &&
             ev.emit(
-              cmd == 'github'
+              downCmd == 'github'
                 ? 'gitclone'
-                : cmd == 'youtube'
+                : downCmd == 'youtube'
                   ? 'ytm4a'
-                  : cmd == 'pinterest'
+                  : downCmd == 'pinterest'
                     ? 'pinterestdl'
-                    : cmd
+                    : downCmd
             );
         }
         break;
+    }
+    keys.isBack ??= {};
+    if (chatDb.autoback && _url && is.group && !is.admin && !is.owner && !is.coowner ) {
+      try {
+        let inviteMatch = _url.match(/chat\.whatsapp\.com\/([\w-]+)/);
+        if (!inviteMatch) return;
+        let { id: idgc, groupApprovalMode } = await Exp.groupGetInviteInfo(
+          inviteMatch[1]
+        );
+        if (groupApprovalMode) return;
+        let inviteCode = await Exp.groupInviteCode(cht.id);
+        let isBack = !inviteMatch[1].includes(inviteCode);
+        if (isBack && !keys.isBack[inviteMatch[1]]) {
+          keys.isBack[inviteMatch[1]] = true;
+          await Exp.groupAcceptInvite(inviteMatch[1]);
+          await sleep(400);
+          await Exp.sendMessage(idgc, {
+            text: `⚠️*Auto Back*\n\nHai semua, jangan lupa join grup aku ya \n\nhttps://chat.whatsapp.com/${inviteCode}`,
+            footer:
+              '- Pesan ini dikirim otomatis karena ada member dari grup ini yang share link grupnya ke grup kami.\n_bot keluar otomatis dalam 3 detik_',
+          });
+          await sleep(3000);
+          await Exp.groupLeave(idgc);
+
+          await cht.reply(`⚠️*Auto Back Berhasil* ✅
+
+Bot sudah join ke grup tersebut, ngirim link grup ini sebagai balasan, lalu keluar lagi 🙂
+`);
+        }
+      } catch (e) {
+        console.error(e);
+        await cht.reply('*Auto Back Gagal* ❗', { foote: e });
+      }
     }
   } catch (error) {
     console.error('Error in Interactive:', error);

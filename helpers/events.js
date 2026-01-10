@@ -146,13 +146,6 @@ export default class EventEmitter {
     }
   }
 
-  addQuestion(sender, cmd, accepts = []) {
-    ArchiveMemories.setItem(sender, 'questionCmd', {
-      emit: `${cmd}`,
-      exp: Date.now() + 20000,
-      accepts,
-    });
-  }
   async emit(event, opts) {
     try {
       this.ensure();
@@ -175,6 +168,7 @@ export default class EventEmitter {
                 : [];
 
       let args = opts?.args || cht?.q;
+      let arg = cht?.args;
       let sender = cht.sender;
       let user = sender.split('@')[0];
       let isPremium = Data.users[user]?.premium?.time
@@ -216,9 +210,19 @@ export default class EventEmitter {
 
       const checks = [
         {
-          condition: ev.isOwner && !this.is.owner,
+          condition: ev.isOwner && !(this.is.owner||this.is.coowner),
           message:
             typeof ev.isOwner === 'boolean' ? messages.isOwner : ev.isOwner,
+        },
+        {
+          condition: 'isCoOwner' in ev && ev.isCoOwner && !(this.is.coowner||this.is.owner),
+          message:
+            typeof ev.isCoOwner === 'boolean' ? messages.isOwner.replace('owner','coowner') : ev.isOwner,
+        },
+        {
+          condition: 'isCoOwner' in ev && ev.isCoOwner == false && this.is.coowner && !this.is.owner,
+          message:
+           'CoOwner is not allowed!'
         },
         {
           condition: ev.isGroup && !this.is.group,
@@ -281,12 +285,24 @@ export default class EventEmitter {
         );
       }
 
-      if (ev.args) {
-        if (!cht.q) {
-          this.addQuestion(sender, cht.cmd);
-          return cht.reply(ev.args !== true ? ev.args : ev.isArgs);
+      if (ev.args || ev.arg) {
+        if (ev.arg ? !arg : !args) {
+          return cht.question(
+            ev.args && ev.args !== true
+              ? ev.args
+              : ev.arg && ev.arg !== true
+                ? ev.arg
+                : messages.isArgs,
+            {
+              emit: cht.cmd,
+              accepts: [],
+              exp: Date.now() + 20000,
+            }
+          );
         }
-        const badword = Data.badwords.filter((a) => cht.q.includes(a));
+        const badword = Data.badwords.filter((a) =>
+          (ev.arg ? arg : args).includes(a)
+        );
         this.is.badword = badword.length > 0;
         if (ev.badword && this.is.badword)
           return cht.reply(
@@ -303,8 +319,14 @@ export default class EventEmitter {
 
       if (ev.urls) {
         if (!(urls?.length > 0)) {
-          this.addQuestion(sender, cht.cmd);
-          return cht.reply(ev.urls.msg !== true ? ev.urls.msg : messages.isUrl);
+          return cht.question(
+            ev.urls.msg !== true ? ev.urls.msg : messages.isUrl,
+            {
+              emit: cht.cmd,
+              accepts: [],
+              exp: Date.now() + 20000,
+            }
+          );
         }
         if (ev.urls.formats) {
           let isFormatsUrl = urls.some((url) =>
@@ -313,11 +335,15 @@ export default class EventEmitter {
             )
           );
           if (!isFormatsUrl) {
-            this.addQuestion(sender, cht.cmd);
-            return cht.reply(
+            return cht.question(
               func.tagReplacer(messages.isFormatsUrl, {
                 formats: ev.urls.formats.join('\n- '),
-              })
+              }),
+              {
+                emit: cht.cmd,
+                accepts: [],
+                exp: Date.now() + 20000,
+              }
             );
           }
         }
@@ -327,28 +353,37 @@ export default class EventEmitter {
         const { type, msg, etc } = ev.media;
         let { type: mediaType, quoted: isQuotedMedia } = this.getMediaType();
         if (!type.includes(mediaType)) {
-          this.addQuestion(sender, cht.cmd);
-          return cht.reply(
+          return cht.question(
             msg ||
               func.tagReplacer(messages.isMedia, {
                 type: type.join('/'),
                 caption: cht.msg,
-              })
+              }),
+            {
+              emit: cht.cmd,
+              accepts: [],
+              exp: Date.now() + 20000,
+            }
           );
         }
 
         if (mediaType === 'audio') {
           if (etc && this.is.quoted?.audio?.seconds > etc.seconds) {
-            this.addQuestion(sender, cht.cmd);
-            return cht.reply(
-              func.tagReplacer(messages.isExceedsAudio, { second: etc.seconds })
+            return cht.question(
+              func.tagReplacer(messages.isExceedsAudio, {
+                second: etc.seconds,
+              }),
+              {
+                emit: cht.cmd,
+                accepts: [],
+                exp: Date.now() + 20000,
+              }
             );
           }
         }
 
         if (mediaType === 'video') {
           if (etc && this.is.quoted?.video?.seconds > etc.seconds) {
-            this.addQuestion(sender, cht.cmd);
             return cht.reply(
               func.tagReplacer(messages.isExceedsVideo, { second: etc.seconds })
             );
@@ -357,25 +392,37 @@ export default class EventEmitter {
 
         if (mediaType === 'sticker') {
           if (etc && etc.isNoAnimated && this.is.quoted?.sticker?.isAnimated) {
-            this.addQuestion(sender, cht.cmd);
-            return cht.reply(
+            return cht.question(
               etc.isNoAnimated !== true
                 ? etc.isNoAnimated
-                : messages.isNoAnimatedSticker
+                : messages.isNoAnimatedSticker,
+              {
+                emit: cht.cmd,
+                accepts: [],
+                exp: Date.now() + 20000,
+              }
             );
           }
           if (etc && etc.isAnimated && !this.is.quoted?.sticker?.isAnimated) {
-            this.addQuestion(sender, cht.cmd);
-            return cht.reply(
+            return cht.question(
               etc.isAnimated !== true
                 ? etc.isAnimated
-                : messages.isAnimatedSticker
+                : messages.isAnimatedSticker,
+              {
+                emit: cht.cmd,
+                accepts: [],
+                exp: Date.now() + 20000,
+              }
             );
           }
           if (etc && etc.isAvatar && !this.is.quoted?.sticker?.isAvatar) {
-            this.addQuestion(sender, cht.cmd);
-            return cht.reply(
-              etc.avatar !== true ? etc.avatar : messages.isAvatarSticker
+            return cht.question(
+              etc.avatar !== true ? etc.avatar : messages.isAvatarSticker,
+              {
+                emit: cht.cmd,
+                accepts: [],
+                exp: Date.now() + 20000,
+              }
             );
           }
         }
@@ -407,10 +454,22 @@ export default class EventEmitter {
       if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
         await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
         await cht.reply(`-${ev.energy} Energy⚡`, { replyAi: false });
-        await sleep(100);
+      } else {
+        ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
       }
 
-      const resolves = { media, urls, args, cht };
+      const resolves = {
+        media,
+        urls,
+        args,
+        cht,
+        argsText:
+          typeof ev.args == 'string'
+            ? ev.args
+            : typeof ev.arg == 'string'
+              ? ev.arg
+              : messages.isArgs,
+      };
       await ev.resolve(resolves);
       await func.addCmd();
       await func.addCMDForTop(event);

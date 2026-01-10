@@ -1,5 +1,4 @@
 const fs = 'fs'.import().promises;
-const { role } = await `${fol[0]}role.js`.r();
 
 export class ArchiveMemories {
   static add(userJid) {
@@ -47,11 +46,12 @@ export class ArchiveMemories {
         : false;
 
     try {
-      let roles = [role(userData.chat)];
-      is?.owner && roles.push('owner');
-      is?.groupAdmin && roles.push('admin group');
-      premium && roles.push('user premium');
-      userData.role = roles.join(', ');
+      let roles = [];
+      if (is?.owner) roles.push('Owner');
+      if (is?.groupAdmin) roles.push('Admin Group');
+      if (premium) roles.push('User Premium');
+      let hubungan = userData.role?.split(',')[0] || 'asing';
+      userData.role = [hubungan, ...roles].join(', ');
       if (!userData.energy) userData.energy = 0;
       if (
         !userData.lastCharge ||
@@ -118,7 +118,6 @@ export class ArchiveMemories {
 
     try {
       userData.energy += parseFloat(amount);
-      userData.role = role(userData.chat);
       this.set(userJid, userData);
       return userData;
     } catch (error) {
@@ -137,7 +136,6 @@ export class ArchiveMemories {
     }
 
     try {
-      userData.role = role(userData.chat);
       let newEnergy = userData.energy - parseFloat(amount);
       userData.energy = newEnergy < 0 ? 0 : newEnergy;
       this.set(userJid, userData);
@@ -159,7 +157,6 @@ export class ArchiveMemories {
 
     try {
       userData.chat += 1;
-      userData.role = role(userData.chat);
       this.set(userJid, userData);
       return userData;
     } catch (error) {
@@ -196,8 +193,7 @@ export class ArchiveMemories {
     let userData = this.clearExpiredData(this.get(userJid));
 
     const defaultItems = {
-      chat: 0,
-      role: 0,
+      role: 'orang asing',
       energy: cfg.first.energy,
       chargingSpeed: cfg.first.chargingSpeed,
       chargeRate: cfg.first.chargeRate,
@@ -366,7 +362,7 @@ export class ArchiveMemories {
     let aut = cfg.first.autoai;
     let userData = Data.users[userId] || {};
     userData.chat ??= 1;
-    userData.role ??= role(1);
+    userData.role ??= 'Orang Asing';
     userData.energy ??= cfg.first.energy;
     userData.chargingSpeed ??= cfg.first.chargingSpeed;
     userData.chargeRate ??= cfg.first.chargeRate;

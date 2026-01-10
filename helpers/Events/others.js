@@ -2,7 +2,7 @@
 const fs = 'fs'.import();
 const { downloadContentFromMessage } = 'baileys'.import();
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
-
+const { dashboard } = await (fol[2] + 'dashboard.js').r();
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
   const { id } = cht;
@@ -21,7 +21,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let topcmd = func.topCmd(2);
       let events = Object.fromEntries(
         Object.entries(Data.events).filter(
-          ([key, val]) => !args || args.toLowerCase().includes(val.tag)
+          ([key, val]) =>
+            !args || args.toLowerCase().includes(String(val.tag).toLowerCase())
         )
       );
 
@@ -33,7 +34,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         `${args.includes('reaction') ? '' : func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`;
       let menu = {};
       if (cfg.button && cfg?.menu_type == 'buttonListImage') {
-        let imageMessage = await func.uploadToServer(
+        keys['bell_jpg'] ??= await func.uploadToServer(
           fs.readFileSync(fol[3] + 'bell.jpg')
         );
         let quick_reply = [];
@@ -54,7 +55,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           interactiveMessage: {
             header: {
               title: '',
-              imageMessage,
+              imageMessage: keys['bell_jpg'],
               hasMediaAttachment: true,
             },
             body: {
@@ -93,6 +94,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
               stanzaId: cht.key.id,
               participant: cht.key.participant,
               quotedMessage: cht,
+              forwardedNewsletterMessageInfo: cfg.chId || {
+                newsletterJid: '120363301254798220@newsletter',
+                newslettedName: 'Termai',
+                serverMessageId: 152,
+              },
             },
           },
         };
@@ -235,15 +241,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
               sourceUrl: 'https://github.com/Rifza123',
               mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
               renderLargerThumbnail: true,
-              showAdAttribution: true,
+
               mediaType: 1,
-              sourceType: 'ad',
-              sourceId: '1',
+
+              sourceId: 'IMAGE',
               sourceUrl: 'https://instagram.com/rifza.p.p',
             },
             forwardingScore: 19,
             isForwarded: true,
-            forwardedNewsletterMessageInfo: {
+            forwardedNewsletterMessageInfo: cfg.chId || {
               newsletterJid: '120363301254798220@newsletter',
               newslettedName: 'Termai',
               serverMessageId: 152,
@@ -253,6 +259,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         await Exp.sendMessage(id, menu, { quoted: cht });
       }
       Data.audio?.menu?.length > 0 &&
+        type !== 'content' &&
         Exp.sendMessage(
           cht.id,
           {
@@ -365,7 +372,122 @@ ${infos.others.readMore}
         `   PID: ${processStats.pid}\n` +
         `   Title: ${processStats.title}\n` +
         `   Exec Path: ${processStats.execPath}`;
-      return cht.reply(txt);
+      Exp.sendMessage(
+        cht.id,
+        { image: await dashboard(), caption: txt },
+        { quoted: cht }
+      );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['totalpesan'],
+      listmenu: true,
+      tag: 'group',
+    },
+    async () => {
+      let mention = cht.mention?.length > 0 ? cht.mention : null;
+
+      let meta = is.group ? await Exp.groupMetadata(cht.id) : null;
+
+      let header = is.group
+        ? `📋Total Pesan di group ${meta?.subject || '-'}\n`
+        : `📋Total pesan kamu\n`;
+
+      if (!is.group) {
+        const user = Data.chats[cht.sender.split('@')[0]];
+        if (!user?.groups) return await cht.reply('Belum ada data pesan 🙂');
+
+        const groups = Object.keys(user.groups);
+
+        let arr = await Promise.all(
+          groups.map(async (gid) => {
+            const g = user.groups[gid];
+            if (!g) return null;
+
+            const subtotal = Object.keys(g).reduce(
+              (n, t) => (t === 'lastSent' ? n : n + g[t]),
+              0
+            );
+
+            const meta = await Exp.groupMetadata(gid);
+
+            const det = Object.keys(g)
+              .filter((t) => t !== 'lastSent')
+              .map((t) => `  • ${t}: ${g[t]}`)
+              .join('\n');
+
+            const last = g.lastSent
+              ? func.dateFormatter(g.lastSent, 'Asia/Jakarta')
+              : '-';
+
+            return {
+              name: meta?.subject || gid,
+              subtotal,
+              det,
+              last,
+            };
+          })
+        );
+
+        arr = arr.filter(Boolean).sort((a, b) => b.subtotal - a.subtotal);
+
+        let teks = arr
+          .map(
+            (v, idx) =>
+              `${idx + 1}. ${v.name} (total: ${v.subtotal})\n${v.det}\n  • lastSent: ${v.last}`
+          )
+          .join('\n\n');
+
+        return await cht.reply(teks || 'Belum ada data pesan 🙂');
+      }
+
+      let arr = mention
+        ? Object.keys(Data.chats).filter((a) =>
+            mention.some((b) => String(a).includes(b.split('@')[0]))
+          )
+        : Object.keys(Data.chats);
+
+      arr = await Promise.all(
+        arr.map(async (userId) => {
+          const user = Data.chats[userId];
+          const group = user.groups?.[cht.id];
+          if (!group) return null;
+
+          const total = Object.keys(group).reduce(
+            (n, t) => (t === 'lastSent' ? n : n + group[t]),
+            0
+          );
+
+          const detail = Object.keys(group)
+            .filter((t) => t !== 'lastSent')
+            .map((t) => `  - ${t}: ${group[t]}`)
+            .join('\n');
+
+          const last = group.lastSent
+            ? func.dateFormatter(group.lastSent, 'Asia/Jakarta')
+            : '-';
+
+          return {
+            userId,
+            total,
+            detail,
+            last,
+          };
+        })
+      );
+
+      arr = arr.filter(Boolean).sort((a, b) => b.total - a.total);
+
+      let teks = arr
+        .map(
+          (v, idx) =>
+            `${idx + 1}. @${v.userId.split('@')[0]} (total: ${v.total})\n${v.detail}\n  - lastSent: ${v.last}`
+        )
+        .join('\n\n');
+
+      await cht.reply(teks ? header + teks : 'Belum ada data pesan 🙂');
     }
   );
 }

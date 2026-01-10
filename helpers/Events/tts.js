@@ -70,24 +70,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     {
       cmd: Data.voices.map((a) => a.toLowerCase()), //tambah voice di global.js
       listmenu: Data.voices,
-      energy: 15,
       args: 'Harap sertakan teks untuk diucapkan!',
       tag: 'tts',
     },
-    async () => {
-      await Exp.sendPresenceUpdate('recording', cht.id);
+    async ({ args }) => {
       let v = Data.voices.find((a) => a.toLowerCase() == cht.cmd.toLowerCase());
-      Exp.sendMessage(
-        id,
-        {
-          audio: {
-            url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${v}&key=${api.xterm.key}&text=${cht.q}&${config}`,
-          },
-          mimetype: 'audio/mpeg',
-          ai: true,
-        },
-        { quoted: cht }
-      );
+      cht.q = `${v}|${args}`;
+      ev.emit('elevenlabs');
     }
   );
 
@@ -104,12 +93,19 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       if (!Data.voices.includes(voice)) return cht.reply(txtreply);
       if (!text) return cht.reply(txtreply);
       await Exp.sendPresenceUpdate('recording', cht.id);
+      let res = await fetch(
+        `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`
+      );
+      if (res.headers.get('content-type').includes('application/json')) {
+        let { status, message: msg } = await res.json();
+        return cht.reply(`❗ *API RESPONSE STATUS: ${status}*\n\n${msg}`, {
+          footer: `Harap Beli/Gunakan plan yang lebih tinggi untuk mendapatkan batas penggunaan yang lebih besar di https://termai.cc#pricing\nCek waktu reset dengan perintah: .cekapikey`,
+        });
+      }
       Exp.sendMessage(
         id,
         {
-          audio: {
-            url: `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`,
-          },
+          audio: await Buffer.from(await res.arrayBuffer()),
           mimetype: 'audio/mpeg',
           ai: true,
         },

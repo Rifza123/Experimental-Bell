@@ -52,7 +52,7 @@ global['session'] = fol[8] + 'session';
 
 const { Mongo } = await `${fol[0]}mongodb.js`.r();
 
-let mongoURI = ''; 
+let mongoURI = '';
 /* Masukkan SRV URI jika ingin menggunakan database mongo
   📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
 */
@@ -60,7 +60,6 @@ let mongoURI = '';
 const db = fol[5];
 const conf = fol[3] + 'config.json';
 let config = JSON.parse(fs.readFileSync(conf));
-let keys = Object.keys(config);
 let mongo;
 
 //antisipasi kalo masi pake config lama
@@ -70,6 +69,8 @@ if (!(config.cfg.ai_interactive?.group || config.cfg.ai_interactive?.private)) {
   };
   config.cfg.ai_interactive.private = true;
 }
+config.coowner ??=[]
+let keys = Object.keys(config);
 
 if (mongoURI && mongoURI.length > 5) {
   mongo = await new Mongo(mongoURI, {}, ['db']).init();
@@ -163,13 +164,15 @@ export const initialize = async () => {
       path: db,
       name: 'ShopRPG',
       content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {} },
-    }, // new
+    },
+    { path: db, name: 'ch_reaction', content: {} }, //new
+    { path: db, name: 'sewa', content: {} }, //new
+    { path: db, name: 'antispam', content: {} }, //new
+    { path: db, name: 'chats', content: {} }, //new
   ];
 
   global._DB = DB.map((a) => a.name);
-  const words = await fetch(
-    'https://raw.githubusercontent.com/Rifza123/lib/main/db/badwords.json'
-  ).then((a) => a.json());
+  const words = [];
 
   Data.toxicwords = [
     ...Data.toxicwords,
@@ -243,7 +246,7 @@ export const initialize = async () => {
   }
 
   /*!-======[ Definition of Infos ]======-!*/
-  await (fol[9] + locale + '.js').r()
+  await (fol[9] + locale + '.js').r();
 };
 
 const originalConsoleError = console.error;

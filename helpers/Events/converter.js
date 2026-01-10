@@ -13,13 +13,24 @@ function normalizeArgs(args) {
       return JSON.parse(args);
     } catch {}
   }
-  if (args.includes(',')) {
-    return args
-      .split(',')
-      .map((s) => s.trim().replace(/^["']|["']$/g, ''))
-      .filter(Boolean);
+  let parts = args.split(/\s+/);
+  let fixed = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === '-af') {
+      let chain = [];
+      chain.push(parts[i]);
+      i++;
+      while (i < parts.length && !parts[i].startsWith('-')) {
+        chain.push(parts[i]);
+        i++;
+      }
+      fixed.push(chain.join(' '));
+      i--;
+      continue;
+    }
+    fixed.push(parts[i]);
   }
-  return args.split(/\s+/);
+  return fixed;
 }
 
 /*!-======[ Default Export Function ]======-!*/

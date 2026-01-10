@@ -521,4 +521,56 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await cht.edit(infos.messages.done, _key);
     }
   );
+
+  ev.on(
+    {
+      cmd: ['ttsr', 'tiktoksearch', 'ttsearch'],
+      listmenu: ['tiktoksearch'],
+      tag: 'search',
+      args: `Cari video apa?`,
+      energy: 10,
+    },
+    async ({ args }) => {
+      try {
+        let params = new URLSearchParams({ query: args, key: api.xterm.key });
+        let res = await fetch(api.xterm.url + '/api/search/tiktok?' + params);
+        if (!res.ok)
+          return cht.reply(`❗*Failed*\nAPI response status: ${res.status}`);
+        let { data, msg, status } = await res.json();
+
+        if (!status) return cht.reply(msg);
+        let text = '';
+        let Keys = {};
+        for (let i = 0; i < data.length; i++) {
+          const v = data[i];
+          Keys[i + 1] = v.link;
+          text +=
+            `${i + 1}. ${v.title?.trim() || '-'}\n` +
+            `   👤 ${v.author_name} (@${v.author_username})\n` +
+            `   ⏱ Durasi: ${v.duration}s\n` +
+            `   👁 Views: ${v.stats?.views?.toLocaleString() || 0}\n` +
+            `   ❤️ Like: ${v.stats?.like?.toLocaleString() || 0}\n` +
+            `   🔗 ${v.link}\n\n`;
+        }
+
+        cht.question(
+          `🎶 *Tiktok Search*\n${text}`,
+          {
+            emit: 'tiktok',
+            sender: cht.sender,
+            exp: Date.now() + func.parseTimeString('5 menit'),
+            accepts: Object.keys(Keys),
+            Keys,
+            maxUse: 10,
+          },
+          {
+            footer: `- Balas pesan ini dengan angka 1 sampai ${data.length} untuk mengunduh!\n_Kamu bisa melakukannya selama 5 menit dan maksimal ${data.length}x (hanya berlaku untuk @${cht.sender.split('@')[0]})_`,
+            mentions: [cht.sender],
+          }
+        );
+      } catch (e) {
+        cht.reply(`❗*Failed*\n${Data.infos.others.readMore} ${e}`);
+      }
+    }
+  );
 }

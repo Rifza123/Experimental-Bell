@@ -258,10 +258,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['getchid'],
       tag: 'tools',
       energy: 10,
-      isQuoted: 'Reply pesan yang diteruskan dari saluran!',
+      args: 'Kirimkan link ch nya!',
+      //isQuoted: 'Reply pesan yang diteruskan dari saluran!',
     },
-    async () => {
+    async ({ args }) => {
       try {
+        /*
         let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message[
           cht.quoted.type
         ].contextInfo.forwardedNewsletterMessageInfo;
@@ -272,6 +274,81 @@ export default async function on({ cht, Exp, store, ev, is }) {
             `\nID Pesan: ${res.serverMessageId}`,
           keys[sender]
         );
+        */
+
+        let _id = args.match(/channel\/([^\/]+)/)?.[1];
+        let d = await Exp.newsletterMetadata('invite', _id);
+
+        let meta = d?.thread_metadata || {};
+
+        let name = meta?.name?.text || '-';
+        let desc = meta?.description?.text || '-';
+        let subs = meta?.subscribers_count || '0';
+        let verif =
+          meta?.verification === 'VERIFIED'
+            ? '✔️ Terverifikasi'
+            : 'Tidak terverifikasi';
+        let invite = meta?.invite || '-';
+        let handle = meta?.handle || '-';
+        let reaction = meta?.settings?.reaction_codes?.value || '-';
+        let created = meta?.creation_time
+          ? new Date(Number(meta.creation_time) * 1000).toLocaleString('id-ID')
+          : '-';
+
+        let text = `🆔 ID: ${d?.id || '-'}
+📝 Nama: ${name}
+🔖 Status: ${verif}
+👥 Pengikut: ${subs}
+
+🔗 Invite Code: ${invite}
+#️⃣ Handle: ${handle}
+💬 Reaction Setting: ${reaction}
+⏱ Dibuat Pada: ${created}
+
+📄 Deskripsi:
+${desc}
+`;
+
+        if (cfg.button) {
+          let imageMessage = await func.uploadToServer(
+            'https://mmg.whatsapp.net' + meta.preview?.direct_path
+          );
+
+          let _m = {
+            interactiveMessage: {
+              header: {
+                title: '',
+                imageMessage,
+                hasMediaAttachment: true,
+              },
+              body: {
+                text: '📡 Informasi Channel'.font('bold'),
+              },
+              footer: {
+                text,
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: 'cta_copy',
+                    buttonParamsJson: {
+                      display_text: name,
+                      id: 'bahlil',
+                      copy_code: d?.id,
+                    }.String(),
+                  },
+                ],
+              },
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.key.participant,
+                quotedMessage: cht,
+              },
+            },
+          };
+          return Exp.relayMessage(cht.id, _m, {});
+        }
+        await cht.edit('📡 Informasi Channel\n\n' + text, keys[sender]);
       } catch (e) {
         cht.reply('Error get Channel id' + e.message);
       }
@@ -460,6 +537,45 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let [r, g, b, a] = args.match(/\((.*?)\)/)[1].split(',');
       if (/rgb/.test(args)) return cht.reply(func.rgbaToHex(r, g, b, a));
       func.hexToRgba(args);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['rch'],
+      listmenu: ['rch'],
+      tag: 'tools',
+      energy: 110,
+      args: 'Kirimkan link pesan channelnya!',
+      premium: true,
+      urls: {
+        formats: ['https://whatsapp.com/channel/'],
+        msg: true,
+      },
+    },
+    async ({ args, cht, urls }) => {
+      try {
+        const url = new URL(urls[0]);
+        const [, , _id, server_id] = url.pathname.split('/');
+        let d = await Exp.newsletterMetadata('invite', _id);
+        const reaction = args.match(
+          /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu
+        ) || ['😂', '😢', '👍', '😯', '🙏', '❤️'];
+
+        let newsletterId = d.id;
+        cht.reply(
+          (
+            await {
+              newsletterId,
+              server_id,
+              reaction,
+            }.newsletterReact()
+          ).String()
+        );
+      } catch (e) {
+        console.error(e);
+        cht.reply('❌ Terjadi error melakukan react.');
+      }
     }
   );
 }

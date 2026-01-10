@@ -59,21 +59,21 @@ async function getDirectoriesRecursive(
 }
 
 export class func {
-  constructor({ Exp, store }) {
+  constructor({ Exp, store, groupMetadata }) {
     this.Exp = Exp;
     this.store = store;
-
+    this.groupMetadata = groupMetadata;
     this._metadata = {
       init: false,
     };
   }
-  
-  init(config){
-    if(typeof config !== 'object') return 'Invalid Object!'
-    for(let i of Object.keys(config)){
-      this[i] = config[i]
+
+  init(config) {
+    if (typeof config !== 'object') return 'Invalid Object!';
+    for (let i of Object.keys(config)) {
+      this[i] = config[i];
     }
-    return this
+    return this;
   }
 
   normalizeSender(jid) {
@@ -226,11 +226,6 @@ export class func {
     }
 
     const newData = Data.lids;
-    const diffResult = this.deepDiff({
-      oldData,
-      newData,
-      type: 'terminal',
-    });
 
     const summary =
       `\x1b[36m[LID Manager]\x1b[0m ` +
@@ -238,13 +233,10 @@ export class func {
       `${skipped > 0 ? ` \x1b[34m➜ Dilewati: ${skipped}\x1b[0m` : ''}` +
       `${errors.length ? ` \x1b[33m⚠️ Error: ${errors.length}\x1b[0m` : ''}`;
 
-    if (
-      diffResult &&
-      typeof diffResult === 'string' &&
-      diffResult.includes('[CHANGED')
-    ) {
-      console.log(diffResult);
-    }
+    this.deepDiff({
+      oldData,
+      newData,
+    });
 
     return summary.trim();
   }
@@ -285,14 +277,14 @@ export class func {
       try {
         let meta = this._metadata[id] || { metadata: {} };
         let { metadata: oldData } = meta;
-        console.log(oldData);
-        let changeDetails = this.deepDiff({
-          oldData,
-          newData: data.metadata,
-          type: 'terminal',
-        });
         console.log(
-          `${this.color.blue('[GROUP_METADATA_MANAGER]')}: ${id}\n${changeDetails}`
+          `${this.color.blue('[GROUP_METADATA_MANAGER]')}\n` +
+            `  ${this.color.white('Group :')} ${this.color.cyan(data.metadata.subject)}\n` +
+            `  ${this.color.white('Changes:')}\n`,
+          this.deepDiff({
+            oldData,
+            newData: data.metadata,
+          })
         );
 
         this._metadata[id] = data;
@@ -340,11 +332,17 @@ export class func {
     },
 
     all: () => {
-      return this._metadata;
+      this.metadata.init();
+      return Object.fromEntries(
+        Object.entries(this._metadata).filter(
+          ([_, v]) => v && typeof v === 'object' && !Array.isArray(v)
+        )
+      );
     },
   };
 
   getGroupMetadata = async (chtId, Exp, update = false) => {
+    this.metadata.init();
     let hasData = this.metadata.has(chtId);
     let now = Date.now();
     let metadata = this.metadata.get(chtId);
@@ -370,6 +368,11 @@ export class func {
           id: chtId,
           run: () => this.getGroupMetadata(chtId, Exp, update),
         });
+        console.log(
+          `${this.color.blue('[GROUP_METADATA_MANAGER]')}\n` +
+            `  ${this.color.white('Queue:')} ${this.color.cyan(chtId)}\n` +
+            `  ${this.color.white('Status:')} Waiting for metadata fetch`
+        );
       }
       return metadata.metadata;
     }
@@ -377,7 +380,7 @@ export class func {
     let groupMetadata;
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        groupMetadata = await Exp.groupMetadata(chtId);
+        groupMetadata = await this.groupMetadata(chtId);
         break;
       } catch (err) {
         console.error(
@@ -385,7 +388,7 @@ export class func {
           err
         );
         if (attempt === 2) throw err;
-        await sleep(10000);
+        await sleep(5000);
       }
     }
 
@@ -435,21 +438,25 @@ export class func {
   };
 
   async downloadSave(message, filename) {
-    let quoted = message.msg ? message.msg : message;
-    let mime = (message.msg || message).mimetype || '';
-    let messageType = message.mtype
+    const mime = message.mimetype || '';
+    const messageType = message.mtype
       ? message.mtype.replace(/Message/gi, '')
       : mime.split('/')[0];
-    const stream = await downloadContentFromMessage(quoted, messageType);
 
-    let buffer = Buffer.from([]);
+    const stream = await downloadContentFromMessage(message, messageType);
+
+    const writeStream = fs.createWriteStream(filename);
+
     for await (const chunk of stream) {
-      buffer = Buffer.concat([buffer, chunk]);
+      writeStream.write(chunk);
     }
 
-    let trueFileName = filename;
-    await fs.writeFileSync(trueFileName, buffer);
-    return trueFileName;
+    await new Promise((resolve, reject) => {
+      writeStream.end(resolve);
+      writeStream.on('error', reject);
+    });
+
+    return filename;
   }
 
   async download(message, MessageType) {
@@ -470,39 +477,55 @@ export class func {
     return [...text.matchAll(/<([^>]+)>/g)].map((m) => m[1]);
   }
 
-  menuFormatter(data, frames, tags) {
-    const normalizedData = {};
-    Object.values(data).forEach((item) => {
+  menuFormatter(data, framesConfig) {
+    const { frames, tags: tagNames, prefix = '.' } = framesConfig;
+
+    const normalized = {};
+    for (const item of Object.values(data || {})) {
+      if (!item || !item.tag) continue;
+
       const tag = item.tag;
-      if (!normalizedData[tag]) {
-        normalizedData[tag] = new Set();
-      }
-      if (Array.isArray(item.listmenu)) {
-        item.listmenu.forEach((menu) => normalizedData[tag].add(menu));
+      if (!normalized[tag]) normalized[tag] = new Set();
+
+      let menus = item.listmenu;
+
+      if (menus === true) menus = item.cmd;
+      if (!menus) continue;
+
+      if (Array.isArray(menus)) {
+        menus.forEach((m) => m && normalized[tag].add(m));
       } else {
-        normalizedData[tag].add(item.listmenu);
+        normalized[tag].add(menus);
       }
+    }
+
+    Object.keys(normalized).forEach((tag) => {
+      normalized[tag] = Array.from(normalized[tag]);
     });
 
-    Object.keys(normalizedData).forEach((tag) => {
-      normalizedData[tag] = Array.from(normalizedData[tag]);
-    });
+    const orderedTags = [
+      ...Object.keys(tagNames || {}),
+      ...Object.keys(normalized).filter((t) => !(tagNames || {})[t]),
+    ];
 
-    const generateOutput = (data, { frames, tags, prefix }) => {
-      let result = '';
-      Object.keys(tags).forEach((tag) => {
-        if (data[tag] && data[tag].length > 0) {
-          result += `${frames.head}${frames.brackets[0]} ${tags[tag]} ${frames.brackets[1]}\n`;
-          data[tag].forEach((menu) => {
-            result += `${frames.body} ${prefix || '.'}${menu}\n`;
-          });
-          result += `${frames.foot}\n\n`;
-        }
+    let result = '';
+
+    orderedTags.forEach((tag) => {
+      const menus = normalized[tag];
+      if (!menus || !menus.length) return;
+
+      const displayName = tagNames?.[tag] || `*<${tag}>*`;
+
+      result += `${frames.head}${frames.brackets[0]} ${displayName} ${frames.brackets[1]}\n`;
+
+      menus.forEach((menu) => {
+        result += `${frames.body} ${prefix}${menu}\n`;
       });
-      return result.trim();
-    };
 
-    return generateOutput(normalizedData, frames, tags);
+      result += `${frames.foot}\n\n`;
+    });
+
+    return result.trim();
   }
 
   getTotalCmd = () => {
@@ -602,6 +625,63 @@ export class func {
     });
   }
 
+  async saveToFile(url, filePath, options = {}, maxRedirects = 5) {
+    return new Promise((resolve, reject) => {
+      if (!filePath) filePath = './toolkit/db/' + Date.now() + '.bin';
+      const urlObj = new URL(url);
+      const client = urlObj.protocol === 'https:' ? https : http;
+
+      const req = client.get(url, options, (response) => {
+        if (
+          response.statusCode >= 300 &&
+          response.statusCode < 400 &&
+          response.headers.location
+        ) {
+          if (maxRedirects === 0)
+            return reject(new Error('Too many redirects'));
+
+          const redirectUrl = new URL(
+            response.headers.location,
+            url
+          ).toString();
+          return resolve(
+            this.saveToFile(redirectUrl, filePath, options, maxRedirects - 1)
+          );
+        }
+
+        if (response.statusCode !== 200) {
+          return reject(new Error(`HTTP status ${response.statusCode}`));
+        }
+
+        const fileStream = fs.createWriteStream(filePath);
+
+        response.pipe(fileStream);
+
+        fileStream.on('finish', () => {
+          fileStream.close(() => {
+            setTimeout(() => {
+              fs.unlink(filePath, (err) => {
+                if (err && err.code !== 'ENOENT') {
+                  console.error('Gagal hapus file:', err);
+                }
+              });
+            }, 60000 * 5);
+
+            resolve(filePath);
+          });
+        });
+
+        fileStream.on('error', (err) => {
+          fs.unlink(filePath, () => reject(err));
+        });
+
+        response.on('error', reject);
+      });
+
+      req.on('error', reject);
+    });
+  }
+
   compareTwoStrings(first, second) {
     first = first.replace(/\s+/g, '');
     second = second.replace(/\s+/g, '');
@@ -680,7 +760,8 @@ export class func {
         const similarity = this.compareTwoStrings(query, item.toLowerCase());
         return { item, similarity, index };
       })
-      .filter((result) => result.similarity >= threshold);
+      .filter((result) => result.similarity >= threshold)
+      .sort((a, b) => b.similarity - a.similarity);
   };
 
   getTopSimilar = (arr) =>
@@ -1000,9 +1081,10 @@ export class func {
   }
 
   async uploadToServer(media, type = 'image') {
-    media = typeof media == 'string' && media.startsWith('http') 
-      ? { url: media }
-      : media
+    media =
+      typeof media == 'string' && media.startsWith('http')
+        ? { url: media }
+        : media;
     return Object.values(
       await generateWAMessageContent(
         { [type]: media },
@@ -1203,7 +1285,7 @@ export class func {
     brightWhite: (str) => `\x1b[97m${str}\x1b[0m`,
   };
 
-  deepDiff({ oldData, newData, path = 'root', type }) {
+  deepDiff({ oldData, newData, path = 'root' }) {
     const changes = [];
 
     const joinPath = (base, key, isArray) =>
@@ -1211,7 +1293,6 @@ export class func {
 
     const isObject = (v) => typeof v === 'object' && v !== null;
 
-    // === Handle missing root ===
     if (newData === undefined && oldData !== undefined) {
       changes.push({
         type: 'removed',
@@ -1227,7 +1308,6 @@ export class func {
         note: '[Root added]',
       });
     } else {
-      // === recursive diff ===
       const diff = (a, b, p) => {
         if (!isObject(a) || !isObject(b)) {
           if (a !== b) {
@@ -1236,7 +1316,6 @@ export class func {
           return;
         }
 
-        // ARRAY
         if (Array.isArray(a) || Array.isArray(b)) {
           const maxLen = Math.max(a?.length || 0, b?.length || 0);
           for (let i = 0; i < maxLen; i++) {
@@ -1262,7 +1341,6 @@ export class func {
           return;
         }
 
-        // OBJECT
         const keys = new Set([
           ...Object.keys(a || {}),
           ...Object.keys(b || {}),
@@ -1292,9 +1370,8 @@ export class func {
       diff(oldData, newData, path);
     }
 
-    // === OUTPUT ===
     if (!changes.length) {
-      console.log(this.color.blue('[NO CHANGES] Data sama persis'));
+      //console.log(this.color.blue('[NO CHANGES] Data sama persis'));
       return;
     }
 
@@ -1325,5 +1402,15 @@ export class func {
           break;
       }
     }
+  }
+
+  parseLink(args = '') {
+    return (
+      args.match(
+        /(https?:\/\/)?[^\s]+\.(com|net|org|edu|gov|mil|int|info|biz|pro|name|xyz|id|co|io|ai|app|dev|tech|cloud|online|site|store|shop|blog|me|tv|live|fun|lol|icu|top|click|link|digital|media|news|press|wiki|work|agency|software|systems|network|email|services|support|solutions|group|company|finance|capital|investments|ventures|trade|exchange|market|academy|school|college|university|health|care|clinic|hospital|pharmacy|legal|law|attorney|accountant|tax|consulting|engineering|construction|property|realestate|house|homes|rent|auction|energy|solar|green|eco|bio|farm|food|restaurant|cafe|bar|coffee|pizza|beer|wine|fashion|style|beauty|makeup|hair|spa|salon|fitness|gym|sport|football|basketball|tennis|golf|racing|motor|auto|car|bike|travel|tour|vacation|holiday|hotel|hostel|flight|air|sea|cruise|space|science|tech|ai|ml|data|crypto|blockchain|nft|web3|dao)(\/[^\s]*)?/gi
+      ) || []
+    ).map((url) =>
+      (url.startsWith('http') ? url : 'https://' + url).replace(/['"`<>]/g, '')
+    );
   }
 }

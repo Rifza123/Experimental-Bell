@@ -2,8 +2,9 @@
 const chalk = 'chalk'.import();
 
 /*!-======[ Default Export Function ]======-!*/
-export default async function client({ Exp, store, cht, is, chatDb }) {
+export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
   let { func } = Exp;
+  let { archiveMemories: memories } = func;
   try {
     let m = store?.messages?.[cht.id] || {};
     m.idmsg ??= [];
@@ -12,7 +13,7 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
 
     if (cht.memories?.banned && !is.owner) {
       if (cht.memories.banned * 1 > Date.now()) return;
-      func.archiveMemories.delItem(cht.sender, 'banned');
+      memories.delItem(cht.sender, 'banned');
     }
 
     chatDb.ai_interactive ??= Data.preferences[cht.id].ai_interactive =
@@ -27,6 +28,7 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
       cfg['autotyping'] && (await Exp.sendPresenceUpdate('composing', cht.id));
       cfg[is.group ? 'autoreadgc' : 'autoreadpc'] &&
         (await Exp.readMessages([cht.key]));
+
       console.log(
         func.logMessage(
           is.group ? 'GROUP' : 'PRIVATE',
@@ -35,12 +37,25 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
           frmtEdMsg
         )
       );
+
+      /* *pendataan total chat user* */
+      Exp.addChat({ cht, is });
+
+      if (cfg.antipc && !is.bypassOnlyGC) {
+        let text =
+          `\`⚠️KAMU TELAH DI BLOKIR!⚠️\`` +
+          '\n- *Bot dalam mode anti Private Chat!*' +
+          '\n> _Setiap user yang menghubungi bot melalui private chat akan otomatis di blokir!_';
+        await Exp.sendMessage(cht.id, { text });
+        await Exp.updateBlockStatus(cht.id, 'block');
+      }
     }
 
     /*!-======[ Block Chat ]======-!*/
     if (!cfg.public && !is.owner && !is.me && !is.offline) return;
     if (cfg.public === 'onlygc' && !is.group && !is.owner) return;
-    if (cfg.public === 'onlypc' && is.group && !is.owner) return;
+    if (cfg.public === 'onlypc' && is.group && !is.owner && !is.bypassOnlyGC)
+      return;
     if (
       cfg.public === 'onlyjoingc' &&
       !is.owner &&
@@ -75,6 +90,16 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
         });
       }
     }
+    if (
+      is.group &&
+      cfg.sewa &&
+      cht.id in Data.sewa &&
+      (sewaDb.status == 'grace' ||
+        sewaDb.status == 'expired' ||
+        sewaDb.graceUntil) &&
+      !is.owner
+    )
+      return;
 
     /*
       🔧 Handling LID (Linked ID / PC user)
@@ -123,22 +148,20 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
     let except = is.antiTagall || is.antibot || is.antilink;
     if ((is.baileys || is.mute || is.onlyadmin) && !except) return;
 
-    const exps = { Exp, store, cht, is, chatDb };
+    const exps = { Exp, store, cht, is, chatDb, sewaDb };
     const ev = new Data.EventEmitter({ ...exps });
     Data.ev ??= ev;
     if (!is.offline && !is.afk && (cht.cmd || cht.reaction)) {
-      if (
-        cfg.register &&
-        !func.archiveMemories.has(cht.sender) &&
-        !['register', 'daftar'].includes(cht.cmd?.toLowerCase()) &&
-        !cht.reaction
-      )
-        return cht.reply(Data.infos.client.registerNeeded, { replyAi: false });
+      let regmsg = Exp.checkRegisterNeeded({ cht, memories });
+      if (regmsg === true) return;
+      if (typeof regmsg == 'string' && Data.events[cht.cmd])
+        return cht.reply(regmsg);
       cht.cmd &&
         (await Promise.all([
           'questionCmd' in cht.memories &&
-            func.archiveMemories.delItem(cht.sender, 'questionCmd'),
-          (await ev.emit(cht.cmd, exps)) == 'NOTFOUND' &&
+            memories.delItem(cht.sender, 'questionCmd'),
+          !regmsg &&
+            (await ev.emit(cht.cmd, exps)) == 'NOTFOUND' &&
             cfg.didYouMean &&
             (async (cht) => {
               let didYouMean = await func
@@ -153,9 +176,10 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
               didYouMean.length > 0 &&
                 (await cht.react('🤔')) &&
                 (await sleep(1000));
-              cht.reply(
-                `Maaf, command \`${cht.cmd}\` tidak ada dalam menu.\nMungkin yang kamu maksud:\n${didYouMean.join('\n')}`
-              );
+              didYouMean.length > 0 &&
+                (await cht.reply(
+                  `Maaf, command \`${cht.cmd}\` tidak ada dalam menu.\nMungkin yang kamu maksud:\n${didYouMean.join('\n')}`
+                ));
             })(cht),
         ]));
       cht.reaction && (await Data.reaction({ ev, ...exps }));
@@ -164,12 +188,10 @@ export default async function client({ Exp, store, cht, is, chatDb }) {
     }
 
     /*!-======[ Chat Interactions Add ]======-!*/
-    !cht.cmd &&
-      is.botMention &&
-      (await func.archiveMemories.addChat(cht.sender));
+    !cht.cmd && is.botMention && (await memories.addChat(cht.sender));
 
-    await func.archiveMemories.setItem(cht.sender, 'name', cht.pushName);
-    func.archiveMemories.setItem(cht.sender, 'lastChat', Date.now());
+    await memories.setItem(cht.sender, 'name', cht.pushName);
+    memories.setItem(cht.sender, 'lastChat', Date.now());
   } catch (error) {
     console.error('Error in client.js:', error);
   }
