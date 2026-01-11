@@ -41,7 +41,7 @@ export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
       /* *pendataan total chat user* */
       Exp.addChat({ cht, is });
 
-      if (cfg.antipc && !is.bypassOnlyGC) {
+      if (cfg.antipc && !is.bypassOnlyGC && !is.group && !is.owner) {
         let text =
           `\`⚠️KAMU TELAH DI BLOKIR!⚠️\`` +
           '\n- *Bot dalam mode anti Private Chat!*' +
