@@ -363,7 +363,7 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
 - Autosticker: ${pref.autosticker ? '✅ Aktif' : '❌ Mati'}
 - Auto Download: ${pref.autodownload ? '✅ Aktif' : '❌ Mati'}
 - Anti Channel: ${pref.antich ? '✅ Aktif' : '❌ Mati'}
-- Anti Spam: ${pref.antspam ? '✅ Aktif' : '❌ Mati'}
+- Anti Spam: ${pref.antispam ? '✅ Aktif' : '❌ Mati'}
 - Auto Back: ${pref.autoback ? '✅ Aktif' : '❌ Mati'}
 
 🔗 *Grup Induk:* ${meta.linkedParent || 'Tidak ada'}
@@ -1618,6 +1618,7 @@ Example:
           try {
             groupInfo = await Exp.groupGetInviteInfo(inviteMatch[1]);
             _id = groupInfo?.id;
+            args = args.replace(inviteMatch[1], '')
           } catch (e) {
             return await cht.reply(
               `Gagal mendapatkan rata group!\nErr: ${e.message}${e.message.includes('not-authorized') ? '\n> Bot di kick, jadi gabisa ngambil id dari linknya karena akses di blokir, delsewa pake id/nama grub aja kalo masih kesimpen metadata nya!' : ''}`
@@ -1664,7 +1665,7 @@ Example:
         }
 
         if (!_id) return cht.reply(argsText);
-
+        
         const timestamp = func.parseTimeString(args);
         if (!timestamp && cht.cmd !== 'delsewa')
           return cht.reply('Waktu tidak valid!\n\n' + argsText);
