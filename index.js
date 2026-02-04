@@ -81,7 +81,7 @@ async function launch() {
 
     const Exp = makeWASocket({
       logger,
-      version: [2, 3000, 1029700657],
+      version: [2, 3000, 1027934701],
       printQRInTerminal: !global.pairingCode,
       browser: Browsers.ubuntu('Chrome'),
       auth: state,
