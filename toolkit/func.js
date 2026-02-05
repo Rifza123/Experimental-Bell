@@ -341,7 +341,7 @@ export class func {
     },
   };
 
-  getGroupMetadata = async (chtId, Exp, update = false) => {
+  getGroupMetadata = async (chtId, update = false, force=false) => {
     this.metadata.init();
     let hasData = this.metadata.has(chtId);
     let now = Date.now();
@@ -352,18 +352,18 @@ export class func {
       }
     */
     if (hasData && !update) return metadata.metadata;
-    if (hasData) {
+    if (hasData && !force) {
       let index = Data.queueMetadata.findIndex((a) => a.id == chtId);
 
       if (index >= 0) {
         //biar gak duplikat, 1 grup 1x update aja
         Data.queueMetadata[index].run = () =>
-          this.getGroupMetadata(chtId, Exp, true);
+          this.getGroupMetadata(chtId, true, true);
       } else {
         //masukin ke queue biar gak kena limit
         Data.queueMetadata.push({
           id: chtId,
-          run: () => this.getGroupMetadata(chtId, Exp, true),
+          run: () => this.getGroupMetadata(chtId, true, true),
         });
 
         console.log(
@@ -393,7 +393,7 @@ export class func {
 
     if (groupMetadata.addressingMode == 'lid') {
       const group = await getBinaryNodeChild(
-        await Exp.query({
+        await this.Exp.query({
           tag: 'iq',
           attrs: {
             type: 'get',
