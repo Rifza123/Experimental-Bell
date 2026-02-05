@@ -1002,11 +1002,11 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
         console.log(chalk.red(` - ${err.name}: ${err.msg}`));
       }
     } else {
-      console.log(
+      /*console.log(
         chalk.green(
           `[DETECTOR] OK (${success.length == total ? 'All' : success.length} tasks) ${Date.now() - start}ms`
         )
-      );
+      );*/
     }
   }, 20000);
 }
