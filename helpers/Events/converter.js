@@ -350,4 +350,171 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
       }
     }
   );
+
+  /* Author : Maxiel Nuoye ོ  
+ Number : 083835155437
+ 
+⚠️ WARNING ⚠️
+
+FITUR INI DILARANG DI JUAL,DIBUAT UNTUK MEMBANTU KEBUTUHAN PARA PELAJAR 
+
+*/
+
+  ev.on(
+    {
+      cmd: ['textdoc', 'todoc'],
+      listmenu: ['textdoc'],
+      tag: 'converter',
+      args: 'Masukkan text setelah perintah',
+      energy: 3,
+    },
+    async ({ cht }) => {
+      if (!cht || !cht.id) return;
+
+      const text = typeof cht.q === 'string' ? cht.q.trim() : '';
+
+      if (!text) {
+        return cht.reply('❌ Masukkan text setelah perintah.');
+      }
+
+      try {
+        const pageWidth = 612;
+        const pageHeight = 792;
+        const marginX = 72;
+        const marginY = 72;
+        const lineHeight = 14;
+        const maxCharsPerLine = 90;
+
+        let y = pageHeight - marginY;
+        let content = '';
+        let pages = [];
+
+        const wrapText = (str) => {
+          const words = str.split(' ');
+          let lines = [];
+          let line = '';
+
+          for (const word of words) {
+            if ((line + word).length > maxCharsPerLine) {
+              lines.push(line);
+              line = word + ' ';
+            } else {
+              line += word + ' ';
+            }
+          }
+          if (line.trim()) lines.push(line);
+          return lines;
+        };
+
+        const rawLines = text.split('\n');
+
+        for (const raw of rawLines) {
+          const wrappedLines = wrapText(raw);
+
+          for (const l of wrappedLines) {
+            if (y < marginY) {
+              pages.push(content);
+              content = '';
+              y = pageHeight - marginY;
+            }
+
+            const safeLine = l
+              .replace(/\\/g, '\\\\')
+              .replace(/\(/g, '\\(')
+              .replace(/\)/g, '\\)');
+
+            content += `BT /F1 12 Tf ${marginX} ${y} Td (${safeLine}) Tj ET\n`;
+            y -= lineHeight;
+          }
+
+          y -= lineHeight / 2;
+        }
+
+        if (content.trim()) pages.push(content);
+
+        let objects = [];
+        let offsets = [];
+        let cursor = 0;
+
+        const pushObj = (str) => {
+          offsets.push(cursor);
+          cursor += Buffer.byteLength(str);
+          objects.push(str);
+        };
+
+        pushObj('%PDF-1.4\n');
+
+        pushObj(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
+
+        let kids = pages.map((_, i) => `${3 + i * 2} 0 R`).join(' ');
+        pushObj(
+          `2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>\nendobj\n`
+        );
+
+        let objIndex = 3;
+
+        pages.forEach((pageContent) => {
+          pushObj(
+            `${objIndex} 0 obj
+<< /Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents ${objIndex + 1} 0 R
+/Resources << /Font << /F1 ${3 + pages.length * 2} 0 R >> >>
+>>
+endobj\n`
+          );
+
+          pushObj(
+            `${objIndex + 1} 0 obj
+<< /Length ${Buffer.byteLength(pageContent)} >>
+stream
+${pageContent}
+endstream
+endobj\n`
+          );
+
+          objIndex += 2;
+        });
+
+        pushObj(
+          `${3 + pages.length * 2} 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj\n`
+        );
+
+        const xrefStart = cursor;
+        let xref = `xref\n0 ${offsets.length + 1}\n0000000000 65535 f \n`;
+        offsets.forEach((o) => {
+          xref += `${o.toString().padStart(10, '0')} 00000 n \n`;
+        });
+
+        pushObj(
+          `${xref}
+trailer
+<< /Size ${offsets.length + 1} /Root 1 0 R >>
+startxref
+${xrefStart}
+%%EOF`
+        );
+
+        const buffer = Buffer.from(objects.join(''));
+
+        await Exp.sendMessage(
+          cht.id,
+          {
+            document: buffer,
+            mimetype: 'application/pdf',
+            fileName: 'text.pdf',
+          },
+          { quoted: cht }
+        );
+      } catch (e) {
+        console.error('[TEXTDOC ERROR]', e);
+        try {
+          await cht.reply('❌ Gagal membuat PDF.');
+        } catch {}
+      }
+    }
+  );
 }

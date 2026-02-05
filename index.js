@@ -94,7 +94,7 @@ async function launch() {
     const { groupMetadata } = Exp;
     Func.init({ Exp, groupMetadata });
     Func.metadata.init();
-    Exp.groupMetadata = Func.getGroupMetadata
+    Exp.groupMetadata = async(id, update,force) => Func.getGroupMetadata(id, update,force)
     Exp.func = Func;
 
     if (global.pairingCode && !Exp.authState.creds.registered) {

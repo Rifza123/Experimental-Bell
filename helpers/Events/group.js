@@ -1891,6 +1891,7 @@ Example:
       cmd: ['upswgc', 'swgroup', 'swgc'],
       listmenu: ['swgc'],
       tag: 'group',
+      isAdmin: true,
       isGroup: true
     },
     async ({ args }) => {
