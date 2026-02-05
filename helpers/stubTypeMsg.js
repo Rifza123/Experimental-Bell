@@ -70,7 +70,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
           `${func.color.white('Event:')} ${func.color.cyan(stubName)}`
       );
 
-      return await func.getGroupMetadata(cht.id, Exp, true);
+      return await Exp.groupMetadata(cht.id, true)
     };
     //console.log({ genText: genText(wtype, members, group.subject, group.desc, 'welcome') })
     let stubType =
@@ -80,7 +80,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
     switch (stubType) {
       case StubType.GROUP_PARTICIPANT_ADD:
       case StubType.GROUP_PARTICIPANT_ADD_REQUEST_JOIN: {
-        await func.getGroupMetadata(cht.id, Exp, true);
+        await Exp.groupMetadata(cht.id, true)
         if (!Data.preferences[cht.id]?.welcome) return;
         let text = genText(
           wtype,
@@ -173,7 +173,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
 
       case StubType.GROUP_PARTICIPANT_REMOVE:
       case StubType.GROUP_PARTICIPANT_LEAVE: {
-        func.getGroupMetadata(cht.id, Exp, true);
+        Exp.groupMetadata(cht.id, true);
         if (_members.includes(Exp.number))
           return delete Data.preferences[cht.id];
         if (
