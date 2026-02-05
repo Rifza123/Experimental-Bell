@@ -1888,7 +1888,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
         }
 
         if (!cyk) {
-          let meta = await func.getGroupMetadata(gcid, Exp);
+          let meta = await func.getGroupMetadata(gcid);
           return cht.question(
             `Yakin ingin keluar dari group \`${meta.subject}\`?`,
             { emit: `${cht.cmd} ${q} --`, ...qdata }

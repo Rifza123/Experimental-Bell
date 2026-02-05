@@ -111,7 +111,7 @@ export class func {
         );
       }
 
-      let meta = isGroup ? await this.getGroupMetadata(cht.id, Exp) : null;
+      let meta = isGroup ? await this.getGroupMetadata(cht.id) : null;
       //console.log(meta)
       let participants =
         meta?.adressingMode == 'lid' ? meta.participants : this.lid();
@@ -284,6 +284,7 @@ export class func {
           this.deepDiff({
             oldData,
             newData: data.metadata,
+            type: 'text',
           })
         );
 
@@ -341,7 +342,7 @@ export class func {
     },
   };
 
-  getGroupMetadata = async (chtId, update = false, force=false) => {
+  getGroupMetadata = async (chtId, update = false, force = false) => {
     this.metadata.init();
     let hasData = this.metadata.has(chtId);
     let now = Date.now();
@@ -352,6 +353,7 @@ export class func {
       }
     */
     if (hasData && !update) return metadata.metadata;
+    //console.log({ chtId, update, force })
     if (hasData && !force) {
       let index = Data.queueMetadata.findIndex((a) => a.id == chtId);
 
@@ -1284,7 +1286,7 @@ export class func {
     brightWhite: (str) => `\x1b[97m${str}\x1b[0m`,
   };
 
-  deepDiff({ oldData, newData, path = 'root' }) {
+  deepDiff({ oldData, newData, path = 'root', type = 'log' }) {
     const changes = [];
 
     const joinPath = (base, key, isArray) =>
@@ -1380,35 +1382,51 @@ export class func {
       if (typeof v === 'object') return `Object(${Object.keys(v).length})`;
       return JSON.stringify(v);
     };
-
-    console.log(this.color.yellow('=== DIFF RESULT ==='));
+    let text = '=== DIFF RESULT ===';
+    console.log(this.color.yellow(text));
     for (const c of changes) {
       switch (c.type) {
         case 'added':
-          console.log(
-            `${this.color.green('[ADDED]')} ${this.color.cyan(c.path)} → ${this.color.green(fmt(c.new))}`
-          );
+          {
+            let typeChanges = `${this.color.green('[ADDED]')} ${this.color.cyan(c.path)} → ${this.color.green(fmt(c.new))}`;
+            if (type == 'text') {
+              text += `\n${typeChanges}`;
+            } else {
+              console.log(typeChanges);
+            }
+          }
           break;
         case 'removed':
-          console.log(
-            `${this.color.red('[REMOVED]')} ${this.color.cyan(c.path)} ← ${this.color.red(fmt(c.old))} ${c.note ? this.color.magenta(c.note) : ''}`
-          );
+          {
+            let typeChanges = `${this.color.red('[REMOVED]')} ${this.color.cyan(c.path)} ← ${this.color.red(fmt(c.old))} ${c.note ? this.color.magenta(c.note) : ''}`;
+            if (type == 'text') {
+              text += `\n${typeChanges}`;
+            } else {
+              console.log(typeChanges);
+            }
+          }
           break;
         case 'changed':
-          console.log(
-            `${this.color.yellow('[CHANGED]')} ${this.color.cyan(c.path)} : ${this.color.red(fmt(c.old))} → ${this.color.green(fmt(c.new))}`
-          );
+          {
+            let typeChanges = `${this.color.yellow('[CHANGED]')} ${this.color.cyan(c.path)} : ${this.color.red(fmt(c.old))} → ${this.color.green(fmt(c.new))}`;
+            if (type == 'text') {
+              text += `\n${typeChanges}`;
+            } else {
+              console.log(typeChanges);
+            }
+          }
           break;
       }
     }
+    if (type == 'text') return text;
   }
 
   parseLink(args = '') {
     return (
       args.match(
         /(https?:\/\/)?[^\s]+\.(com|net|org|edu|gov|mil|int|info|biz|pro|name|xyz|id|co|io|ai|app|dev|tech|cloud|online|site|store|shop|blog|me|tv|live|fun|lol|icu|top|click|link|digital|media|news|press|wiki|work|agency|software|systems|network|email|services|support|solutions|group|company|finance|capital|investments|ventures|trade|exchange|market|academy|school|college|university|health|care|clinic|hospital|pharmacy|legal|law|attorney|accountant|tax|consulting|engineering|construction|property|realestate|house|homes|rent|auction|energy|solar|green|eco|bio|farm|food|restaurant|cafe|bar|coffee|pizza|beer|wine|fashion|style|beauty|makeup|hair|spa|salon|fitness|gym|sport|football|basketball|tennis|golf|racing|motor|auto|car|bike|travel|tour|vacation|holiday|hotel|hostel|flight|air|sea|cruise|space|science|tech|ai|ml|data|crypto|blockchain|nft|web3|dao)(\/[^\s]*)?/gi
-      ) || 
-        args?.match(/https?:\/\/[^\s)]+/g) || 
+      ) ||
+      args?.match(/https?:\/\/[^\s)]+/g) ||
       []
     ).map((url) =>
       (url.startsWith('http') ? url : 'https://' + url).replace(/['"`<>]/g, '')

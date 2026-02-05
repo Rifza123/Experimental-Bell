@@ -12,7 +12,7 @@ const {
   STORIES_JID,
   generateWAMessageFromContent,
 } = 'baileys'.import();
- 
+
 const conf = fol[3] + 'config.json';
 const db = fol[5];
 let config = JSON.parse(fs.readFileSync(conf));
@@ -305,7 +305,7 @@ export default async function detector({ Exp, store }) {
         let w = '5 menit';
         //console.log(data)
         if (data.now && !data.hasNotice) {
-          let { participants, subject } = await func.getGroupMetadata(id, Exp);
+          let { participants, subject } = await func.getGroupMetadata(id);
           let groupAdmins = func.getGroupAdmins(participants);
           let isBotAdmin = groupAdmins.includes(Exp.number);
 
@@ -873,7 +873,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
         if (!d.graceUntil) {
           d.graceUntil = now + ONE_DAY;
           d.status = 'grace';
-          let { participants } = await func.getGroupMetadata(id, Exp);
+          let { participants } = await func.getGroupMetadata(id);
           await Exp.sendMessage(id, {
             text:
               `⏳ *Masa Sewa Berakhir*\n\n` +
@@ -893,7 +893,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
         if (d.graceUntil && now > d.graceUntil) {
           if (d.status !== 'expired') {
             d.status = 'expired';
-            let { participants } = await func.getGroupMetadata(id, Exp);
+            let { participants } = await func.getGroupMetadata(id);
             await Exp.sendMessage(id, {
               text:
                 `⛔ *Sewa Berakhir Sepenuhnya*\n\n` +
@@ -984,7 +984,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
     await safeExec(() => {
       let queue = Data.queueMetadata.shift();
-      if (typeof queue === 'function') return queue.run();
+      if (typeof queue?.run === 'function') return queue.run();
     }, 'queue.run');
     exec(
       `find . toolkit -type f \\( -name "output_*" -o -name "*.tmp" -o -name "*.bin" \\) -delete`,

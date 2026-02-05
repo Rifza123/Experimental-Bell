@@ -69,7 +69,7 @@ export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
         let ii = i.split('/').slice(-1)?.[0]?.split('?')?.[0];
         keys[ii] ??= await Exp.groupGetInviteInfo(ii).then((a) => a.id);
         let mem = await func
-          .getGroupMetadata(keys[ii], Exp)
+          .getGroupMetadata(keys[ii])
           .then((a) =>
             a.participants.map(
               (a) => a[cht.sender.endsWith('@lid') ? 'lid' : 'id']
@@ -121,7 +121,7 @@ export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
         for (let url of urls) {
           let code = url.split('/').slice(-1)?.[0]?.split('?')?.[0];
           keys[code] ??= await Exp.groupGetInviteInfo(code).then((a) => a.id);
-          metadata = await func.getGroupMetadata(keys[code], Exp);
+          metadata = await func.getGroupMetadata(keys[code]);
 
           let mem = metadata.participants.map((a) => a.lid);
           if (mem.includes(cht.sender)) {
