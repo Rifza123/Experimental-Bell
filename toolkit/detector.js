@@ -12,7 +12,7 @@ const {
   STORIES_JID,
   generateWAMessageFromContent,
 } = 'baileys'.import();
-
+ 
 const conf = fol[3] + 'config.json';
 const db = fol[5];
 let config = JSON.parse(fs.readFileSync(conf));
