@@ -665,6 +665,33 @@ ${loraText}
     }
   );
 
+  // Import the perplexity function
+  const { perplexity } = await (fol[2] + 'perplexity.js').r();
+  
+  ev.on(
+    {
+      cmd: ['perplexity', 'pplx'],
+      tag: 'ai',
+      args: infos.ai.isQuery,
+      listmenu: ['perplexity'],
+      energy: 7,
+    },
+    async () => {
+      // Check if API key is configured
+      if (!process.env.PERPLEXITY_API_KEY && !api.perplexity?.key) {
+        return cht.reply(
+          "[ PERPLEXITY AI ]\nAPI key not configured. Please set the PERPLEXITY_API_KEY environment variable or add 'perplexity: { key: &quot;your-api-key&quot; }' to your API configuration."
+        );
+      }
+      
+      let res = await perplexity(cht.q);
+      cht.reply('[ PERPLEXITY AI ]\n' + res.response, {
+        ai: true,
+        replyAi: false,
+      });
+    }
+  );
+
   ev.on(
     {
       cmd: ['bell', 'autoai', 'aichat', 'ai_interactive'],
