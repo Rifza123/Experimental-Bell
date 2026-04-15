@@ -27,7 +27,9 @@ Data.notify = Data.notify || {
 Data.queueMetadata ??= [];
 const saving = new Set();
 
+let detectorInterval;
 export default async function detector({ Exp, store }) {
+  if (detectorInterval) clearInterval(detectorInterval);
   const { func } = Exp;
   livechart.default({ Exp });
   const reloadData = async (files) => {
@@ -425,6 +427,10 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       }
 
       await fs.promises.writeFile(tmp, raw);
+      if (!fs.existsSync(tmp)) {
+        console.warn(`[SAVE] tmp file hilang: ${tmp}`);
+        return;
+      }
       await fs.promises.rename(tmp, filepath);
     } catch (e) {
       console.error(`Error in detector.js > saveData > SAVE ERROR ${name}:`, e);
@@ -923,7 +929,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
   global.jadwal = new JadwalSholat(jdwl);
 
   cfg.keyChecker ??= true;
-  keys['detector'] = setInterval(async () => {
+  detectorInterval = setInterval(async () => {
     let start = Date.now();
     let total = 0;
     const errors = [];
@@ -1009,4 +1015,5 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       );*/
     }
   }, 20000);
+  return detectorInterval
 }

@@ -94,7 +94,8 @@ async function launch() {
     const { groupMetadata } = Exp;
     Func.init({ Exp, groupMetadata });
     Func.metadata.init();
-    Exp.groupMetadata = async(id, update,force) => Func.getGroupMetadata(id, update,force)
+    Exp.groupMetadata = async (id, update, force) =>
+      Func.getGroupMetadata(id, update, force);
     Exp.func = Func;
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
@@ -120,7 +121,6 @@ async function launch() {
     Data.initialize({ Exp, store }); //Exp function
 
     /*!-======[ Detect File Update ]======-!*/
-    keys['detector'] && clearInterval(keys['detector']);
     detector({ Exp, store });
 
     /*!-======[ EVENTS Exp ]======-!*/

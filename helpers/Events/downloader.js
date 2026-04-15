@@ -347,32 +347,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
           if (cfg.button && isYts) {
             let imageMessage = await func.uploadToServer(item.thumbnail);
             let paramJson = {
-              title: `🔎Click and see all search results➡️`,
+              title: `.`,
               has_multiple_buttons: true,
               sections: search.items.map((v, i) => ({
-                title: `#${i + 1}. ${v.title}`,
-                highlight_label: `${v.duration}`,
+                title: `#`,
+                highlight_label: `.`,
                 rows: [
                   {
-                    title: 'Download Audio/M4A 🎵',
-                    description: 'Audio Biasa',
-                    id: `.ytm4a ${v.url}`,
+                    title: '.',
+                    description: '.',
+                    id: `.pin jokowi`,
                   },
                   {
-                    title: 'Download Audio/WAV 🎙️',
-                    description: 'Voice Note',
-                    id: `.playvn ${v.url}`,
-                  },
-                  {
-                    title: 'Download Audio/MP4 📹',
-                    description: 'Video',
-                    id: `.ytmp4 ${v.url}`,
-                  },
-                  {
-                    title: 'Download Audio/MP3 💽',
-                    description: 'Audio MP3 (dalam bentuk dokumen)',
-                    id: `.ytmp3 ${v.url}`,
-                  },
+                    title: '.',
+                    description: '.',
+                    id: `.pin jokowi`,
+                  }
                 ],
               })),
             };
@@ -385,11 +375,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
                   hasMediaAttachment: true,
                 },
                 body: {
-                  text: `🔍 YouTube Search\n${item.title}`.font('bold'),
+                  text: `.`
                 },
 
                 footer: {
-                  text: `👤 Channel: ${item.author?.name}\n⏱ Duration: ${item.duration}\n📅 Rilis: ${item.publishedAt}\n👁️ Views: ${item.viewCount.toLocaleString()}\n🔗 ${item.url}`,
+                  text: `.`
                 },
                 nativeFlowMessage: {
                   buttons: [
