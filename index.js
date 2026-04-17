@@ -75,7 +75,7 @@ const Exp = makeWASocket({
 const { groupMetadata } = Exp;
 Func.init({ Exp, groupMetadata });
 Func.metadata.init();
-
+Exp.func = Func;
 /*!-======[ Detect File Update ]======-!*/
 detector({ Exp, store });
 
@@ -106,7 +106,7 @@ async function launch() {
 
     Exp.groupMetadata = async (id, update, force) =>
       Func.getGroupMetadata(id, update, force);
-    Exp.func = Func;
+    
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
       const phoneNumber = await question(
