@@ -51,6 +51,31 @@ Data.initialize = (await `${fol[1]}initialize.js`.r()).default;
 let logger = pino({ level: 'silent' });
 let store = makeInMemoryStore();
 
+let { state, saveCreds } = await useMultiFileAuthState(session);
+let Func = new func({ store });
+
+const Exp = makeWASocket({
+  logger,
+  version: [
+    2,
+    3000,
+    await fetch(
+      'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version'
+    ).then((a) => a.text()),
+  ],
+  printQRInTerminal: !global.pairingCode,
+  browser: Browsers.ubuntu('Chrome'),
+  auth: state,
+  retryRequestDelayMs: 5000,
+  maxMsgRetryCount: 2,
+  getMessage: async () => undefined,
+  cachedGroupMetadata: (jid) => Func.metadata.get(jid),
+  syncFullHistory: false,
+}); 
+
+/*!-======[ Detect File Update ]======-!*/
+detector({ Exp, store });
+
 async function launch() {
   try {
     const rl = readline.createInterface({
@@ -76,21 +101,6 @@ async function launch() {
       }
     }
 
-    let { state, saveCreds } = await useMultiFileAuthState(session);
-    let Func = new func({ store });
-
-    const Exp = makeWASocket({
-      logger,
-      version: [2, 3000, await fetch("https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version").then(a => a.text())],
-      printQRInTerminal: !global.pairingCode,
-      browser: Browsers.ubuntu('Chrome'),
-      auth: state,
-      retryRequestDelayMs: 5000,
-      maxMsgRetryCount: 2,
-      getMessage: async () => undefined,
-      cachedGroupMetadata: (jid) => Func.metadata.get(jid),
-      syncFullHistory: false,
-    });
     const { groupMetadata } = Exp;
     Func.init({ Exp, groupMetadata });
     Func.metadata.init();
@@ -119,9 +129,6 @@ async function launch() {
 
     /*!-======[ INITIALIZE ]======-!*/
     Data.initialize({ Exp, store }); //Exp function
-
-    /*!-======[ Detect File Update ]======-!*/
-    detector({ Exp, store });
 
     /*!-======[ EVENTS Exp ]======-!*/
     Exp.ev.on('connection.update', async (update) => {
