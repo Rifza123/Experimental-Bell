@@ -46,7 +46,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
   const { func } = Exp;
   const { getDirectoriesRecursive, archiveMemories: memories } = func;
   const { id, sender } = cht;
-  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+  const preferences = is?.jadibot
+    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+    : (Data.preferences ??= {});
 
   function sendPremInfo({ _text, text }, cust = false, number) {
     return Exp.sendMessage(
@@ -1108,7 +1110,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       if (user.premium.time >= Date.now()) {
         user.premium = { ...claim, ...prm };
         if (['addpremium', 'addprem'].includes(cht.cmd)) {
-          user.energy = (parseFloat(user.energy) || 0) + parseFloat(claim.energy || 0);
+          user.energy =
+            (parseFloat(user.energy) || 0) + parseFloat(claim.energy || 0);
         }
         let txc = '\n\n*🎁Bonus `(Berlaku selama premium)`*';
         for (let i of claims) {
@@ -1919,9 +1922,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     async ({ args }) => {
       let tx = 'Mengecek semua nama group yang terdaftar...';
       await cht.reply(tx);
-      let gc = Object.keys(preferences).filter((a) =>
-        a.includes(from.group)
-      );
+      let gc = Object.keys(preferences).filter((a) => a.includes(from.group));
       let g = `*LIST GROUP*\n`;
       let perStep = Math.ceil(gc.length / 5);
 
@@ -2302,8 +2303,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let stopped = 'max-depth';
       let lastKey = current?.key;
 
-      for (; deep < depth && current;) {
-        deep++
+      for (; deep < depth && current; ) {
+        deep++;
         const ctx = deepFind(current.message, 'key', 4);
 
         if (!ctx?.stanzaId || !ctx?.participant) {
@@ -2321,15 +2322,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
         lastKey = next.key;
       }
       await Exp.relayMessage(jid, current.message, {});
-      await Exp.sendMessage(jid, { text:
-        ` 🔍 *Quoted Info*\n` +
-          ` • Requested Depth : ${depth}\n` +
-          ` • Reached Depth : ${deep}\n` +
-          ` • Stop Reason : ${stopped}\n` +
-          ` • Final ID : ${lastKey?.id}\n\n` +
-          `\`CODE\`:\n` +
-          infos.others.readMore +
-          JSON.stringify(current.message, 0, 2),
+      await Exp.sendMessage(
+        jid,
+        {
+          text:
+            ` 🔍 *Quoted Info*\n` +
+            ` • Requested Depth : ${depth}\n` +
+            ` • Reached Depth : ${deep}\n` +
+            ` • Stop Reason : ${stopped}\n` +
+            ` • Final ID : ${lastKey?.id}\n\n` +
+            `\`CODE\`:\n` +
+            infos.others.readMore +
+            JSON.stringify(current.message, 0, 2),
         },
         { quoted: current.message }
       );

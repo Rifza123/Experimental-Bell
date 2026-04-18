@@ -78,6 +78,7 @@ const fs = 'fs'.import();
 // Atau bisa gunakan await untuk mengatasi promise
 //const fs = await "fs".import()
 ```
+
 ---
 
 ### Cara Mengimpor Fungsi
@@ -91,7 +92,6 @@ const events = await './tolkit/events.js'.r();
 ```
 
 ---
-
 
 ## ✨ Fitur Event Emitter Lanjutan
 
@@ -132,7 +132,7 @@ ev.on(
     },
     isMention: true, //Membutuhkan mention (tag/reply/input nomor)
     isQuoted: false, //membutuhkan quoted,
-    onlyGame: [ 'tebakgambar', 'tebakanime' ], //Jika anda menambahkan onlyGame, event ini hanya bisa digunakan saat bermain salah satu game dalam array
+    onlyGame: ['tebakgambar', 'tebakanime'], //Jika anda menambahkan onlyGame, event ini hanya bisa digunakan saat bermain salah satu game dalam array
   },
   ({ media }) => {
     // media adalah kembalian dari media yang di-download,
@@ -148,10 +148,10 @@ Menambahkan atau mengubah file di dalam folder `./helpers/Events` secara otomati
 ```javascript
 ev.on(
   {
-    cmd: ['ai'],        // Command pemicu
-    listmenu: ['ai'],   // Tampil di menu dengan nama AI
-    tag: 'tools',       // Kategori menu
-    energy: 5,          // Energi yang digunakan
+    cmd: ['ai'], // Command pemicu
+    listmenu: ['ai'], // Tampil di menu dengan nama AI
+    tag: 'tools', // Kategori menu
+    energy: 5, // Energi yang digunakan
   },
   async ({ cht }) => {
     await cht.reply('Hai! Ini adalah balasan dari event ai.');
@@ -167,7 +167,7 @@ Misalnya, kita ingin mengganti command dan pertanyaan (`cht.cmd` dan `cht.q`) se
 ```javascript
 // Ubah command & input
 cht.cmd = 'ai';
-cht.q   = 'Hai';
+cht.q = 'Hai';
 
 // Jalankan event 'ai' dengan data yang sudah dimodifikasi
 ev.emit('ai', { cht });
@@ -175,9 +175,9 @@ ev.emit('ai', { cht });
 
 Dengan cara ini, Anda bisa:
 
-* **Mengalihkan** user ke command lain.
-* Menyusun **alur percakapan interaktif**.
-* Membuat sistem **multi-step AI** atau chatbot yang fleksibel.
+- **Mengalihkan** user ke command lain.
+- Menyusun **alur percakapan interaktif**.
+- Membuat sistem **multi-step AI** atau chatbot yang fleksibel.
 
 ---
 
@@ -187,7 +187,7 @@ Berikut contoh nyata bagaimana event lain bisa memicu event tambahan:
 //code ini diterapkan di ./helpers/interactive.js
 
 ```javascript
-let _ai = await bell(text)
+let _ai = await bell(text);
 let config = _ai?.data || {};
 
 switch (config?.cmd) {
@@ -209,16 +209,16 @@ switch (config?.cmd) {
 
 Contoh di atas menunjukkan:
 
-* **Rekayasa command**: `config.cmd` menentukan event mana yang dijalankan.
-* **Pengubahan input**: `cht.q` bisa diisi ulang untuk menyesuaikan pertanyaan.
+- **Rekayasa command**: `config.cmd` menentukan event mana yang dijalankan.
+- **Pengubahan input**: `cht.q` bisa diisi ulang untuk menyesuaikan pertanyaan.
 
 ---
 
 ## 💡 Manfaat Utama
 
-* 🔄 **Dynamic Flow**: Alihkan perintah ke event lain dengan input yang disesuaikan.
-* 🕹️ **Command Engineering**: Mengatur logika kompleks (AI, game, dsb.) tanpa duplikasi kode.
-* 🎯 **Interaktif**: Buat chatbot multi-tahap atau sistem cerdas.
+- 🔄 **Dynamic Flow**: Alihkan perintah ke event lain dengan input yang disesuaikan.
+- 🕹️ **Command Engineering**: Mengatur logika kompleks (AI, game, dsb.) tanpa duplikasi kode.
+- 🎯 **Interaktif**: Buat chatbot multi-tahap atau sistem cerdas.
 
 ---
 
@@ -228,20 +228,22 @@ Terima kasih kepada semua yang telah berkontribusi dan mendukung pengembangan pr
 Setiap masukan, ide, dan bantuan sangat berarti!
 
 ### 🏆 Kontributor Utama
-- **Azfir (rifza.p.p)**  
-  - [Instagram](https://www.instagram.com/rifza.p.p)  
-  - [GitHub](https://github.com/Rifza123)  
-  - [YouTube](https://www.youtube.com/@rifza)  
-  - [WhatsApp Channel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)  
+
+- **Azfir (rifza.p.p)**
+  - [Instagram](https://www.instagram.com/rifza.p.p)
+  - [GitHub](https://github.com/Rifza123)
+  - [YouTube](https://www.youtube.com/@rifza)
+  - [WhatsApp Channel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
   - **Peran:** Semua kontribusi utama, pengelolaan dan pengembangan penuh proyek.
 
 ### 🤝 Kontributor Lain
-- **Hanif Skizo**  
-  - [Instagram](https://instagram.com/htr.ox)  
-  - **Kontribusi:** Penambahan fitur game *chess.js*.
 
-- **Barr**  
-  - [Instagram](https://www.instagram.com/pler.curutt)  
+- **Hanif Skizo**
+  - [Instagram](https://instagram.com/htr.ox)
+  - **Kontribusi:** Penambahan fitur game _chess.js_.
+
+- **Barr**
+  - [Instagram](https://www.instagram.com/pler.curutt)
   - **Kontribusi:** Pembuatan modul **autoBackup (detector.js)**, **listUser (owner.js)** dan **antiimg/antivid/antidoct/antistk/antistkpck/antivoice**.
 
 [![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)

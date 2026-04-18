@@ -1619,7 +1619,7 @@ Example:
           try {
             groupInfo = await Exp.groupGetInviteInfo(inviteMatch[1]);
             _id = groupInfo?.id;
-            args = args.replace(inviteMatch[1], '')
+            args = args.replace(inviteMatch[1], '');
           } catch (e) {
             return await cht.reply(
               `Gagal mendapatkan rata group!\nErr: ${e.message}${e.message.includes('not-authorized') ? '\n> Bot di kick, jadi gabisa ngambil id dari linknya karena akses di blokir, delsewa pake id/nama grub aja kalo masih kesimpen metadata nya!' : ''}`
@@ -1666,7 +1666,7 @@ Example:
         }
 
         if (!_id) return cht.reply(argsText);
-        
+
         const timestamp = func.parseTimeString(args);
         if (!timestamp && cht.cmd !== 'delsewa')
           return cht.reply('Waktu tidak valid!\n\n' + argsText);
@@ -1885,84 +1885,81 @@ Example:
       }
     }
   );
-  
+
   ev.on(
     {
       cmd: ['upswgc', 'swgroup', 'swgc'],
       listmenu: ['swgc'],
       tag: 'group',
       isAdmin: true,
-      isGroup: true
+      isGroup: true,
     },
     async ({ args }) => {
       try {
-        let { quoted, type: mediaType } = ev.getMediaType(cht)
-        let caption = args || null
-        let messageSecret = await 'crypto'.import().then(a => a.randomBytes(32))
+        let { quoted, type: mediaType } = ev.getMediaType(cht);
+        let caption = args || null;
+        let messageSecret = await 'crypto'
+          .import()
+          .then((a) => a.randomBytes(32));
 
-        await Exp.sendMessage(
-          id,
-          {
-            react: {
-              text: '📤', 
-              key: cht.key 
-            }
-          }
-        )
-        
-        let content = { text: caption || 'Haii semua!! yang buat sw ini adalah ' + cht.pushName }
-        
+        await Exp.sendMessage(id, {
+          react: {
+            text: '📤',
+            key: cht.key,
+          },
+        });
+
+        let content = {
+          text:
+            caption || 'Haii semua!! yang buat sw ini adalah ' + cht.pushName,
+        };
+
         if (quoted && mediaType) {
-          let media = await cht.quoted.download()
+          let media = await cht.quoted.download();
           switch (mediaType) {
             case 'sticker':
             case 'image':
             case 'video':
-              content = { [mediaType]: media, caption }
-              break
+              content = { [mediaType]: media, caption };
+              break;
             case 'audio':
-              content = { audio: media, mimetype: 'audio/mpeg', ptt: false }
-              break
-            }
+              content = { audio: media, mimetype: 'audio/mpeg', ptt: false };
+              break;
           }
+        }
 
         let inside = await baileys.generateWAMessageContent(content, {
           upload: Exp.waUploadToServer,
-        })
+        });
 
         const m = baileys.generateWAMessageFromContent(
           id,
           {
-           groupStatusMessageV2: {
+            groupStatusMessageV2: {
               message: {
                 ...inside,
                 messageContextInfo: { messageSecret },
               },
             },
-          }, {}
-        )
+          },
+          {}
+        );
 
-        await Exp.relayMessage(
-          id,
-          m.message, 
-          { messageId: m.key.id }
-        )
-      
-        await Exp.sendMessage(
-          id,
-          { 
-            react: { 
-              text: '✅',
-              key: cht.key 
-            }
-          }
-        )
+        await Exp.relayMessage(id, m.message, { messageId: m.key.id });
 
-        return cht.reply(`✅ Berhasil membuat status grup${caption ? `\ncaption: ${caption}` : ''}`)
-      
+        await Exp.sendMessage(id, {
+          react: {
+            text: '✅',
+            key: cht.key,
+          },
+        });
+
+        return cht.reply(
+          `✅ Berhasil membuat status grup${caption ? `\ncaption: ${caption}` : ''}`
+        );
       } catch (e) {
-        return cht.reply("Gagal membuat status grup\n\n*Error:*\n" + e)
+        return cht.reply('Gagal membuat status grup\n\n*Error:*\n' + e);
       }
     }
-  )
+  );
 }

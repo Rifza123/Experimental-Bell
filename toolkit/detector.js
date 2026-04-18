@@ -1015,5 +1015,5 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       );*/
     }
   }, 20000);
-  return detectorInterval
+  return detectorInterval;
 }

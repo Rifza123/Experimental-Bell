@@ -1432,7 +1432,7 @@ export class func {
       (url.startsWith('http') ? url : 'https://' + url).replace(/['"`<>]/g, '')
     );
   }
-  
+
   async exists(path) {
     try {
       await fs.promises.access(path);

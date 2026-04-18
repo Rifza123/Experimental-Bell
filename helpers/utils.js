@@ -378,16 +378,16 @@ export default async function utils({ Exp, cht, is, store }) {
 
     is.antich = Boolean(
       groupDb?.antich &&
-        !is.owner &&
-        !is.coowner &&
-        !is.me &&
-        !is.groupAdmins &&
-        is.botAdmin &&
-        (Object.values(cht?.message || {})?.[0]?.contextInfo
-          ?.forwardedNewsletterMessageInfo ||
-          is.url.find(
-            (a) => a.includes('whatsapp.com') && a.includes('/channel')
-          ))
+      !is.owner &&
+      !is.coowner &&
+      !is.me &&
+      !is.groupAdmins &&
+      is.botAdmin &&
+      (Object.values(cht?.message || {})?.[0]?.contextInfo
+        ?.forwardedNewsletterMessageInfo ||
+        is.url.find(
+          (a) => a.includes('whatsapp.com') && a.includes('/channel')
+        ))
     );
 
     is.bypassOnlyGC =
