@@ -46,6 +46,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
   const { func } = Exp;
   const { getDirectoriesRecursive, archiveMemories: memories } = func;
   const { id, sender } = cht;
+  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
 
   function sendPremInfo({ _text, text }, cust = false, number) {
     return Exp.sendMessage(
@@ -1106,6 +1107,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
       txt += `🔑Premium: ${user.premium.time >= Date.now() ? 'yes' : 'no'}`;
       if (user.premium.time >= Date.now()) {
         user.premium = { ...claim, ...prm };
+        if (['addpremium', 'addprem'].includes(cht.cmd)) {
+          user.energy = (parseFloat(user.energy) || 0) + parseFloat(claim.energy || 0);
+        }
         let txc = '\n\n*🎁Bonus `(Berlaku selama premium)`*';
         for (let i of claims) {
           txc += `\n- ${i}: +${claim[i]}`;
@@ -1915,7 +1919,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     async ({ args }) => {
       let tx = 'Mengecek semua nama group yang terdaftar...';
       await cht.reply(tx);
-      let gc = Object.keys(Data.preferences).filter((a) =>
+      let gc = Object.keys(preferences).filter((a) =>
         a.includes(from.group)
       );
       let g = `*LIST GROUP*\n`;
@@ -2264,6 +2268,71 @@ export default async function on({ cht, Exp, store, ev, is }) {
               : 'Belum pernah')
           : '');
       cht.reply(text);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['q', 'quoted', 'qpc', 'quotedpc'],
+      listmenu: ['q', 'qpc'],
+      isOwner: true,
+      isQuoted:
+        '*Reply pesannya!*\n' +
+        'Sertakan juga angka untuk menentukan seberapa dalam quoted diambil.\n' +
+        'Contoh: .qpc 2',
+
+      tag: 'owner',
+    },
+    async ({ args }) => {
+      function deepFind(o, key = 'contextInfo', max = 5) {
+        if (!o || typeof o !== 'object' || !max) return null;
+        if (o[key]) return o[key];
+        for (const k in o) {
+          const r = deepFind(o[k], key, max - 1);
+          if (r) return r;
+        }
+        return null;
+      }
+
+      let jid = cht.cmd.includes('pc') ? cht.sender : cht.id;
+      let current = await store.loadMessage(cht.id, cht.quoted?.key?.id);
+
+      let depth = Number(args) || 100;
+      let deep = 0;
+      let stopped = 'max-depth';
+      let lastKey = current?.key;
+
+      for (; deep < depth && current;) {
+        deep++
+        const ctx = deepFind(current.message, 'key', 4);
+
+        if (!ctx?.stanzaId || !ctx?.participant) {
+          stopped = 'no-quoted';
+          break;
+        }
+
+        const next = await store.loadMessage(ctx.participant, ctx.stanzaId);
+        if (!next) {
+          stopped = 'end-quoted';
+          break;
+        }
+
+        current = next;
+        lastKey = next.key;
+      }
+      await Exp.relayMessage(jid, current.message, {});
+      await Exp.sendMessage(jid, { text:
+        ` 🔍 *Quoted Info*\n` +
+          ` • Requested Depth : ${depth}\n` +
+          ` • Reached Depth : ${deep}\n` +
+          ` • Stop Reason : ${stopped}\n` +
+          ` • Final ID : ${lastKey?.id}\n\n` +
+          `\`CODE\`:\n` +
+          infos.others.readMore +
+          JSON.stringify(current.message, 0, 2),
+        },
+        { quoted: current.message }
+      );
     }
   );
 }

@@ -67,12 +67,11 @@ export class ArchiveMemories {
           lastCharge: Date.now(),
         };
       }
-      if (!userData.flow || !userData.coins) {
-        userData = {
-          ...userData,
-          flow: cfg.first.flow,
-          coins: cfg.first.coins,
-        };
+      if (userData.flow == null) {
+        userData.flow = cfg.first.flow;
+      }
+      if (userData.coins == null) {
+        userData.coins = cfg.first.coins;
       }
 
       let { chargeRate, maxCharge } = userData;

@@ -88,7 +88,7 @@ export default async function on({ cht, ev, Exp }) {
       tag: 'RPG',
     },
     async () => {
-      const user = Data.inventories[sender];
+      const user = await inventory.get(sender);
       if (!user || !user.sn) {
         return cht.reply(
           `❌ Kamu belum punya SN. Silakan daftar dulu dengan .daftar`,
@@ -122,7 +122,8 @@ export default async function on({ cht, ev, Exp }) {
 
       const nama = userInv.nama || userGlobal?.name || 'Tidak diketahui';
       const sn = userInv.sn;
-      delete Data.inventories[sender];
+      const inventoryKey = sender.split('@')[0];
+      if (Data.inventories?.[inventoryKey]) delete Data.inventories[inventoryKey];
       const key = sender.split('@')[0];
       if (Data.users?.[key]) delete Data.users[key];
 
@@ -641,16 +642,17 @@ Hanya berlaku untuk:
 - pickaxe
 - ax
 - sword
-- fishing_hook`,
+- fishing_hook
+- armor`,
     },
     async () => {
       const itemToRepair = cht.q?.toLowerCase();
       if (!itemToRepair) return cht.reply('Contoh: *.repair pickaxe*');
 
-      const allowedItems = ['pickaxe', 'ax', 'sword', 'fishing_hook'];
+      const allowedItems = ['pickaxe', 'ax', 'sword', 'fishing_hook', 'armor'];
       if (!allowedItems.includes(itemToRepair)) {
         return cht.reply(
-          'Item tidak bisa diperbaiki. Gunakan: pickaxe / ax / sword / fishing_hook'
+          'Item tidak bisa diperbaiki. Gunakan: pickaxe / ax / sword / fishing_hook / armor'
         );
       }
 
@@ -658,7 +660,7 @@ Hanya berlaku untuk:
       let inv = (await func.inventory.get(sender)) || {};
 
       const itemData = inv.item?.[itemToRepair];
-      if (!itemData) return cht.reply(`Kamu belum memiliki *${itemToRepair}*.`);
+      if (!itemData) return cht.reply(`Kamu belum memiliki *${itemToRepair}*\n Buat dengan cara *.craft ${itemToRepair}*`);
 
       const { durability, maxDurability } = itemData;
       if (durability >= maxDurability) {

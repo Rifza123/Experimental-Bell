@@ -89,7 +89,7 @@ async function launch() {
     const question = (text) =>
       new Promise((resolve) => rl.question(text, resolve));
     if (fs.existsSync(session) && !fs.existsSync(session + '/creds.json'))
-      await fs.rmdir(session, { recursive: true }, (err) => {});
+      await fs.rmdir(session);
     if (!fs.existsSync(session + '/creds.json')) {
       let quest = `\n${chalk.red.bold('╭──────────────────────────────────────────────────────╮')}\n${chalk.red.bold('│')} ${chalk.bold('❗️ Anda belum memiliki session ❗️')} ${chalk.red.bold('│')}\n${chalk.red.bold('╰──────────────────────────────────────────────────────╯')}\n            \n${chalk.green('🏷 Pilih salah satu dari opsi berikut untuk menautkan perangkat:')}\n${chalk.blue('▪︎ qr')}\n${chalk.blue('▪︎ pairing')}\n\n${chalk.yellow('* Ketik salah satu dari opsi di atas, contoh:')} ${chalk.blue.bold('pairing')}\n\n${chalk.yellow('Please type here: ')}`;
 
