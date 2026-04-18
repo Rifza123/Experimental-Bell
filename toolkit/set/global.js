@@ -97,7 +97,124 @@ global.cfg.logic =
 `;
 global.cfg.replyAi ??= false;
 global.cfg.register ??= false;
-
+cfg.rpg.cratePool ??= {
+        "common": [
+          {
+            "item": "coins",
+            "min": 5000,
+            "max": 15000,
+            "rate": 40
+          },
+          {
+            "item": "iron",
+            "min": 5,
+            "max": 20,
+            "rate": 30
+          },
+          {
+            "item": "potion",
+            "min": 1,
+            "max": 3,
+            "rate": 20
+          },
+          {
+            "item": "crate_uncommon",
+            "min": 1,
+            "max": 1,
+            "rate": 10
+          }
+        ],
+        "uncommon": [
+          {
+            "item": "coins",
+            "min": 15000,
+            "max": 40000,
+            "rate": 30
+          },
+          {
+            "item": "gold",
+            "min": 1,
+            "max": 3,
+            "rate": 25
+          },
+          {
+            "item": "potion",
+            "min": 3,
+            "max": 6,
+            "rate": 20
+          },
+          {
+            "item": "crate_mythic",
+            "min": 1,
+            "max": 1,
+            "rate": 15
+          },
+          {
+            "item": "flow",
+            "min": 1,
+            "max": 2,
+            "rate": 10
+          }
+        ],
+        "mythic": [
+          {
+            "item": "coins",
+            "min": 50000,
+            "max": 150000,
+            "rate": 30
+          },
+          {
+            "item": "diamond",
+            "min": 1,
+            "max": 3,
+            "rate": 25
+          },
+          {
+            "item": "flow",
+            "min": 2,
+            "max": 4,
+            "rate": 20
+          },
+          {
+            "item": "crate_legendary",
+            "min": 1,
+            "max": 1,
+            "rate": 10
+          },
+          {
+            "item": "premium",
+            "min": 30,
+            "max": 120,
+            "rate": 15
+          }
+        ],
+        "legendary": [
+          {
+            "item": "coins",
+            "min": 200000,
+            "max": 600000,
+            "rate": 35
+          },
+          {
+            "item": "diamond",
+            "min": 3,
+            "max": 10,
+            "rate": 30
+          },
+          {
+            "item": "flow",
+            "min": 5,
+            "max": 10,
+            "rate": 20
+          },
+          {
+            "item": "premium",
+            "min": 120,
+            "max": 360,
+            "rate": 15
+          }
+        ]
+      }
 /*!-======[ Global function ]======-!*/
 global['__filename'] = (imp) => fileURLToPath(imp);
 global['require'] = (imp) => createRequire(imp);
