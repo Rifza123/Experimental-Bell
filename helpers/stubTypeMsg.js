@@ -1,11 +1,12 @@
 const { WAMessageStubType: StubType } = 'baileys'.import();
 let infos = Data.infos;
 
-export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
+export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
   try {
     //console.log({ sewaDb, id: cht.id, sewadb2: Data.sewa[cht.id] }, JSON.stringify(Data.sewa,0,2))
+    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
     let { func } = Exp,
-      chatDb = Data.preferences[cht.id],
+      chatDb = preferences[cht.id],
       { wtype, ltype } = chatDb;
     const group = await func.getGroupMetadata(cht.id);
 
@@ -81,7 +82,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
       case StubType.GROUP_PARTICIPANT_ADD:
       case StubType.GROUP_PARTICIPANT_ADD_REQUEST_JOIN: {
         await func.getGroupMetadata(cht.id, true);
-        if (!Data.preferences[cht.id]?.welcome) return;
+        if (!preferences[cht.id]?.welcome) return;
         let text = genText(
           wtype,
           members,
@@ -175,11 +176,11 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb }) {
       case StubType.GROUP_PARTICIPANT_LEAVE: {
         func.getGroupMetadata(cht.id, true);
         if (_members.includes(Exp.number))
-          return delete Data.preferences[cht.id];
+          return delete preferences[cht.id];
         if (
           'leave' in chatDb
             ? !chatDb?.leave
-            : !Data.preferences[cht.id]?.welcome
+            : !preferences[cht.id]?.welcome
         )
           return;
         let text = genText(ltype, members, group.subject, group.desc, 'leave');

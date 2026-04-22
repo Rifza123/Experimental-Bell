@@ -215,6 +215,7 @@ cfg.rpg.cratePool ??= {
     },
   ],
 };
+
 /*!-======[ Global function ]======-!*/
 global['__filename'] = (imp) => fileURLToPath(imp);
 global['require'] = (imp) => createRequire(imp);
@@ -268,6 +269,7 @@ export const initialize = async () => {
   const DB = [
     { path: db, name: 'cmd', content: { total: 0, ai_response: 0, cmd: [] } },
     { path: db, name: 'preferences', content: {} },
+    { path: db, name: "preferencesBot", content: {} }, //new
     { path: fol[6], name: 'users', content: {} },
     { path: db, name: 'badwords', content: [] },
     { path: db, name: 'links', content: [] },
@@ -282,10 +284,12 @@ export const initialize = async () => {
       name: 'ShopRPG',
       content: { buy: {}, sell: {}, diskon: {}, inflasi: {}, statistik: {} },
     },
-    { path: db, name: 'ch_reaction', content: {} }, //new
-    { path: db, name: 'sewa', content: {} }, //new
-    { path: db, name: 'antispam', content: {} }, //new
-    { path: db, name: 'chats', content: {} }, //new
+    { path: db, name: 'ch_reaction', content: {} },
+    { path: db, name: 'sewa', content: {} },
+    { path: db, name: 'antispam', content: {} },
+    { path: db, name: 'chats', content: {} },
+    { path: db, name: 'jadibot', content: {} }, //new
+    { path: db, name: 'jadibotMap', content: {} }, //new
   ];
 
   global._DB = DB.map((a) => a.name);

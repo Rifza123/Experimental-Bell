@@ -19,12 +19,14 @@ let config = JSON.parse(fs.readFileSync(conf));
 let keys = Object.keys(config);
 let livechart = await (fol[2] + 'livechart.js').r();
 let onreload = false;
+
 Data.notify = Data.notify || {
   every: 60,
   h: 0,
   first: !1,
 };
 Data.queueMetadata ??= [];
+
 const saving = new Set();
 
 let detectorInterval;

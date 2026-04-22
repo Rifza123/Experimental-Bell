@@ -4,6 +4,7 @@ const baileys = 'baileys'.import();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is, chatDb }) {
+  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
   const { id, sender } = cht;
   const { func } = Exp;
   const { archiveMemories: memories, dateFormatter } = func;
@@ -295,7 +296,7 @@ export default async function on({ cht, Exp, store, ev, is, chatDb }) {
     async () => {
       try {
         let meta = Exp.groupMetdata;
-        let pref = Data.preferences[cht.id];
+        let pref = preferences[cht.id];
 
         let topUsers = [];
         let topEnergy = await Promise.all(
@@ -418,7 +419,7 @@ ${topEnergy}
       isAdmin: true,
     },
     async () => {
-      if (Data.preferences[id]['antitagall'])
+      if (preferences[id]['antitagall'])
         return cht.reply('Tagall tidak di izinkan disini!');
       let mentions = Exp.groupMembers.map((a) => a.id);
       let text =
@@ -546,7 +547,7 @@ ${topEnergy}
         });
         return cht.reply(text);
       }
-      let sets = Data.preferences[id];
+      let sets = preferences[id];
       sets[input] = sets[input] || false;
       let sholat = {};
       if (input == 'jadwalsholat' && isOn) {
@@ -667,7 +668,7 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         .split(/[,\s]+/)
         .filter(Boolean);
       let value = etc?.length > 0 ? etc : false;
-      let sets = Data.preferences[cht.id];
+      let sets = preferences[cht.id];
       sets[cht.cmd] = sets[cht.cmd] || false;
       sets.links = sets.links || ['chat.whatsapp.com'];
       if (['on', 'off'].includes(action)) {
@@ -714,7 +715,7 @@ _Jika sudah mengaktifkan jadwalsholat dengan tipe diatas, anda bisa memastikanny
         .split(/[,\s]+/)
         .filter(Boolean);
       let value = etc?.length > 0 ? etc : false;
-      let sets = Data.preferences[cht.id];
+      let sets = preferences[cht.id];
       sets[cht.cmd] = sets[cht.cmd] || false;
       sets.badwords = sets.badwords || [];
       if (['on', 'off'].includes(action)) {
@@ -1190,7 +1191,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
     }
   );
 
-  ev.on(
+/*  ev.on(
     {
       cmd: ['opentime', 'closetime', 'schedule'],
       tag: 'group',
@@ -1385,7 +1386,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
 
       Data.preferences[id] = preferences;
     }
-  );
+  ); */
   ev.on(
     {
       cmd: ['setwelcome', 'setleave'],
@@ -1891,7 +1892,6 @@ Example:
       cmd: ['upswgc', 'swgroup', 'swgc'],
       listmenu: ['swgc'],
       tag: 'group',
-      isAdmin: true,
       isGroup: true,
     },
     async ({ args }) => {

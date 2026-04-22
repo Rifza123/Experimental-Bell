@@ -2,7 +2,8 @@ const { proto, getContentType, generateWAMessage } = 'baileys'.import();
 
 export default async function utils({ Exp, cht, is, store }) {
   try {
-    Data.preferences[cht?.id] ??= {};
+    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+    preferences[cht?.id] ??= {};
     Data.setCmd ??= {};
 
     const { func } = Exp;
@@ -219,7 +220,7 @@ export default async function utils({ Exp, cht, is, store }) {
       return jid && jid + from.sender === cht.sender;
     });
     is.group = cht.id?.endsWith(from.group);
-    const groupDb = is.group ? Data.preferences[cht.id] : {};
+    const groupDb = is.group ? preferences[cht.id] : {};
     if (is.group) {
       const groupMetadata = await Exp.groupMetadata(cht.id);
       Exp.groupMetdata = groupMetadata;
@@ -378,16 +379,16 @@ export default async function utils({ Exp, cht, is, store }) {
 
     is.antich = Boolean(
       groupDb?.antich &&
-      !is.owner &&
-      !is.coowner &&
-      !is.me &&
-      !is.groupAdmins &&
-      is.botAdmin &&
-      (Object.values(cht?.message || {})?.[0]?.contextInfo
-        ?.forwardedNewsletterMessageInfo ||
-        is.url.find(
-          (a) => a.includes('whatsapp.com') && a.includes('/channel')
-        ))
+        !is.owner &&
+        !is.coowner &&
+        !is.me &&
+        !is.groupAdmins &&
+        is.botAdmin &&
+        (Object.values(cht?.message || {})?.[0]?.contextInfo
+          ?.forwardedNewsletterMessageInfo ||
+          is.url.find(
+            (a) => a.includes('whatsapp.com') && a.includes('/channel')
+          ))
     );
 
     is.bypassOnlyGC =
@@ -539,7 +540,7 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
         );
         groupDb.warn[jid][t].value++;
       }
-      Data.preferences[cht.id] = groupDb;
+      preferences[cht.id] = groupDb;
     };
     cht.question = async (
       text,

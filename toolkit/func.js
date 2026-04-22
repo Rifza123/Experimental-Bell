@@ -30,6 +30,7 @@ if (!fs.existsSync(groupDir)) {
 /*const cache = new Map();
 const CACHE_DURATION = 1 * 60 * 1000;
 */
+
 let METADATA_RETRIEVAL_DISTANCE = 15000;
 
 async function getDirectoriesRecursive(
