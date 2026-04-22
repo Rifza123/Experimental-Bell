@@ -14,6 +14,7 @@ import './toolkit/set/prototype.js';
 let { initialize } = await './toolkit/set/global.js'.r();
 
 /*!-======[ Mudules Imports ]======-!*/
+const path = 'path'.import();
 const readline = 'readline'.import();
 const fs = await 'fs/promises'.import();
 const chalk = 'chalk'.import();
@@ -55,35 +56,6 @@ let Func = new func({ store });
 let Exp, Detector;
 
 async function launch() {
-  let { state, saveCreds } = await useMultiFileAuthState(session);
-
-  Exp = makeWASocket({
-    logger,
-    version: [
-      2,
-      3000,
-      await fetch(
-        'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version'
-      ).then((a) => a.text()),
-    ],
-    printQRInTerminal: !global.pairingCode,
-    browser: Browsers.ubuntu('Chrome'),
-    auth: state,
-    retryRequestDelayMs: 5000,
-    maxMsgRetryCount: 2,
-    getMessage: async () => undefined,
-    cachedGroupMetadata: (jid) => Func.metadata.get(jid),
-    syncFullHistory: false,
-  });
-
-  const { groupMetadata } = Exp;
-  Func.init({ Exp, groupMetadata });
-  Func.metadata.init();
-  Exp.func = Func;
-
-  /*!-======[ Detect File Update ]======-!*/
-  Detector ??= detector({ Exp, store });
-
   try {
     const rl = readline.createInterface({
       input: process.stdin,
@@ -92,8 +64,11 @@ async function launch() {
 
     const question = (text) =>
       new Promise((resolve) => rl.question(text, resolve));
-    if ((await Func.exists(session)) && !(await Func.exists(session + '/creds.json')))
-      await fs.rm(session, { recursive: true, force: true })
+    if (
+      (await Func.exists(session)) &&
+      !(await Func.exists(session + '/creds.json'))
+    )
+      await fs.rm(session, { recursive: true, force: true });
     if (!(await Func.exists(session + '/creds.json'))) {
       let quest = `\n${chalk.red.bold('╭──────────────────────────────────────────────────────╮')}\n${chalk.red.bold('│')} ${chalk.bold('❗️ Anda belum memiliki session ❗️')} ${chalk.red.bold('│')}\n${chalk.red.bold('╰──────────────────────────────────────────────────────╯')}\n            \n${chalk.green('🏷 Pilih salah satu dari opsi berikut untuk menautkan perangkat:')}\n${chalk.blue('▪︎ qr')}\n${chalk.blue('▪︎ pairing')}\n\n${chalk.yellow('* Ketik salah satu dari opsi di atas, contoh:')} ${chalk.blue.bold('pairing')}\n\n${chalk.yellow('Please type here: ')}`;
 
@@ -108,9 +83,37 @@ async function launch() {
       }
     }
 
+    let { state, saveCreds } = await useMultiFileAuthState(session);
+
+    Exp = makeWASocket({
+      logger,
+      version: [
+        2,
+        3000,
+        await fetch(
+          'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version'
+        ).then((a) => a.text()),
+      ],
+      printQRInTerminal: !global.pairingCode,
+      browser: Browsers.ubuntu('Chrome'),
+      auth: state,
+      retryRequestDelayMs: 5000,
+      maxMsgRetryCount: 2,
+      getMessage: async () => undefined,
+      cachedGroupMetadata: (jid) => Func.metadata.get(jid),
+      syncFullHistory: false,
+    });
+
+    const { groupMetadata } = Exp;
+    Func.init({ Exp, groupMetadata });
+    Func.metadata.init();
+    Exp.func = Func;
+
+    /*!-======[ Detect File Update ]======-!*/
+    Detector ??= detector({ Exp, store });
+
     Exp.groupMetadata = async (id, update, force) =>
       Func.getGroupMetadata(id, update, force);
-    
 
     if (global.pairingCode && !Exp.authState.creds.registered) {
       const phoneNumber = await question(
