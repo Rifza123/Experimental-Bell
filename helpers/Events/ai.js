@@ -1047,7 +1047,7 @@ ${loraText}
                       forwardingScore: 999,
                       isForwarded: true,
                       forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363301254798220@newsletter',
+                        newsletterJid: '120363205560908891@newsletter',
                         serverMessageId: 152,
                       },
                     },

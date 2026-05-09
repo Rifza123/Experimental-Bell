@@ -95,7 +95,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               participant: cht.key.participant,
               quotedMessage: cht,
               forwardedNewsletterMessageInfo: cfg.chId || {
-                newsletterJid: '120363301254798220@newsletter',
+                newsletterJid: '120363205560908891@newsletter',
                 newslettedName: 'Termai',
                 serverMessageId: 152,
               },
@@ -173,7 +173,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 forwardingScore: 19,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: cfg.chId || {
-                  newsletterJid: '120363301254798220@newsletter',
+                  newsletterJid: '120363205560908891@newsletter',
                   newslettedName: 'Termai',
                   serverMessageId: 152,
                 },
@@ -221,7 +221,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                   sourceUrl: 'https://instagram.com/rifza.p.p',
                 },
                 forwardedNewsletterMessageInfo: cfg.chId || {
-                  newsletterJid: '120363301254798220@newsletter',
+                  newsletterJid: '120363205560908891@newsletter',
                   newslettedName: 'Termai',
                   serverMessageId: 152,
                 },
@@ -250,7 +250,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             forwardingScore: 19,
             isForwarded: true,
             forwardedNewsletterMessageInfo: cfg.chId || {
-              newsletterJid: '120363301254798220@newsletter',
+              newsletterJid: '120363205560908891@newsletter',
               newslettedName: 'Termai',
               serverMessageId: 152,
             },

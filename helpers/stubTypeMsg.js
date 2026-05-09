@@ -107,7 +107,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
             forwardingScore: 19,
             isForwarded: true,
             forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363301254798220@newsletter',
+              newsletterJid: '120363205560908891@newsletter',
               serverMessageId: 152,
             },
           },
@@ -202,7 +202,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
             forwardingScore: 19,
             isForwarded: true,
             forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363301254798220@newsletter',
+              newsletterJid: '120363205560908891@newsletter',
               serverMessageId: 152,
             },
           },
