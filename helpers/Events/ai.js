@@ -18,6 +18,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
   let infos = Data.infos;
   let { sender, id } = cht;
   const { func } = Exp;
+  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
   ev.on(
     {
       cmd: ['cover', 'covers'],
@@ -182,11 +183,12 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         ).then((a) => a.json());
         console.log(ai);
         if (!ai.status) return cht.reply(ai?.msg || 'Error!');
-        while (tryng < 50) {
+        while (tryng < 75) {
           if (i === Data.spinner.length) i = 0;
           let s = await fetch(
             api.xterm.url + '/api/img2img/filters/batchProgress?id=' + ai.id
           ).then((a) => a.json());
+          tryng++;
           await cht.edit(
             `${Data.spinner[i++]} ${s?.progress || 'Prepare...'}`,
             _key,
@@ -389,7 +391,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
 
         let tryng = 0;
         let i = 0;
-        while (tryng < 50) {
+        while (tryng < 80) {
           tryng += 1;
 
           let sResponse = await fetch(
@@ -695,7 +697,7 @@ ${loraText}
         );
       }
       if (!cht.q) return sendAiInfo();
-      Data.preferences[id] = Data.preferences[id] || {};
+      preferences[id] = preferences[id] || {};
       let q = cht.q;
       let set = {
         on: {
@@ -768,7 +770,7 @@ ${loraText}
         },
       }[q];
 
-      let alls = Object.keys(Data.preferences);
+      let alls = Object.keys(preferences);
       if (!set) return sendAiInfo();
       if (set.owner && !is.owner) return cht.reply(infos.messages.isOwner);
       if (id.endsWith(from.group) && !(is.groupAdmins || is.owner))
@@ -794,14 +796,14 @@ ${loraText}
               ? alls.filter((a) => a.endsWith(from.sender))
               : alls;
         for (let i of alls) {
-          Data.preferences[i].ai_interactive = set.value;
+          preferences[i].ai_interactive = set.value;
         }
       } else if (set.type == 'energy') {
         cfg.ai_interactive.energy = set.value;
       } else if (set.type == 'partResponse') {
         cfg.ai_interactive.partResponse = set.value;
       } else {
-        Data.preferences[id].ai_interactive = set.value;
+        preferences[id].ai_interactive = set.value;
       }
 
       cht.reply(set.done);
