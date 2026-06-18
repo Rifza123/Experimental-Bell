@@ -799,6 +799,30 @@ sehingga membuat reply terasa lebih natural._`,
     '⟡ listuser afk\n\n' +
     'Contoh:\n' +
     '.listuser afk',
+
+  zelsend: `
+📌 *[ Zelapi Premium Send ]*
+
+Gunakan command ini untuk mengirim permintaan premium ke email target.
+
+*🛠 Format:*
+- \`.zelsend <email>\`
+
+*💡 Contoh:*
+- \`.zelsend target@gmail.com\`
+`,
+
+  zelverif: `
+📌 *[ Zelapi Premium Verification ]*
+
+Gunakan command ini untuk memverifikasi link premium untuk email target.
+
+*🛠 Format:*
+- \`.zelverif <email>|<link>\`
+
+*💡 Contoh:*
+- \`.zelverif target@gmail.com|https://alightcreative.com/auth/...\`
+`,
 };
 
 /*

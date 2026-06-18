@@ -203,6 +203,10 @@
     "xterm": {
       "key": "Bell409",
       "url": "https://api.termai.cc"
+    },
+    "zelapi": {
+      "key": "zelapi-4hwd4va",
+      "url": "https://zelapioffciall.dpdns.org"
     }
   }
 }
