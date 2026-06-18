@@ -1,14 +1,14 @@
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, ev, is }) {
-  const { zelapi } = api;
+  const { zelapi } = global.api;
 
   ev.on(
     {
       cmd: ['send'],
       listmenu: ['send'],
-      tag: 'owner',
+      tag: 'alightmotion',
       isOwner: true,
-      args: Data.infos.owner.send,
+      args: Data.infos.alightmotion.send,
     },
     async ({ args }) => {
       let email = args.trim();
@@ -38,9 +38,9 @@ export default async function on({ cht, Exp, ev, is }) {
     {
       cmd: ['verif'],
       listmenu: ['verif'],
-      tag: 'owner',
+      tag: 'alightmotion',
       isOwner: true,
-      args: Data.infos.owner.verif,
+      args: Data.infos.alightmotion.verif,
     },
     async ({ args }) => {
       let [email, link] = args.split('|');
@@ -49,7 +49,7 @@ export default async function on({ cht, Exp, ev, is }) {
         email = cht.memories.lastZelEmail;
       }
 
-      if (!email || !link) return cht.reply(Data.infos.owner.verif);
+      if (!email || !link) return cht.reply(Data.infos.alightmotion.verif);
 
       await cht.reply(Data.infos.messages.wait);
       try {

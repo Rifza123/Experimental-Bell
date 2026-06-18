@@ -800,7 +800,8 @@ sehingga membuat reply terasa lebih natural._`,
     'Contoh:\n' +
     '.listuser afk',
 
-  send: `
+  alightmotion: {
+    send: `
 📌 *[ Zelapi Premium Send ]*
 
 Gunakan command ini untuk mengirim permintaan premium ke email target.
@@ -812,7 +813,7 @@ Gunakan command ini untuk mengirim permintaan premium ke email target.
 - \`.send target@gmail.com\`
 `,
 
-  verif: `
+    verif: `
 📌 *[ Zelapi Premium Verification ]*
 
 Gunakan command ini untuk memverifikasi link premium untuk email target.
@@ -823,6 +824,7 @@ Gunakan command ini untuk memverifikasi link premium untuk email target.
 *💡 Contoh:*
 - \`.verif target@gmail.com|https://alightcreative.com/auth/...\`
 `,
+  },
 };
 
 /*
