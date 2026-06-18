@@ -4,13 +4,14 @@ export default async function on({ cht, Exp, ev, is }) {
 
   ev.on(
     {
-      cmd: ['zelsend'],
-      listmenu: ['zelsend'],
+      cmd: ['send'],
+      listmenu: ['send'],
       tag: 'owner',
       isOwner: true,
-      args: Data.infos.owner.zelsend,
+      args: Data.infos.owner.send,
     },
     async ({ args }) => {
+      let email = args.trim();
       await cht.reply(Data.infos.messages.wait);
       try {
         let res = await fetch(`${zelapi.url}/api/v1/premium/send`, {
@@ -19,9 +20,12 @@ export default async function on({ cht, Exp, ev, is }) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${zelapi.key}`,
           },
-          body: JSON.stringify({ email: args.trim() }),
+          body: JSON.stringify({ email }),
         });
         let json = await res.json();
+        if (json.status) {
+          await Exp.func.archiveMemories.setItem(cht.sender, 'lastZelEmail', email);
+        }
         cht.reply(`*[ ZELAPI SEND ]*\n\n${JSON.stringify(json, null, 2)}`);
       } catch (e) {
         console.error('Error in zelsend:', e);
@@ -32,15 +36,21 @@ export default async function on({ cht, Exp, ev, is }) {
 
   ev.on(
     {
-      cmd: ['zelverif'],
-      listmenu: ['zelverif'],
+      cmd: ['verif'],
+      listmenu: ['verif'],
       tag: 'owner',
       isOwner: true,
-      args: Data.infos.owner.zelverif,
+      args: Data.infos.owner.verif,
     },
     async ({ args }) => {
       let [email, link] = args.split('|');
-      if (!email || !link) return cht.reply(Data.infos.owner.zelverif);
+      if (!link && args.startsWith('http')) {
+        link = args.trim();
+        email = cht.memories.lastZelEmail;
+      }
+
+      if (!email || !link) return cht.reply(Data.infos.owner.verif);
+
       await cht.reply(Data.infos.messages.wait);
       try {
         let res = await fetch(`${zelapi.url}/api/v1/premium/verif`, {

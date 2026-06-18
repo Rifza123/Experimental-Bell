@@ -800,28 +800,28 @@ sehingga membuat reply terasa lebih natural._`,
     'Contoh:\n' +
     '.listuser afk',
 
-  zelsend: `
+  send: `
 📌 *[ Zelapi Premium Send ]*
 
 Gunakan command ini untuk mengirim permintaan premium ke email target.
 
 *🛠 Format:*
-- \`.zelsend <email>\`
+- \`.send <email>\`
 
 *💡 Contoh:*
-- \`.zelsend target@gmail.com\`
+- \`.send target@gmail.com\`
 `,
 
-  zelverif: `
+  verif: `
 📌 *[ Zelapi Premium Verification ]*
 
 Gunakan command ini untuk memverifikasi link premium untuk email target.
 
 *🛠 Format:*
-- \`.zelverif <email>|<link>\`
+- \`.verif <email>|<link>\`
 
 *💡 Contoh:*
-- \`.zelverif target@gmail.com|https://alightcreative.com/auth/...\`
+- \`.verif target@gmail.com|https://alightcreative.com/auth/...\`
 `,
 };
 
