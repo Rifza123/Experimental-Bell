@@ -269,7 +269,7 @@ export const initialize = async () => {
   const DB = [
     { path: db, name: 'cmd', content: { total: 0, ai_response: 0, cmd: [] } },
     { path: db, name: 'preferences', content: {} },
-    { path: db, name: "preferencesBot", content: {} }, //new
+    { path: db, name: 'preferencesBot', content: {} }, //new
     { path: fol[6], name: 'users', content: {} },
     { path: db, name: 'badwords', content: [] },
     { path: db, name: 'links', content: [] },

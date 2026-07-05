@@ -18,7 +18,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
   let infos = Data.infos;
   let { sender, id } = cht;
   const { func } = Exp;
-  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+  const preferences = is?.jadibot
+    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+    : (Data.preferences ??= {});
   ev.on(
     {
       cmd: ['cover', 'covers'],
@@ -1479,10 +1481,37 @@ ${loraText}
     ...['ungukan', 'unguin'].map((k) => [k, 'change skin color to purple']),
     ...['gelapkan', 'gelapin'].map((k) => [k, 'change skin color to dark']),
     ...['jadibiru'].map((k) => [k, 'change skin color to blue']),
+
+    ...['silverkan', 'silverin', 'manusiasilver'].map((k) => [
+      k,
+      'change skin color to metallic silver, reflective silver body paint texture, street performer style, highly detailed metallic sheen',
+    ]),
+    ...['emaskan', 'goldkan', 'manusiaemas'].map((k) => [
+      k,
+      'change skin color to shiny metallic gold, reflective gold paint, statuesque appearance, luxury gold texture',
+    ]),
+
     ...['ironman'].map((k) => [
       k,
       'edit the image into Iron Man suit, helmet open showing the original face, keep the face highly accurate and similar to the input photo, cinematic lighting, detailed metallic armor, glowing arc reactor on the chest, realistic Marvel movie style',
     ]),
+    ...['avatar', "na'vi", 'navikan'].map((k) => [
+      k,
+      "convert into Avatar Na'vi character, glowing neon blue skin with faint stripes, bioluminescent dots on face, yellow eyes, braided hair, Pandora jungle background",
+    ]),
+    ...['hulk', 'hulkkan', 'jadihulk'].map((k) => [
+      k,
+      'convert into Hulk style, giant muscular build, green skin, angry expression, ripped clothes, realistic cinematic look',
+    ]),
+    ...['zombie', 'zombiefy', 'jadi-zombie'].map((k) => [
+      k,
+      'convert into a realistic zombie, pale decaying skin, cinematic horror lighting, dramatic shadows, post-apocalyptic background, detailed and spooky',
+    ]),
+    ...['cyberpunk', 'cyborg', 'robotkan'].map((k) => [
+      k,
+      'convert into cyberpunk cyborg style, mechanical parts integrated into skin, glowing neon LED lines on face and body, futuristic high-tech clothing, synthwave city background',
+    ]),
+
     ...['chibi'].map((k) => [
       k,
       'convert the image into cute chibi anime style, small body proportions, oversized head, large sparkling eyes, colorful soft shading, kawaii expression, pastel color palette, clean line art',
