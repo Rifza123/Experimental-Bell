@@ -379,7 +379,53 @@ ${infos.others.readMore}
       );
     }
   );
-
+ev.on({ 
+  cmd: ['owner'], 
+  listmenu: ['owner'],
+  tag: 'others'
+}, async({ cht })=> {
+  await Exp.sendContacts(cht, owner.map(a => String(a)))
+   cht.reply(`Hai kak itu owner ${botname} ya`)
+})
+ev.on({ 
+  cmd: ['myweb'], 
+  listmenu: ['myweb'],
+  tag: 'others'
+}, async({ cht })=> {
+  cht.reply(
+    `🌐 *DAFTAR WEBSITE SAYA*\n\n` +
+    `1. *Web Store* (Toko Online)\n` +
+    `   🔗 https://tiyan.biz.id\n` +
+    `   ⭐ Untuk pembelian produk & layanan\n\n` +
+    `2. *Web* (Website Utama)\n` +
+    `   🔗 https://web.tiyan.biz.id\n` +
+    `   ⭐ Informasi lengkap & portal utama\n\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `📞 Butuh bantuan? Ketik .owner`
+  );
+});
+ev.on({ 
+  cmd: ['donasi', 'donate'], 
+  listmenu: ['donasi'],
+  tag: 'others'
+}, async({ cht })=> {
+  await cht.reply(`💰 *DONASI UNTUK TIYAN* 💰\n\n` +
+    `_Bantu support pengembangan bot dan server dengan berdonasi_\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `💰 *DONASI MELALUI:*\n\n` +
+    `1. *Saweria*\n` +
+    `   🔗 https://saweria.co/Septiyandaputra\n\n` +
+    `2. *Sociabuzz*\n` +
+    `   🔗 https://sociabuzz.com/tiyan_gaming/tribe\n\n` +
+    `3. *Linkteer*\n` +
+    `   🔗 https://teer.id/tiyanz\n\n` +
+    `4. *QRIS *\n` +
+    `   🔗 https://files.catbox.moe/jnyful.jpg\n\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `📞 Butuh bantuan? Ketik .owner\n` +
+    `🙏 Terima kasih atas supportnya!`
+  );
+});
   ev.on(
     {
       cmd: ['totalpesan'],

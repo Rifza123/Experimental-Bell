@@ -799,6 +799,32 @@ sehingga membuat reply terasa lebih natural._`,
     '⟡ listuser afk\n\n' +
     'Contoh:\n' +
     '.listuser afk',
+
+  alightmotion: {
+    send: `
+📌 *[ Zelapi Premium Send ]*
+
+Gunakan command ini untuk mengirim permintaan premium ke email target.
+
+*🛠 Format:*
+- \`.send <email>\`
+
+*💡 Contoh:*
+- \`.send target@gmail.com\`
+`,
+
+    verif: `
+📌 *[ Zelapi Premium Verification ]*
+
+Gunakan command ini untuk memverifikasi link premium untuk email target.
+
+*🛠 Format:*
+- \`.verif <email>|<link>\`
+
+*💡 Contoh:*
+- \`.verif target@gmail.com|https://alightcreative.com/auth/...\`
+`,
+  },
 };
 
 /*
