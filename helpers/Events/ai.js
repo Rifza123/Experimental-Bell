@@ -623,6 +623,147 @@ ${loraText}
 
   ev.on(
     {
+      cmd: ['enhancevideo', 'hdvideo', 'ehv', 'wink', 'repairvideo', 'rpv'],
+      listmenu: ['enhancevideo', 'repairvideo'],
+      tag: 'ai',
+      energy: 185,
+      premium: true,
+      media: {
+        type: ['video'],
+      },
+    },
+    async ({ media }) => {
+      const _key = keys[sender];
+
+      // Jika perintah adalah .wink dan tidak ada opsi tambahan, balas dengan daftar opsi
+      if (cht.cmd === 'wink' && !cht.q) {
+        return cht.reply(
+          `[ 🤖 WINK VIDEO PROCESSOR ]\n\n` +
+          `Gunakan perintah: *${prefix}wink [opsi]* sambil melampirkan video.\n\n` +
+          `*Pilihan Opsi yang Tersedia:*\n` +
+          `• *4k* : AI UHD 4K (Kualitas detail maksimal)\n` +
+          `• *2k* : Ultra HD 2K (Resolusi 2K tajam)\n` +
+          `• *hd* : Standard HD (Peningkatan cepat)\n` +
+          `• *repair* : AI Repair Pro (Memperbaiki video buram/rusak)\n` +
+          `• *portrait* : Portrait (Fokus memperjelas wajah)\n` +
+          `• *cartoon* : Gaya Animasi/Kartun 2D\n` +
+          `• *denoise* : Mengurangi noise/bintik semut\n` +
+          `• *deblur* : Mengurangi blur akibat goyangan kamera\n` +
+          `• *smooth* : Meningkatkan kehalusan gerakan (FPS)\n` +
+          `• *color* : Koreksi warna kontras otomatis\n\n` +
+          `*Contoh*: Balas video dengan mengetik *${prefix}wink 4k*`
+        );
+      }
+
+      let taskParam = '';
+      let modelParam = '';
+
+      const opt = (cht.q || '').toLowerCase().trim();
+      const cmdName = cht.cmd.toLowerCase();
+
+      if (cmdName === 'repairvideo' || cmdName === 'rpv' || opt === 'repair') {
+        taskParam = 'VIDEO_REPAIR';
+        modelParam = '65591';
+      } else if (opt === '4k' || opt === 'ai_uhd') {
+        taskParam = 'VIDEO_HD';
+        modelParam = '63093';
+      } else if (opt === '2k' || opt === 'ultra_hd') {
+        taskParam = 'VIDEO_HD';
+        modelParam = '63091';
+      } else if (opt === 'portrait') {
+        taskParam = 'VIDEO_HD';
+        modelParam = '63092';
+      } else if (opt === 'cartoon' || opt === 'anime') {
+        taskParam = 'VIDEO_HD';
+        modelParam = '63097';
+      } else if (opt === 'hd') {
+        taskParam = 'VIDEO_HD';
+        modelParam = '63090';
+      } else if (opt === 'denoise') {
+        taskParam = 'DENOISE';
+        modelParam = '63292';
+      } else if (opt === 'deblur') {
+        taskParam = 'DEBLUR';
+        modelParam = '67691';
+      } else if (opt === 'smooth' || opt === 'fps') {
+        taskParam = 'FRAME_INTERPOLATION';
+        modelParam = '62091';
+      } else if (opt === 'color') {
+        taskParam = 'COLOR_CORRECTION';
+        modelParam = '64990';
+      }
+
+      const response = await axios.post(
+        `${api.xterm.url}/api/tools/video-enhancer?key=${api.xterm.key}${taskParam ? '&task=' + taskParam : ''}${modelParam ? '&model=' + modelParam : ''}`,
+        media,
+        {
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
+          responseType: 'stream',
+        }
+      );
+
+      let i = 0;
+      response.data.on('data', async (chunk) => {
+        try {
+          const eventString = chunk.toString();
+          const eventData = eventString.match(/data: (.+)/);
+          if (eventData && eventData[1]) {
+            let data;
+            try {
+              data = JSON.parse(eventData[1]);
+            } catch (e) {
+              data = {};
+            }
+            console.log(data);
+            if (i === Data.spinner.length) i = 0;
+            switch (data.status) {
+              case 'preparing':
+              case 'uploading':
+              case 'processing':
+              case 'enhancing':
+                cht.edit(
+                  `${Data.spinner[i++]} ${data.msg || 'Processing....'}`,
+                  _key,
+                  true
+                );
+                break;
+              case 'failed':
+                await cht.reply(data.msg);
+                response.data.destroy();
+                break;
+              case 'completed':
+                await Exp.sendMessage(
+                  id,
+                  {
+                    video: { url: data.video.url },
+                    mimetype: 'video/mp4',
+                    ai: true,
+                  },
+                  { quoted: cht }
+                );
+                response.data.destroy();
+                break;
+              case 'reject':
+                cht.reply(data.msg);
+                response.data.destroy();
+                break;
+              default:
+                console.log('Unknown status:', data);
+            }
+          }
+        } catch (e) {
+          console.error('Error processing chunk:', e.message);
+          response.data.destroy();
+          cht.reply('Err!!');
+        }
+      });
+    }
+  );
+
+  ev.on(
+    {
       cmd: ['bard', 'ai'],
       tag: 'ai',
       args: infos.ai.isQuery,
