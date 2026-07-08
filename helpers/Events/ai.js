@@ -630,6 +630,9 @@ ${loraText}
       premium: true,
       media: {
         type: ['video'],
+        etc: {
+          seconds: 60,
+        },
       },
     },
     async ({ media }) => {
@@ -641,7 +644,8 @@ ${loraText}
           `[ 🤖 WINK VIDEO PROCESSOR ]\n\n` +
           `Gunakan perintah: *${prefix}wink [opsi]* sambil melampirkan video.\n\n` +
           `*Pilihan Opsi yang Tersedia:*\n` +
-          `• *4k* : AI UHD 4K (Kualitas detail maksimal)\n` +
+          `• *uhd* : New AI UHD (Resolusi UHD detail maksimal - Maks 10 detik)\n` +
+          `• *4k* : 4K Ultra HD (Kualitas detail standard - Maks 60 detik)\n` +
           `• *2k* : Ultra HD 2K (Resolusi 2K tajam)\n` +
           `• *hd* : Standard HD (Peningkatan cepat)\n` +
           `• *repair* : AI Repair Pro (Memperbaiki video buram/rusak)\n` +
@@ -651,7 +655,7 @@ ${loraText}
           `• *deblur* : Mengurangi blur akibat goyangan kamera\n` +
           `• *smooth* : Meningkatkan kehalusan gerakan (FPS)\n` +
           `• *color* : Koreksi warna kontras otomatis\n\n` +
-          `*Contoh*: Balas video dengan mengetik *${prefix}wink 4k*`
+          `*Contoh*: Balas video dengan mengetik *${prefix}wink uhd*`
         );
       }
 
@@ -664,6 +668,9 @@ ${loraText}
       if (cmdName === 'repairvideo' || cmdName === 'rpv' || opt === 'repair') {
         taskParam = 'VIDEO_REPAIR';
         modelParam = '65591';
+      } else if (opt === 'uhd') {
+        taskParam = 'VIDEO_UHD';
+        modelParam = '63031';
       } else if (opt === '4k' || opt === 'ai_uhd') {
         taskParam = 'VIDEO_HD';
         modelParam = '63093';
@@ -739,6 +746,7 @@ ${loraText}
                   {
                     video: { url: data.video.url },
                     mimetype: 'video/mp4',
+                    caption: `*Wink Video Processor Sukses!*\n⚡ Penggunaan: *${data.beans || 2} Beans*`,
                     ai: true,
                   },
                   { quoted: cht }
