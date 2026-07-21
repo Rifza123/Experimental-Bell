@@ -8,8 +8,10 @@ function calcMinThreshold(text) {
 
 export default async function game({ cht, Exp, store, is, ev, chatDb }) {
   let similar = calcMinThreshold(cht.msg);
+  
+  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
 
-  let metadata = Data.preferences[cht.id];
+  let metadata = preferences[cht.id] ??= {};
   let { game } = chatDb;
   let {
     type,
@@ -52,7 +54,7 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
 
           clearTimeout(timeouts[cht.id]);
           Exp.sendMessage(cht.id, { delete: key });
-          delete Data.preferences[cht.id].game;
+          delete preferences[cht.id].game;
           delete timeouts[cht.id];
         } else {
           let { key: Key } = await cht.reply(
@@ -124,7 +126,7 @@ export default async function game({ cht, Exp, store, is, ev, chatDb }) {
         !isAnswerAll && metadata.game.id_message.push(Key.id);
         if (isAnswerAll) {
           await cht.reply(Data.infos.eventGame.gameOver);
-          delete Data.preferences[cht.id].game;
+          delete preferences[cht.id].game;
           Object.entries(answered).forEach(async ([answerKey, user]) => {
             let idx = answer.findIndex((item) => item === answerKey);
             if (idx === -1) {

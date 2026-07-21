@@ -24,9 +24,10 @@ cfg.hadiah = cfg.hadiah || {
   tebaklirik: 40,
 };
 
-export default async function on({ Exp, cht, ev, chatDb }) {
+export default async function on({ Exp, cht, ev, chatDb, is }) {
   const { id } = cht;
   const { func } = Exp;
+  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
   let {
     archiveMemories: memories,
     parseTimeString,
@@ -48,7 +49,7 @@ export default async function on({ Exp, cht, ev, chatDb }) {
     }
   }
 
-  let metadata = Data.preferences[id];
+  let metadata = preferences[id];
   let game = metadata?.game || false;
   if (game) {
     let isEnd = Date.now() >= game.endTime;
@@ -123,7 +124,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -187,7 +188,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -266,7 +267,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -329,7 +330,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -390,7 +391,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -451,7 +452,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -512,7 +513,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -573,7 +574,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -670,7 +671,7 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -737,7 +738,7 @@ ${answer.map((item, index) => `${index + 1}. ${index == 0 ? '\`TOP SURVEY\`' : '
       metadata.game.id_message.push(key.id);
       metadata.game.key = key;
       global.timeouts[id] = setTimeout(async () => {
-        delete Data.preferences[id].game;
+        delete preferences[id].game;
         delete global.timeouts[id];
 
         await cht.reply(`*WAKTU HABIS*
@@ -745,7 +746,7 @@ ${answer.map((item, index) => `${index + 1}. ${index == 0 ? '\`TOP SURVEY\`' : '
 Jawaban: 
 ${answer.map((item, index) => `${index + 1}. ${item} ${index == 0 ? '\`TOP SURVEY\`' : ''} (${((cfg.hadiah[cht.cmd] * (index == 0 ? 1 : 1.5)) / (index + 1)).toFixed()} Energy⚡)`).join('\n')}
 `);
-        let { answered } = Data.preferences[id].game;
+        let { answered } = preferences[id].game;
         let answeredKey = Object.keys(answered);
         await sleep(1000);
         await Exp.sendMessage(cht.id, { delete: key });
@@ -818,7 +819,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
       const [action, param1] = (args || '').split(' ', 2);
       const chatId = cht.id;
 
-      let games = Data.preferences[cht.id]?.chess || {};
+      let games = preferences[cht.id]?.chess || {};
       /*
           [ '––『CREDIT THANKS TO』––' ]
           ┊ALLAH S.W.T.
@@ -875,7 +876,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           turn: 'white',
         };
 
-        Data.preferences[cht.id].chess = games;
+        preferences[cht.id].chess = games;
         return cht.reply(
           `✅ Room "${param1}" berhasil dibuat!\nAnda berada di room ini sebagai Putih`
         );
@@ -897,7 +898,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
             games[param1].players.map((item) => [item.id, item])
           ).values(),
         ];
-        Data.preferences[cht.id].chess = games;
+        preferences[cht.id].chess = games;
         return cht.reply(
           `✅ Anda bergabung di room "${param1}" sebagai Hitam.`
         );
@@ -961,7 +962,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           chess.load(room.fen);
         } catch (error) {
           room.fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-          Data.preferences[cht.id].chess = games;
+          preferences[cht.id].chess = games;
           return cht.reply('⚠️ Permainan direset ke posisi awal karena error!');
         }
 
@@ -990,7 +991,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
 
           room.fen = chess.fen();
           room.turn = chess.turn() === 'w' ? 'white' : 'black';
-          Data.preferences[cht.id].chess = games;
+          preferences[cht.id].chess = games;
           // const encodedFEN = room.fen.replace(/ /g, '_');
           const boardUrl =
             `https://chessboardimage.com/${room.fen}` +
@@ -1034,7 +1035,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           */
           if (chess.isCheckmate()) {
             delete games[roomName];
-            Data.preferences[cht.id].chess = games;
+            preferences[cht.id].chess = games;
             return cht.reply(
               `🏆 SKAKMAT! Pemenang: ${player.color.toUpperCase()}`
             );
@@ -1042,7 +1043,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
 
           if (chess.isDraw()) {
             delete games[roomName];
-            Data.preferences[cht.id].chess = games;
+            preferences[cht.id].chess = games;
             return cht.reply('🤝 PERMAINAN BERAKHIR REMIS!');
           }
         } catch (error) {
@@ -1075,7 +1076,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         if (games[param1].players[0].id !== senderNumber)
           return cht.reply('Hanya pembuat room yang dapat menghapus sesi!');
         delete games[param1];
-        Data.preferences[cht.id].chess = games;
+        preferences[cht.id].chess = games;
         return cht.reply(`✅ Room "${param1}" berhasil dihapus.`);
       }
 
@@ -1097,7 +1098,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
       const chatId = cht.id;
       const senderNumber = cht.sender.split('@')[0];
 
-      let sessions = Data.preferences[chatId].sos || {};
+      let sessions = preferences[chatId].sos || {};
 
       function formatBoard(board) {
         return (
@@ -1177,7 +1178,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         };
 
         sessions.theme = themes[param1];
-        Data.preferences[chatId].sos = sessions;
+        preferences[chatId].sos = sessions;
         return cht.reply(
           `✅ Tema "${param1}" berhasil dipilih! Simbol: ${themes[param1][0]} (1) & ${themes[param1][1]} (2).`
         );
@@ -1197,7 +1198,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           players: [{ id: senderNumber, symbol: symbols[0] }],
           turn: symbols[0],
         };
-        Data.preferences[chatId].sos = sessions;
+        preferences[chatId].sos = sessions;
         return cht.reply(`✅ Room "${param1}" berhasil dibuat!`);
       }
 
@@ -1213,7 +1214,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         const symbols =
           sessions[param1].players[0].symbol === '⭕' ? '❌' : '⭕';
         sessions[param1].players.push({ id: senderNumber, symbol: symbols });
-        Data.preferences[chatId].sos = sessions;
+        preferences[chatId].sos = sessions;
         let { key: key1 } = await cht.reply(
           `✅ Anda bergabung dalam room "${param1}"!`
         );
@@ -1233,7 +1234,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           return cht.reply('❌ Anda tidak berada di game mana pun.');
 
         delete sessions[roomName];
-        Data.preferences[chatId].sos = sessions;
+        preferences[chatId].sos = sessions;
         return cht.reply(`✅ Anda keluar dari room "${roomName}".`);
       }
 
@@ -1325,7 +1326,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           delete sessions[roomName];
           return cht.reply(`🤝 Permainan Seri!\n${boardText}`);
         }
-        Data.preferences[chatId].sos[roomName] = room;
+        preferences[chatId].sos[roomName] = room;
         return cht.reply(`${boardText}\nGiliran: ${room.turn}`);
       }
 

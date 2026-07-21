@@ -1,3 +1,4 @@
+const fs = 'fs'.import();
 const chalk = 'chalk'.import();
 const qrcode = await 'qrcode'.import();
 
@@ -19,19 +20,26 @@ const Connecting = async ({
     }, 150);
   const { connection, lastDisconnect, receivedPendingNotifications, qr } =
     update;
+
+  console.log(chalk.gray(`[DEBUG UPDATE] keys: ${Object.keys(update).join(', ')}`));
+
   if (receivedPendingNotifications && !Exp.authState?.creds?.myAppStateKeyId) {
     console.log('Flushed');
     Exp.ev.flush();
   }
-  connection &&
+  if (connection) {
     console.log(
       chalk.yellow.bold('【 CONNECTION 】') + ' -> ',
       chalk.cyan.bold(connection)
     );
+  }
 
   if (qr) console.log(await qrcode.toString(qr, { type: 'terminal' }));
   if (connection == 'close') {
-    let statusCode = new Boom(lastDisconnect?.error)?.output.statusCode;
+    let err = lastDisconnect?.error;
+    let statusCode = new Boom(err)?.output?.statusCode;
+    console.log(chalk.red.bold(`[DEBUG DISCONNECT] statusCode: ${statusCode}`));
+    console.log(chalk.red(`[DEBUG DISCONNECT ERROR]`), err);
 
     switch (statusCode) {
       case 405:
@@ -63,6 +71,11 @@ const Connecting = async ({
         break;
       case 401:
         console.log(`Perangkat keluar, silakan lakukan pemindaian ulang🔄`);
+        try {
+          if (fs.existsSync(session)) {
+            fs.rmSync(session, { recursive: true, force: true });
+          }
+        } catch (e) {}
         clearInterval(spinnerInterval);
         process.exit();
         break;

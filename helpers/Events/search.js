@@ -46,7 +46,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 {
                   name: 'cta_url',
                   buttonParamsJson:
-                    '{"display_text":"WhatsappChannel","url":"https://whatsapp.com/channel/0029VaGZeqe90x30xHXT2Q3C","webview_presentation":null}',
+                    '{"display_text":"WhatsappChannel","url":"https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V","webview_presentation":null}',
                 },
               ],
             },
@@ -307,7 +307,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     {
                       name: 'cta_url',
                       buttonParamsJson:
-                        '{"display_text":"WhatsappChannel","url":"https://whatsapp.com/channel/0029VaGZeqe90x30xHXT2Q3C","webview_presentation":null}',
+                        '{"display_text":"WhatsappChannel","url":"https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V","webview_presentation":null}',
                     },
                   ],
                 },

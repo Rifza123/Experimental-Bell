@@ -1,5 +1,5 @@
 node_modules
 .git
-connection
+connection/session
 toolkit/set/db
 *.json

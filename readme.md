@@ -227,26 +227,25 @@ Contoh di atas menunjukkan:
 Terima kasih kepada semua yang telah berkontribusi dan mendukung pengembangan project ini.  
 Setiap masukan, ide, dan bantuan sangat berarti!
 
-### 🏆 Kontributor Utama
-
-- **Azfir (rifza.p.p)**
-  - [Instagram](https://www.instagram.com/rifza.p.p)
-  - [GitHub](https://github.com/Rifza123)
-  - [YouTube](https://www.youtube.com/@rifza)
-  - [WhatsApp Channel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
-  - **Peran:** Semua kontribusi utama, pengelolaan dan pengembangan penuh proyek.
-
-### 🤝 Kontributor Lain
-
-- **Hanif Skizo**
-  - [Instagram](https://instagram.com/htr.ox)
-  - **Kontribusi:** Penambahan fitur game _chess.js_.
-
-- **Barr**
-  - [Instagram](https://www.instagram.com/pler.curutt)
-  - **Kontribusi:** Pembuatan modul **autoBackup (detector.js)**, **listUser (owner.js)** dan **antiimg/antivid/antidoct/antistk/antistkpck/antivoice**.
-
 [![](https://contrib.rocks/image?repo=Rifza123/Experimental-Bell)](https://github.com/Rifza123/Experimental-Bell/graphs/contributors)
+
+Jika namamu belum tercantum, atau ingin ditambahkan, silakan ajukan issue atau hubungi kami.
+
+---
+
+## Kontributor
+
+- **Azfir (rifza.p.p)**  
+  [Instagram](https://www.instagram.com/rifza.p.p) • [GitHub](https://github.com/Rifza123) • [YouTube](https://www.youtube.com/@rifza) • [WhatsappChannel](https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V)
+  (All contributions)
+
+- **Hanif skizo**  
+  [Instagram](https://instagram.com/htr.ox)
+  (Berkontribusi dalam: penambahan game chess.js)
+
+- **Barr**  
+  [Instagram](https://www.instagram.com/pler.curutt)
+  (Berkontribusi dalam: autoBackup(detector.js))
 
 ## 📄 License
 

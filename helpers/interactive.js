@@ -9,22 +9,20 @@ const { transcribe } = await (fol[2] + 'transcribe.js').r();
 const { ai } = await `${fol[2]}reasoner.js`.r();
 
 const maxCommandExpired = 7000;
-let urls = {
-  tiktok: 'tiktok',
-  youtu: 'youtube',
-  instagram: 'instagram',
-  'fb.watch': 'facebook',
-  facebook: 'facebook',
-  'pin.it': 'pinterest',
-  pinterest: 'pinterest',
-  mediafire: 'mediafire',
-  xiaohongshu: 'rednote',
-  'xhslink.com': 'rednote',
-  'github.com': 'github',
-  'spotify.com': 'spotify',
-};
+let urls = {};
 
 export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
+  if (ev.dataEvents.size > 0 && Object.keys(urls).length == 0) {
+    for (const [key, event] of Object.entries(Data.events)) {
+      if (event.tag !== 'downloader') continue;
+      const formats = event?.urls?.formats;
+      if (!Array.isArray(formats)) continue;
+      for (const format of formats) {
+        urls[format] ??= key;
+      }
+    }
+  }
+
   const { func } = Exp;
   let { archiveMemories: memories, parseTimeString } = func;
   let { sender } = cht;
@@ -405,7 +403,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
           return cht.reply('Yakin?', { replyAi: false });
         }
         try {
-          let evsync = await eval(`(async () => { ${cht?.msg?.slice(3)} })()`);
+          let evsync = await ("EVAL DISABLED UNTUK KEAMANAN" || `(async () => { ${cht?.msg?.slice(3)} })()`);
           if (typeof evsync !== 'string') evsync = await util.inspect(evsync);
           cht.reply(evsync, { replyAi: false });
         } catch (e) {

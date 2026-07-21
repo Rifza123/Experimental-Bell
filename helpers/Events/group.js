@@ -4,9 +4,7 @@ const baileys = 'baileys'.import();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is, chatDb }) {
-  const preferences = is?.jadibot
-    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
-    : (Data.preferences ??= {});
+    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
   const { id, sender } = cht;
   const { func } = Exp;
   const { archiveMemories: memories, dateFormatter } = func;
@@ -1193,7 +1191,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
     }
   );
 
-  /*  ev.on(
+/*  ev.on(
     {
       cmd: ['opentime', 'closetime', 'schedule'],
       tag: 'group',

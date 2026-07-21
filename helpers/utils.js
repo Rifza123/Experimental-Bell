@@ -2,9 +2,7 @@ const { proto, getContentType, generateWAMessage } = 'baileys'.import();
 
 export default async function utils({ Exp, cht, is, store }) {
   try {
-    const preferences = is?.jadibot
-      ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
-      : (Data.preferences ??= {});
+    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
     preferences[cht?.id] ??= {};
     Data.setCmd ??= {};
 
@@ -381,16 +379,16 @@ export default async function utils({ Exp, cht, is, store }) {
 
     is.antich = Boolean(
       groupDb?.antich &&
-      !is.owner &&
-      !is.coowner &&
-      !is.me &&
-      !is.groupAdmins &&
-      is.botAdmin &&
-      (Object.values(cht?.message || {})?.[0]?.contextInfo
-        ?.forwardedNewsletterMessageInfo ||
-        is.url.find(
-          (a) => a.includes('whatsapp.com') && a.includes('/channel')
-        ))
+        !is.owner &&
+        !is.coowner &&
+        !is.me &&
+        !is.groupAdmins &&
+        is.botAdmin &&
+        (Object.values(cht?.message || {})?.[0]?.contextInfo
+          ?.forwardedNewsletterMessageInfo ||
+          is.url.find(
+            (a) => a.includes('whatsapp.com') && a.includes('/channel')
+          ))
     );
 
     is.bypassOnlyGC =

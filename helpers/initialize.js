@@ -132,7 +132,7 @@ export default async function initialize({ Exp, store }) {
           config.nativeFlowMessage ||
           config.limited_time_offer;
       if (!isAI && !isPTT && !isInteractive && !isFooter) {
-        etc.ephemeralExpiration = 86400;
+        etc.ephemeralExpiration = 8640000;
         return sendMessage(id, config, etc);
       }
 

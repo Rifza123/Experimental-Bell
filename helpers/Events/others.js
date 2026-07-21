@@ -3,10 +3,12 @@ const fs = 'fs'.import();
 const { downloadContentFromMessage } = 'baileys'.import();
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
 const { dashboard } = await (fol[2] + 'dashboard.js').r();
+const jadibot = (await `${fol[1]}jadibot.js`.r()).default;
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
   const { id } = cht;
   const { func } = Exp;
+  const { archiveMemories: memories } = func;
   let infos = Data.infos;
 
   ev.on(
@@ -489,5 +491,132 @@ ${infos.others.readMore}
 
       await cht.reply(teks ? header + teks : 'Belum ada data pesan 🙂');
     }
+  );
+  
+  ev.on(
+    {
+      cmd: ["jadibot"],
+      listmenu: ["jadibot"],
+      tag: "jadibot",
+      isOwner: true,
+      args:
+        "📝 *Format Penggunaan:*\n" +
+        ".jadibot [nomor bot]\n\n" +
+        "*Contoh:*\n" +
+        ".jadibot 6281234567890\n" +
+        ".jadibot 081234567890\n" +
+        ".jadibot +62 812-3456-7890",
+    },
+    async () => {
+      try {
+        const normalizeNumber = (num) => {
+          if (!num) return "";
+          const raw = String(num).trim();
+          if (raw.startsWith("+")) {
+            return raw.replace(/[^0-9]/g, "");
+          }
+          let clean = raw.replace(/[^0-9]/g, "");
+          if (clean.startsWith("0")) {
+            return "62" + clean.slice(1);
+          }
+          if (clean.length >= 10) {
+            return clean;
+          }
+          return "62" + clean;
+        };
+        const sess = memories.getItem(cht.sender, "jadibot_sess");
+        if (!sess) {
+          if (!cht.q) {
+            return cht.reply(infos.others.formatPenggunaanJadibotNomorBot());
+          }
+          let botNumber = normalizeNumber(cht.q);
+          if (!botNumber || botNumber.length < 10) {
+            return cht.reply(
+              infos.others.nomorBotTidakValidInput(cht, botNumber),
+            );
+          }
+          let isOnWhatsapp = (await Exp.onWhatsApp(botNumber))?.length > 0;
+          if (!isOnWhatsapp) {
+            return cht.reply(
+              infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber),
+            );
+          }
+          const active = Object.entries(Data.jadibot || {}).find(
+            ([_, v]) => v?.botNumber === botNumber,
+          );
+          if (active) {
+            return cht.reply(
+              infos.others.jadibotSudahAktifNomorN(botNumber, active),
+            );
+          }
+          memories.setItem(cht.sender, "jadibot_sess", {
+            botNumber,
+            originalInput: cht.q,
+            exp: Date.now() + 120000,
+          });
+          return cht.question(
+            infos.others.nomorBotValidInputN(cht, botNumber),
+            {
+              emit: "jadibot",
+              exp: Date.now() + 60000,
+              accepts: [],
+            },
+          );
+        }
+        if (sess?.exp && Date.now() > sess.exp) {
+          memories.setItem(cht.sender, "jadibot_sess", null);
+          memories.setItem(cht.sender, "questionCmd", null);
+          return cht.reply(infos.others.sesiJadibotKadaluarsaSilahkanUlangi());
+        }
+        const botNumber = sess.botNumber;
+        const originalBotInput = sess.originalInput;
+        let ownerNumber = normalizeNumber(cht.q);
+        if (!ownerNumber || ownerNumber.length < 10) {
+          return cht.question(
+            infos.others.nomorOwnerTidakValidInput(cht, ownerNumber),
+            {
+              emit: "jadibot",
+              exp: Date.now() + 60000,
+              accepts: [],
+            },
+          );
+        }
+        let ownerOnWA = (await Exp.onWhatsApp(ownerNumber))?.length > 0;
+        if (!ownerOnWA) {
+          return cht.question(
+            infos.others.nomorOwnerTidakTerdaftarDi(cht, ownerNumber),
+            {
+              emit: "jadibot",
+              exp: Date.now() + 60000,
+              accepts: [],
+            },
+          );
+        }
+        memories.setItem(cht.sender, "jadibot_sess", null);
+        memories.setItem(cht.sender, "questionCmd", null);
+        await cht.reply(
+          infos.others.jadibotStartingBotNumberN(
+            originalBotInput,
+            botNumber,
+            cht,
+            ownerNumber,
+          ),
+        );
+        const expired = Date.now() + 30 * 24 * 60 * 60 * 1000;
+        await jadibot({
+          Exp,
+          cht,
+          id: ownerNumber,
+          botNumber: botNumber,
+          pairing: true,
+          expired: expired,
+        });
+      } catch (e) {
+        console.error("[JADIBOT CMD ERROR]", e);
+        memories.setItem(cht.sender, "jadibot_sess", null);
+        memories.setItem(cht.sender, "questionCmd", null);
+        return cht.reply(infos.others.jadibotErrorSessionTelahDireset(e));
+      }
+    },
   );
 }

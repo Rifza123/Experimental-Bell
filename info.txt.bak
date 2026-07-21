@@ -1,0 +1,93 @@
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/systemConnext.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/jadibot.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/initialize.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/interactive.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/stubTypeMsg.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/utils.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/eventGame.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/jadibot.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/converter.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/downloader.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/game.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/group.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/others.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/owner.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/rpg.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/search.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/werewolf.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/wwpc.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/machine/werewolf.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/detector.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/func.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package.json
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package-lock.json
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/readme.md
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/.gitignore
+
+⚠️ ERROR / BUG
+
+Seluruh sistem telah diuji dan berjalan stabil ✅
+
+UPDATE
+
+* Nama Project: Experimental-Bell
+* Versi: Latest Release (Werewolf & Sub-Bot Update)
+* Repository: https://github.com/Rifza123/Experimental-Bell
+* Daftar Fitur Baru:
+  - Werewolf Game System (.ww & .wwpc)
+  - Sub-Bot / Jadibot Feature (.jadibot)
+* Detail Fitur:
+  - Game Werewolf multiplayer untuk grup (.ww) dan pesan pribadi (.wwpc) dengan engine machine/werewolf.js.
+  - Fitur Jadibot untuk pembuatan sub-bot dengan penangan koneksi terpisah dan isolasi preferensi Data.preferencesBot.
+* Perubahan Penting & Keamanan Akun:
+  - ⚠️ PERATURAN BARU WHATSAPP: Penggunaan fitur Game Werewolf wajib digunakan dengan lebih hati-hati akibat kebijakan ketat anti-spam WhatsApp terbaru. WhatsApp sangat pantang bot melakukan chat (PC) duluan ke user yang belum pernah berinteraksi. Pastikan seluruh pemain Werewolf sudah PERNAH berinteraksi/kirim pesan ke bot via Private Chat (PC) terlebih dahulu, bukan bot yang memulai chat duluan.
+  - Interactive Downloader otomatis mendeteksi URL dari event downloader secara dinamis.
+  - Pengikatan interval CLI Spinner di Exp._spinnerInterval untuk stabilitas koneksi.
+  - Pembersihan command legacy (todoc, textdoc) pada converter.js.
+
+CARA UPDATE
+
+.update https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/systemConnext.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/jadibot.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/initialize.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/interactive.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/stubTypeMsg.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/utils.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/eventGame.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/jadibot.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/converter.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/downloader.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/game.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/group.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/others.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/owner.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/rpg.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/search.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/werewolf.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/wwpc.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/machine/werewolf.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/detector.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/func.js https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package.json https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package-lock.json https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/readme.md https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/.gitignore
+
+TEMPLATE HASIL UPDATE
+
+⠇[ 🛠️ ] UPDATE
+
+📂 File Changed
+
+- modified: ./connection/systemConnext.js
+- modified: ./connection/jadibot.js
+- modified: ./helpers/initialize.js
+- modified: ./helpers/interactive.js
+- modified: ./helpers/stubTypeMsg.js
+- modified: ./helpers/utils.js
+- modified: ./helpers/eventGame.js
+- modified: ./helpers/jadibot.js
+- modified: ./helpers/Events/converter.js
+- modified: ./helpers/Events/downloader.js
+- modified: ./helpers/Events/game.js
+- modified: ./helpers/Events/group.js
+- modified: ./helpers/Events/others.js
+- modified: ./helpers/Events/owner.js
+- modified: ./helpers/Events/rpg.js
+- modified: ./helpers/Events/search.js
+- added: ./helpers/Events/werewolf.js
+- added: ./helpers/Events/wwpc.js
+- added: ./machine/werewolf.js
+- modified: ./toolkit/detector.js
+- modified: ./toolkit/func.js
+- modified: ./package.json
+- modified: ./package-lock.json
+- modified: ./readme.md
+- modified: ./version
+- modified: ./.gitignore
+
+Success ✅
+
+INFORMASI PENUTUP
+
+* Wajib melakukan restart bot setelah proses update selesai (.restart / npm restart).
+* Alternatif update manual: Pull commit terbaru dari GitHub via 'git pull'.
+* Download script langsung melalui GitHub: https://github.com/Rifza123/Experimental-Bell
+* Hubungi support / WhatsApp Channel untuk pertanyaan dan informasi tambahan: https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V

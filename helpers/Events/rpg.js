@@ -123,8 +123,7 @@ export default async function on({ cht, ev, Exp }) {
       const nama = userInv.nama || userGlobal?.name || 'Tidak diketahui';
       const sn = userInv.sn;
       const inventoryKey = sender.split('@')[0];
-      if (Data.inventories?.[inventoryKey])
-        delete Data.inventories[inventoryKey];
+      if (Data.inventories?.[inventoryKey]) delete Data.inventories[inventoryKey];
       const key = sender.split('@')[0];
       if (Data.users?.[key]) delete Data.users[key];
 
@@ -661,10 +660,7 @@ Hanya berlaku untuk:
       let inv = (await func.inventory.get(sender)) || {};
 
       const itemData = inv.item?.[itemToRepair];
-      if (!itemData)
-        return cht.reply(
-          `Kamu belum memiliki *${itemToRepair}*\n Buat dengan cara *.craft ${itemToRepair}*`
-        );
+      if (!itemData) return cht.reply(`Kamu belum memiliki *${itemToRepair}*\n Buat dengan cara *.craft ${itemToRepair}*`);
 
       const { durability, maxDurability } = itemData;
       if (durability >= maxDurability) {

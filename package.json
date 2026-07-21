@@ -29,7 +29,7 @@
     "chalk": "^3.0.0",
     "cheerio": "1.0.0-rc.12",
     "chokidar": "^3.6.0",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "escape-string-regexp": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "jimp": "0.16.1",
@@ -42,7 +42,7 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
-    "prettier": "^3.8.3"
+    "prettier": "^3.6.1"
   },
   "overrides": {
     "file-type": "16.5.4",
