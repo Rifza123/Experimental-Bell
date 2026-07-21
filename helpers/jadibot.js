@@ -104,7 +104,7 @@ export async function stopJadibot({ slot, owner, botNumber, removeSession = true
   return true
 }
 
-async function jadibot({ Exp, cht, id, botNumber, pairing = false, expired = 0 }) {
+async function jadibot({ Exp, cht, id, botNumber, pairing = false, expired = 0, userSender = null }) {
   let cleanupTimer = null
   let countdownInterval = null
   let slot = null
@@ -291,6 +291,11 @@ async function jadibot({ Exp, cht, id, botNumber, pairing = false, expired = 0 }
       })
 
       if (update.connection === 'open') {
+        if (!_Exp._energyDeducted && userSender) {
+          _Exp._energyDeducted = true
+          const curEnergy = func.archiveMemories.getItem(userSender, 'energy') || 0
+          func.archiveMemories.setItem(userSender, 'energy', Math.max(0, curEnergy - 200))
+        }
         if (cleanupTimer) {
           clearTimeout(cleanupTimer)
           cleanupTimer = null

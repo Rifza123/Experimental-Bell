@@ -498,7 +498,7 @@ ${infos.others.readMore}
       cmd: ["jadibot"],
       listmenu: ["jadibot"],
       tag: "jadibot",
-      isOwner: true,
+      premium: true,
       args:
         "📝 *Format Penggunaan:*\n" +
         ".jadibot [nomor bot]\n\n" +
@@ -509,6 +509,16 @@ ${infos.others.readMore}
     },
     async () => {
       try {
+        let userEnergy = cht.memories.energy || 0;
+        if (userEnergy < 200) {
+          return cht.reply(
+            Data.infos.messages.isEnergy({
+              uEnergy: userEnergy,
+              energy: 200,
+              charging: cht.memories.charging,
+            })
+          );
+        }
         const normalizeNumber = (num) => {
           if (!num) return "";
           const raw = String(num).trim();
@@ -610,6 +620,7 @@ ${infos.others.readMore}
           botNumber: botNumber,
           pairing: true,
           expired: expired,
+          userSender: cht.sender,
         });
       } catch (e) {
         console.error("[JADIBOT CMD ERROR]", e);
