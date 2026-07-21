@@ -537,26 +537,36 @@ ${infos.others.readMore}
         const sess = memories.getItem(cht.sender, "jadibot_sess");
         if (!sess) {
           if (!cht.q) {
-            return cht.reply(infos.others.formatPenggunaanJadibotNomorBot());
+            return cht.reply(
+              typeof infos.others?.formatPenggunaanJadibotNomorBot === "function"
+                ? infos.others.formatPenggunaanJadibotNomorBot()
+                : "Format Penggunaan: .jadibot [nomor]"
+            );
           }
           let botNumber = normalizeNumber(cht.q);
           if (!botNumber || botNumber.length < 10) {
             return cht.reply(
-              infos.others.nomorBotTidakValidInput(cht, botNumber),
+              typeof infos.others?.nomorBotTidakValidInput === "function"
+                ? infos.others.nomorBotTidakValidInput(cht, botNumber)
+                : `Nomor bot ${botNumber} tidak valid!`
             );
           }
           let isOnWhatsapp = (await Exp.onWhatsApp(botNumber))?.length > 0;
           if (!isOnWhatsapp) {
             return cht.reply(
-              infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber),
+              typeof infos.others?.nomorTidakTerdaftarDiWhatsapp === "function"
+                ? infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber)
+                : `Nomor ${botNumber} tidak terdaftar di WhatsApp!`
             );
           }
           const active = Object.entries(Data.jadibot || {}).find(
-            ([_, v]) => v?.botNumber === botNumber,
+            ([_, v]) => v?.botNumber === botNumber
           );
           if (active) {
             return cht.reply(
-              infos.others.jadibotSudahAktifNomorN(botNumber, active),
+              typeof infos.others?.jadibotSudahAktifNomorN === "function"
+                ? infos.others.jadibotSudahAktifNomorN(botNumber, active)
+                : `Bot dengan nomor ${botNumber} sudah aktif!`
             );
           }
           memories.setItem(cht.sender, "jadibot_sess", {
@@ -565,52 +575,64 @@ ${infos.others.readMore}
             exp: Date.now() + 120000,
           });
           return cht.question(
-            infos.others.nomorBotValidInputN(cht, botNumber),
+            typeof infos.others?.nomorBotValidInputN === "function"
+              ? infos.others.nomorBotValidInputN(cht, botNumber)
+              : `Nomor bot ${botNumber} valid. Masukkan nomor owner:`,
             {
               emit: "jadibot",
               exp: Date.now() + 60000,
               accepts: [],
-            },
+            }
           );
         }
         if (sess?.exp && Date.now() > sess.exp) {
           memories.setItem(cht.sender, "jadibot_sess", null);
           memories.setItem(cht.sender, "questionCmd", null);
-          return cht.reply(infos.others.sesiJadibotKadaluarsaSilahkanUlangi());
+          return cht.reply(
+            typeof infos.others?.sesiJadibotKadaluarsaSilahkanUlangi === "function"
+              ? infos.others.sesiJadibotKadaluarsaSilahkanUlangi()
+              : `Sesi jadibot telah kadaluarsa, silahkan ulangi!`
+          );
         }
         const botNumber = sess.botNumber;
         const originalBotInput = sess.originalInput;
         let ownerNumber = normalizeNumber(cht.q);
         if (!ownerNumber || ownerNumber.length < 10) {
           return cht.question(
-            infos.others.nomorOwnerTidakValidInput(cht, ownerNumber),
+            typeof infos.others?.nomorOwnerTidakValidInput === "function"
+              ? infos.others.nomorOwnerTidakValidInput(cht, ownerNumber)
+              : `Nomor owner ${ownerNumber} tidak valid!`,
             {
               emit: "jadibot",
               exp: Date.now() + 60000,
               accepts: [],
-            },
+            }
           );
         }
         let ownerOnWA = (await Exp.onWhatsApp(ownerNumber))?.length > 0;
         if (!ownerOnWA) {
           return cht.question(
-            infos.others.nomorOwnerTidakTerdaftarDi(cht, ownerNumber),
+            typeof infos.others?.nomorOwnerTidakTerdaftarDi === "function"
+              ? infos.others.nomorOwnerTidakTerdaftarDi(cht, ownerNumber)
+              : `Nomor owner ${ownerNumber} tidak terdaftar di WhatsApp!`,
             {
               emit: "jadibot",
               exp: Date.now() + 60000,
               accepts: [],
-            },
+            }
           );
         }
         memories.setItem(cht.sender, "jadibot_sess", null);
         memories.setItem(cht.sender, "questionCmd", null);
         await cht.reply(
-          infos.others.jadibotStartingBotNumberN(
-            originalBotInput,
-            botNumber,
-            cht,
-            ownerNumber,
-          ),
+          typeof infos.others?.jadibotStartingBotNumberN === "function"
+            ? infos.others.jadibotStartingBotNumberN(
+                originalBotInput,
+                botNumber,
+                cht,
+                ownerNumber
+              )
+            : `Memulai bot untuk nomor ${botNumber} dengan owner ${ownerNumber}...`
         );
         const expired = Date.now() + 30 * 24 * 60 * 60 * 1000;
         await jadibot({
@@ -626,7 +648,11 @@ ${infos.others.readMore}
         console.error("[JADIBOT CMD ERROR]", e);
         memories.setItem(cht.sender, "jadibot_sess", null);
         memories.setItem(cht.sender, "questionCmd", null);
-        return cht.reply(infos.others.jadibotErrorSessionTelahDireset(e));
+        return cht.reply(
+          typeof infos.others?.jadibotErrorSessionTelahDireset === "function"
+            ? infos.others.jadibotErrorSessionTelahDireset(e)
+            : `Terjadi kesalahan. Sesi telah direset.\n\nError: ${e?.message || e}`
+        );
       }
     },
   );

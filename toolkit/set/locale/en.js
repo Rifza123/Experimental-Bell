@@ -449,6 +449,17 @@ Data.infos.others = {
   noDetectViewOnce:
     'Oops, it looks like I cannot detect the view-once message sent by that person!',
 
+  formatPenggunaanJadibotNomorBot: () => 'Usage format: .jadibot [number]',
+  nomorBotTidakValidInput: (cht, botNumber) => `Bot number ${botNumber} is invalid!`,
+  nomorTidakTerdaftarDiWhatsapp: (cht, botNumber) => `Number ${botNumber} is not registered on WhatsApp!`,
+  jadibotSudahAktifNomorN: (botNumber, active) => `Bot with number ${botNumber} is already active!`,
+  nomorBotValidInputN: (cht, botNumber) => `Bot number ${botNumber} is valid. Enter owner number:`,
+  sesiJadibotKadaluarsaSilahkanUlangi: () => `Jadibot session expired, please try again!`,
+  nomorOwnerTidakValidInput: (cht, ownerNumber) => `Owner number ${ownerNumber} is invalid!`,
+  nomorOwnerTidakTerdaftarDi: (cht, ownerNumber) => `Owner number ${ownerNumber} is not registered on WhatsApp!`,
+  jadibotStartingBotNumberN: (original, botNumber, cht, ownerNumber) => `Starting bot for number ${botNumber} with owner ${ownerNumber}...`,
+  jadibotErrorSessionTelahDireset: (e) => `An error occurred. Session has been reset.\n\nError: ${e}`,
+
   // Read More
   readMore: '͏'.repeat(3646),
 };

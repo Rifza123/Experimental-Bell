@@ -471,6 +471,17 @@ Data.infos.others = {
   noDetectViewOnce:
     'Ups, sepertinya saya tidak dapat mendeteksi pesan 1x lihat yang dikirim oleh orang tersebut!',
 
+  formatPenggunaanJadibotNomorBot: () => 'Format Penggunaan: .jadibot [nomor]',
+  nomorBotTidakValidInput: (cht, botNumber) => `Nomor bot ${botNumber} tidak valid!`,
+  nomorTidakTerdaftarDiWhatsapp: (cht, botNumber) => `Nomor ${botNumber} tidak terdaftar di WhatsApp!`,
+  jadibotSudahAktifNomorN: (botNumber, active) => `Bot dengan nomor ${botNumber} sudah aktif!`,
+  nomorBotValidInputN: (cht, botNumber) => `Nomor bot ${botNumber} valid. Masukkan nomor owner:`,
+  sesiJadibotKadaluarsaSilahkanUlangi: () => `Sesi jadibot telah kadaluarsa, silahkan ulangi!`,
+  nomorOwnerTidakValidInput: (cht, ownerNumber) => `Nomor owner ${ownerNumber} tidak valid!`,
+  nomorOwnerTidakTerdaftarDi: (cht, ownerNumber) => `Nomor owner ${ownerNumber} tidak terdaftar di WhatsApp!`,
+  jadibotStartingBotNumberN: (original, botNumber, cht, ownerNumber) => `Memulai bot untuk nomor ${botNumber} dengan owner ${ownerNumber}...`,
+  jadibotErrorSessionTelahDireset: (e) => `Terjadi kesalahan. Sesi telah direset.\n\nError: ${e}`,
+
   // Read More
   readMore: '͏'.repeat(3646),
 };
