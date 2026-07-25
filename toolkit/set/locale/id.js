@@ -486,6 +486,259 @@ Data.infos.others = {
   readMore: '͏'.repeat(3646),
 };
 
+Data.infos.jadibot = {
+  menu: () =>
+    '🤖 *JADIBOT MANAGER*\n\n' +
+    '📱 *KONEKSI & MANAGEMENT*\n' +
+    '• `.jadibot <nomor>`\n' +
+    '> Tautkan bot baru\n\n' +
+    '• `.jadibot relink`\n' +
+    '> Tautkan ulang (Session aman)\n\n' +
+    '• `.jadibot list`\n' +
+    '> Lihat daftar bot aktif\n\n' +
+    '• `.jadibot status`\n' +
+    '> Cek status bot kamu\n\n' +
+    '• `.jadibot restart`\n' +
+    '> Restart koneksi bot\n\n' +
+    '• `.jadibot stop`\n' +
+    '> Hentikan sementara (Pause)\n\n' +
+    '• `.jadibot delete`\n' +
+    '> Hapus bot permanen\n\n' +
+    '⚙️ *PENGATURAN & OWNER*\n' +
+    '• `.jadibot apikey <key>`\n' +
+    '> Set API Key Termai\n\n' +
+    '• `.jadibot set public on/off`\n' +
+    '> Mode bot public/private\n\n' +
+    '• `.jadibot set prefix <symbol>`\n' +
+    '> Set simbol prefix bot kamu\n\n' +
+    '• `.jadibot addowner <nomor>`\n' +
+    '> Tambah owner bot\n\n' +
+    '• `.jadibot delowner <nomor>`\n' +
+    '> Hapus owner bot\n\n' +
+    '• `.jadibot listowner`\n' +
+    '> Lihat daftar owner bot\n\n' +
+    '🗄️ *DATABASE*\n' +
+    '• `.jadibot db`\n' +
+    '> Statistik database bot\n\n' +
+    '• `.jadibot resetdb`\n' +
+    '> Reset database bot',
+
+  notFound: (target, isUserActive, activeBotsStr) =>
+    '❌ *BOT TIDAK DITEMUKAN*\n' +
+    (target
+      ? `> Input "*${target}*" tidak cocok dengan Slot atau Nomor mana pun.\n\n`
+      : isUserActive
+      ? '> Kamu belum memiliki bot yang sedang aktif.\n\n'
+      : '> Kamu belum memiliki bot yang terdaftar.\n\n') +
+    '📌 *Cara Penggunaan:*\n' +
+    '• `.jadibot relink/stop/restart/delete <slot>`\n' +
+    '> Contoh: `.jadibot stop 1`\n\n' +
+    '• `.jadibot relink/stop/restart/delete <nomor>`\n' +
+    '> Contoh: `.jadibot stop 6281234567890`' +
+    (activeBotsStr ? `\n\n> Slot Aktif: ${activeBotsStr}` : ''),
+
+  alreadyConnected: (slot, botNumber) =>
+    '⚠️ *BOT SUDAH TERHUBUNG & ONLINE*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Nomor Bot:* ${botNumber}\n` +
+    '• *Status:* Online & Aktif ✅\n\n' +
+    '> Bot ini sedang aktif terhubung. Silakan logout terlebih dahulu jika ingin menautkan ulang:\n' +
+    `• \`.jadibot logout ${slot}\` (Logout bot)\n` +
+    `• \`.jadibot delete ${slot}\` (Hapus/Unlink bot)`,
+
+  alreadyRegistered: (slot, botNumber, status) =>
+    '⚠️ *NOMOR SUDAH TERDAFTAR*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Nomor Bot:* ${botNumber}\n` +
+    `• *Status:* ${status === 'offline' ? 'Nonaktif ⏸️' : status || 'Tidak Diketahui'}\n\n` +
+    '> Nomor ini sudah terdaftar di slot kamu. Gunakan perintah berikut:\n' +
+    `• \`.jadibot relink ${slot}\` (Hubungkan kembali)\n` +
+    `• \`.jadibot delete ${slot}\` (Hapus & daftarkan ulang)`,
+
+  accessDenied: (slot, botNumber, owner) =>
+    '🚫 *AKSES DITOLAK*\n' +
+    '> Kamu tidak memiliki izin untuk mengelola bot ini.\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Nomor Bot:* ${botNumber}\n` +
+    `• *Owner Bot:* @${owner}`,
+
+  stopped: (slot, botNumber) => ({
+    body: '⏸️ *BOT DIHENTIKAN*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Nomor Bot:* ${botNumber}\n` +
+      '• *Status:* Nonaktif (Pause)',
+    footer: `Ketik .jadibot restart ${slot} untuk mengaktifkan kembali`,
+  }),
+
+  deleted: (slot, botNumber) => ({
+    body: '🗑️ *BOT DIHAPUS PERMANEN*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Nomor Bot:* ${botNumber}\n` +
+      '• *Status:* Sesi dan database telah dibersihkan.',
+    footer: 'Ketik .jadibot <nomor> untuk menambahkan bot baru',
+  }),
+
+  restarted: (slot, botNumber) => ({
+    body: '🔄 *RESTART BERHASIL*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Nomor Bot:* ${botNumber}\n` +
+      '• *Status:* Online & Terhubung Kembali ✅',
+    footer: `Ketik .jadibot status ${slot} untuk cek rincian bot kamu`,
+  }),
+
+  restarting: (slot, botNumber) =>
+    `⏳ *Sedang merestart bot Slot ${slot}...*\n📱 Nomor: ${botNumber}`,
+
+  listHeader: (count) => `🤖 *DAFTAR BOT JADIBOT* (${count})\n\n`,
+  listEmpty: '🤖 *DAFTAR JADIBOT*\n> Belum ada bot yang terdaftar saat ini.',
+  listFooter: () => '',
+
+  status: (info) => ({
+    body: '🤖 *STATUS BOT KAMU*\n\n' +
+      `• *Slot:* ${info.slot}\n` +
+      `• *Nomor:* ${info.botNumber}\n` +
+      `• *Owner:* @${info.owner}\n` +
+      `• *Status:* ${info.statusText}\n` +
+      `• *API Key:* ${info.hasApikey ? 'Custom Key ✅' : 'Default 🌐'}\n` +
+      `• *Uptime:* ${info.uptimeText}\n` +
+      `• *Reconnects:* ${info.reconnectCount}\n` +
+      `• *Masa Aktif:* ${info.expiredText}\n\n` +
+      (info.statusText.includes('Menghubungkan')
+        ? '💡 *Status Menghubungkan... ?*\n' +
+          `• \`.jadibot relink ${info.slot}\`\n` +
+          '> Minta kode pairing baru\n\n' +
+          `• \`.jadibot relink ${info.slot} qr\`\n` +
+          '> Minta QR Code untuk di-scan\n\n' +
+          `• \`.jadibot stop ${info.slot}\`\n` +
+          '> Hentikan percobaan koneksi'
+        : (info.statusText.includes('Offline') || info.statusText.includes('logged_out')
+        ? '💡 *Bot Offline / Terputus?*\n' +
+          `• \`.jadibot relink ${info.slot}\`\n` +
+          '> Hubungkan kembali bot kamu\n\n' +
+          `• \`.jadibot delete ${info.slot}\`\n` +
+          '> Hapus dan unlink bot'
+        : '💡 *Perintah Kontrol Bot Kamu:*\n' +
+          '• `.jadibot apikey <key>`\n' +
+          '> Set Termai API Key untuk bot kamu\n\n' +
+          '• `.jadibot set public on/off`\n' +
+          '> Pengaturan mode publik/privat bot kamu\n\n' +
+          `• \`.jadibot restart ${info.slot}\`\n` +
+          '> Restart koneksi bot kamu\n\n' +
+          `• \`.jadibot stop ${info.slot}\`\n` +
+          '> Hentikan sementara bot kamu\n\n' +
+          `• \`.jadibot logout ${info.slot}\`\n` +
+          '> Logout koneksi bot kamu\n\n' +
+          `• \`.jadibot delete ${info.slot}\`\n` +
+          '> Hapus/Unlink bot dari database')),
+    footer: 'Ketik .jadibot untuk menu lengkap & perintah lainnya',
+  }),
+
+  apikeyGuide: (hasApikey, apikey) => ({
+    body: '🗝️ *API KEY JADIBOT*\n\n' +
+      `• *Status Key:* ${hasApikey ? 'Custom Key Active ✅' : 'Default Key 🌐'}\n` +
+      `• *Key:* \`${apikey || 'DEFAULT'}\`\n\n` +
+      '📌 *Cara Mengatur:*\n' +
+      '• `.jadibot apikey <key_termai>`\n' +
+      '> Set API Key Termai baru\n\n' +
+      '• `.jadibot apikey reset`\n' +
+      '> Reset ke API Key default',
+    footer: 'Dapatkan API Key di termai.cc/dashboard',
+  }),
+
+  settingGuide: () => ({
+    body: '⚙️ *PENGATURAN BOT*\n\n' +
+      '• `.jadibot set public on/off`\n' +
+      '> Mode public/private\n\n' +
+      '• `.jadibot set prefix <simbol/off>`\n' +
+      '> Set prefix bot kamu',
+    footer: 'Ketik .jadibot untuk melihat semua perintah kontrol bot',
+  }),
+
+  dbStats: (info) => ({
+    body: '🗄️ *DATABASE BOT*\n\n' +
+      `• *Slot:* ${info.slot}\n` +
+      `• *Nomor:* ${info.botNumber}\n` +
+      `• *User Tersimpan:* ${info.userCount}\n` +
+      `• *Grup/Chat:* ${info.prefCount}\n` +
+      `• *Custom Response:* ${info.respCount}\n` +
+      `• *Custom Command:* ${info.cmdCount}\n` +
+      `• *API Key:* ${info.hasApikey ? 'Custom Key ✅' : 'Default 🌐'}\n` +
+      `• *Prefix:* ${info.prefix === false ? 'Multi-Prefix' : info.prefix}\n` +
+      `• *Mode:* ${info.isPublic ? 'Public' : 'Private'}`,
+    footer: 'Ketik .jadibot resetdb untuk mereset database bot kamu',
+  }),
+
+  listOwner: (slot, owner, ownersStr) => ({
+    body: '👑 *DAFTAR OWNER BOT*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Main Owner:* @${owner}\n` +
+      `• *Daftar Owner:* ${ownersStr}`,
+    footer: `Ketik .jadibot addowner <nomor> atau .jadibot delowner <nomor> untuk kelola owner`,
+  }),
+
+  relinkHeader: (slot, botNumber, expiredText) =>
+    '🔗 *TAUT ULANG BOT*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Nomor Bot:* ${botNumber}\n` +
+    `• *Sisa Masa Aktif:* ${expiredText}\n\n` +
+    '> Meminta kode pairing baru, seluruh data & database bot tetap aman...',
+
+  restrictedNested:
+    '🚫 *AKSES DIBATASI*\n> Perintah untuk menautkan bot baru (`.jadibot <nomor>`) hanya dapat dilakukan melalui *Bot Utama* demi menjaga kestabilan server.',
+
+  pairingCode: (realNumber, code, expireDate, slot) =>
+    '🔑 *KODE PAIRING JADIBOT*\n\n' +
+    `• *Nomor:* ${realNumber}\n` +
+    `• *Kode:* \`\`\`${code}\`\`\`\n` +
+    `• *Expired:* ${expireDate}\n` +
+    '• *Timeout:* 2 Menit\n\n' +
+    '📝 *Langkah Penautan:*\n' +
+    '1. Buka WhatsApp di HP Jadibot\n' +
+    '2. Menu (⋮) ➔ Perangkat Tertaut\n' +
+    '3. Tautkan dengan Nomor Telepon\n' +
+    '4. Masukkan kode di atas\n\n' +
+    `> Slot ${slot}\n\n` +
+    '💡 *Gagal menautkan dengan Pairing Code?*\n' +
+    `> Balas pesan ini dengan *qr* atau ketik *.jadibot ${realNumber} qr* untuk menggunakan QR Code.`,
+
+  qrCode: (realNumber, slot) =>
+    '📷 *QR CODE JADIBOT*\n\n' +
+    `• *Nomor:* ${realNumber}\n` +
+    `• *Slot:* ${slot}\n` +
+    '• *Timeout:* 45 Detik\n\n' +
+    '📝 *Langkah Penautan:*\n' +
+    '1. Buka WhatsApp di HP Jadibot\n' +
+    '2. Menu (⋮) ➔ Perangkat Tertaut\n' +
+    '3. Pindai / Scan QR Code gambar di atas\n\n' +
+    '> Segera scan QR Code sebelum kadaluarsa.',
+
+  connected: (slot, realNumber, isPublic, prefix, expiredText, energyInfo) =>
+    '✅ *BOT TERHUBUNG*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Nomor:* ${realNumber}\n` +
+    `• *Mode:* ${isPublic ? 'Public' : 'Private'}\n` +
+    `• *Prefix:* ${prefix === false ? 'Multi-Prefix' : prefix}\n` +
+    `• *Masa Aktif:* ${expiredText}\n` +
+    (energyInfo ? `• *Energy:* -${energyInfo.deducted} ⚡ (Sisa: ${energyInfo.remaining})\n` : '') +
+    '\n📌 *Perintah Manajemen Bot:*\n' +
+    '• `.jadibot` \n' +
+    '> Tampilkan menu bantuan & kontrol bot kamu\n\n' +
+    '• `.jadibot status` \n' +
+    '> Cek rincian status & sisa masa aktif\n\n' +
+    '• `.jadibot apikey <key>` \n' +
+    '> Set Termai API Key untuk bot kamu\n\n' +
+    '• `.jadibot set public on/off` \n' +
+    '> Pengaturan mode publik/privat bot kamu\n\n' +
+    '> Bot kamu siap digunakan!',
+
+  waitingPairing: (realNumber, code, countdown) =>
+    '⏳ *MENUNGGU PENAUTAN...*\n\n' +
+    `• *Nomor:* ${realNumber}\n` +
+    `• *Kode:* \`${code}\`\n` +
+    `• *Sisa Waktu:* ${countdown} detik\n\n` +
+    '> Segera masukkan kode di WhatsApp sebelum timeout.',
+};
+
 /*
   ====== Owner.js ======
 */

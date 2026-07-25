@@ -205,20 +205,38 @@ export default async function utils({ Exp, cht, is, store }) {
 
     Exp.number = Exp?.user?.id?.split(':')[0] + from.sender;
 
+    Exp.apiKey = is?.jadibot
+      ? (Data.jadibot?.[is.jadibotId]?.apikey || (Data.preferencesBot?.[Exp?.user?.id?.split(':')[0]] ?? {}).apikey || api.xterm.key)
+      : api.xterm.key;
+    cht.apiKey = Exp.apiKey;
+
     is.me = cht?.key?.fromMe || cht.sender == Exp.number;
+
+    const senderNum = cht.sender.split('@')[0].replace(/[^0-9]/g, '');
+    const isJadibotOwner = is?.jadibot && (
+      (Exp.jadibotOwner && String(Exp.jadibotOwner).replace(/[^0-9]/g, '') === senderNum) ||
+      (Data.jadibot?.[is.jadibotId]?.owners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum) ||
+      (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.owners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum)
+    );
+    const isJadibotCoOwner = is?.jadibot && (
+      (Data.jadibot?.[is.jadibotId]?.coowners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum) ||
+      (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.coowners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum)
+    );
+
     is.owner =
       global.owner.some((a) => {
         const jid = String(a)
           ?.split('@')[0]
           ?.replace(/[^0-9]/g, '');
         return jid && jid + from.sender === cht.sender;
-      }) || is.me;
+      }) || is.me || isJadibotOwner;
+
     is.coowner = global.coowner.some((a) => {
       const jid = String(a)
         ?.split('@')[0]
         ?.replace(/[^0-9]/g, '');
       return jid && jid + from.sender === cht.sender;
-    });
+    }) || isJadibotCoOwner;
     is.group = cht.id?.endsWith(from.group);
     const groupDb = is.group ? preferences[cht.id] : {};
     if (is.group) {

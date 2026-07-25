@@ -3,7 +3,7 @@ const fs = 'fs'.import();
 const { downloadContentFromMessage } = 'baileys'.import();
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
 const { dashboard } = await (fol[2] + 'dashboard.js').r();
-const jadibot = (await `${fol[1]}jadibot.js`.r()).default;
+const { default: jadibot, stopJadibot, listAllJadibots, getJadibotStatus, setJadibotApikey, setJadibotConfig, restartJadibot, getJadibotDb, resetJadibotDb, resolveJadibotSlot, checkExpiredJadibots } = await `${fol[1]}jadibot.js`.r();
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
   const { id } = cht;
@@ -496,16 +496,9 @@ ${infos.others.readMore}
   ev.on(
     {
       cmd: ["jadibot"],
-      listmenu: ["jadibot"],
-      tag: "jadibot",
+      listmenu: [`jadibot`],
+      tag: `jadibot`,
       premium: true,
-      args:
-        "📝 *Format Penggunaan:*\n" +
-        ".jadibot [nomor bot]\n\n" +
-        "*Contoh:*\n" +
-        ".jadibot 6281234567890\n" +
-        ".jadibot 081234567890\n" +
-        ".jadibot +62 812-3456-7890",
     },
     async () => {
       try {
@@ -520,114 +513,428 @@ ${infos.others.readMore}
           );
         }
         const normalizeNumber = (num) => {
-          if (!num) return "";
-          const raw = String(num).trim();
-          if (raw.startsWith("+")) {
-            return raw.replace(/[^0-9]/g, "");
-          }
-          let clean = raw.replace(/[^0-9]/g, "");
-          if (clean.startsWith("0")) {
-            return "62" + clean.slice(1);
+          if (!num) return ``;
+          let raw = String(num).trim();
+          let clean = raw.replace(/[^0-9]/g, ``);
+          if (clean.startsWith(`0`)) {
+            return `62` + clean.slice(1);
           }
           if (clean.length >= 10) {
             return clean;
           }
-          return "62" + clean;
+          return `62` + clean;
         };
-        const sess = memories.getItem(cht.sender, "jadibot_sess");
-        if (!sess) {
-          if (!cht.q) {
+        let senderNum = cht.sender ? cht.sender.split('@')[0].replace(/[^0-9]/g, '') : '';
+        let action = cht.q ? cht.q.trim().toLowerCase() : '';
+        let jdbLang = infos.jadibot || Data.infos.jadibot;
+        let botName = global.botfullname || 'Jadibot';
+        let replyJdb = (tpl, opts) => {
+          return Exp.sendMessage(cht.id, {
+            text: tpl.body,
+            footer: tpl.footer,
+            ...(opts?.mentionedJid ? { mentions: opts.mentionedJid } : {}),
+          }, { quoted: cht });
+        };
+
+        if (action === "stop" || action === "logout" || action === "keluar" || action === "matikan" || action.startsWith("stop ") || action.startsWith("logout ") || action.startsWith("keluar ") || action.startsWith("matikan ")) {
+          let parts = action.split(" ");
+          let target = parts.slice(1).join(" ").trim() || null;
+          let targetSlot = resolveJadibotSlot(target, senderNum);
+
+          if (!targetSlot || !Data.jadibot?.[targetSlot]) {
+            let activeBots = listAllJadibots();
+            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            return cht.reply(jdbLang.notFound(target, true, activeBotsStr));
+          }
+
+          let info = Data.jadibot[targetSlot];
+          let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
+          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
             return cht.reply(
-              typeof infos.others?.formatPenggunaanJadibotNomorBot === "function"
-                ? infos.others.formatPenggunaanJadibotNomorBot()
-                : "Format Penggunaan: .jadibot [nomor]"
+              jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
+              { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
-          let botNumber = normalizeNumber(cht.q);
-          if (!botNumber || botNumber.length < 10) {
+          let ok = await stopJadibot({ slot: targetSlot, removeSession: false });
+          if (ok) {
+            return replyJdb(jdbLang.stopped(targetSlot, info.botNumber));
+          } else {
+            return cht.reply('❌ Gagal menghentikan bot Slot ' + targetSlot + '.');
+          }
+        }
+
+        if (action === "delete" || action === "hapus" || action.startsWith("delete ") || action.startsWith("hapus ")) {
+          let parts = action.split(" ");
+          let target = parts.slice(1).join(" ").trim() || null;
+          let targetSlot = resolveJadibotSlot(target, senderNum);
+
+          if (!targetSlot || !Data.jadibot?.[targetSlot]) {
+            let activeBots = listAllJadibots();
+            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
+          }
+
+          let info = Data.jadibot[targetSlot];
+          let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
+          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
             return cht.reply(
-              typeof infos.others?.nomorBotTidakValidInput === "function"
-                ? infos.others.nomorBotTidakValidInput(cht, botNumber)
-                : `Nomor bot ${botNumber} tidak valid!`
+              jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
+              { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
-          let isOnWhatsapp = (await Exp.onWhatsApp(botNumber))?.length > 0;
-          if (!isOnWhatsapp) {
+          let ok = await stopJadibot({ slot: targetSlot, removeSession: true });
+          if (ok) {
+            return replyJdb(jdbLang.deleted(targetSlot, info.botNumber, botName));
+          } else {
+            return cht.reply('❌ Gagal menghapus bot Slot ' + targetSlot + '.');
+          }
+        }
+
+        if (action === "restart" || action === "mulaiulang" || action.startsWith("restart ") || action.startsWith("mulaiulang ")) {
+          let parts = action.split(" ");
+          let target = parts.slice(1).join(" ").trim() || null;
+          let targetSlot = resolveJadibotSlot(target, senderNum);
+
+          if (!targetSlot || !Data.jadibot?.[targetSlot]) {
+            let activeBots = listAllJadibots();
+            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
+          }
+
+          let info = Data.jadibot[targetSlot];
+          let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
+          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
             return cht.reply(
-              typeof infos.others?.nomorTidakTerdaftarDiWhatsapp === "function"
-                ? infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber)
-                : `Nomor ${botNumber} tidak terdaftar di WhatsApp!`
+              jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
+              { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
-          const active = Object.entries(Data.jadibot || {}).find(
-            ([_, v]) => v?.botNumber === botNumber
-          );
-          if (active) {
+          await cht.reply(jdbLang.restarting(targetSlot, info.botNumber));
+          let ok = await restartJadibot({ Exp, cht, slot: targetSlot, owner: senderNum });
+          if (ok) {
+            return replyJdb(jdbLang.restarted(targetSlot, info.botNumber, botName));
+          } else {
+            return cht.reply('❌ Gagal merestart bot Slot ' + targetSlot + '.');
+          }
+        }
+
+        if (action === "list" || action === "daftar") {
+          await checkExpiredJadibots();
+          let bots = listAllJadibots();
+          if (!bots || bots.length === 0) {
+            return cht.reply(jdbLang.listEmpty);
+          }
+          let text = jdbLang.listHeader(bots.length);
+          for (let b of bots) {
+            text += '• *Slot ' + b.slot + '*\n';
+            text += '  ├ 📱 Nomor: ' + b.botNumber + '\n';
+            text += '  ├ 👤 Owner: @' + b.owner + '\n';
+            text += '  ├ ⚡ Status: ' + b.statusText + '\n';
+            text += '  ├ 🗝️ API Key: ' + (b.hasApikey ? 'Custom Key ✅' : 'Default 🌐') + '\n';
+            text += '  ├ ⏱️ Uptime: ' + b.uptimeText + '\n';
+            text += '  ╰ ⏳ Masa Aktif: ' + b.expiredText + '\n\n';
+          }
+          text += jdbLang.listFooter(botName);
+          return cht.reply(text.trim(), { mentions: bots.map(b => b.owner + '@s.whatsapp.net') });
+        }
+
+        if (action === "status" || action === "info" || action === "cek" || action.startsWith("status ") || action.startsWith("info ") || action.startsWith("cek ")) {
+          let parts = cht.q.trim().split(" ");
+          let target = parts.slice(1).join(" ").trim() || null;
+          let targetSlot = resolveJadibotSlot(target, senderNum);
+
+          let resolvedInfo = null;
+          if (!targetSlot || !Data.jadibot?.[targetSlot]) {
+            let status = getJadibotStatus(senderNum);
+            if (status.active) {
+              resolvedInfo = status;
+            } else {
+              let activeBots = listAllJadibots();
+              let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+              return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
+            }
+          } else {
+            let info = Data.jadibot[targetSlot];
+            resolvedInfo = {
+              slot: targetSlot,
+              botNumber: info.botNumber,
+              owner: info.owner,
+              statusText: info.status === 'online' ? 'Online ✅' : (info.status === 'connecting' ? 'Menghubungkan... ⏳' : 'Offline ❌'),
+              hasApikey: !!info.apikey,
+              uptimeText: info.onlineSince ? func.parseMs(Date.now() - info.onlineSince) : '0s',
+              reconnectCount: info.reconnectCount || 0,
+              expiredText: info.expired && info.expired > Date.now() ? func.parseMs(info.expired - Date.now()) : 'Unlimited'
+            };
+          }
+
+          let statusTpl = jdbLang.status(resolvedInfo, botName);
+          return replyJdb(statusTpl, { mentionedJid: [resolvedInfo.owner + '@s.whatsapp.net'] });
+        }
+
+        if (action.startsWith("apikey ") || action.startsWith("setapikey ") || action === "apikey") {
+          let status = getJadibotStatus(senderNum);
+          if (!status.active && !is.owner) {
+            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+          }
+          let parts = cht.q.trim().split(" ");
+          let newKey = parts.slice(1).join(" ").trim();
+          if (!newKey) {
+            return replyJdb(jdbLang.apikeyGuide(status.hasApikey, status.apikey, botName));
+          }
+          if (newKey === "reset" || newKey === "delete" || newKey === "hapus") {
+            setJadibotApikey({ slot: status.slot, owner: senderNum, apikey: "" });
+            return cht.reply("✅ API Key sub-bot telah direset ke default!");
+          }
+          setJadibotApikey({ slot: status.slot, owner: senderNum, apikey: newKey });
+          return cht.reply('✅ API Key sub-bot berhasil diset ke:\n`' + newKey + '`');
+        }
+
+        if (action.startsWith("set ") || action.startsWith("setting ")) {
+          let status = getJadibotStatus(senderNum);
+          if (!status.active && !is.owner) {
+            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+          }
+          let parts = cht.q.trim().split(" ");
+          let opt = (parts[1] || "").toLowerCase();
+          let val = parts.slice(2).join(" ").trim();
+          if (opt === "public") {
+            let isPub = val === "on" || val === "true" || val === "1";
+            setJadibotConfig({ slot: status.slot, owner: senderNum, key: "public", value: isPub });
+            return cht.reply('✅ Mode bot diset ke: *' + (isPub ? "Public" : "Private") + '*');
+          }
+          if (opt === "prefix") {
+            let pref = val === "false" || val === "off" ? false : val;
+            setJadibotConfig({ slot: status.slot, owner: senderNum, key: "prefix", value: pref });
+            return cht.reply('✅ Prefix bot diset ke: *' + (pref === false ? "Multi-Prefix" : pref) + '*');
+          }
+          return replyJdb(jdbLang.settingGuide(botName));
+        }
+
+        if (action === "db" || action === "database" || action === "dbstatus") {
+          let status = getJadibotStatus(senderNum);
+          if (!status.active && !is.owner) {
+            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+          }
+          let dbInfo = getJadibotDb(senderNum);
+          if (!dbInfo) {
+            return cht.reply("❌ Database sub-bot tidak ditemukan!");
+          }
+          let userCount = Object.keys(dbInfo.db.users || {}).length;
+          let prefCount = Object.keys(dbInfo.db.preferences || {}).length;
+          let respCount = Object.keys(dbInfo.db.response || {}).length;
+          let cmdCount = Object.keys(dbInfo.db.setCmd || {}).length;
+          return replyJdb(jdbLang.dbStats({
+            slot: dbInfo.slot,
+            botNumber: dbInfo.botNumber,
+            userCount,
+            prefCount,
+            respCount,
+            cmdCount,
+            hasApikey: !!dbInfo.db.apikey,
+            prefix: dbInfo.db.prefix,
+            isPublic: dbInfo.db.public
+          }));
+        }
+
+        if (action === "cleardb" || action === "resetdb") {
+          let status = getJadibotStatus(senderNum);
+          if (!status.active && !is.owner) {
+            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+          }
+          let ok = resetJadibotDb(senderNum);
+          if (ok) {
+            return cht.reply("🗑️ Database sub-bot berhasil direset ke kondisi bersih!");
+          } else {
+            return cht.reply("❌ Gagal mereset database sub-bot.");
+          }
+        }
+
+        if (action.startsWith("addowner ") || action.startsWith("delowner ") || action === "listowner" || action === "owners") {
+          let status = getJadibotStatus(senderNum);
+          if (!status.active && !is.owner) {
+            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+          }
+          let slot = status.slot;
+          let info = Data.jadibot[slot];
+          info.owners ??= [info.owner];
+          let botNum = info.botNumber;
+          Data.jadibotDb[botNum].owners ??= info.owners;
+
+          if (action === "listowner" || action === "owners") {
+            let ownersStr = info.owners.map(o => '@' + String(o).replace(/[^0-9]/g, '')).join(', ');
+            return replyJdb(jdbLang.listOwner(slot, info.owner, ownersStr, botName), { mentionedJid: info.owners.map(o => String(o).replace(/[^0-9]/g, '') + '@s.whatsapp.net') });
+          }
+
+          let parts = cht.q.trim().split(" ");
+          let target = normalizeNumber(parts.slice(1).join(" "));
+          if (!target || target.length < 10) {
+            return cht.reply("❌ Nomor target tidak valid!\n\nFormat: `.jadibot addowner 628xxx` atau `.jadibot delowner 628xxx`");
+          }
+
+          if (action.startsWith("addowner ")) {
+            if (!info.owners.includes(target)) info.owners.push(target);
+            if (!Data.jadibotDb[botNum].owners.includes(target)) Data.jadibotDb[botNum].owners.push(target);
+            return cht.reply('✅ Berhasil menambahkan @' + target + ' sebagai owner sub-bot!', { mentions: [target + '@s.whatsapp.net'] });
+          } else {
+            if (target === info.owner) {
+              return cht.reply("❌ Tidak dapat menghapus owner utama sub-bot!");
+            }
+            info.owners = info.owners.filter(o => o !== target);
+            Data.jadibotDb[botNum].owners = Data.jadibotDb[botNum].owners.filter(o => o !== target);
+            return cht.reply('✅ Berhasil menghapus @' + target + ' dari daftar owner sub-bot!', { mentions: [target + '@s.whatsapp.net'] });
+          }
+        }
+
+        if (action === "relink" || action === "tautulang" || action.startsWith("relink ") || action.startsWith("tautulang ")) {
+          let isQrMode = action.endsWith(" qr") || action.includes(" qr") || cht.q.toLowerCase().includes("qr");
+          let cleanQ = action.replace(/relink/gi, "").replace(/tautulang/gi, "").replace(/qr/gi, "").trim();
+          let targetSlot = resolveJadibotSlot(cleanQ, senderNum);
+
+          if (!targetSlot || !Data.jadibot?.[targetSlot]) {
+            let activeBots = listAllJadibots();
+            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            return cht.reply(jdbLang.notFound(cleanQ, false, activeBotsStr));
+          }
+
+          let info = Data.jadibot[targetSlot];
+          let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
+          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
             return cht.reply(
-              typeof infos.others?.jadibotSudahAktifNomorN === "function"
-                ? infos.others.jadibotSudahAktifNomorN(botNumber, active)
-                : `Bot dengan nomor ${botNumber} sudah aktif!`
+              jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
+              { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
-          memories.setItem(cht.sender, "jadibot_sess", {
-            botNumber,
-            originalInput: cht.q,
-            exp: Date.now() + 120000,
+
+          if (info.status === 'online') {
+            return cht.reply(jdbLang.alreadyConnected(targetSlot, info.botNumber));
+          }
+
+          if (info.expired && info.expired > 0 && info.expired < Date.now()) {
+            return cht.reply('❌ Masa aktif Bot (Slot ' + targetSlot + ') telah kadaluarsa! Silakan buat jadibot baru.');
+          }
+
+          let expiredText = info.expired ? func.parseMs(info.expired - Date.now()) : 'Unlimited';
+          await cht.reply(jdbLang.relinkHeader(targetSlot, info.botNumber, expiredText));
+
+          await jadibot({
+            Exp,
+            cht,
+            id: targetOwner,
+            botNumber: info.botNumber,
+            pairing: !isQrMode,
+            useQr: isQrMode,
+            expired: info.expired || 0,
+            userSender: cht.sender,
           });
-          return cht.question(
-            typeof infos.others?.nomorBotValidInputN === "function"
-              ? infos.others.nomorBotValidInputN(cht, botNumber)
-              : `Nomor bot ${botNumber} valid. Masukkan nomor owner:`,
-            {
-              emit: "jadibot",
-              exp: Date.now() + 60000,
-              accepts: [],
-            }
-          );
+          return;
         }
-        if (sess?.exp && Date.now() > sess.exp) {
-          memories.setItem(cht.sender, "jadibot_sess", null);
-          memories.setItem(cht.sender, "questionCmd", null);
+
+        if (!cht.q) {
+          return cht.reply(jdbLang.menu(botName));
+        }
+
+        if (is?.jadibot) {
+          return cht.reply(jdbLang.restrictedNested);
+        }
+
+        let isQrMode = action.endsWith(" qr") || action === "qr" || cht.q.toLowerCase().includes("qr") || (cht.quoted && cht.quoted.text && (cht.quoted.text.includes("PAIRING") || cht.quoted.text.includes("pairing")));
+        let cleanQ = cht.q.replace(/qr/gi, "").trim();
+
+        let inputTokens = cleanQ ? cleanQ.split(/\s+/) : [];
+        let botNumber = '';
+        let ownerNumber = senderNum;
+
+        let fullNormalized = normalizeNumber(cleanQ);
+        if (fullNormalized && fullNormalized.length >= 10 && fullNormalized.length <= 15) {
+          botNumber = fullNormalized;
+        } else if (inputTokens.length >= 2) {
+          let lastToken = inputTokens[inputTokens.length - 1];
+          let lastNum = normalizeNumber(lastToken);
+          let firstPartNum = normalizeNumber(inputTokens.slice(0, inputTokens.length - 1).join(" "));
+          if (firstPartNum && firstPartNum.length >= 10 && lastNum && lastNum.length >= 10) {
+            botNumber = firstPartNum;
+            ownerNumber = lastNum;
+          } else {
+            botNumber = fullNormalized || normalizeNumber(inputTokens[0]);
+          }
+        } else if (inputTokens.length === 1) {
+          botNumber = fullNormalized || normalizeNumber(inputTokens[0]);
+        }
+
+        if (!botNumber && (isQrMode || cht.quoted)) {
+          let targetSlot = resolveJadibotSlot(cleanQ, senderNum);
+          if (targetSlot && Data.jadibot?.[targetSlot]) {
+            botNumber = Data.jadibot[targetSlot].botNumber;
+          } else {
+            let status = getJadibotStatus(senderNum);
+            if (status.active) botNumber = status.botNumber;
+          }
+        }
+
+        if (!botNumber || botNumber.length < 10) {
           return cht.reply(
-            typeof infos.others?.sesiJadibotKadaluarsaSilahkanUlangi === "function"
-              ? infos.others.sesiJadibotKadaluarsaSilahkanUlangi()
-              : `Sesi jadibot telah kadaluarsa, silahkan ulangi!`
+            typeof infos.others?.nomorBotTidakValidInput === "function"
+              ? infos.others.nomorBotTidakValidInput(cht, botNumber)
+              : `Nomor bot ${botNumber} tidak valid!`
           );
         }
-        const botNumber = sess.botNumber;
-        const originalBotInput = sess.originalInput;
-        let ownerNumber = normalizeNumber(cht.q);
-        if (!ownerNumber || ownerNumber.length < 10) {
-          return cht.question(
-            typeof infos.others?.nomorOwnerTidakValidInput === "function"
-              ? infos.others.nomorOwnerTidakValidInput(cht, ownerNumber)
-              : `Nomor owner ${ownerNumber} tidak valid!`,
-            {
-              emit: "jadibot",
-              exp: Date.now() + 60000,
-              accepts: [],
-            }
+        let isOnWhatsapp = (await Exp.onWhatsApp(botNumber))?.length > 0;
+        if (!isOnWhatsapp) {
+          return cht.reply(
+            typeof infos.others?.nomorTidakTerdaftarDiWhatsapp === "function"
+              ? infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber)
+              : `Nomor ${botNumber} tidak terdaftar di WhatsApp!`
           );
         }
-        let ownerOnWA = (await Exp.onWhatsApp(ownerNumber))?.length > 0;
-        if (!ownerOnWA) {
-          return cht.question(
-            typeof infos.others?.nomorOwnerTidakTerdaftarDi === "function"
-              ? infos.others.nomorOwnerTidakTerdaftarDi(cht, ownerNumber)
-              : `Nomor owner ${ownerNumber} tidak terdaftar di WhatsApp!`,
-            {
-              emit: "jadibot",
-              exp: Date.now() + 60000,
-              accepts: [],
-            }
-          );
+        const registeredDb = Data.jadibotDb?.[botNumber];
+        const registeredSlot = Object.entries(Data.jadibot || {}).find(
+          ([_, v]) => String(v?.botNumber) === String(botNumber)
+        );
+
+        let registeredOwner = registeredDb?.owner || registeredSlot?.[1]?.owner;
+        let registeredOwners = (registeredDb?.owners || registeredSlot?.[1]?.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+
+        if (registeredOwner) {
+          registeredOwner = String(registeredOwner).replace(/[^0-9]/g, '');
+          if (!is.owner && registeredOwner !== senderNum && !registeredOwners.includes(senderNum)) {
+            let slotNum = registeredSlot?.[0] || '1';
+            return cht.reply(
+              jdbLang.accessDenied(slotNum, botNumber, registeredOwner),
+              { mentions: [registeredOwner + '@s.whatsapp.net'] }
+            );
+          }
         }
-        memories.setItem(cht.sender, "jadibot_sess", null);
-        memories.setItem(cht.sender, "questionCmd", null);
+
+        if (registeredSlot) {
+          let slotNum = registeredSlot[0];
+          let slotStatus = registeredSlot[1]?.status;
+          if (slotStatus === 'online') {
+            return cht.reply(jdbLang.alreadyConnected(slotNum, botNumber));
+          }
+          return cht.reply(jdbLang.alreadyRegistered(slotNum, botNumber, slotStatus));
+        }
+
+        if (!is.owner) {
+          const userEnergy = (await memories.getItem(cht.sender, 'energy')) ?? cht.memories?.energy ?? 0;
+          if (userEnergy < 200) {
+            return cht.reply(
+              '⚡ *ENERGY TIDAK CUKUP*\n\n' +
+              '• *Dibutuhkan:* 200 Energy\n' +
+              `• *Energy Kamu:* ${userEnergy} Energy\n\n` +
+              '> Kamu membutuhkan minimal *200 Energy* untuk menautkan bot.'
+            );
+          }
+        }
+        memories.setItem(cht.sender, `jadibot_sess`, null);
+        memories.setItem(cht.sender, `questionCmd`, null);
         await cht.reply(
           typeof infos.others?.jadibotStartingBotNumberN === "function"
             ? infos.others.jadibotStartingBotNumberN(
-                originalBotInput,
+                botNumber,
                 botNumber,
                 cht,
                 ownerNumber
@@ -640,14 +947,15 @@ ${infos.others.readMore}
           cht,
           id: ownerNumber,
           botNumber: botNumber,
-          pairing: true,
+          pairing: !isQrMode,
+          useQr: isQrMode,
           expired: expired,
           userSender: cht.sender,
         });
       } catch (e) {
-        console.error("[JADIBOT CMD ERROR]", e);
-        memories.setItem(cht.sender, "jadibot_sess", null);
-        memories.setItem(cht.sender, "questionCmd", null);
+        console.error(`[JADIBOT CMD ERROR]`, e);
+        memories.setItem(cht.sender, `jadibot_sess`, null);
+        memories.setItem(cht.sender, `questionCmd`, null);
         return cht.reply(
           typeof infos.others?.jadibotErrorSessionTelahDireset === "function"
             ? infos.others.jadibotErrorSessionTelahDireset(e)

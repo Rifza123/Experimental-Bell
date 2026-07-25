@@ -464,6 +464,259 @@ Data.infos.others = {
   readMore: '͏'.repeat(3646),
 };
 
+Data.infos.jadibot = {
+  menu: () =>
+    '🤖 *JADIBOT MANAGER*\n\n' +
+    '📱 *CONNECTION & MANAGEMENT*\n' +
+    '• `.jadibot <number>`\n' +
+    '> Link new sub-bot\n\n' +
+    '• `.jadibot relink`\n' +
+    '> Re-link bot (Session safe)\n\n' +
+    '• `.jadibot list`\n' +
+    '> List active sub-bots\n\n' +
+    '• `.jadibot status`\n' +
+    '> Check your sub-bot status\n\n' +
+    '• `.jadibot restart`\n' +
+    '> Restart sub-bot connection\n\n' +
+    '• `.jadibot stop`\n' +
+    '> Pause sub-bot\n\n' +
+    '• `.jadibot delete`\n' +
+    '> Delete sub-bot permanently\n\n' +
+    '⚙️ *SETTINGS & OWNER*\n' +
+    '• `.jadibot apikey <key>`\n' +
+    '> Set Termai API Key\n\n' +
+    '• `.jadibot set public on/off`\n' +
+    '> Bot public/private mode\n\n' +
+    '• `.jadibot set prefix <symbol>`\n' +
+    '> Set sub-bot prefix\n\n' +
+    '• `.jadibot addowner <number>`\n' +
+    '> Add sub-bot owner\n\n' +
+    '• `.jadibot delowner <number>`\n' +
+    '> Delete sub-bot owner\n\n' +
+    '• `.jadibot listowner`\n' +
+    '> View sub-bot owners list\n\n' +
+    '🗄️ *DATABASE*\n' +
+    '• `.jadibot db`\n' +
+    '> Sub-bot database statistics\n\n' +
+    '• `.jadibot resetdb`\n' +
+    '> Reset sub-bot database',
+
+  notFound: (target, isUserActive, activeBotsStr) =>
+    '❌ *BOT NOT FOUND*\n' +
+    (target
+      ? `> Input "*${target}*" does not match any Slot or Number.\n\n`
+      : isUserActive
+      ? '> You do not have an active Bot.\n\n'
+      : '> You do not have any registered Bot.\n\n') +
+    '📌 *How to Use:*\n' +
+    '• `.jadibot relink/stop/restart/delete <slot>`\n' +
+    '> Example: `.jadibot stop 1`\n\n' +
+    '• `.jadibot relink/stop/restart/delete <number>`\n' +
+    '> Example: `.jadibot stop 6281234567890`' +
+    (activeBotsStr ? `\n\n> Active Slots: ${activeBotsStr}` : ''),
+
+  alreadyConnected: (slot, botNumber) =>
+    '⚠️ *BOT ALREADY CONNECTED & ONLINE*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Bot Number:* ${botNumber}\n` +
+    '• *Status:* Online & Active ✅\n\n' +
+    '> This bot is currently active and connected. Please logout first if you wish to re-link:\n' +
+    `• \`.jadibot logout ${slot}\` (Logout bot)\n` +
+    `• \`.jadibot delete ${slot}\` (Delete/Unlink bot)`,
+
+  alreadyRegistered: (slot, botNumber, status) =>
+    '⚠️ *NUMBER ALREADY REGISTERED*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Bot Number:* ${botNumber}\n` +
+    `• *Status:* ${status === 'offline' ? 'Inactive ⏸️' : status || 'Unknown'}\n\n` +
+    '> This number is already registered in your slot. Use these commands:\n' +
+    `• \`.jadibot relink ${slot}\` (Reconnect bot)\n` +
+    `• \`.jadibot delete ${slot}\` (Delete & re-register)`,
+
+  accessDenied: (slot, botNumber, owner) =>
+    '🚫 *ACCESS RESTRICTED*\n' +
+    '> You do not have permission to manage this Bot.\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Bot Number:* ${botNumber}\n` +
+    `• *Bot Owner:* @${owner}`,
+
+  stopped: (slot, botNumber) => ({
+    body: '⏸️ *BOT STOPPED*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Bot Number:* ${botNumber}\n` +
+      '• *Status:* Inactive (Pause)',
+    footer: `Type .jadibot restart ${slot} to reactivate your bot`,
+  }),
+
+  deleted: (slot, botNumber) => ({
+    body: '🗑️ *BOT PERMANENTLY DELETED*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Bot Number:* ${botNumber}\n` +
+      '• *Status:* Session and database have been cleared.',
+    footer: 'Type .jadibot <number> to add a new bot',
+  }),
+
+  restarted: (slot, botNumber) => ({
+    body: '🔄 *RESTART SUCCESSFUL*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Bot Number:* ${botNumber}\n` +
+      '• *Status:* Online & Reconnected ✅',
+    footer: `Type .jadibot status ${slot} to check your bot details`,
+  }),
+
+  restarting: (slot, botNumber) =>
+    `⏳ *Restarting Bot Slot ${slot}...*\n📱 Number: ${botNumber}`,
+
+  listHeader: (count) => `🤖 *JADIBOT LIST* (${count})\n\n`,
+  listEmpty: '🤖 *JADIBOT LIST*\n> No bots registered at the moment.',
+  listFooter: () => '',
+
+  status: (info) => ({
+    body: '🤖 *YOUR BOT STATUS*\n\n' +
+      `• *Slot:* ${info.slot}\n` +
+      `• *Number:* ${info.botNumber}\n` +
+      `• *Owner:* @${info.owner}\n` +
+      `• *Status:* ${info.statusText}\n` +
+      `• *API Key:* ${info.hasApikey ? 'Custom Key ✅' : 'Default 🌐'}\n` +
+      `• *Uptime:* ${info.uptimeText}\n` +
+      `• *Reconnects:* ${info.reconnectCount}\n` +
+      `• *Active Period:* ${info.expiredText}\n\n` +
+      (info.statusText.includes('Connecting') || info.statusText.includes('Menghubungkan')
+        ? '💡 *Status Connecting...?*\n' +
+          `• \`.jadibot relink ${info.slot}\`\n` +
+          '> Request new pairing code\n\n' +
+          `• \`.jadibot relink ${info.slot} qr\`\n` +
+          '> Request QR Code to scan\n\n' +
+          `• \`.jadibot stop ${info.slot}\`\n` +
+          '> Stop connection attempts'
+        : (info.statusText.includes('Offline') || info.statusText.includes('logged_out')
+        ? '💡 *Bot Offline / Disconnected?*\n' +
+          `• \`.jadibot relink ${info.slot}\`\n` +
+          '> Reconnect your bot\n\n' +
+          `• \`.jadibot delete ${info.slot}\`\n` +
+          '> Delete and unlink bot'
+        : '💡 *Bot Control Commands:*\n' +
+          '• `.jadibot apikey <key>`\n' +
+          '> Set Termai API Key for your bot\n\n' +
+          '• `.jadibot set public on/off`\n' +
+          '> Public/private mode settings\n\n' +
+          `• \`.jadibot restart ${info.slot}\`\n` +
+          '> Restart your bot connection\n\n' +
+          `• \`.jadibot stop ${info.slot}\`\n` +
+          '> Pause your bot temporarily\n\n' +
+          `• \`.jadibot logout ${info.slot}\`\n` +
+          '> Logout your bot connection\n\n' +
+          `• \`.jadibot delete ${info.slot}\`\n` +
+          '> Delete/Unlink bot from database')),
+    footer: 'Type .jadibot for full menu & more commands',
+  }),
+
+  apikeyGuide: (hasApikey, apikey) => ({
+    body: '🗝️ *JADIBOT API KEY*\n\n' +
+      `• *Key Status:* ${hasApikey ? 'Custom Key Active ✅' : 'Default Key 🌐'}\n` +
+      `• *Key:* \`${apikey || 'DEFAULT'}\`\n\n` +
+      '📌 *How to Set:*\n' +
+      '• `.jadibot apikey <key_termai>`\n' +
+      '> Set new Termai API Key\n\n' +
+      '• `.jadibot apikey reset`\n' +
+      '> Reset to default API Key',
+    footer: 'Get your API Key at termai.cc/dashboard',
+  }),
+
+  settingGuide: () => ({
+    body: '⚙️ *BOT SETTINGS*\n\n' +
+      '• `.jadibot set public on/off`\n' +
+      '> Public/private mode\n\n' +
+      '• `.jadibot set prefix <symbol/off>`\n' +
+      '> Set bot prefix',
+    footer: 'Type .jadibot to view all bot control commands',
+  }),
+
+  dbStats: (info) => ({
+    body: '🗄️ *BOT DATABASE*\n\n' +
+      `• *Slot:* ${info.slot}\n` +
+      `• *Number:* ${info.botNumber}\n` +
+      `• *Saved Users:* ${info.userCount}\n` +
+      `• *Groups/Chats:* ${info.prefCount}\n` +
+      `• *Custom Responses:* ${info.respCount}\n` +
+      `• *Custom Commands:* ${info.cmdCount}\n` +
+      `• *API Key:* ${info.hasApikey ? 'Custom Key ✅' : 'Default 🌐'}\n` +
+      `• *Prefix:* ${info.prefix === false ? 'Multi-Prefix' : info.prefix}\n` +
+      `• *Mode:* ${info.isPublic ? 'Public' : 'Private'}`,
+    footer: 'Type .jadibot resetdb to reset your bot database',
+  }),
+
+  listOwner: (slot, owner, ownersStr) => ({
+    body: '👑 *BOT OWNERS LIST*\n\n' +
+      `• *Slot:* ${slot}\n` +
+      `• *Main Owner:* @${owner}\n` +
+      `• *Owners List:* ${ownersStr}`,
+    footer: `Type .jadibot addowner <number> or .jadibot delowner <number> to manage owners`,
+  }),
+
+  relinkHeader: (slot, botNumber, expiredText) =>
+    '🔗 *RE-LINK BOT*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Bot Number:* ${botNumber}\n` +
+    `• *Remaining Active Period:* ${expiredText}\n\n` +
+    '> Requesting new pairing code, all data & bot database remain safe...',
+
+  restrictedNested:
+    '🚫 *ACCESS RESTRICTED*\n> Command to link new bot (`.jadibot <number>`) can only be performed from the *Main Bot* for server stability.',
+
+  pairingCode: (realNumber, code, expireDate, slot) =>
+    '🔑 *JADIBOT PAIRING CODE*\n\n' +
+    `• *Number:* ${realNumber}\n` +
+    `• *Code:* \`\`\`${code}\`\`\`\n` +
+    `• *Expired:* ${expireDate}\n` +
+    '• *Timeout:* 2 Minutes\n\n' +
+    '📝 *Pairing Steps:*\n' +
+    '1. Open WhatsApp on Sub-Bot phone\n' +
+    '2. Menu (⋮) ➔ Linked Devices\n' +
+    '3. Link with Phone Number\n' +
+    '4. Enter the code above\n\n' +
+    `> Slot ${slot}\n\n` +
+    '💡 *Failed to link with Pairing Code?*\n' +
+    `> Reply to this message with *qr* or type *.jadibot ${realNumber} qr* to use QR Code.`,
+
+  qrCode: (realNumber, slot) =>
+    '📷 *JADIBOT QR CODE*\n\n' +
+    `• *Number:* ${realNumber}\n` +
+    `• *Slot:* ${slot}\n` +
+    '• *Timeout:* 45 Seconds\n\n' +
+    '📝 *Pairing Steps:*\n' +
+    '1. Open WhatsApp on Sub-Bot phone\n' +
+    '2. Menu (⋮) ➔ Linked Devices\n' +
+    '3. Scan the QR Code image above\n\n' +
+    '> Scan the QR Code before it expires.',
+
+  connected: (slot, realNumber, isPublic, prefix, expiredText, energyInfo) =>
+    '✅ *JADIBOT CONNECTED*\n\n' +
+    `• *Slot:* ${slot}\n` +
+    `• *Number:* ${realNumber}\n` +
+    `• *Mode:* ${isPublic ? 'Public' : 'Private'}\n` +
+    `• *Prefix:* ${prefix === false ? 'Multi-Prefix' : prefix}\n` +
+    `• *Active Period:* ${expiredText}\n` +
+    (energyInfo ? `• *Energy:* -${energyInfo.deducted} ⚡ (Remaining: ${energyInfo.remaining})\n` : '') +
+    '\n📌 *Bot Management Commands:*\n' +
+    '• `.jadibot` \n' +
+    '> Display help menu & bot controls\n\n' +
+    '• `.jadibot status` \n' +
+    '> Check status details & active duration\n\n' +
+    '• `.jadibot apikey <key>` \n' +
+    '> Set Termai API Key for your bot\n\n' +
+    '• `.jadibot set public on/off` \n' +
+    '> Public/private mode settings\n\n' +
+    '> Your Bot is ready to use!',
+
+  waitingPairing: (realNumber, code, countdown) =>
+    '⏳ *WAITING FOR LINK...*\n\n' +
+    `• *Number:* ${realNumber}\n` +
+    `• *Code:* \`${code}\`\n` +
+    `• *Time Remaining:* ${countdown} seconds\n\n` +
+    '> Please enter the code in WhatsApp before timeout.',
+};
+
 /*
   ====== Owner.js ======
 */

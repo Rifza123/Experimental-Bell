@@ -140,6 +140,24 @@ async function launch() {
     /*!-======[ EVENTS Exp ]======-!*/
     Exp.ev.on('connection.update', async (update) => {
       await Connecting({ update, Exp, Boom, DisconnectReason, sleep, launch });
+      if (update.connection === 'open') {
+        const { default: jadibot, checkExpiredJadibots } = await `${fol[1]}jadibot.js`.r();
+        await checkExpiredJadibots().catch(e => console.error(e));
+        Data.jadibot ??= {};
+        for (let slot of Object.keys(Data.jadibot)) {
+          const info = Data.jadibot[slot];
+          if (info && info.botNumber) {
+            console.log(`[AUTOLOAD] Reconnecting Jadibot: ${info.botNumber}`);
+            jadibot({
+              Exp,
+              id: info.owner,
+              botNumber: info.botNumber,
+              pairing: false,
+              expired: info.expired || 0,
+            }).catch(e => console.error(e));
+          }
+        }
+      }
     });
 
     Exp.ev.on('creds.update', saveCreds);

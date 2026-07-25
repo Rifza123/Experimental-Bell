@@ -392,6 +392,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         });
         break;
       case isEvalSync:
+        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -412,6 +413,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         break;
 
       case isEval:
+        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -434,6 +436,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         break;
 
       case isExec:
+        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -505,7 +508,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
           try {
             let _ai = await ai({
               text: chat,
-              id: cht?.sender,
+              id: await func.getSender(cht?.sender, { cht, lid: false }),
               fullainame: botfullname,
               nickainame: botnickname,
               senderName: cht?.pushName,
@@ -714,12 +717,20 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             }
           }
 
-          let chat = cht?.msg?.startsWith(botnickname.toLowerCase())
-            ? cht?.msg?.slice(botnickname.length)
-            : cht?.msg || '';
+          let chat = cht?.msg || '';
+          if (is?.botMention) {
+            [/@\u2068\u202e\d+~\u2069/g, /@\d+/g, /@\(\d+\)/g, /@<\d+>/g].forEach((pattern) => {
+              chat = chat.replace(pattern, botnickname);
+            });
+          }
           let isImage = is?.image
             ? true
             : is.quoted?.image
+              ? cht.quoted.sender !== Exp.number
+              : false;
+          let isVideo = is?.video
+            ? true
+            : is.quoted?.video
               ? cht.quoted.sender !== Exp.number
               : false;
           if (cht?.type === 'audio') {
@@ -734,11 +745,29 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             let download = is.image ? cht?.download : cht?.quoted?.download;
             isImage = await func.minimizeImage(await download());
           }
+          if (isVideo) {
+            let seconds = is.video ? (cht.msg?.seconds || 0) : (cht.quoted?.video?.seconds || 0);
+            if (seconds > 60) {
+              return cht.reply(func.tagReplacer(Data.infos.others.isExceedsVideo, { second: 60 }));
+            }
+            try {
+              let download = is.video ? cht?.download : cht?.quoted?.download;
+              let vidBuf = await download();
+              if (vidBuf && vidBuf.length > 0) {
+                isVideo = vidBuf.toString('base64');
+              } else {
+                isVideo = false;
+              }
+            } catch (error) {
+              console.error('Error downloading video for autoai:', error);
+              isVideo = false;
+            }
+          }
           chat = func.clearNumbers(chat);
           try {
             let _ai = await ai({
               text: chat,
-              id: cht?.sender,
+              id: await func.getSender(cht?.sender, { cht, lid: false }),
               fullainame: botfullname,
               nickainame: botnickname,
               senderName: cht?.pushName,
@@ -751,6 +780,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 botnickname,
               }),
               image: isImage,
+              video: isVideo,
               commands: [
                 {
                   description: 'Jika perlu direspon dengan suara',

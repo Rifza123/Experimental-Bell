@@ -116,9 +116,53 @@ export default async function on({ cht, Exp, store, ev, is }) {
           off = ['off', 'false'],
           isOn = on.includes(t2),
           isOff = off.includes(t2),
-          isOnly = ['onlypc', 'onlygc', 'onlyjoingc'].includes(t2),
-          mode =
-            options[t1] ||
+          isOnly = ['onlypc', 'onlygc', 'onlyjoingc'].includes(t2);
+
+        if (is?.jadibot) {
+          const slot = is.jadibotId;
+          const botNum = Exp.user.id.split(':')[0];
+          Data.jadibotDb ??= {};
+          Data.jadibotDb[botNum] ??= {};
+
+          if (t1 === 'public') {
+            let isPub = isOn || t2 === 'public';
+            if (isOff) isPub = false;
+            Data.jadibot[slot].public = isPub;
+            Data.jadibotDb[botNum].public = isPub;
+            return cht.reply(`✅ Mode Sub-Bot diset ke: *${isPub ? 'Public' : 'Private'}*`);
+          }
+          if (t1 === 'apikey') {
+            if (!t2) return cht.reply('Silahkan masukkan API Key!');
+            Data.jadibot[slot].apikey = t2.trim();
+            Data.jadibotDb[botNum].apikey = t2.trim();
+            Exp.apiKey = t2.trim();
+            return cht.reply(`✅ API Key Sub-Bot berhasil diset ke: \`${t2.trim()}\``);
+          }
+          if (t1 === 'prefix') {
+            let pref = isOff ? false : (t2 || false);
+            Data.jadibot[slot].prefix = pref;
+            Data.jadibotDb[botNum].prefix = pref;
+            return cht.reply(`✅ Prefix Sub-Bot diset ke: *${pref === false ? 'Multi-Prefix' : pref}*`);
+          }
+          if (t1 === 'logic') {
+            let profile = func.findValue('profile', cht.q) || func.findValue('logic', cht.q) || t2;
+            Data.jadibotDb[botNum].logic = profile;
+            return cht.reply(`✅ AI Logic Sub-Bot berhasil diperbarui!`);
+          }
+          if (t1 === 'voice') {
+            if (!t2) return cht.reply('`LIST VOICES`\n- ' + Data.voices.join('\n- '));
+            Data.jadibotDb[botNum].ai_voice = t2.trim();
+            return cht.reply(`✅ AI Voice Sub-Bot diset ke: *${t2.trim()}*`);
+          }
+          if (options[t1]) {
+            Data.jadibotDb[botNum][t1] = isOn ? true : isOff ? false : t2;
+            return cht.reply(`✅ Setting *${options[t1]}* pada Sub-Bot diset ke: *${t2}*`);
+          }
+          return cht.reply(`❌ Setting \`${t1}\` tidak tersedia atau diset khusus untuk sub-bot.`);
+        }
+
+        let mode =
+          options[t1] ||
             (t1 == 'fquoted'
               ? `Success ${fquotedKeys.includes(t2) ? 'change' : 'add'} fake quoted ${t2}\n\nList fake quoted:\n\n- ${!fquotedKeys.includes(t2) ? [...fquotedKeys, t2].join('\n- ') : fquotedKeys.join('\n- ')}`
               : t1 == 'voice'
@@ -1358,6 +1402,25 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     ({ args }) => {
       let mention = cht.mention.map((a) => String(a.split('@')[0]));
+      if (is?.jadibot) {
+        const slot = is.jadibotId;
+        const botNum = Exp.user.id.split(':')[0];
+        Data.jadibot[slot].owners ??= [Data.jadibot[slot].owner];
+        Data.jadibotDb[botNum].owners ??= Data.jadibot[slot].owners;
+        if ('addowner' === cht.cmd) {
+          mention.forEach(m => {
+            if (!Data.jadibot[slot].owners.includes(m)) Data.jadibot[slot].owners.push(m);
+            if (!Data.jadibotDb[botNum].owners.includes(m)) Data.jadibotDb[botNum].owners.push(m);
+          });
+        } else {
+          Data.jadibot[slot].owners = Data.jadibot[slot].owners.filter(a => !mention.includes(String(a).split('@')[0]));
+          Data.jadibotDb[botNum].owners = Data.jadibotDb[botNum].owners.filter(a => !mention.includes(String(a).split('@')[0]));
+        }
+        return cht.reply(
+          `Success ${'addowner' === cht.cmd ? 'add' : 'delete'} owner jadibot ${mention.map((a) => '@' + a).join(', ')}!`,
+          { mentions: cht.mention }
+        );
+      }
       owner =
         'addowner' == cht.cmd
           ? [...owner, ...mention]
@@ -1378,6 +1441,25 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     ({ args }) => {
       let mention = cht.mention.map((a) => String(a.split('@')[0]));
+      if (is?.jadibot) {
+        const slot = is.jadibotId;
+        const botNum = Exp.user.id.split(':')[0];
+        Data.jadibot[slot].coowners ??= [];
+        Data.jadibotDb[botNum].coowners ??= [];
+        if ('addcoowner' === cht.cmd) {
+          mention.forEach(m => {
+            if (!Data.jadibot[slot].coowners.includes(m)) Data.jadibot[slot].coowners.push(m);
+            if (!Data.jadibotDb[botNum].coowners.includes(m)) Data.jadibotDb[botNum].coowners.push(m);
+          });
+        } else {
+          Data.jadibot[slot].coowners = Data.jadibot[slot].coowners.filter(a => !mention.includes(String(a).split('@')[0]));
+          Data.jadibotDb[botNum].coowners = Data.jadibotDb[botNum].coowners.filter(a => !mention.includes(String(a).split('@')[0]));
+        }
+        return cht.reply(
+          `Success ${'addcoowner' === cht.cmd ? 'add' : 'delete'} coowner jadibot ${mention.map((a) => '@' + a).join(', ')}!`,
+          { mentions: cht.mention }
+        );
+      }
       coowner =
         'addcoowner' == cht.cmd
           ? [...coowner, ...mention]

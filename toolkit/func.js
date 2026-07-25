@@ -817,6 +817,19 @@ export class func {
   toZeroIfInfinity(value) {
     return Number.isFinite(value) ? value : 0;
   }
+  parseMs = (milliseconds) => {
+    if (typeof milliseconds !== 'number' || isNaN(milliseconds)) return '0s';
+    const seconds = Math.floor((milliseconds / 1000) % 60);
+    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
+    const hours = Math.floor((milliseconds / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
+    let res = [];
+    if (days > 0) res.push(`${days}d`);
+    if (hours > 0) res.push(`${hours}h`);
+    if (minutes > 0) res.push(`${minutes}m`);
+    if (seconds > 0) res.push(`${seconds}s`);
+    return res.length > 0 ? res.join(' ') : '0s';
+  };
 
   parseNumber(milliseconds) {
     return {
