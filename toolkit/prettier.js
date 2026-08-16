@@ -1,16 +1,15 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 const args = process.argv.slice(2);
 const target = args[0];
 
-let command = 'prettier --write';
+const prettierArgs = ['--write'];
 
 if (target) {
-  command += ` "${target}"`;
+  prettierArgs.push(target);
 } else {
-  command +=
-    ' "**/*.{js,jsx,ts,tsx,cjs,mjs,json,md}" --ignore-path .prettierignore';
+  prettierArgs.push('**/*.{js,jsx,ts,tsx,cjs,mjs,json,md}', '--ignore-path', '.prettierignore');
 }
 
-console.log(`Running: ${command}`);
-execSync(command, { stdio: 'inherit' });
+console.log(`Running: prettier ${prettierArgs.join(' ')}`);
+spawnSync('prettier', prettierArgs, { stdio: 'inherit' });
