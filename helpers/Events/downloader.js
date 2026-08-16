@@ -340,10 +340,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
           await cht.edit('Searching...', _key);
           let search = (
             await fetch(
-              `${api.xterm.url}/api/search/youtube?query=${q}&key=${api.xterm.key}`
+              `${api.xterm.url}/api/search/youtube?query=${encodeURIComponent(q)}&key=${api.xterm.key}`
             ).then((a) => a.json())
           ).data;
-          item = search.items[0];
+          item = search?.items?.[0];
+          if (!item) return cht.reply('Hasil pencarian tidak ditemukan!');
           if (cfg.button && isYts) {
             let imageMessage = await func.uploadToServer(item.thumbnail);
             let paramJson = {
@@ -364,7 +365,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                     id: `.playvn ${v.url}`,
                   },
                   {
-                    title: 'Download Audio/MP4 📹',
+                    title: 'Download Video/MP4 📹',
                     description: 'Video',
                     id: `.ytmp4 ${v.url}`,
                   },
@@ -429,16 +430,17 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if (cfg.button && !isDl && cht.cmd == 'ytmp4') {
           let downloads = data?.downloads || [];
           let imageMessage = await func.uploadToServer(data.thumb);
+          let videoDownloads = downloads.filter((v) => v && (v.hasVideo || v.ext === 'mp4'));
           let paramJson = {
             title: `📥 Pilih format download`,
             has_multiple_buttons: true,
             sections: [
               {
                 title: `🎬 Video (MP4)`,
-                rows: downloads.map((v) => ({
+                rows: (videoDownloads.length > 0 ? videoDownloads : downloads).map((v) => ({
                   title:
-                    `${v.resolution} ${v.ext.toUpperCase()} ${v.hasAudio ? '🔊' : ''}`.trim(),
-                  description: `ITag: ${v.format_id} • FPS: ${v.fps} • ${v.note || ''}`,
+                    `${v.resolution} ${v.ext.toUpperCase()} 🔊`.trim(),
+                  description: `ITag: ${v.format_id} • FPS: ${v.fps || 30} • ${v.note || ''}`,
                   id: `.dlvlink ${v.dlink}|||||${JSON.stringify(item)}`,
                 })),
               },
@@ -484,13 +486,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
         await cht.edit('Downloading...', _key);
 
-        let saved = isDl
-          ? await func.saveToFile(dlink + '&isBaileys=true')
-          : false;
-        isDl && (await cht.edit('Converting...', _key));
-        let converted = saved
-          ? await processMedia(saved, ['-c:v', 'libx264', '-an'], 'mp4')
-          : null;
+        let saved = false;
+        if (isDl) {
+          try {
+            saved = await func.saveToFile(dlink + '&isBaileys=true');
+          } catch (err) {
+            saved = false;
+          }
+        }
+
+        if (isDl && (!saved || !fs.existsSync(saved))) {
+          return cht.edit('❌ Gagal mengunduh file media', _key);
+        }
+
+        let converted = saved;
         console.log(converted);
         let audio = {
           [cht.cmd === 'ytmp4' || isDl
@@ -498,7 +507,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
             : cht.cmd === 'ytmp3'
               ? 'document'
               : 'audio']: isDl
-            ? { url: converted }
+            ? fs.readFileSync(converted)
             : await func.getBuffer(data.dlink),
           mimetype:
             isDl || cht.cmd === 'ytmp4'
@@ -507,13 +516,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 ? 'audio/mp3'
                 : 'audio/mpeg',
           fileName:
-            item.title +
+            (item.title || 'video') +
             (cht.cmd === 'ytmp4' || cht.cmd == 'dlvlink' ? '.mp4' : '.mp3'),
-          ptt: cht.cmd === 'playvn',
-          contextInfo: {
+          caption: (cht.cmd === 'ytmp4' || isDl)
+            ? (item.title ? item.title + '\n\n' : '') + '> Video tidak dapat diputar? Reply pesan ini dengan ketik "y" atau .fixvideo'
+            : undefined,
+          contextInfo: (cht.cmd === 'ytmp4' || isDl) ? {
             externalAdReply: {
-              title: 'Title: ' + item.title,
-              body: 'Channel: ' + item.creator,
+              title: 'Title: ' + (item.title || 'YouTube'),
+              body: 'Channel: ' + (item.creator || item.author?.name || 'YouTube'),
               thumbnailUrl: item.thumbnail,
               sourceUrl: item.url,
               mediaUrl:
@@ -523,14 +534,24 @@ export default async function on({ cht, Exp, store, ev, is }) {
               showAdAttribution: true,
               mediaType: 2,
             },
-          },
+          } : undefined,
         };
         console.log(audio);
         await cht.edit('Sending...', _key);
-        await Exp.sendMessage(cht.id, audio, { quoted: cht.reaction || cht });
+        let sentMsg = await Exp.sendMessage(cht.id, audio, { quoted: cht.reaction || cht });
+        if ((cht.cmd === 'ytmp4' || isDl) && sentMsg?.key?.id) {
+          let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
+          qCmds[sentMsg.key.id] = {
+            emit: 'fixvideo',
+            exp: Date.now() + 60000 * 10,
+            accepts: ['y', 'yes', 'ya', 'recode', 'fix'],
+          };
+          memories.setItem(sender, 'quotedQuestionCmd', qCmds);
+        }
         await cht.edit('Success...', _key);
-        //  fs.unlinkSync(saved);
-        //fs.unlinkSync(converted);
+        if (saved && fs.existsSync(saved)) {
+          fs.unlink(saved, () => {});
+        }
       } catch (e) {
         console.log(e);
         cht.reply("Can't download from that url!");

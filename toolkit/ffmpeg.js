@@ -14,6 +14,7 @@ const { PassThrough } = await 'stream'.import();
 */
 
 import fs from 'fs';
+import path from 'path';
 
 /**
  * processMedia
@@ -32,32 +33,44 @@ export async function processMedia(
   input,
   args = [],
   format = 'mp3',
-  outputPath = null
+  outputPath = null,
+  onProgress = null
 ) {
   return new Promise((resolve, reject) => {
     let command;
-    if (typeof input == 'string')
-      outputPath = input.replace(
-        input.split('/').last(),
-        'output_' + input.split('/').last()
-      );
+    let tempInputFile = null;
+    let isTempInput = false;
 
     if (Buffer.isBuffer(input)) {
-      const inputStream = new PassThrough();
-      inputStream.end(input);
-      command = ff(inputStream);
-    } else if (typeof input === 'string') {
+      tempInputFile = path.resolve('./toolkit/db', `input_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.bin`);
+      fs.writeFileSync(tempInputFile, input);
+      input = tempInputFile;
+      isTempInput = true;
+    }
+
+    if (typeof input === 'string') {
+      input = path.resolve(input);
       if (!fs.existsSync(input)) {
+        if (isTempInput && tempInputFile && fs.existsSync(tempInputFile)) {
+          try { fs.unlinkSync(tempInputFile); } catch (e) {}
+        }
         return reject(new Error(`Input file not found: ${input}`));
       }
+      const baseName = path.basename(input);
+      const nameWithoutExt = baseName.includes('.') ? baseName.slice(0, baseName.lastIndexOf('.')) : baseName;
+      outputPath = path.join(path.dirname(input), 'output_' + nameWithoutExt + '.' + format);
       command = ff(input);
     } else {
       return reject(new Error('Invalid input type (Buffer | filepath only)'));
     }
 
-    if (Array.isArray(args) && args.length > 0) {
-      command.outputOptions(args);
+    // 🔥 Batasi CPU ke max 100% (1 CPU core) jika belum diset
+    const finalArgs = Array.isArray(args) ? [...args] : [];
+    if (!finalArgs.includes('-threads')) {
+      finalArgs.push('-threads', '1');
     }
+
+    command.outputOptions(finalArgs);
 
     if (['png', 'jpg', 'jpeg', 'webp'].includes(format)) {
       command
@@ -66,25 +79,70 @@ export async function processMedia(
         .outputOptions(['-frames:v', '1']);
     } else {
       command.format(format);
+      if (['mp4', 'mov'].includes(format)) {
+        command.outputOptions(['-movflags', 'frag_keyframe+empty_moov']);
+      }
     }
 
-    if (outputPath && typeof outputPath === 'string') {
-      command
-        .on('error', reject)
-        .on('end', () => resolve(outputPath))
-        .save(outputPath);
-      return;
+    if (typeof onProgress === 'function') {
+      let totalDurationSec = 0;
+
+      command.on('stderr', (line) => {
+        if (!totalDurationSec && line && line.includes('Duration:')) {
+          const match = line.match(/Duration:\s*(\d+):(\d+):(\d+\.\d+)/);
+          if (match) {
+            totalDurationSec = parseFloat(match[1]) * 3600 + parseFloat(match[2]) * 60 + parseFloat(match[3]);
+          }
+        }
+      });
+
+      const parseTimemark = (tm) => {
+        if (!tm || typeof tm !== 'string') return 0;
+        const parts = tm.split(':');
+        if (parts.length < 3) return 0;
+        return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+      };
+
+      command.on('progress', (p) => {
+        if (!p) return;
+        let percent = 0;
+        if (typeof p.percent === 'number' && !isNaN(p.percent) && p.percent > 0) {
+          percent = p.percent;
+        } else if (totalDurationSec > 0 && p.timemark) {
+          const curSec = parseTimemark(p.timemark);
+          percent = Math.min(99.9, (curSec / totalDurationSec) * 100);
+        }
+        if (percent > 0) {
+          onProgress(percent);
+        }
+      });
     }
 
-    const outputStream = new PassThrough();
+    const cleanup = () => {
+      if (isTempInput && tempInputFile && fs.existsSync(tempInputFile)) {
+        try { fs.unlinkSync(tempInputFile); } catch (e) {}
+      }
+    };
+
     const chunks = [];
+    const passThrough = new PassThrough();
+
+    passThrough.on('data', (chunk) => chunks.push(chunk));
+    passThrough.on('end', () => {
+      cleanup();
+      resolve(Buffer.concat(chunks));
+    });
+    passThrough.on('error', (err) => {
+      cleanup();
+      reject(err);
+    });
 
     command
-      .on('error', reject)
-      .on('end', () => resolve(Buffer.concat(chunks)))
-      .pipe(outputStream, { end: true });
-
-    outputStream.on('data', (chunk) => chunks.push(chunk));
+      .on('error', (err) => {
+        cleanup();
+        reject(err);
+      })
+      .pipe(passThrough, { end: true });
   });
 }
 

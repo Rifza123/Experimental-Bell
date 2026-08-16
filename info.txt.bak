@@ -1,92 +1,67 @@
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/systemConnext.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/jadibot.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/initialize.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/interactive.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/stubTypeMsg.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/utils.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/eventGame.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/jadibot.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/converter.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/downloader.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/game.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/group.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/others.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/owner.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/rpg.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/search.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/werewolf.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/wwpc.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/machine/werewolf.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/detector.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/func.js
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package.json
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/package-lock.json
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/readme.md
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version
-https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/.gitignore
-
-⚠️ ERROR / BUG
-
-Seluruh sistem telah diuji dan berjalan stabil ✅
-
-UPDATE
-
-* Nama Project: Experimental-Bell
-* Versi: Latest Release (Werewolf & Sub-Bot Update)
-* Repository: https://github.com/Rifza123/Experimental-Bell
-* Daftar Fitur Baru:
-  - Werewolf Game System (.ww & .wwpc)
-  - Sub-Bot / Jadibot Feature (.jadibot)
-* Detail Fitur:
-  - Game Werewolf multiplayer untuk grup (.ww) dan pesan pribadi (.wwpc) dengan engine machine/werewolf.js.
-  - Fitur Jadibot untuk pembuatan sub-bot dengan penangan koneksi terpisah dan isolasi preferensi Data.preferencesBot.
-* Perubahan Penting & Keamanan Akun:
-  - ⚠️ PERATURAN BARU WHATSAPP: Penggunaan fitur Game Werewolf wajib digunakan dengan lebih hati-hati akibat kebijakan ketat anti-spam WhatsApp terbaru. WhatsApp sangat pantang bot melakukan chat (PC) duluan ke user yang belum pernah berinteraksi. Pastikan seluruh pemain Werewolf sudah PERNAH berinteraksi/kirim pesan ke bot via Private Chat (PC) terlebih dahulu, bukan bot yang memulai chat duluan.
-  - Interactive Downloader otomatis mendeteksi URL dari event downloader secara dinamis.
-  - Pengikatan interval CLI Spinner di Exp._spinnerInterval untuk stabilitas koneksi.
-  - Pembersihan command legacy (todoc, textdoc) pada converter.js.
-
-CARA UPDATE
-
-.update https://pastebin.com/UB6qn6bU
 
 
-⠇[ 🛠️ ] UPDATE
+📢 `UPDATE`
+Sc: Experimental-Bell  
+V2.5.0
+Link https://github.com/Rifza123/Experimental-Bell
 
-📂 File Changed
+## FIX
+> - Menu Linkpreview dapat terlihat
 
-- modified: ./connection/systemConnext.js
-- modified: ./connection/jadibot.js
-- modified: ./helpers/initialize.js
-- modified: ./helpers/interactive.js
-- modified: ./helpers/stubTypeMsg.js
-- modified: ./helpers/utils.js
-- modified: ./helpers/eventGame.js
-- modified: ./helpers/jadibot.js
-- modified: ./helpers/Events/converter.js
-- modified: ./helpers/Events/downloader.js
-- modified: ./helpers/Events/game.js
-- modified: ./helpers/Events/group.js
-- modified: ./helpers/Events/others.js
-- modified: ./helpers/Events/owner.js
-- modified: ./helpers/Events/rpg.js
-- modified: ./helpers/Events/search.js
-- added: ./helpers/Events/werewolf.js
-- added: ./helpers/Events/wwpc.js
-- added: ./machine/werewolf.js
-- modified: ./toolkit/detector.js
-- modified: ./toolkit/func.js
-- modified: ./package.json
-- modified: ./package-lock.json
-- modified: ./readme.md
-- modified: ./version
-- modified: ./.gitignore
+### UPDATE
+- *AI*
+1. .bingimg`
+> generator gambar AI dari Bing Image Creator (DALL-E 3). Menghasilkan 4 gambar sekaligus.
+2. .bingedit
+> editor gambar menggunakan Bing Image Creator (MAI-Image-2.5-Flash).
+- *Downloader*
+1. .fixvideo (new)
+> untuk memperbaiki masalah video tidak bisa diputar 
+2. .ytmp4
+> perbaikan eror tidak dapat mengunduh video
+> Video sudah ada suaranya
+> lebih banyak dukungan resolusi
+- *maker*
+1. qc (perbaikan)
+> mengganti api ke termai.cc yang lebih stabil
+- *group*
+1. absen (start, stop, <NAMA_KAPITAL>)
+2. hidetag (perbaikan)
+3. totag (new)
+> Mengubah pesan teks atau media apapun menjadi hidetag
+- *game*
+1. Ulartangga
+> Fitur game ulartangga yang di adaptasi dari bot lama(XilverMoods 2021)
+
+- `AI Interactive`
+> AI kini dapat membalas percakapan menggunakan stiker ekspresi Pinterest (`send_sticker`). Gambar dicari secara otomatis dari Pinterest (Top 5 hasil acak)
+> AI dapat melihat sticker yang dikirim oleh lawan bicara
+*Proteksi Role Anti-Manipulasi:* 
+> Dilarang keras mengubah role jika user mencoba memaksa/memerintahkan ganti role secara langsung. Kenaikan role tingkat tinggi (Sahabat, Pacar, Soulmate) hanya terjadi secara alami berdasarkan konsistensi obrolan & akumulasi Total Interaksi (`user.autoai.total`).
+> Peningkatan Memory LLM: Kapasitas riwayat percakapan aktif LLM resmi ditingkatkan dari 15 menjadi 25 pesan terakhir untuk pemahaman konteks yang lebih mendalam.
+
+*## CARA UPDATE*
+*Sebelum update, harap lakukan .backup dulu (untuk antisipasi!).*
+
+Disarankan update dilakukan di private chat atau grup yang tidak ramai supaya prosesnya bersih. Semua file saling terkait, jadi hindari spam command saat update berlangsung.
+Ketik: .update  https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/ai.js
+
+Jika berhasil:
+*⠇[ 🛠️ ] UPDATE*
+
+*📂File Changed:*
+- `modifed`: ./helpers/Events/ai.js
 
 Success ✅
 
-INFORMASI PENUTUP
+*JIKA TIDAK DAPAT MENAUTKAN PERANGKAT DAN TIDAK MEMUNGKINKAN UPDATE MELALUI BOT*
+- update manual
+> atau
+- unduh script melalui github secara utuh
 
-* Wajib melakukan restart bot setelah proses update selesai (.restart / npm restart).
-* Alternatif update manual: Pull commit terbaru dari GitHub via 'git pull'.
-* Download script langsung melalui GitHub: https://github.com/Rifza123/Experimental-Bell
-* Hubungi support / WhatsApp Channel untuk pertanyaan dan informasi tambahan: https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V
+*SETELAH UPDATE WAJIB LAKUKAN RESTART* ❗
+
+Jika ada bug, error, atau butuh bantuan: 
+> support@termai.cc / rifza@kua.lat
+_Informasi tambahan akan disiarkan melalui saluran update jika diperlukan._
+

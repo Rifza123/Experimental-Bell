@@ -52,7 +52,8 @@ global['session'] = fol[8] + 'session';
 
 const { Mongo } = await `${fol[0]}mongodb.js`.r();
 
-let mongoURI = '';
+let mongoURI = ''
+
 /* Masukkan SRV URI jika ingin menggunakan database mongo
   📘Baca artikel https://termai.cc/blogs/mongodb-uri untuk mengetahui lebih lanjut
 */
@@ -288,8 +289,10 @@ export const initialize = async () => {
     { path: db, name: 'sewa', content: {} },
     { path: db, name: 'antispam', content: {} },
     { path: db, name: 'chats', content: {} },
-    { path: db, name: 'jadibot', content: {} }, //new
-    { path: db, name: 'jadibotMap', content: {} }, //new
+    { path: db, name: 'jadibot', content: {} },
+    { path: db, name: 'jadibotMap', content: {} },
+    { path: db, name: 'jadibotDb', content: {} },
+    { path: db, name: 'daduMedia', content: {} },
   ];
 
   global._DB = DB.map((a) => a.name);

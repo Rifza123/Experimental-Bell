@@ -36,12 +36,17 @@ export default async function utils({ Exp, cht, is, store }) {
 
     cht.quoted = cht?.message?.[type]?.contextInfo?.quotedMessage || false;
 
+    let cmdFromMedia = (is?.jadibot
+      ? (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.setCmd ?? {})
+      : (Data.setCmd ?? {}))[
+      cht?.message?.[type]?.fileSha256?.toString()?.to('utf16le')
+    ];
+    if (cmdFromMedia === 'dadu') cmdFromMedia = '.dadu';
+
     cht.msg =
       cht.id === 'status@broadcast'
         ? null
-        : Data.setCmd[
-            cht?.message?.[type]?.fileSha256?.toString()?.to('utf16le')
-          ] ||
+        : cmdFromMedia ||
           [
             { type: 'conversation', msg: cht?.message?.[type] },
             { type: 'extendedTextMessage', msg: cht?.message?.[type]?.text },
@@ -486,11 +491,15 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
             : cht;
         }
 
-        const { key } = await Exp.sendMessage(
-          cht.id,
-          { text: finalText, ...etc },
-          quoted
-        );
+        let msgContent =
+          etc.image || etc.video || etc.document || etc.audio || etc.sticker
+            ? { caption: etc.caption || finalText, ...etc }
+            : { text: finalText, ...etc };
+        if (msgContent.image || msgContent.video || msgContent.document) {
+          delete msgContent.text;
+        }
+
+        const { key } = await Exp.sendMessage(cht.id, msgContent, quoted);
         keys[cht.sender] = key;
         return { key };
       } catch (e) {
@@ -570,6 +579,7 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
         let qcmds =
           memories.getItem(sender || cht.sender, 'quotedQuestionCmd') || {};
         qcmds[key.id] = {
+          key: { id: key.id },
           emit: emit || `${cht.cmd}`,
           exp: exp || Date.now() + 60000,
           Keys,

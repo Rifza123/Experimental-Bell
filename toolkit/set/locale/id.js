@@ -369,12 +369,152 @@ Data.infos.group = {
     `Berhasil ${cmd === 'on' ? 'mengaktifkan' : 'menonaktifkan'} *${input}* di group ini!`,
 
   nallowPlayGame: `Bermain game tidak diizinkan disini!\n_Untuk mengizinkan bisa dengan mengetik *.on playgame* (hanya boleh dilakukan oleh admin/owner)_`,
+
+  absen: {
+    guide: `📋 *PANDUAN FITUR ABSEN GROUP*
+
+\`CARA MEMULAI ABSEN (ADMIN):\`
+• \`.absen start <Judul> | <Durasi> | <MentionAll>\`
+  > *Contoh:* \`.absen start Rapat Proyek | 30m | yes\`
+  > *Durasi:* 15m, 30m, 1h, 2h (Default: 1h)
+  > *MentionAll:* \`yes\` atau \`no\` (Default: \`yes\`)
+
+\`CARA MENGISI ABSEN (MEMBER):\`
+• \`.absen <NAMA_KAPITAL>\`
+  > *Contoh:* \`.absen RIFZA\`
+  > *Catatan:* Nama WAJIB menggunakan huruf besar/kapital semua.
+
+\`CARA MENGHENTIKAN ABSEN (ADMIN):\`
+• \`.absen stop\` atau \`.absen delete\`
+  > Menghentikan sesi absen dan menampilkan laporan akhir.`,
+
+    alreadyActive: `⚠️ *SESI ABSEN SEDANG AKTIF!*
+
+Absen di grup ini masih berlangsung.
+Ketik \`.absen stop\` untuk menghentikan terlebih dahulu sebelum membuat baru.`,
+
+    notActive: `⚠️ *TIDAK ADA ABSEN AKTIF!*
+
+Saat ini tidak ada sesi absen yang sedang berjalan di grup ini.
+Admin dapat membuat absen baru dengan mengetik \`.absen start <Judul>\`.`,
+
+    alreadySubmitted: `⚠️ *ANDA SUDAH ABSEN!*
+
+Anda sudah terdaftar dalam daftar hadir sesi absen ini.`,
+
+    mustCapital: `⚠️ *FORMAT NAMA SALAH!*
+
+Pengisian nama absen **WAJIB** menggunakan **HURUF KAPITAL (BESAR) SEMUA**.
+_Contoh benar:_ \`.absen RIFZA\`
+_Contoh salah:_ \`.absen Rifza\` atau \`.absen rifza\``,
+
+    onlyAdmin: `⚠️ *AKSES DITOLAK!*
+
+Perintah ini hanya dapat dilakukan oleh **Admin Group**!`,
+
+    started: (data) => `\`${data.groupName}\`
+📌 *${data.title}*
+
+📅 *Tanggal:* ${data.date}
+⏰ *Waktu:* ${data.time} WIB
+
+📝 *Daftar Hadir (Total: ${data.list.length}):*
+${data.listText || '_Belum ada yang mengisi absen_'}
+
+⏳ *Durasi:* ${data.durationText} (Berakhir pada ${data.expireTimeStr} WIB)
+💡 *Ketik \`.absen <NAMA_KAPITAL>\` untuk mengisi absen*`,
+
+    updated: (data) => `\`${data.groupName}\`
+📌 *${data.title}*
+
+📅 *Tanggal:* ${data.date}
+⏰ *Waktu:* ${data.time} WIB
+
+📝 *Daftar Hadir (Total: ${data.list.length}):*
+${data.listText}
+
+⏳ *Durasi:* ${data.durationText} (Berakhir pada ${data.expireTimeStr} WIB)
+💡 *Ketik \`.absen <NAMA_KAPITAL>\` untuk mengisi absen*`,
+
+    stopped: (data) => ({
+      body: `\`${data.groupName}\`
+📋 *LAPORAN HASIL ABSEN*
+📌 *${data.title}*
+
+📝 *Daftar Hadir (Total: ${data.list.length}):*
+${data.listText || '_Tidak ada yang hadir_'}
+
+❌ *Daftar Tidak Hadir (Total: ${data.absentList.length}):*
+${data.absentText || '_Semua anggota hadir_'}`,
+      footer: `Sesi absen telah dihentikan.`
+    }),
+
+    autoStopped: (data) => ({
+      body: `\`${data.groupName}\`
+📋 *LAPORAN HASIL ABSEN (WAKTU HABIS)*
+📌 *${data.title}*
+
+📝 *Daftar Hadir (Total: ${data.list.length}):*
+${data.listText || '_Tidak ada yang hadir_'}
+
+❌ *Daftar Tidak Hadir (Total: ${data.absentList.length}):*
+${data.absentText || '_Semua anggota hadir_'}`,
+      footer: `Waktu absen telah berakhir otomatis.`
+    })
+  }
 };
 
 /*
   ====== Messages.js ======
 */
 Data.infos.messages = {
+  termaiApiError: (err, cmd = '') => {
+    const type = err?.type || 'API_ERROR';
+    const msg = err?.apiMsg || err?.message || 'Terjadi kesalahan pada sistem API';
+    if (type === 'FEATURE_LIMIT') {
+      return (
+        '⚠️ *LIMIT FITUR TERMAI API*\n\n' +
+        '• ' + msg + '\n' +
+        '> Silakan upgrade plan Anda atau tunggu API Key Anda reset esok hari.\n\n' +
+        '🛒 *Beli / Upgrade Key:* https://termai.cc#pricing'
+      );
+    }
+    if (type === 'KEY_LIMIT') {
+      return (
+        '⚠️ *LIMIT API KEY HABIS*\n\n' +
+        '• Kuota penggunaan API Key Anda telah habis / rate limit tercapai.\n' +
+        '> Silakan upgrade plan Anda atau tunggu API Key Anda reset esok hari.\n\n' +
+        '🛒 *Beli / Upgrade Key:* https://termai.cc#pricing\n' +
+        '🔑 *Set Key:* `.jadibot apikey <key_baru>`'
+      );
+    }
+    if (type === 'EXPIRED') {
+      return (
+        '⚠️ *API KEY EXPIRED*\n\n' +
+        '• Masa berlaku (expiration) API Key Anda telah berakhir.\n' +
+        '> Silakan dapatkan API Key baru atau upgrade plan Anda di https://termai.cc#pricing\n\n' +
+        '🔑 *Set Key:* `.jadibot apikey <key_baru>`'
+      );
+    }
+    if (type === 'MAINTENANCE') {
+      return (
+        '🛠️ *FITUR DALAM MAINTENANCE*\n\n' +
+        '• ' + msg + '\n\n' +
+        '💡 _Informasi pembaruan dapat dilihat di channel: https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V_'
+      );
+    }
+    const status = err?.status || 500;
+    if (msg.includes('id not found') || msg.includes('session not found')) {
+      return 'ℹ️ Riwayat obrolan AI kamu belum ada atau sudah bersih.';
+    }
+    if (status < 500) {
+      return 'ℹ️ ' + msg;
+    }
+    return (
+      '⚠️ *TERMAI API ERROR*\n\n' +
+      '• ' + msg
+    );
+  },
   // Default Message
   isGroup: 'Khusus group!',
   isAdmin: 'Kamu bukan admin!',
@@ -482,13 +622,16 @@ Data.infos.others = {
   jadibotStartingBotNumberN: (original, botNumber, cht, ownerNumber) => `Memulai bot untuk nomor ${botNumber} dengan owner ${ownerNumber}...`,
   jadibotErrorSessionTelahDireset: (e) => `Terjadi kesalahan. Sesi telah direset.\n\nError: ${e}`,
 
+  videoPlayHint: '> Video tidak dapat diputar? Reply pesan ini dengan ketik "y" atau .fixvideo',
+
   // Read More
   readMore: '͏'.repeat(3646),
 };
 
 Data.infos.jadibot = {
   menu: () =>
-    '🤖 *JADIBOT MANAGER*\n\n' +
+    '🤖 *JADIBOT MANAGER*\n' +
+    '> Biaya tautkan bot baru: 1.500 energy\n\n' +
     '📱 *KONEKSI & MANAGEMENT*\n' +
     '• `.jadibot <nomor>`\n' +
     '> Tautkan bot baru\n\n' +
@@ -684,7 +827,7 @@ Data.infos.jadibot = {
     '> Meminta kode pairing baru, seluruh data & database bot tetap aman...',
 
   restrictedNested:
-    '🚫 *AKSES DIBATASI*\n> Perintah untuk menautkan bot baru (`.jadibot <nomor>`) hanya dapat dilakukan melalui *Bot Utama* demi menjaga kestabilan server.',
+    '🚫 *AKSES DIBATASI*\n> Perintah untuk menautkan atau mengaitkan ulang bot (`.jadibot`) hanya dapat dilakukan melalui *Bot Utama* demi menjaga kestabilan server.',
 
   pairingCode: (realNumber, code, expireDate, slot) =>
     '🔑 *KODE PAIRING JADIBOT*\n\n' +
@@ -773,9 +916,20 @@ Data.infos.owner = {
   listSetmenu: `\`List type menu yang tersedia:\`\n\n- <list>`,
   successSetMenu: `Berhasil mengganti menu ke <menu>`,
   audiolist: `Sukses menambahkan audio ke dalam list <list>✅️\n\nAudio: <url>\n> Untuk melihat list silahkan ketik *.getdata audio <list>*`,
-  menuLiveLocationInfo:
-    '_Menu liveLocation tidak dapat terlihat di private chat. Harap pertimbangkan kembali untuk menggunakan menu ini_',
   checkJson: `Harap periksa kembali JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`,
+  updatePreview: ({ files, recentFiles }) => {
+    let listFiles = files.map((f) => `• \`${f.type}\`: ${f.path}`).join('\n');
+    let warning = recentFiles.length > 0
+      ? `\n\n⚠️ *PERINGATAN:*\nFile berikut baru-baru ini telah Anda ubah:\n${recentFiles.map((f) => `• ${f.path} (diubah ${f.timeAgo})`).join('\n')}\n> Update melalui link ini akan menimpa perubahan tersebut!`
+      : '';
+    return {
+      body: `*[ 🛠️ ] PREVIEW UPDATE*\n\n📂 *Daftar Perubahan:*\n${listFiles}${warning}\n\nApakah Anda yakin ingin melanjutkan update ini? (y/n)`,
+      footer: 'Ketik y untuk melanjutkan atau n untuk membatalkan',
+    };
+  },
+  updateCancelled: '❌ *Update dibatalkan.*',
+  updateExpired: '⏱️ *Sesi update telah kadaluwarsa.*',
+  updateSuccess: 'Success ✅',
 
   // ------- Set Info -------
   set: `
@@ -812,6 +966,8 @@ Data.infos.owner = {
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
+- dadu <reply media>
+> Set media kustom sebagai dadu permainan Ular Tangga. Reply media (stiker/gambar/video/audio) lalu ketik .set dadu. Untuk menghapus: .set dadu off
 
 _Example: .set public on_`,
 
@@ -1063,6 +1219,16 @@ sehingga membuat reply terasa lebih natural._`,
     '⟡ listuser afk\n\n' +
     'Contoh:\n' +
     '.listuser afk',
+  rdpHelp:
+    '🖥️ *RDP MANAGER*\n\n' +
+    '• .rdp on\n' +
+    '> Aktifkan layanan RDP VPS\n\n' +
+    '• .rdp off\n' +
+    '> Matikan layanan RDP VPS\n\n' +
+    '• .rdp status\n' +
+    '> Cek status aktif RDP\n\n' +
+    '• .rdp detail\n' +
+    '> Tampilkan rincian host dan log',
 };
 
 /*
@@ -1139,6 +1305,42 @@ _*Beri reaksi ke pesan target dengan salah satu emoji di atas*_`,
   ====== Tools.js ======
 */
 Data.infos.tools = {
+  sitekey: {
+    result: (sitekey, details) => {
+      let text = `🔑 *SITEKEY FOUND*\n\n`;
+      text += `• *Sitekey:* ${sitekey}\n`;
+      text += `• *Source:* ${details.source}\n`;
+      text += `• *Method:* ${details.method === 1 ? 'HTTP Fetch' : 'Puppeteer Browser'}\n`;
+      text += `• *Puppeteer:* ${details.puppeteer_used ? 'Yes' : 'No'}\n`;
+      text += `• *Duration:* ${details.duration_ms}ms\n`;
+      if (details.found_in) text += `• *Found in:* ${details.found_in}\n`;
+      text += `\n📊 *HTTP Scan*\n`;
+      text += `• Fetched: ${details.http_scan?.performed ? 'Yes' : 'No'}\n`;
+      if (details.http_scan?.status_code) text += `• Status: ${details.http_scan.status_code}\n`;
+      if (details.http_scan?.html_length) text += `• HTML Length: ${details.http_scan.html_length.toLocaleString()} chars\n`;
+      if (details.http_scan?.patterns_checked?.length) text += `• Patterns Checked: ${details.http_scan.patterns_checked.join(', ')}\n`;
+      if (details.http_scan?.external_scripts_found) text += `• External Scripts: ${details.http_scan.external_scripts_scanned}/${details.http_scan.external_scripts_found} scanned\n`;
+      if (details.browser_scan) {
+        text += `\n🌐 *Browser Scan*\n`;
+        text += `• Network Requests: ${details.browser_scan.network_requests_intercepted}\n`;
+        text += `• DOM Scanned: ${details.browser_scan.dom_scanned ? 'Yes' : 'No'}\n`;
+        text += `• Iframes Checked: ${details.browser_scan.iframes_checked ? 'Yes' : 'No'}\n`;
+        if (details.browser_scan.dynamic_scripts_found) text += `• Dynamic Scripts: ${details.browser_scan.dynamic_scripts_scanned}/${details.browser_scan.dynamic_scripts_found} scanned\n`;
+      }
+      return text;
+    },
+    notFound: (details) => {
+      let text = `❌ *SITEKEY NOT FOUND*\n\nTidak ditemukan Turnstile Sitekey pada website target.\n`;
+      text += `\n• *Duration:* ${details.duration_ms}ms\n`;
+      text += `• *Puppeteer:* ${details.puppeteer_used ? 'Yes' : 'No'}\n`;
+      if (details.http_scan?.status_code) text += `• *HTTP Status:* ${details.http_scan.status_code}\n`;
+      if (details.http_scan?.external_scripts_found) text += `• *Scripts Scanned:* ${details.http_scan.external_scripts_scanned}/${details.http_scan.external_scripts_found}\n`;
+      if (details.http_scan?.error) text += `• *HTTP Error:* ${details.http_scan.error}\n`;
+      if (details.browser_scan?.error) text += `• *Browser Error:* ${details.browser_scan.error}\n`;
+      return text;
+    },
+    busy: 'ᤡ *SERVER BUSY*\n\nServer sedang sibuk memproses antrean browser. Silakan coba lagi dalam beberapa detik.',
+  },
   enhance: `
 *SILAHKAN PILIH TYPE YANG TERSEDIA!*
 ▪︎ Photo style
@@ -1197,6 +1399,28 @@ _*Kamu bisa menggunakan .hint untuk mendapatkan petunjuk jawaban*_
   timeUp: (answer) => `*WAKTU HABIS*
 
 Jawaban: ${answer}`,
+
+  ulartanggaInvite: (p1, targets) => `🐍 *UNDANGAN ULAR TANGGA* 🐍\n\n@${p1} mengundang: ${targets.map(a => '@' + a).join(', ')}\n\n📜 *COMMAND PERMAINAN:*\n• *.ut join* / *join*\n> Bergabung ke lobby\n• *.ut cancel* / *cancel*\n> Membatalkan lobby\n• *.ut start*\n> Memulai game (Min 2 pemain)\n• *🎲* / *.dadu* / *media dadu*\n> Melempar dadu (saat giliran)\n• *.ut*\n> Cek status & giliran game\n• *.delsesiut*\n> Hapus / menghentikan sesi game (Pembuat / Admin)`,
+  ulartanggaJoined: (player, count) => `@${player} berhasil bergabung! (${count}/4 pemain)\n\n• Ketik *.ut start* untuk memulai permainan.\n• Ketik *.delsesiut* jika ingin menghapus/menghentikan sesi.`,
+  ulartanggaFull: 'Ruang permainan Ular Tangga sudah penuh! (Maksimal 4 pemain)',
+  ulartanggaMinPlayers: 'Permainan memerlukan minimal 2 pemain untuk dimulai!',
+  ulartanggaHasSession: 'Masih ada permainan/lobby Ular Tangga di grup ini!\n\n• Ketik *.ut* untuk cek status permainan.\n• Ketik *.delsesiut* untuk menghentikan permainan.',
+  ulartanggaOnlyGroup: 'Fitur ini hanya dapat digunakan di dalam grup!',
+  ulartanggaTagTarget: 'Tag orang yang ingin Anda ajak bermain atau ketik .ulartangga untuk membuka lobby!',
+  ulartanggaNoSelf: 'Anda tidak bisa mengundang diri sendiri!',
+  ulartanggaDeclined: 'Permainan dibatalkan!',
+  ulartanggaDaduMediaNotice: (players, isSticker) => `🎲 *DADU PERMAINAN*\n\nHalo ${players.map(p => '@' + p).join(' ')}! ${isSticker ? 'Simpan stiker dadu di bawah ini terlebih dahulu ya!' : 'Simpan media dadu di bawah ini terlebih dahulu ya!'}\nSaat giliran kamu, kamu bisa melempar dadu dengan:\n• Kirim media dadu ini langsung di grup\n• Atau reply pesan papan permainan dengan emoji dadu (🎲)\n• Atau kirim emoji 🎲 langsung di grup`,
+  ulartanggaStart: (p1, dadu) => `*[ Game Ular Tangga 🐍 ]*\n\nPermainan dimulai!\nGiliran pertama: @${p1}\n\n• Kirim media dadu atau reply pesan ini dengan emoji dadu (🎲)\n\n> ℹ️ Ketik *.delsesiut* untuk menghentikan/menghapus permainan.`,
+  ulartanggaNextTurn: (currPlayer, nextPlayer, statusNotice, rollMsg) => `${rollMsg}${statusNotice}\n\n*[ Game Ular Tangga 🐍 ]*\n\nGiliran selanjutnya: @${nextPlayer}\n\n• Kirim media dadu atau reply pesan ini dengan emoji dadu (🎲)\n\n> ℹ️ Ketik *.delsesiut* jika ingin menghentikan permainan`,
+  ulartanggaRoll: (player, num) => `@${player} mendapat ${num} pada dadu 🎲`,
+  ulartanggaTurn: (player) => `Tunggu giliran @${player}!\n\n• Kirim media dadu atau reply pesan giliran dengan emoji dadu (🎲)`,
+  ulartanggaLadder: (player, diff) => `@${player} Naik tangga 🪜\n+${diff}`,
+  ulartanggaSnake: (player, diff) => `@${player} Yaah kena ular 🐍 :(\n-${diff}`,
+  ulartanggaWin: (player, limit) => `🎉 *PEMENANG ULAR TANGGA* 🎉\n\nSelamat @${player}!\nKamu berhasil mencapai garis finish pertama! 🏆\nMendapat : ${limit} Energy⚡`,
+  ulartanggaTimeoutWin: (player, pos, limit) => `⏱️ *WAKTU HABIS (10 MENIT)* ⏱️\n\nTidak ada aktivitas permainan selama 10 menit.\nPermainan berakhir dan dimenangkan oleh pemain dengan posisi terjauh!\n\n🏆 *Pemenang:* @${player} (Kotak ${pos})\n🎁 *Hadiah:* +${limit} Energy⚡`,
+  ulartanggaTimeoutLobby: '⏱️ *Lobby Ular Tangga dibatalkan otomatis karena tidak ada aktivitas selama 10 menit.*',
+  ulartanggaNoSession: 'Tidak ada sesi permainan Ular Tangga di grup ini!\nKetik *.ut* atau *.ut @tag* untuk membuat permainan baru.',
+  ulartanggaDeleted: 'Sesi permainan Ular Tangga berhasil dihapus!',
 };
 
 /*

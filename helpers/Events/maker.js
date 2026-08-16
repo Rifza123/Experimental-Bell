@@ -196,12 +196,30 @@ export default async function on({ cht, Exp, store, ev, is }) {
         gold: '#FFD700',
         silver: '#C0C0C0',
       };
-      if (!args)
+      if (!args && !cht.quoted)
         return cht.reply(
           `Example: ${cht.prefix + cht.cmd} pink hello\n\nColor list:\n- ${Object.keys(colors).join('\n- ')}`
         );
 
-      let [color, ...message] = args.split(' ');
+      let color, messageText;
+      if (args) {
+        let [first, ...rest] = args.split(' ');
+        if (colors[first]) {
+          color = first;
+          messageText = rest.join(' ');
+        } else {
+          color = 'white';
+          messageText = args;
+        }
+      }
+
+      if (!messageText && cht.quoted) {
+        messageText = cht.quoted.text;
+      }
+
+      if (!messageText) {
+        return cht.reply('Silakan masukkan teks atau reply pesan yang ingin dijadikan quote!');
+      }
 
       let avatar;
       try {
@@ -226,12 +244,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
             avatar: true,
             from: {
               id: 1,
-              name: cht.pushName,
+              name: cht.quoted ? func.getName(cht.quoted.sender) : cht.pushName,
               photo: {
                 url: avatar,
               },
             },
-            text: colors[color] ? message.join(' ') : args,
+            text: messageText,
             'm.replyMessage': {},
           },
         ],
@@ -239,7 +257,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
       'axios'
         .import()
-        .post('https://bot.lyo.su/quote/generate', json, {
+        .post(`${api.xterm.url}/api/maker/qc?key=${api.xterm.key}`, json, {
           headers: {
             'Content-Type': 'application/json',
           },

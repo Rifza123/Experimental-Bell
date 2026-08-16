@@ -24,6 +24,74 @@ cfg.hadiah = cfg.hadiah || {
   tebaklirik: 40,
 };
 
+const baseUTPositions = [
+  [-165, 128], [-103, 128], [-35, 128], [33, 128], [103, 128], [163, 145],
+  [163, 63], [103, 63], [33, 63], [-35, 63], [-103, 63], [-165, 63],
+  [-165, -6], [-103, -6], [-35, -6], [33, -6], [103, -6], [163, -6],
+  [163, -75], [103, -75], [33, -75], [-35, -75], [-103, -75], [-165, -75],
+  [-165, -128], [-103, -128], [-35, -128], [33, -128], [103, -128], [163, -132]
+];
+
+const getUTPos = (locate, usrIdx) => {
+  let pos = locate > 30 ? 30 : locate < 1 ? 1 : locate;
+  let base = baseUTPositions[pos - 1] || [0, 0];
+  let offsets = [
+    { dx: -10, dy: -10 },
+    { dx: 10, dy: 10 },
+    { dx: -10, dy: 10 },
+    { dx: 10, dy: -10 }
+  ];
+  let off = offsets[(usrIdx - 1) % offsets.length];
+  return {
+    x: Math.round(208 + base[0] + off.dx - 14),
+    y: Math.round(173 + base[1] + off.dy - 14)
+  };
+};
+
+const renderUTBoard = async (bgPath, players) => {
+  const { createCanvas, loadImage } = await '@napi-rs/canvas'.import();
+  const canvas = createCanvas(416, 346);
+  const ctx = canvas.getContext('2d');
+  const bg = await loadImage(bgPath);
+  ctx.drawImage(bg, 0, 0, 416, 346);
+
+  const colors = ['#ff4d4d', '#3399ff', '#33cc33', '#ffaa00'];
+
+  for (let i = 0; i < players.length; i++) {
+    const p = players[i];
+    const pos = getUTPos(p.jalan, i + 1);
+    try {
+      const img = await loadImage(p.picture);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pos.x + 14, pos.y + 14, 14, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, pos.x, pos.y, 28, 28);
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(pos.x + 14, pos.y + 14, 14, 0, Math.PI * 2);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = colors[i % colors.length];
+      ctx.stroke();
+
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.arc(pos.x + 4, pos.y + 4, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), pos.x + 4, pos.y + 4);
+    } catch (e) {}
+  }
+
+  return canvas.toBuffer('image/jpeg');
+};
+
 export default async function on({ Exp, cht, ev, chatDb, is }) {
   const { id } = cht;
   const { func } = Exp;
@@ -1333,6 +1401,693 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
       return cht.reply(
         '❌ Perintah tidak dikenal. Gunakan `.sos help` untuk melihat daftar perintah.'
       );
+    }
+  );
+
+  let clearUTTimer = (id) => {
+    global._ulartanggaTimers ??= {};
+    if (global._ulartanggaTimers[id]) {
+      clearTimeout(global._ulartanggaTimers[id]);
+      delete global._ulartanggaTimers[id];
+    }
+  };
+
+  ev.on(
+    {
+      cmd: ['ulartangga', 'ut', 'dadu', 'roll'],
+      listmenu: ['ulartangga'],
+      tag: 'game',
+    },
+    async () => {
+      if (!is.group) return cht.reply(Data.infos.game.ulartanggaOnlyGroup);
+      let chatDb = (preferences[cht.id] ??= {});
+      let session = chatDb.ulartangga || Data.ulartangga?.[cht.id];
+
+      let refreshSessionTimeout = (ses) => {
+        if (!ses) return;
+        clearUTTimer(cht.id);
+        ses.lastActivity = Date.now();
+        ses.exp = Date.now() + 600000;
+        global._ulartanggaTimers[cht.id] = setTimeout(async () => {
+          clearUTTimer(cht.id);
+          if (chatDb.ulartangga && chatDb.ulartangga === ses) {
+            let delKeys = ses.keys || [];
+            let curStatus = ses.status;
+            let curPlayers = ses.players || [];
+            delete chatDb.ulartangga;
+            if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+            for (let kid of delKeys) {
+              Exp.sendMessage(cht.id, {
+                delete: {
+                  remoteJid: cht.id,
+                  fromMe: true,
+                  id: kid,
+                  participant: Exp.user?.id,
+                },
+              }).catch(() => {});
+            }
+            if (curStatus === 'playing' && curPlayers.length > 0) {
+              let sorted = [...curPlayers].sort((a, b) => b.jalan - a.jalan);
+              let winner = sorted[0];
+              memories.setItem(
+                winner.id,
+                'energy',
+                (memories.getItem(winner.id, 'energy') || 0) + 25
+              );
+              let winText = Data.infos.game.ulartanggaTimeoutWin(
+                winner.id.split('@')[0],
+                winner.jalan,
+                25
+              );
+              Exp.sendMessage(cht.id, {
+                text: winText,
+                mentions: curPlayers.map((p) => p.id),
+              }).catch(() => {});
+            } else {
+              Exp.sendMessage(cht.id, {
+                text: Data.infos.game.ulartanggaTimeoutLobby,
+              }).catch(() => {});
+            }
+          }
+        }, 600000);
+      };
+
+      let now = Date.now();
+      if (session) {
+        let isExpired = session.exp ? now > session.exp : (session.lastActivity ? now - session.lastActivity > 600000 : false);
+        let isCorrupted = !Array.isArray(session.players) || session.players.length === 0 || !session.status;
+        if (isExpired || isCorrupted) {
+          clearUTTimer(cht.id);
+          let delKeys = session.keys || [];
+          delete chatDb.ulartangga;
+          if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+          for (let kid of delKeys) {
+            Exp.sendMessage(cht.id, {
+              delete: {
+                remoteJid: cht.id,
+                fromMe: true,
+                id: kid,
+                participant: Exp.user?.id,
+              },
+            }).catch(() => {});
+          }
+          session = null;
+        }
+      }
+
+      let getAvatar = async (jid) => {
+        let targetJid =
+          jid && jid.endsWith('@lid')
+            ? (cht.key?.participantAlt || jid).replace(/@lid$/, '@s.whatsapp.net')
+            : jid;
+        try {
+          return await Promise.race([
+            Exp.profilePictureUrl(targetJid, 'image'),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 2000)
+            ),
+          ]);
+        } catch (e) {
+          return 'https://telegra.ph/file/42d2a0e0881e349806028.jpg';
+        }
+      };
+
+      if (!session) {
+        let inputStr = (cht.q || cht.msg || '').trim();
+        let hasAtInText = /@\d+/.test(cht.msg || '') || (cht.msg || '').includes('@') || /@\d+/.test(cht.q || '');
+        let mentions = hasAtInText
+          ? Array.from(new Set(cht.mention || [])).filter((a) => a !== cht.sender)
+          : [];
+        let isCreateCmd = mentions.length > 0 || /^(create|open|lobby|play|start|\.ut create|\.ut open|\.ut lobby)$/i.test(inputStr.toLowerCase());
+
+        if (!isCreateCmd) {
+          let cap =
+            `🐍 *GAME ULAR TANGGA* 🐍\n\n` +
+            `Permainan papan Ular Tangga interaktif (2 - 4 Pemain).\n\n` +
+            `🎮 *CARA MEMULAI PERMAINAN:*\n` +
+            `• *.ut @tag*\n> Mengundang teman bermain\n` +
+            `• *.ut create*\n> Membuka lobby umum di grup\n\n` +
+            `📜 *COMMAND PERMAINAN:*\n` +
+            `• *.ut join* / *join*\n> Bergabung ke lobby\n` +
+            `• *.ut start*\n> Memulai game (Min 2 pemain)\n` +
+            `• *.ut cancel* / *cancel*\n> Membatalkan lobby\n` +
+            `• *🎲* / *.dadu* / *media dadu*\n> Melempar dadu (saat giliran)\n` +
+            `• *.ut*\n> Cek status permainan\n` +
+            `• *.delsesiut*\n> Hapus / menghentikan sesi (Pembuat / Admin)`;
+          return cht.reply(cap);
+        }
+
+        if (mentions.length > 3) {
+          return cht.reply('Maksimal 3 orang yang dapat diundang (total 4 pemain)!');
+        }
+
+        let ppCreator = await getAvatar(cht.sender);
+
+        let players = [
+          { id: cht.sender, jalan: 1, picture: ppCreator, setuju: true },
+        ];
+
+        for (let target of mentions) {
+          let ppTarget = await getAvatar(target);
+          players.push({
+            id: target,
+            jalan: 1,
+            picture: ppTarget,
+            setuju: false,
+          });
+        }
+
+        session = {
+          status: 'waiting',
+          gilir: 0,
+          creator: cht.sender,
+          players,
+          keys: [],
+          hasInvites: mentions.length > 0,
+          exp: Date.now() + 600000,
+          lastActivity: Date.now(),
+        };
+
+        chatDb.ulartangga = session;
+        Data.ulartangga = Data.ulartangga || {};
+        Data.ulartangga[cht.id] = session;
+        refreshSessionTimeout(session);
+
+        if (mentions.length > 0) {
+          let targetsNum = mentions.map((a) => a.split('@')[0]);
+          return cht.question(
+            Data.infos.game.ulartanggaInvite(
+              cht.sender.split('@')[0],
+              targetsNum
+            ),
+            {
+              emit: 'ulartangga',
+              sender: mentions[0],
+              accepts: [
+                'join',
+                '.join',
+                '.ut join',
+                'cancel',
+                '.cancel',
+                '.ut cancel',
+                'start',
+                '.start',
+                '.ut start',
+              ],
+              exp: Date.now() + 600000,
+            },
+            { mentions: [cht.sender, ...mentions] }
+          ).then((r) => {
+            if (r?.key?.id) {
+              session.keys = session.keys || [];
+              session.keys.push(r.key.id);
+              chatDb.ulartangga = session;
+            }
+          });
+        } else {
+          let cap = `🐍 *LOBBY PERMAINAN ULAR TANGGA* 🐍\n\n👤 *Pemain (1/4):*\n1. @${cht.sender.split('@')[0]}\n\n📜 *COMMAND PERMAINAN:*\n• *.ut join* / *join*\n> Bergabung ke lobby\n• *.ut start*\n> Memulai game (Min 2 pemain)\n• *.ut cancel* / *cancel*\n> Membatalkan lobby\n• *🎲* / *.dadu* / *media dadu*\n> Melempar dadu (saat game berjalan)\n• *.ut*\n> Cek status & giliran game\n• *.delsesiut*\n> Hapus / menghentikan sesi game (Pembuat / Admin)`;
+          return cht.question(
+            cap,
+            {
+              emit: 'ulartangga',
+              exp: Date.now() + 600000,
+            },
+            { mentions: [cht.sender] }
+          ).then((r) => {
+            if (r?.key?.id) {
+              session.keys = session.keys || [];
+              session.keys.push(r.key.id);
+              chatDb.ulartangga = session;
+            }
+          });
+        }
+      }
+
+      let input = (cht.q || cht.msg || '').trim().toLowerCase();
+
+      if (session.status === 'waiting') {
+        session.lastActivity = Date.now();
+        session.exp = Date.now() + 600000;
+        if (/^(cancel|\.ut cancel|\.cancel|batal|\.batal)$/i.test(input)) {
+          if (
+            cht.sender === session.creator ||
+            session.players.some((p) => p.id === cht.sender)
+          ) {
+            clearUTTimer(cht.id);
+            let delKeys = session.keys || [];
+            delete chatDb.ulartangga;
+            if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+            for (let kid of delKeys) {
+              Exp.sendMessage(cht.id, {
+                delete: {
+                  remoteJid: cht.id,
+                  fromMe: true,
+                  id: kid,
+                  participant: Exp.user?.id,
+                },
+              }).catch(() => {});
+            }
+            return cht.reply(Data.infos.game.ulartanggaDeclined);
+          }
+        }
+
+        let isStartCmd = /^(start|\.ut start|\.start)$/i.test(input);
+
+        if (isStartCmd) {
+          if (cht.sender !== session.creator && !is.groupAdmins && !is.owner) {
+            return cht.reply(
+              `❌ Hanya Pembuat Game (@${session.creator.split('@')[0]}) yang dapat memulai permainan!`,
+              { mentions: [session.creator] }
+            );
+          }
+          let confirmedPlayers = session.players.filter((p) => p.setuju);
+          if (confirmedPlayers.length < 2) {
+            return cht.reply(Data.infos.game.ulartanggaMinPlayers);
+          }
+          session.players = confirmedPlayers;
+          session.status = 'playing';
+          session.gilir = 0;
+          chatDb.ulartangga = session;
+          refreshSessionTimeout(session);
+
+          let daduMedia = is?.jadibot
+            ? Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.daduMedia
+            : Data.daduMedia;
+          if (daduMedia?.message) {
+            let isSticker = daduMedia.type === 'stickerMessage' || daduMedia.type === 'sticker';
+            let playerNums = session.players.map((p) => p.id.split('@')[0]);
+            let notice = Data.infos.game.ulartanggaDaduMediaNotice(playerNums, isSticker);
+            await Exp.sendMessage(
+              cht.id,
+              {
+                text: notice,
+                mentions: session.players.map((p) => p.id),
+              },
+              { quoted: cht }
+            );
+            await Exp.relayMessage(cht.id, daduMedia.message, {}).catch(
+              (e) => console.error(e)
+            );
+          } else if (is.owner) {
+            await cht.reply(
+              '⚠️ Media dadu belum diset!\nOwner bisa mengaturnya dengan me-reply media (stiker/gambar/video/audio) lalu ketik: .set dadu'
+            );
+          }
+
+          let buf = await renderUTBoard(
+            './toolkit/set/ulartangga.jpg',
+            session.players
+          );
+
+          let firstPlayer = session.players[0];
+          let cap = Data.infos.game.ulartanggaStart(
+            firstPlayer.id.split('@')[0],
+            '🎲'
+          );
+
+          return cht.question(
+            cap,
+            {
+              emit: 'ulartangga',
+              sender: firstPlayer.id,
+              accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+              exp: Date.now() + 600000,
+            },
+            {
+              image: buf,
+              mentions: session.players.map((p) => p.id),
+            }
+          ).then((r) => {
+            if (r?.key?.id) {
+              session.keys = session.keys || [];
+              session.keys.push(r.key.id);
+              chatDb.ulartangga = session;
+            }
+          });
+        }
+
+        let isJoinCmd = /^(join|\.ut join|\.join)$/i.test(
+          input
+        );
+
+        if (isJoinCmd) {
+          let existingPlayer = session.players.find((p) => p.id === cht.sender);
+          if (existingPlayer) {
+            if (!existingPlayer.setuju) {
+              existingPlayer.setuju = true;
+            } else {
+              return cht.reply(
+                `@${cht.sender.split('@')[0]} Anda sudah berada di dalam lobby!`,
+                { mentions: [cht.sender] }
+              );
+            }
+          } else {
+            if (session.players.length >= 4) {
+              return cht.reply(Data.infos.game.ulartanggaFull);
+            }
+            let ppSender = await getAvatar(cht.sender);
+            session.players.push({
+              id: cht.sender,
+              jalan: 1,
+              picture: ppSender,
+              setuju: true,
+            });
+          }
+
+          chatDb.ulartangga = session;
+          let confirmedPlayers = session.players.filter((p) => p.setuju);
+          let allInvitedAccepted = session.players.every((p) => p.setuju);
+
+          if (
+            session.hasInvites &&
+            allInvitedAccepted &&
+            confirmedPlayers.length >= 2 &&
+            session.players.length > 1
+          ) {
+            session.status = 'playing';
+            session.gilir = 0;
+            chatDb.ulartangga = session;
+            refreshSessionTimeout(session);
+
+            let daduMedia = is?.jadibot
+              ? Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.daduMedia
+              : Data.daduMedia;
+            if (daduMedia?.message) {
+              let isSticker = daduMedia.type === 'stickerMessage' || daduMedia.type === 'sticker';
+              let playerNums = session.players.map((p) => p.id.split('@')[0]);
+              let notice = Data.infos.game.ulartanggaDaduMediaNotice(playerNums, isSticker);
+              await Exp.sendMessage(
+                cht.id,
+                {
+                  text: notice,
+                  mentions: session.players.map((p) => p.id),
+                },
+                { quoted: cht }
+              );
+              await Exp.relayMessage(cht.id, daduMedia.message, {}).catch(
+                (e) => console.error(e)
+              );
+            } else if (is.owner) {
+              await cht.reply(
+                '⚠️ Media dadu belum diset!\nOwner bisa mengaturnya dengan me-reply media (stiker/gambar/video/audio) lalu ketik: .set dadu'
+              );
+            }
+
+            let buf = await renderUTBoard(
+              './toolkit/set/ulartangga.jpg',
+              session.players
+            );
+
+            let firstPlayer = session.players[0];
+            let cap = Data.infos.game.ulartanggaStart(
+              firstPlayer.id.split('@')[0],
+              '🎲'
+            );
+
+            return cht.question(
+              cap,
+              {
+                emit: 'ulartangga',
+                sender: firstPlayer.id,
+                accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+                exp: Date.now() + 600000,
+              },
+              {
+                image: buf,
+                mentions: session.players.map((p) => p.id),
+              }
+            ).then((r) => {
+              if (r?.key?.id) {
+                session.keys = session.keys || [];
+                session.keys.push(r.key.id);
+                chatDb.ulartangga = session;
+              }
+            });
+          } else {
+            refreshSessionTimeout(session);
+            let msg = Data.infos.game.ulartanggaJoined(
+              cht.sender.split('@')[0],
+              confirmedPlayers.length
+            );
+            return cht.question(
+              msg,
+              {
+                emit: 'ulartangga',
+                exp: Date.now() + 600000,
+              },
+              { mentions: session.players.map((p) => p.id) }
+            );
+          }
+        } else if (cht.cmd === 'ut' || cht.cmd === 'ulartangga') {
+          refreshSessionTimeout(session);
+          let playerList = session.players
+            .map(
+              (p, i) =>
+                (i + 1) +
+                '. @' +
+                p.id.split('@')[0] +
+                (p.setuju ? ' ✅' : ' ⏳ (Menunggu)')
+            )
+            .join('\n');
+          let cap =
+            `🐍 *LOBBY PERMAINAN ULAR TANGGA* 🐍\n\n` +
+            `👤 *Pemain (` + session.players.length + `/4):*\n` +
+            playerList +
+            `\n\n📜 *COMMAND PERMAINAN:*\n` +
+            `• *.ut join* / *join*\n> Bergabung ke lobby\n` +
+            `• *.ut start*\n> Memulai game (Min 2 pemain)\n` +
+            `• *.ut cancel* / *cancel*\n> Membatalkan lobby\n` +
+            `• *.delsesiut*\n> Hapus / menghentikan sesi game (Pembuat / Admin)`;
+          return cht.question(
+            cap,
+            {
+              emit: 'ulartangga',
+              exp: Date.now() + 600000,
+            },
+            { mentions: session.players.map((p) => p.id) }
+          );
+        }
+      } else if (session.status === 'playing') {
+        refreshSessionTimeout(session);
+
+        let inputLower = (cht.q || cht.msg || '').trim().toLowerCase();
+        let isExplicitStatusCmd = /^(ut|\.ut|ulartangga|\.ulartangga)$/i.test(inputLower);
+
+        if (isExplicitStatusCmd) {
+          let currPlayer = session.players[session.gilir];
+          let playerList = session.players
+            .map(
+              (p, i) =>
+                (i + 1) +
+                '. @' +
+                p.id.split('@')[0] +
+                ' — Posisi: Kotak ' +
+                p.jalan +
+                (session.gilir === i ? ' ⬅️ (Giliran)' : '')
+            )
+            .join('\n');
+          return cht.reply(
+            '*[ Game Ular Tangga 🐍 ]*\n\n📊 *POSISI PEMAIN:*\n' +
+              playerList +
+              '\n\n📜 *COMMAND PERMAINAN:*\n' +
+              '• *🎲* / *.dadu* / *media dadu*\n> Melempar dadu (saat giliran)\n' +
+              '• *.ut*\n> Cek status & giliran game\n' +
+              '• *.delsesiut*\n> Hapus / menghentikan sesi game (Pembuat / Admin)\n\n' +
+              '🎯 *Giliran Sekarang:* @' +
+              currPlayer.id.split('@')[0] +
+              '\n\n• Kirim media dadu atau reply pesan ini dengan emoji dadu (🎲)',
+            { mentions: session.players.map((p) => p.id) }
+          );
+        }
+
+        let currPlayer = session.players[session.gilir];
+        if (!currPlayer) {
+          session.gilir = 0;
+          currPlayer = session.players[0];
+        }
+        if (!currPlayer) {
+          delete chatDb.ulartangga;
+          if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+          return cht.reply('⚠️ Sesi Ular Tangga rusak/kadaluwarsa. Silahkan ketik .ut kembali.');
+        }
+        if (cht.sender !== currPlayer.id) {
+          return cht.reply(
+            Data.infos.game.ulartanggaTurn(currPlayer.id.split('@')[0]),
+            { mentions: [currPlayer.id] }
+          );
+        }
+
+        let dice = Math.floor(Math.random() * 6) + 1;
+        let tota = currPlayer.jalan + dice;
+        if (tota > 30) {
+          currPlayer.jalan = 30 - (tota - 30);
+        } else {
+          currPlayer.jalan += dice;
+        }
+
+        let rollMsg = Data.infos.game.ulartanggaRoll(currPlayer.id.split('@')[0], dice);
+
+        let specialMsg = '';
+        if (currPlayer.jalan === 3) {
+          currPlayer.jalan += 19;
+          specialMsg = Data.infos.game.ulartanggaLadder(
+            currPlayer.id.split('@')[0],
+            19
+          );
+        } else if (currPlayer.jalan === 5) {
+          currPlayer.jalan += 3;
+          specialMsg = Data.infos.game.ulartanggaLadder(
+            currPlayer.id.split('@')[0],
+            3
+          );
+        } else if (currPlayer.jalan === 11) {
+          currPlayer.jalan += 15;
+          specialMsg = Data.infos.game.ulartanggaLadder(
+            currPlayer.id.split('@')[0],
+            15
+          );
+        } else if (currPlayer.jalan === 17) {
+          currPlayer.jalan -= 13;
+          specialMsg = Data.infos.game.ulartanggaSnake(
+            currPlayer.id.split('@')[0],
+            13
+          );
+        } else if (currPlayer.jalan === 19) {
+          currPlayer.jalan -= 12;
+          specialMsg = Data.infos.game.ulartanggaSnake(
+            currPlayer.id.split('@')[0],
+            12
+          );
+        } else if (currPlayer.jalan === 20) {
+          currPlayer.jalan += 9;
+          specialMsg = Data.infos.game.ulartanggaLadder(
+            currPlayer.id.split('@')[0],
+            9
+          );
+        } else if (currPlayer.jalan === 21) {
+          currPlayer.jalan -= 12;
+          specialMsg = Data.infos.game.ulartanggaSnake(
+            currPlayer.id.split('@')[0],
+            12
+          );
+        } else if (currPlayer.jalan === 27) {
+          currPlayer.jalan -= 26;
+          specialMsg = Data.infos.game.ulartanggaSnake(
+            currPlayer.id.split('@')[0],
+            26
+          );
+        }
+
+        let statusNotice = specialMsg ? ('\n' + specialMsg) : '';
+
+        let buf = await renderUTBoard(
+          './toolkit/set/ulartangga.jpg',
+          session.players
+        );
+
+        if (tota === 30 || currPlayer.jalan >= 30) {
+          memories.setItem(
+            currPlayer.id,
+            'energy',
+            (memories.getItem(currPlayer.id, 'energy') || 0) + 25
+          );
+          await Exp.sendMessage(
+            cht.id,
+            {
+              image: buf,
+              caption: rollMsg + statusNotice + '\n\n' + Data.infos.game.ulartanggaWin(
+                currPlayer.id.split('@')[0],
+                25
+              ),
+              mentions: [currPlayer.id],
+            },
+            { quoted: cht }
+          );
+          clearUTTimer(cht.id);
+          let delKeys = session.keys || [];
+          delete chatDb.ulartangga;
+          if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+          for (let kid of delKeys) {
+            Exp.sendMessage(cht.id, {
+              delete: {
+                remoteJid: cht.id,
+                fromMe: true,
+                id: kid,
+                participant: Exp.user?.id,
+              },
+            }).catch(() => {});
+          }
+          return;
+        }
+
+        session.gilir = (session.gilir + 1) % session.players.length;
+        chatDb.ulartangga = session;
+
+        let nextPlayer = session.players[session.gilir];
+        let cap = Data.infos.game.ulartanggaNextTurn(
+          currPlayer.id.split('@')[0],
+          nextPlayer.id.split('@')[0],
+          statusNotice,
+          rollMsg
+        );
+
+        return cht.question(
+          cap,
+          {
+            emit: 'ulartangga',
+            sender: nextPlayer.id,
+            accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+            exp: Date.now() + 600000,
+          },
+          {
+            image: buf,
+            mentions: [currPlayer.id, nextPlayer.id],
+          }
+        ).then((r) => {
+          if (r?.key?.id) {
+            session.keys = session.keys || [];
+            session.keys.push(r.key.id);
+            chatDb.ulartangga = session;
+          }
+        });
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['delsesiut', 'delulartangga'],
+      listmenu: ['delsesiut'],
+      tag: 'game',
+    },
+    async () => {
+      let chatDb = (preferences[cht.id] ??= {});
+      let session = chatDb.ulartangga || Data.ulartangga?.[cht.id];
+      if (!session)
+        return cht.reply(Data.infos.game.ulartanggaNoSession);
+      let isCreator = cht.sender === session.creator;
+      let isAdmin = is.groupAdmins || is.owner;
+      if (!isCreator && !isAdmin) {
+        return cht.reply(
+          `❌ Hanya Pembuat Game (@${session.creator.split('@')[0]}) atau Admin Grup yang dapat menghapus sesi Ular Tangga!`,
+          { mentions: [session.creator] }
+        );
+      }
+      clearUTTimer(cht.id);
+      let delKeys = session.keys || [];
+      delete chatDb.ulartangga;
+      if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
+      for (let kid of delKeys) {
+        Exp.sendMessage(cht.id, {
+          delete: {
+            remoteJid: cht.id,
+            fromMe: true,
+            id: kid,
+            participant: Exp.user?.id,
+          },
+        }).catch(() => {});
+      }
+      return cht.reply(Data.infos.game.ulartanggaDeleted);
     }
   );
 }

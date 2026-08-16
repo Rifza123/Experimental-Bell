@@ -783,7 +783,7 @@ ${loraText}
         `${api.xterm.url}/api/chat/bard?query=${encodeURIComponent(cht.q)}&key=${api.xterm.key}`
       ).then((response) => response.json());
 
-      cht.reply('[ BARD GOOGLE ]\n' + ai.chatUi, { ai: true, replyAi: false });
+      cht.reply('[ BARD GOOGLE ]\n' + ai.chatUi, { ai: true, replyAi: false, footer: String().wm() });
     }
   );
 
@@ -797,7 +797,7 @@ ${loraText}
     },
     async () => {
       let res = await gpt(cht.q);
-      cht.reply('[ GPT-3 ]\n' + res.response, { ai: true, replyAi: false });
+      cht.reply('[ GPT-3 ]\n' + res.response, { ai: true, replyAi: false, footer: String().wm() });
     }
   );
 
@@ -814,6 +814,7 @@ ${loraText}
       cht.reply('[ DEEPSEEK-R1 ]\n' + res.response, {
         ai: true,
         replyAi: false,
+        footer: String().wm(),
       });
     }
   );
@@ -923,6 +924,7 @@ ${loraText}
 
       let alls = Object.keys(preferences);
       if (!set) return sendAiInfo();
+      if (set.owner && (is?.jadibot || Exp?.isJadibot)) return cht.reply("🚫 Pengaturan AI global hanya dapat diubah melalui Bot Utama!");
       if (set.owner && !is.owner) return cht.reply(infos.messages.isOwner);
       if (id.endsWith(from.group) && !(is.groupAdmins || is.owner))
         return cht.reply(infos.messages.isAdmin);
@@ -968,10 +970,19 @@ ${loraText}
       listmenu: ['resetaichat'],
     },
     async () => {
-      let ai = await fetch(
-        `${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`
-      ).then((response) => response.json());
-      cht.reply(ai.msg, { ai: true });
+      try {
+        let response = await fetch(
+          `${api.xterm.url}/api/chat/logic-bell/reset?id=${cht.sender}&key=${api.xterm.key}`
+        );
+        let ai = await response.json().catch(() => ({}));
+        let resMsg = ai?.msg || ai?.message || '✅ Riwayat percakapan AI berhasil dibersihkan!';
+        if (resMsg.includes('id not found') || resMsg.includes('not found')) {
+          resMsg = 'ℹ️ Riwayat obrolan AI kamu belum ada atau sudah bersih.';
+        }
+        await cht.reply(resMsg, { ai: true });
+      } catch (e) {
+        await cht.reply('ℹ️ Riwayat obrolan AI kamu belum ada atau sudah bersih.');
+      }
     }
   );
 
@@ -1069,6 +1080,91 @@ ${loraText}
         },
         { quoted: cht }
       );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['bingimg', 'bingcreate'],
+      listmenu: ['bingimg'],
+      tag: 'art',
+      args: infos.ai.isPrompt,
+      energy: 20,
+      badword: true,
+    },
+    async ({ args }) => {
+      const _key = keys[sender];
+      await cht.edit(infos.messages.wait, _key, true);
+      try {
+        let res = await fetch(
+          `${api.xterm.url}/api/text2img/bing?prompt=${encodeURIComponent(args)}&key=${api.xterm.key}`
+        ).then((r) => r.json());
+        if (!res.status || !res.data?.length)
+          return cht.reply(infos.messages.failed);
+        for (let i = 0; i < res.data.length; i++) {
+          await Exp.sendMessage(
+            id,
+            {
+              image: { url: res.data[i] },
+              ai: true,
+            },
+            { quoted: cht }
+          );
+        }
+      } catch (e) {
+        cht.reply('Failed!: ' + e.message);
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['bingedit', 'bimg2img', 'img2bing'],
+      listmenu: ['bingedit'],
+      tag: 'ai',
+      energy: 25,
+      args: infos.ai.isPrompt,
+    },
+    async () => {
+      const img = is.quoted.image || is.image;
+      if (!img)
+        return cht.reply(infos.messages.replyOrSendImage);
+      let media = await (is.image ? cht.download() : cht.quoted.download());
+      const _key = keys[sender];
+      await cht.edit(infos.messages.wait, _key, true);
+      try {
+        if (is.sticker || is.quoted?.sticker) {
+          let url = await tmpFiles(media);
+          let cv = await convert({
+            url,
+            from: 'webp',
+            to: 'png',
+          });
+          media = await func.getBuffer(cv);
+        }
+        let res = await fetch(
+          `${api.xterm.url}/api/img2img/bing?key=${api.xterm.key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: cht.q, image: await func.minimizeImage(media) }),
+          }
+        ).then((r) => r.json());
+        if (!res.status || !res.data?.length)
+          return cht.reply(infos.messages.failed);
+        for (let i = 0; i < res.data.length; i++) {
+          await Exp.sendMessage(
+            id,
+            {
+              image: { url: res.data[i] },
+              ai: true,
+            },
+            { quoted: cht }
+          );
+        }
+      } catch (e) {
+        cht.reply('Failed!: ' + e.message);
+      }
     }
   );
 
@@ -1552,11 +1648,11 @@ ${loraText}
       tag: 'ai',
       energy: 30,
       args: 'Please input prompt (English recommended)!',
-      media: {
-        type: ['image'],
-      },
     },
-    async ({ media }) => {
+    async () => {
+      const img = is.quoted.image || is.image;
+      if (!img) return cht.reply('Harap kirim gambar atau reply gambar dengan prompt!');
+      let media = await (is.image ? cht.download() : cht.quoted.download());
       try {
         if (is.sticker || is.quoted?.sticker) {
           let url = await tmpFiles(media);
@@ -1567,10 +1663,6 @@ ${loraText}
           });
           media = await func.getBuffer(cv);
         }
-        console.log({
-          react: JSON.stringify(cht.reaction),
-          cht: JSON.stringify(cht),
-        });
         Exp.sendMessage(
           id,
           {
@@ -1672,6 +1764,10 @@ ${loraText}
     ...['tofigur', 'jadifigur'].map((k) => [
       k,
       'illustration of a 1/7 scale figure, highly detailed and realistic style, placed on a computer desk. the figure is mounted on a circular transparent acrylic base (no text or logos). on the computer screen, show the 3D modeling process of the same figure. next to the monitor, place a Tamiya-style toy packaging box with the original artwork printed on it. scene should look natural, clean, and photorealistic.',
+    ]),
+    ...['pantai', 'dipantai', 'jadipantai', 'backgroundpantai'].map((k) => [
+      k,
+      'change background to a tropical beach with white sand, turquoise ocean water, palm trees, sunny sky, photorealistic high detail',
     ]),
   ]);
 

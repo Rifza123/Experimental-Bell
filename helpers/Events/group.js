@@ -421,7 +421,7 @@ ${topEnergy}
     async () => {
       if (preferences[id]['antitagall'])
         return cht.reply('Tagall tidak di izinkan disini!');
-      let mentions = Exp.groupMembers.map((a) => a.id);
+      let mentions = Exp.groupMembers.map((a) => a.id).filter(Boolean)
       let text =
         cht.cmd == 'tagall'
           ? `\`${cht?.q ? await func.replaceLidToPn(cht.q, cht) : 'TAG ALL'}\`\n`
@@ -440,6 +440,302 @@ ${topEnergy}
         {
           quoted: cht,
         }
+      );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['totag', 'tohidetag'],
+      listmenu: ['totag', 'tohidetag'],
+      tag: 'group',
+      isGroup: true,
+      isAdmin: true,
+      isQuoted: 'Balas pesan yang ingin di-jadikan hidetag',
+    },
+    async ({ cht }) => {
+      let mentions = Exp.groupMembers.map((a) => a.id).filter(Boolean);
+      let loadMsg = await store.loadMessage(cht.id, cht.quoted.stanzaId);
+      let rawMessage = loadMsg?.message || cht.quoted?.message;
+
+      if (!rawMessage) {
+        return cht.reply('❌ Pesan dari quoted tidak ditemukan di store!');
+      }
+
+      let msg = JSON.parse(JSON.stringify(rawMessage));
+      let type = baileys.getContentType(msg);
+
+      if (type === 'conversation') {
+        msg.extendedTextMessage = {
+          text: msg.conversation,
+          contextInfo: {
+            mentionedJid: mentions,
+          },
+        };
+        delete msg.conversation;
+        type = 'extendedTextMessage';
+      }
+
+      if (msg[type]) {
+        msg[type].contextInfo = {
+          ...(msg[type].contextInfo || {}),
+          mentionedJid: mentions,
+        };
+
+        if (cht.q) {
+          if (type === 'extendedTextMessage') {
+            msg.extendedTextMessage.text = `${cht.q}\n\n${msg.extendedTextMessage.text || ''}`;
+          } else if (msg[type].caption !== undefined) {
+            msg[type].caption = `${cht.q}\n\n${msg[type].caption || ''}`;
+          }
+        }
+      }
+
+      await Exp.relayMessage(cht.id, msg, {});
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['absen'],
+      listmenu: ['absen <options>'],
+      tag: 'group',
+      isGroup: true,
+    },
+    async () => {
+      let pref = (preferences[id] ??= {});
+      let localeAbsen = infos.group.absen;
+
+      let parseDuration = (str) => {
+        if (!str) return 3600000;
+        let m = str.trim().match(/^(\d+)\s*(m|h|d|min|jam|menit)?$/i);
+        if (!m) return 3600000;
+        let val = parseInt(m[1]);
+        let unit = (m[2] || 'm').toLowerCase();
+        if (unit === 'h' || unit === 'jam') return val * 3600000;
+        if (unit === 'd' || unit === 'hari') return val * 86400000;
+        return val * 60000;
+      };
+
+      let formatDurationStr = (ms) => {
+        let totalMinutes = Math.floor(ms / 60000);
+        if (totalMinutes >= 60) {
+          let hours = Math.floor(totalMinutes / 60);
+          let mins = totalMinutes % 60;
+          return mins > 0 ? `${hours} Jam ${mins} Menit` : `${hours} Jam`;
+        }
+        return `${totalMinutes} Menit`;
+      };
+
+      let input = (cht.q || '').trim();
+      let parts = input.split('|').map((s) => s.trim());
+      let firstWord = parts[0]?.split(' ')?.[0]?.toLowerCase();
+
+      let groupMeta = await getGroupMetadata(id).catch(() => null);
+      let groupName = groupMeta?.subject || 'GROUP';
+      let participants = groupMeta?.participants || [];
+
+      if (!input) {
+        if (pref.absen) {
+          let d = pref.absen;
+          let listText = (d.list || [])
+            .map((item, idx) => {
+              let num = item.jid.split('@')[0];
+              return `${idx + 1}. ${item.name} (@${num}) - ${item.time}`;
+            })
+            .join('\n');
+          let dateStr = dateFormatter(d.startTime, 'Asia/Jakarta');
+          let expireTimeStr =
+            dateFormatter(d.expiredTime, 'Asia/Jakarta').split(' ')[1] || '';
+          let durationText = formatDurationStr(d.expiredTime - d.startTime);
+
+          let tplData = {
+            groupName: d.groupName || groupName,
+            title: d.title,
+            date: dateStr.split(' ')[0] || dateStr,
+            time: dateStr.split(' ')[1] || '',
+            list: d.list || [],
+            listText: listText || '_Belum ada yang mengisi absen_',
+            durationText,
+            expireTimeStr,
+          };
+          let mentions = (d.list || []).map((x) => x.jid);
+          return Exp.sendMessage(
+            id,
+            {
+              text: localeAbsen.updated(tplData),
+              mentions,
+            },
+            { quoted: cht }
+          );
+        } else {
+          return cht.reply(localeAbsen.guide);
+        }
+      }
+
+      if (['start', 'buat', 'mulai'].includes(firstWord)) {
+        if (!is.groupAdmins && !is.owner) {
+          return cht.reply(localeAbsen.onlyAdmin);
+        }
+        if (pref.absen) {
+          return cht.reply(localeAbsen.alreadyActive);
+        }
+
+        let rawTitle = parts[0].substring(firstWord.length).trim();
+        let title = rawTitle || 'Absen Anggota Group';
+        let durationMs = parseDuration(parts[1]);
+        let mentionOption = (parts[2] || 'yes').toLowerCase();
+        let isMentionAll = ['yes', 'ya', 'true', 'all', '1'].includes(
+          mentionOption
+        );
+
+        let startTime = Date.now();
+        let expiredTime = startTime + durationMs;
+        let dateStr = dateFormatter(startTime, 'Asia/Jakarta');
+        let expireTimeStr =
+          dateFormatter(expiredTime, 'Asia/Jakarta').split(' ')[1] || '';
+        let durationText = formatDurationStr(durationMs);
+
+        pref.absen = {
+          title,
+          groupName,
+          creator: sender,
+          startTime,
+          expiredTime,
+          list: [],
+        };
+
+        let tplData = {
+          groupName,
+          title,
+          date: dateStr.split(' ')[0] || dateStr,
+          time: dateStr.split(' ')[1] || '',
+          list: [],
+          listText: '',
+          durationText,
+          expireTimeStr,
+        };
+
+        let mentions = isMentionAll ? participants.map((p) => p.id) : [];
+        return Exp.sendMessage(
+          id,
+          {
+            text: localeAbsen.started(tplData),
+            mentions,
+          },
+          { quoted: cht }
+        );
+      }
+
+      if (['stop', 'delete', 'selesai', 'hapus'].includes(firstWord)) {
+        if (!is.groupAdmins && !is.owner) {
+          return cht.reply(localeAbsen.onlyAdmin);
+        }
+        if (!pref.absen) {
+          return cht.reply(localeAbsen.notActive);
+        }
+
+        let d = pref.absen;
+        let presentJids = new Set((d.list || []).map((x) => x.jid));
+        let absentList = participants.filter((p) => !presentJids.has(p.id));
+
+        let listText = (d.list || [])
+          .map((item, idx) => {
+            let num = item.jid.split('@')[0];
+            return `${idx + 1}. ${item.name} (@${num}) - ${item.time}`;
+          })
+          .join('\n');
+
+        let absentText = absentList
+          .map((item, idx) => {
+            let num = item.id.split('@')[0];
+            return `${idx + 1}. @${num}`;
+          })
+          .join('\n');
+
+        let tplData = {
+          groupName: d.groupName || groupName,
+          title: d.title,
+          list: d.list || [],
+          listText,
+          absentList,
+          absentText,
+        };
+
+        let tpl = localeAbsen.stopped(tplData);
+        let mentions = [
+          ...(d.list || []).map((x) => x.jid),
+          ...absentList.map((x) => x.id),
+        ];
+
+        delete pref.absen;
+
+        return Exp.sendMessage(
+          id,
+          {
+            text: typeof tpl === 'string' ? tpl : tpl.body,
+            ...(typeof tpl === 'object' && tpl.footer
+              ? { footer: tpl.footer }
+              : {}),
+            mentions,
+          },
+          { quoted: cht }
+        );
+      }
+
+      if (!pref.absen) {
+        return cht.reply(localeAbsen.notActive);
+      }
+
+      let nameInput = input;
+      if (nameInput !== nameInput.toUpperCase() || !/[A-Z]/.test(nameInput)) {
+        return cht.reply(localeAbsen.mustCapital);
+      }
+
+      if (pref.absen.list.some((item) => item.jid === sender)) {
+        return cht.reply(localeAbsen.alreadySubmitted);
+      }
+
+      let nowTimeStr =
+        dateFormatter(Date.now(), 'Asia/Jakarta').split(' ')[1] || '';
+      pref.absen.list.push({
+        name: nameInput,
+        jid: sender,
+        time: nowTimeStr,
+      });
+
+      let d = pref.absen;
+      let listText = d.list
+        .map((item, idx) => {
+          let num = item.jid.split('@')[0];
+          return `${idx + 1}. ${item.name} (@${num}) - ${item.time}`;
+        })
+        .join('\n');
+
+      let dateStr = dateFormatter(d.startTime, 'Asia/Jakarta');
+      let expireTimeStr =
+        dateFormatter(d.expiredTime, 'Asia/Jakarta').split(' ')[1] || '';
+      let durationText = formatDurationStr(d.expiredTime - d.startTime);
+
+      let tplData = {
+        groupName: d.groupName || groupName,
+        title: d.title,
+        date: dateStr.split(' ')[0] || dateStr,
+        time: dateStr.split(' ')[1] || '',
+        list: d.list,
+        listText,
+        durationText,
+        expireTimeStr,
+      };
+
+      let mentions = d.list.map((x) => x.jid);
+      return Exp.sendMessage(
+        id,
+        {
+          text: localeAbsen.updated(tplData),
+          mentions,
+        },
+        { quoted: cht }
       );
     }
   );
@@ -1488,6 +1784,8 @@ List tag yang bisa digunakan:
   ev.on(
     { cmd: ['listsewa'], tag: 'owner', listmenu: true, isOwner: true },
     async () => {
+      if (is?.jadibot || Exp?.isJadibot)
+        return cht.reply('🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!');
       if (!cfg.sewa)
         return cht.reply(
           'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
@@ -1541,6 +1839,8 @@ List tag yang bisa digunakan:
       isOwner: true,
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot)
+        return cht.reply('🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!');
       if (!cfg.sewa)
         return cht.reply(
           'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'

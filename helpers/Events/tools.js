@@ -578,4 +578,37 @@ ${desc}
       }
     }
   );
+  ev.on(
+    {
+      cmd: ['sitekey', 'getsitekey', 'sitekeyfinder'],
+      listmenu: ['sitekey'],
+      tag: 'tools',
+      energy: 15,
+      urls: {
+        msg: true,
+      },
+    },
+    async () => {
+      let q = is.quoted?.url || is.url;
+      let targetUrl = q[0];
+      await cht.edit('🔍 Scanning sitekey...', keys[sender]);
+      let res = await fetch(
+        `${api.xterm.url}/api/tools/sitekey_finder?key=${api.xterm.key}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: targetUrl }),
+        }
+      ).then((a) => a.json());
+      if (res.status && res.data) {
+        cht.reply(infos.tools.sitekey.result(res.data, res.details || {}));
+      } else if (res.details && res.msg?.includes('busy')) {
+        cht.reply(infos.tools.sitekey.busy);
+      } else {
+        cht.reply(infos.tools.sitekey.notFound(res.details || {}));
+      }
+    }
+  );
 }

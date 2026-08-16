@@ -4,6 +4,8 @@ let { convert } = exif;
 
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r();
 const { processMedia } = await './toolkit/ffmpeg.js'.r();
+const fs = await 'fs'.import();
+const path = await 'path'.import();
 
 function normalizeArgs(args) {
   if (!args) return [];
@@ -337,16 +339,123 @@ Volume bergetar, freq=kecepatan getar, depth=kedalaman.`,
           normalizeArgs(output ? args.replace('--output=' + output, '') : args),
           output || type
         );
-        return Exp.sendMessage(
+        let mediaPayload = Buffer.isBuffer(res)
+          ? res
+          : (typeof res === 'string' ? { url: path.resolve(res) } : res);
+        const sentMsg = await Exp.sendMessage(
           cht.id,
           {
-            [mtype]: res,
+            [mtype]: mediaPayload,
             ...(mtype !== 'audio' ? {} : { mimetype: 'audio/mpeg' }),
           },
           { quoted: cht }
         );
+        if (typeof res === 'string') {
+          const fp = path.resolve(res);
+          if (fs.existsSync(fp)) {
+            try { fs.unlinkSync(fp); } catch (e) {}
+          }
+        }
+        return sentMsg;
       } catch (e) {
         cht.reply(String(e));
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['fixvideo', 'recodevideo'],
+      listmenu: ['fixvideo'],
+      tag: 'converter',
+      energy: 5,
+    },
+    async ({ media }) => {
+      try {
+        if (cht?.quoted?.stanzaId) {
+          let qCmds = Exp.func.archiveMemories.getItem(cht.sender, 'quotedQuestionCmd') || {};
+          delete qCmds[cht.quoted.stanzaId];
+          Exp.func.archiveMemories.setItem(cht.sender, 'quotedQuestionCmd', qCmds);
+        }
+
+        const startTime = Date.now();
+
+        const renderProgressBar = (percent, length = 15) => {
+          const p = Math.max(0, Math.min(100, percent || 0));
+          const filled = Math.round((p / 100) * length);
+          const empty = length - filled;
+          const bar = '█'.repeat(filled) + '░'.repeat(empty);
+          return `[${bar}] ${p.toFixed(2)}%`;
+        };
+
+        const buildStatusText = (percent) => {
+          const bar = renderProgressBar(percent);
+          if (!percent || percent <= 0) {
+            return `⏱️ Memperoleh & memproses konversi ulang video H.264...\n\n${bar}\n\n> Estimasi sisa waktu: Menghitung...\n> Perkiraan selesai: Menghitung...`;
+          }
+          const elapsedMs = Date.now() - startTime;
+          const estimatedTotalMs = (elapsedMs / percent) * 100;
+          const targetCompletionTime = startTime + estimatedTotalMs;
+          const etaMs = Math.max(0, Math.ceil(targetCompletionTime - Date.now()));
+
+          const etaStr = Exp.func.parseMs ? Exp.func.parseMs(etaMs) : Math.ceil(etaMs / 1000) + 's';
+          const fullDateStr = Exp.func.dateFormatter ? Exp.func.dateFormatter(targetCompletionTime, 'Asia/Jakarta') : '';
+          const timeStr = fullDateStr ? (fullDateStr.split(' ')[1] || fullDateStr) + ' WIB' : 'sebentar lagi';
+
+          return `⏱️ Memperoleh & memproses konversi ulang video H.264...\n\n${bar}\n\n> Estimasi sisa waktu: ${etaStr}\n> Perkiraan selesai: pukul ${timeStr}`;
+        };
+
+        const statusMsg = await cht.reply(
+          buildStatusText(0),
+          { replyAi: false }
+        );
+
+        let videoBuf = media || (await cht.quoted?.download?.().catch(() => null));
+        if (!videoBuf) return cht.reply('❌ Balas video yang tidak dapat diputar dengan mengetik .fixvideo!');
+
+        let lastUpdate = Date.now();
+        let nextInterval = Math.floor(Math.random() * 2000) + 3000;
+
+        const onProgress = async (percent) => {
+          const now = Date.now();
+          if (now - lastUpdate >= nextInterval) {
+            lastUpdate = now;
+            nextInterval = Math.floor(Math.random() * 2000) + 3000;
+            if (statusMsg?.key) {
+              Exp.sendMessage(cht.id, {
+                text: buildStatusText(percent),
+                edit: statusMsg.key,
+              }).catch(() => {});
+            }
+          }
+        };
+
+        const res = await processMedia(
+          videoBuf,
+          ['-c:v', 'libx264', '-c:a', 'aac', '-threads', '1'],
+          'mp4',
+          null,
+          onProgress
+        );
+
+        if (statusMsg?.key) {
+          Exp.sendMessage(cht.id, {
+            text: `⏱️ Memperoleh & memproses konversi ulang video H.264...\n\n${renderProgressBar(100)}\n\n> Selesai diproses!`,
+            edit: statusMsg.key,
+          }).catch(() => {});
+        }
+
+        return Exp.sendMessage(
+          cht.id,
+          {
+            video: res,
+            mimetype: 'video/mp4',
+            caption: '✅ Video berhasil dikonversi ulang ke H.264/AAC MP4!',
+          },
+          { quoted: cht }
+        );
+      } catch (e) {
+        cht.reply('❌ Gagal mengonversi video: ' + String(e));
       }
     }
   );

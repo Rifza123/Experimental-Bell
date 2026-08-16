@@ -133,26 +133,28 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async ({ args }) => {
       try {
+        let query = args || cht.q;
+        if (!query) return cht.reply('Mau cari sticker apa?');
         let res = await fetch(
-          `${api.xterm.url}/api/search/pinterest-image?query=${args}&key=${api.xterm.key}`
-        ).then((a) => a.json());
-        let { data } = res || {};
-        if (data.length < 1) return cht.reply('Tidak ditemukan!');
-        let url = await convert({
-          url: data.slice(0, 20).getRandom(),
-          from: 'jpg',
-          to: 'webp',
-        });
-        let buff = await func.getBuffer(url);
+          `${api.xterm.url}/api/search/pinterest-image?query=${encodeURIComponent(query)}&key=${encodeURIComponent(api.xterm.key)}`
+        ).then((a) => a.json()).catch(() => null);
+        let data = res?.data;
+        if (!data || !Array.isArray(data) || data.length < 1) return cht.reply('Sticker tidak ditemukan!');
+        let imgUrl = data.slice(0, 20).getRandom();
+        let buff = await func.getBuffer(imgUrl).catch(() => null);
+        if (!buff) return cht.reply('Gagal mengambil gambar sticker!');
         let s = await exif['writeExifImg'](
           buff,
           {
-            packname: 'My sticker',
-            author: 'Ⓒ' + cht.pushName,
-          },
-          true
-        );
-        Exp.sendMessage(
+            packname: 'Bella Clarissa',
+            author: 'Ⓒ' + (cht.pushName || 'Bella'),
+          }
+        ).catch((err) => {
+          console.error('writeExifImg error:', err);
+          return null;
+        });
+        if (!s) return cht.reply('Gagal mengonversi sticker!');
+        await Exp.sendMessage(
           id,
           {
             sticker: {
@@ -164,9 +166,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
           }
         );
       } catch (e) {
-        console.error(e);
-        await cht.reply('Failed convert image to sticker!');
-        throw new Error(e);
+        console.error('Pinsticker Error:', e);
+        cht.reply('Terjadi kesalahan saat membuat sticker!');
       }
     }
   );

@@ -211,33 +211,76 @@ async function launch() {
           continue;
         if (!(isMessage || isStubType)) return;
         if (cht.key.remoteJid === 'status@broadcast') {
-          if (!cfg.reactsw)
+          if (cht.key.fromMe) return;
+          if (!cfg.reactsw || typeof cfg.reactsw !== 'object')
             cfg.reactsw = {
               on: false,
               emojis: ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'],
             };
 
-          if (cfg.reactsw.on) {
-            let { emojis } = cfg.reactsw;
-            await Exp.sendMessage(
-              cht.id,
-              { react: { key: cht.key, text: emojis.getRandom() } },
-              {
-                statusJidList: [
-                  cht.key.participant,
-                  Exp.user.id.split(':')[0] + from.sender,
-                ],
-              }
-            );
-          } else if (cfg.autoreadsw == true) {
-            await Exp.readMessages([cht.key]);
-            let typ = getContentType(cht.message);
-            console.log(
-              /protocolMessage/i.test(typ)
-                ? `${cht.key.participant.split('@')[0]} Deleted story❗`
-                : 'View user stories : ' + cht.key.participant.split('@')[0]
-            );
+          let participant =
+            cht.key.remoteJidAlt ||
+            cht.key.participant ||
+            cht.participant ||
+            '';
+          let statusKey = {
+            ...cht.key,
+            participant: participant || cht.key.participant,
+          };
+
+          if (
+            cfg.autoreadsw === true ||
+            cfg.autoreadsw === 'on' ||
+            cfg.autoreadsw === 'true'
+          ) {
+            try {
+              await Exp.readMessages([statusKey]);
+              let typ = getContentType(cht.message);
+              let senderNum = participant
+                ? participant.split('@')[0]
+                : 'Unknown';
+              console.log(
+                /protocolMessage/i.test(typ)
+                  ? `${senderNum} Deleted story❗`
+                  : 'View user stories : ' + senderNum
+              );
+            } catch (err) {
+              console.error('Error auto read SW:', err);
+            }
           }
+
+          if (cfg.reactsw && cfg.reactsw.on) {
+            try {
+              let { emojis } = cfg.reactsw;
+              let validEmojis = (Array.isArray(emojis) ? emojis : []).filter(
+                (e) => e && e !== '\uFE0F'
+              );
+              if (validEmojis.length === 0) {
+                validEmojis = ['😍', '😂', '😬', '🤢', '🤮', '🥰', '😭'];
+              }
+              let textReact = validEmojis.getRandom();
+              let myJid = Exp.user.id.split(':')[0] + '@s.whatsapp.net';
+              let statusJidList = Array.from(
+                new Set(
+                  [
+                    participant,
+                    cht.key.participant,
+                    cht.key.remoteJidAlt,
+                    myJid,
+                  ].filter(Boolean)
+                )
+              );
+
+              await Exp.sendMessage(
+                cht.id,
+                { react: { key: cht.key, text: textReact } },
+                { statusJidList }
+              );
+            } catch (err) {
+              console.error('Error auto react SW:', err);
+            }
+          }
+
           return;
         } else {
           let exs = { cht: { ...cht }, Exp, is: {}, store, chatDb, sewaDb };

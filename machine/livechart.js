@@ -2,7 +2,10 @@ const { default: WebSocket } = await import('ws');
 
 let hasErrorLogged = false;
 const ky = '__livechart_ws__';
-keys[ky] ??= {};
+keys[ky] = Object.assign(
+  { ws: null, interval: null, reconnectTimeout: null, isConnected: false },
+  keys[ky]
+);
 const RCH_SPAM_LIMIT = 60;
 const RCH_SPAM_WINDOW = 60_000;
 const RCH_ALERT_COOLDOWN = 5 * 60_000;
@@ -101,190 +104,221 @@ const getHourKey = () => {
 };
 
 function livechart({ Exp } = {}) {
-  cfg.remoteReaction ??= true;
-  Data.ch_reaction ??= {};
-  const currentMonthKey = getMonthKey();
-  let stats = Data.ch_reaction;
+  if (!Exp) return;
 
-  Object.assign(stats, {
-    startedAt: stats.startedAt ?? new Date().toISOString(),
-    totalReact: stats.totalReact ?? 0,
-    reactsByHour: stats.reactsByHour ?? {},
-    reactsByDate: stats.reactsByDate ?? {
-      daily: {},
-      weekly: {},
-      monthly: {},
-      yearly: {},
-    },
-    perType: stats.perType ?? {},
-    reactSuccess: stats.reactSuccess ?? 0,
-    reactError: stats.reactError ?? 0,
-    lastSuccess: stats.lastSuccess ?? null,
-    lastError: stats.lastError ?? null,
-    monthKey: stats.monthKey ?? currentMonthKey,
-  });
+  const connectWs = () => {
+    const prev = keys[ky];
+    if (
+      prev.ws &&
+      (prev.ws.readyState === WebSocket.OPEN ||
+        prev.ws.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
 
-  if (cfg.remoteReaction) {
-    logLivechart(
-      'Remote Reaction aktif. Bot bisa ikut react ke channel jika ada event tertentu.\n' +
-        'Jika tidak ingin ikut, ketik: .set remoteReaction off',
-      'info'
+    if (prev.reconnectTimeout) {
+      clearTimeout(prev.reconnectTimeout);
+      prev.reconnectTimeout = null;
+    }
+
+    cfg.remoteReaction ??= true;
+    Data.ch_reaction ??= {};
+    const currentMonthKey = getMonthKey();
+    let stats = Data.ch_reaction;
+
+    Object.assign(stats, {
+      startedAt: stats.startedAt ?? new Date().toISOString(),
+      totalReact: stats.totalReact ?? 0,
+      reactsByHour: stats.reactsByHour ?? {},
+      reactsByDate: stats.reactsByDate ?? {
+        daily: {},
+        weekly: {},
+        monthly: {},
+        yearly: {},
+      },
+      perType: stats.perType ?? {},
+      reactSuccess: stats.reactSuccess ?? 0,
+      reactError: stats.reactError ?? 0,
+      lastSuccess: stats.lastSuccess ?? null,
+      lastError: stats.lastError ?? null,
+      monthKey: stats.monthKey ?? currentMonthKey,
+    });
+
+    if (cfg.remoteReaction) {
+      logLivechart(
+        'Remote Reaction aktif. Bot bisa ikut react ke channel jika ada event tertentu.\n' +
+          'Jika tidak ingin ikut, ketik: .set remoteReaction off',
+        'info'
+      );
+    } else {
+      logLivechart(
+        'Remote Reaction nonaktif. Bot tidak akan ikut react ke channel.',
+        'warn'
+      );
+    }
+
+    const ws = new WebSocket(
+      'wss://api.termai.cc/ws/search/livechart?key=' + api.xterm.key
     );
-  } else {
-    logLivechart(
-      'Remote Reaction nonaktif. Bot tidak akan ikut react ke channel.',
-      'warn'
-    );
-  }
 
-  const prev = keys[ky];
+    keys[ky].ws = ws;
 
-  if (prev.ws) {
-    try {
-      prev.ws.removeAllListeners();
-      if (
-        prev.ws.readyState === WebSocket.OPEN ||
-        prev.ws.readyState === WebSocket.CONNECTING
-      ) {
-        prev.ws.close(1000, 'Replaced by new connection');
-      }
-    } catch {}
-  }
+    ws.on('open', () => {
+      logLivechart('WebSocket connected', 'success');
+      hasErrorLogged = false;
 
-  if (prev.interval) {
-    clearInterval(prev.interval);
-    prev.interval = null;
-  }
+      keys[ky].interval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 60000);
+    });
 
-  if (prev.reconnectTimeout) {
-    clearTimeout(prev.reconnectTimeout);
-    prev.reconnectTimeout = null;
-  }
+    ws.on('message', async (msg) => {
+      try {
+        const parsed = JSON.parse(msg);
 
-  if (
-    prev.ws &&
-    (prev.ws.readyState === WebSocket.OPEN ||
-      prev.ws.readyState === WebSocket.CONNECTING)
-  ) {
-    return;
-  }
-
-  const ws = new WebSocket(
-    'wss://api.termai.cc/ws/search/livechart?key=' + api.xterm.key
-  );
-
-  keys[ky].ws = ws;
-
-  ws.on('open', () => {
-    logLivechart('WebSocket connected', 'success');
-    hasErrorLogged = false;
-
-    keys[ky].interval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 60000);
-  });
-
-  ws.on('message', async (msg) => {
-    try {
-      const parsed = JSON.parse(msg);
-
-      switch (parsed.type) {
-        case 'data':
-          Data.livechart = parsed.data;
-          logLivechart(
-            `Received update: ${Object.keys(parsed.data).length} entries`
-          );
-          break;
-
-        case 'rch': {
-          if (!cfg.remoteReaction) return;
-          console.log(parsed);
-          const { newsletterId, server_id, reaction } = parsed.data || {};
-
-          if (checkRchSpam({ Exp })) {
+        switch (parsed.type) {
+          case 'data':
+            Data.livechart = parsed.data;
             logLivechart(
-              '[remote] Reaction Channel skipped (spam detected)',
-              'warn'
+              `Received update: ${Object.keys(parsed.data).length} entries`
             );
-            return;
+            break;
+
+          case 'rch': {
+            if (!cfg.remoteReaction) return;
+            console.log(parsed);
+            const { newsletterId, server_id, reaction } = parsed.data || {};
+
+            if (checkRchSpam({ Exp })) {
+              logLivechart(
+                '[remote] Reaction Channel skipped (spam detected)',
+                'warn'
+              );
+              return;
+            }
+
+            try {
+              await Exp.newsletterReactMessage(newsletterId, server_id, reaction);
+
+              const now = Date.now();
+              const hourKey = getHourKey();
+              const dateKey = getDateKey();
+
+              stats.totalReact++;
+              stats.reactSuccess++;
+              stats.lastSuccess = Exp.func.dateFormatter(now, 'Asia/Jakarta');
+
+              stats.perType[reaction] ??= { count: 0, last: null };
+              stats.perType[reaction].count++;
+              stats.perType[reaction].last = now;
+
+              stats.reactsByHour[hourKey] ??= { count: 0 };
+              stats.reactsByHour[hourKey].count++;
+              pruneHourBuckets(stats.reactsByHour);
+
+              stats.reactsByDate.daily[dateKey] ??= { count: 0 };
+              stats.reactsByDate.daily[dateKey].count++;
+              pruneObjectByDateKey(stats.reactsByDate.daily, 7);
+
+              stats.reactsByDate.weekly[getWeekKey()] ??= { count: 0 };
+              stats.reactsByDate.weekly[getWeekKey()].count++;
+
+              stats.reactsByDate.monthly[getMonthKey()] ??= { count: 0 };
+              stats.reactsByDate.monthly[getMonthKey()].count++;
+
+              stats.reactsByDate.yearly[getYearKey()] ??= { count: 0 };
+              stats.reactsByDate.yearly[getYearKey()].count++;
+              Data.ch_reaction = stats;
+              logLivechart(
+                `📡[Remote] react ${reaction} → ${newsletterId}`,
+                'info'
+              );
+            } catch (e) {
+              stats.reactError++;
+              stats.lastError = Exp.func.dateFormatter(
+                Date.now(),
+                'Asia/Jakarta'
+              );
+              Data.ch_reaction = stats;
+              logLivechart(String(e), 'error');
+            }
+            break;
           }
-
-          try {
-            await Exp.newsletterReactMessage(newsletterId, server_id, reaction);
-
-            const now = Date.now();
-            const hourKey = getHourKey();
-            const dateKey = getDateKey();
-
-            stats.totalReact++;
-            stats.reactSuccess++;
-            stats.lastSuccess = Exp.func.dateFormatter(now, 'Asia/Jakarta');
-
-            stats.perType[reaction] ??= { count: 0, last: null };
-            stats.perType[reaction].count++;
-            stats.perType[reaction].last = now;
-
-            stats.reactsByHour[hourKey] ??= { count: 0 };
-            stats.reactsByHour[hourKey].count++;
-            pruneHourBuckets(stats.reactsByHour);
-
-            stats.reactsByDate.daily[dateKey] ??= { count: 0 };
-            stats.reactsByDate.daily[dateKey].count++;
-            pruneObjectByDateKey(stats.reactsByDate.daily, 7);
-
-            stats.reactsByDate.weekly[getWeekKey()] ??= { count: 0 };
-            stats.reactsByDate.weekly[getWeekKey()].count++;
-
-            stats.reactsByDate.monthly[getMonthKey()] ??= { count: 0 };
-            stats.reactsByDate.monthly[getMonthKey()].count++;
-
-            stats.reactsByDate.yearly[getYearKey()] ??= { count: 0 };
-            stats.reactsByDate.yearly[getYearKey()].count++;
-            Data.ch_reaction = stats;
-            logLivechart(
-              `📡[Remote] react ${reaction} → ${newsletterId}`,
-              'info'
-            );
-          } catch (e) {
-            stats.reactError++;
-            stats.lastError = Exp.func.dateFormatter(
-              Date.now(),
-              'Asia/Jakarta'
-            );
-            Data.ch_reaction = stats;
-            logLivechart(String(e), 'error');
-          }
-          break;
+        }
+      } catch (err) {
+        console.error(err);
+        if (!hasErrorLogged) {
+          hasErrorLogged = true;
+          logLivechart(`Invalid JSON message`, 'error');
         }
       }
-    } catch (err) {
-      console.error(err);
+    });
+
+    ws.on('error', (err) => {
       if (!hasErrorLogged) {
         hasErrorLogged = true;
-        logLivechart(`Invalid JSON message`, 'error');
+        logLivechart(`WebSocket error: ${err.message}`, 'error');
       }
+    });
+
+    ws.on('close', () => {
+      clearInterval(keys[ky].interval);
+      keys[ky].interval = null;
+
+      if (keys[ky].ws === ws) {
+        keys[ky].ws = null;
+      }
+
+      if (keys[ky].isConnected) {
+        logLivechart('WebSocket closed, reconnecting in 30s', 'warn');
+        keys[ky].reconnectTimeout = setTimeout(() => {
+          if (keys[ky].isConnected) {
+            connectWs();
+          }
+        }, 30000);
+      }
+    });
+  };
+
+  const closeWs = () => {
+    keys[ky].isConnected = false;
+    if (keys[ky].reconnectTimeout) {
+      clearTimeout(keys[ky].reconnectTimeout);
+      keys[ky].reconnectTimeout = null;
     }
-  });
-
-  ws.on('error', (err) => {
-    if (!hasErrorLogged) {
-      hasErrorLogged = true;
-      logLivechart(`WebSocket error: ${err.message}`, 'error');
+    if (keys[ky].interval) {
+      clearInterval(keys[ky].interval);
+      keys[ky].interval = null;
     }
-  });
+    if (keys[ky].ws) {
+      try {
+        keys[ky].ws.removeAllListeners();
+        keys[ky].ws.close(1000, 'WhatsApp connection closed');
+      } catch {}
+      keys[ky].ws = null;
+    }
+  };
 
-  ws.on('close', () => {
-    clearInterval(keys[ky].interval);
-    keys[ky].interval = null;
+  if (!keys[ky].boundExp || keys[ky].boundExp !== Exp) {
+    keys[ky].boundExp = Exp;
+    if (Exp.ev) {
+      Exp.ev.on('connection.update', ({ connection }) => {
+        if (connection === 'open') {
+          keys[ky].isConnected = true;
+          connectWs();
+        } else if (connection === 'close') {
+          closeWs();
+        }
+      });
+    }
+  }
 
-    logLivechart('WebSocket closed, reconnecting in 30s', 'warn');
-
-    keys[ky].reconnectTimeout = setTimeout(() => {
-      livechart({ Exp });
-    }, 30000);
-  });
+  if (Exp.user?.id) {
+    keys[ky].isConnected = true;
+    connectWs();
+  }
 }
 
 process.on('exit', () => {

@@ -5,6 +5,7 @@ const {
   generateWAMessageContent,
   getContentType,
   jidNormalizedUser,
+  prepareWAMessageMedia,
 } = 'baileys'.import();
 const { func } = await `${fol[0]}func.js`.r();
 
@@ -117,21 +118,82 @@ export default async function initialize({ Exp, store }) {
     Exp.sendMessage = async (id, config, etc = {}) => {
       let msg;
       let buffer;
+      const isNotice = typeof config?.text === 'string' && (
+        config.text.includes('Energy⚡') ||
+        config.text.includes('⏱️Wait...') ||
+        config.text.includes('Bntr...') ||
+        config.text.includes('Cooldown') ||
+        config.text.includes('Pesan API:')
+      );
+
+      if (config?.footer && (config?.audio || config?.document || config?.sticker))
+        delete config.footer;
+
       const externalAd = config?.contextInfo?.externalAdReply;
 
-      if (externalAd && !cfg.linkpreview)
+      if (externalAd) {
         delete config.contextInfo.externalAdReply;
+        if (
+          cfg.linkpreview &&
+          typeof config?.text === 'string' &&
+          !config.image &&
+          !config.video &&
+          !config.document &&
+          !config.audio &&
+          !config.sticker &&
+          !config.linkPreview
+        ) {
+          if (!config.text.includes('https://termai.cc')) {
+            config.text = `https://termai.cc\n` + config.text;
+          }
+          let thumbBuffer;
+          if (externalAd.thumbnail && Buffer.isBuffer(externalAd.thumbnail)) {
+            thumbBuffer = externalAd.thumbnail;
+          } else if (externalAd.thumbnailUrl) {
+            try {
+              thumbBuffer = await Exp.func.getBuffer(externalAd.thumbnailUrl);
+            } catch {}
+          }
+          if (!thumbBuffer) {
+            try {
+              thumbBuffer = fs.readFileSync(fol[3] + 'bell.jpg');
+            } catch {}
+          }
+          let imageMessage;
+          if (thumbBuffer) {
+            try {
+              const resMedia = await prepareWAMessageMedia(
+                { image: thumbBuffer },
+                { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+              );
+              imageMessage = resMedia?.imageMessage;
+            } catch {}
+          }
+          config.linkPreview = {
+            'matched-text': 'https://termai.cc',
+            title: externalAd.title || Exp.user?.name || 'Termai',
+            description:
+              externalAd.body ||
+              'Artificial Intelligence, The beginning of the robot era',
+            jpegThumbnail: imageMessage?.jpegThumbnail
+              ? Buffer.from(imageMessage.jpegThumbnail)
+              : thumbBuffer || undefined,
+            highQualityThumbnail: imageMessage || undefined,
+          };
+        }
+      }
 
       let mtype = getContentType(config),
         isAI = !!config.ai && !id.endsWith(from.group),
         isPTT = config.ptt === true,
         isFooter = !!config.footer,
+        isLinkPreview = !!config.linkPreview,
         isInteractive =
           mtype == 'interactiveMessage' ||
           isFooter ||
           config.nativeFlowMessage ||
           config.limited_time_offer;
-      if (!isAI && !isPTT && !isInteractive && !isFooter) {
+      if (!isAI && !isPTT && !isInteractive && !isFooter && !isLinkPreview) {
         etc.ephemeralExpiration = 8640000;
         return sendMessage(id, config, etc);
       }
@@ -151,6 +213,47 @@ export default async function initialize({ Exp, store }) {
         upload: Exp.waUploadToServer,
       });
       let type = getContentType(message);
+
+      if (type === 'extendedTextMessage' && message?.extendedTextMessage) {
+        let ext = message.extendedTextMessage;
+        if (config.linkPreview || ext.matchedText || ext.thumbnailDirectPath) {
+          let ts = String(Math.floor(Date.now() / 1000));
+          ext.previewType = 'NONE';
+          ext.inviteLinkGroupTypeV2 = 'DEFAULT';
+          ext.thumbnailHeight = ext.thumbnailHeight || 1080;
+          ext.thumbnailWidth = ext.thumbnailWidth || 1080;
+          if (ext.thumbnailDirectPath && !ext.faviconMMSMetadata) {
+            try {
+              if (!keys['termai_favicon_media']) {
+                const favRes = await prepareWAMessageMedia(
+                  { image: { url: 'https://c.termai.cc/i170/88Oj.png' } },
+                  { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+                );
+                if (favRes?.imageMessage) {
+                  keys['termai_favicon_media'] = {
+                    thumbnailDirectPath: favRes.imageMessage.directPath,
+                    thumbnailSha256: favRes.imageMessage.fileSha256,
+                    thumbnailEncSha256: favRes.imageMessage.fileEncSha256,
+                    mediaKey: favRes.imageMessage.mediaKey,
+                    mediaKeyTimestamp: String(favRes.imageMessage.mediaKeyTimestamp || ts),
+                  };
+                }
+              }
+              if (keys['termai_favicon_media']) {
+                ext.faviconMMSMetadata = keys['termai_favicon_media'];
+              }
+            } catch {}
+
+            ext.faviconMMSMetadata ||= {
+              thumbnailDirectPath: ext.thumbnailDirectPath,
+              thumbnailSha256: ext.thumbnailSha256,
+              thumbnailEncSha256: ext.thumbnailEncSha256,
+              mediaKey: ext.mediaKey,
+              mediaKeyTimestamp: ext.mediaKeyTimestamp || ts,
+            };
+          }
+        }
+      }
 
       let isMedia = /^(image|document|video)/.test(type);
       if (isInteractive && !config.audio) {
@@ -197,10 +300,16 @@ export default async function initialize({ Exp, store }) {
 
       if (etc.quoted) {
         message[type].contextInfo = {
+          ...(config.contextInfo || {}),
           stanzaId: etc.quoted.key.id,
           participant: etc.quoted.key.participant || etc.quoted.key.remoteJid,
           quotedMessage: etc.quoted,
           mentionedJid: config.mentionedJid || config.mentions || [],
+        };
+      } else if (config.contextInfo) {
+        message[type].contextInfo = {
+          ...(message[type].contextInfo || {}),
+          ...config.contextInfo,
         };
       }
 

@@ -110,7 +110,7 @@ export default class EventEmitter {
     }
   }
 
-  sendPremiumMsg(trial = true, trialAvailable = true) {
+  sendPremiumMsg(trial = false, trialAvailable = true) {
     this.ensure();
     const imageMessage = {
       text: messages.onlyPremium(trial, trialAvailable),
@@ -459,9 +459,14 @@ export default class EventEmitter {
                 */
       }
 
+      const isAudioEvent = ev.tag === 'tts' || (Array.isArray(ev.type) && ev.type.includes('audio'));
+
       if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
         await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
-        await cht.reply(`-${ev.energy} Energy⚡`, { replyAi: false });
+        await cht.reply(`-${ev.energy} Energy⚡`, {
+          replyAi: false,
+          ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
+        });
       } else {
         ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
       }
@@ -487,6 +492,24 @@ export default class EventEmitter {
         `${bgcolor('[ERROR]', 'red')} ${timestamp()}\n- Error emitting "${event}"`,
         error.stack
       );
+      try {
+        let cht = opts?.cht || this.cht;
+        let sender = cht?.sender;
+        let isApiErr = error?.name === 'TermaiApiError' || error?.apiError || String(error?.stack || error?.message).includes('TermaiApiError');
+        if (isApiErr || error instanceof TypeError) {
+          let errMsg = messages.termaiApiError(error, event);
+          let _key = global.keys?.[sender];
+          if (_key && cht.edit) {
+            try {
+              await cht.edit(errMsg, _key, true);
+            } catch (e) {
+              await cht.reply(errMsg);
+            }
+          } else {
+            await cht.reply(errMsg);
+          }
+        }
+      } catch (errSend) {}
       return;
     }
   }

@@ -93,6 +93,41 @@ const events = await './tolkit/events.js'.r();
 
 ---
 
+## 📜 Konvensi Koding & Gaya Penulisan Pesan (Bell Logic)
+
+Seluruh kontributor wajib mematuhi standar koding dan gaya penulisan pesan berikut agar seragam:
+
+### 1. Lokalisasi Terpusat (Locale)
+* **Dilarang meng-hardcode teks respon** langsung di dalam file handler/event.
+* Semua string pesan harus diletakkan pada:
+  - `toolkit/set/locale/id.js` (Bahasa Indonesia - referensi utama)
+  - `toolkit/set/locale/en.js` (Bahasa Inggris)
+* Panggil teks menggunakan `infos.<modul>.<properti>` atau `Data.infos.<modul>.<properti>`.
+
+### 2. Standar Format Pesan WhatsApp
+* **Deskripsi Komando (`\n> deskripsi`)**:
+  - Tulis nama komando pada baris terpisah (contoh: `• .jadibot <nomor>`).
+  - Baris bawahnya diawali karakter `> ` untuk memformat quote subtext (contoh: `> Tautkan bot baru`).
+  - **Dilarang keras** menggunakan simbol panah (`➔`) untuk memisahkan komando dan deskripsi dalam satu baris.
+* **Menu & Seksi**:
+  - Gunakan emoji dan huruf kapital tebal untuk judul seksi (contoh: `📱 *KONEKSI & MANAGEMENT*`).
+  - Berikan pemisah baris kosong agar nyaman dibaca di layar HP.
+* **Tanpa Footer Alay**: Jangan menambahkan footer berlebihan atau alay di bagian bawah pesan.
+
+### 3. Native WhatsApp Footer (`footer`)
+* `Exp.sendMessage` mendukung property `footer` secara langsung. Gunakan format:
+  ```javascript
+  Exp.sendMessage(cht.id, { text: '...isi pesan...', footer: '...teks footer...' }, { quoted: cht })
+  ```
+* Footer WhatsApp tidak mendukung format markup (*bold*, _italic_, > quote). Selalu tulis sebagai teks polos biasa.
+
+### 4. Aturan Teks Jadibot
+* Gunakan istilah **"bot kamu"** atau **"bot"**, jangan gunakan istilah "Sub-Bot".
+* Tampilkan slot tanpa simbol `#` (contoh: `Slot 1`, bukan `Slot #1`).
+* Jangan kirim pesan proaktif (PC/DM) ke user pada event background (seperti auto-reconnect, cron, dll.) untuk mencegah ban WhatsApp.
+
+---
+
 ## ✨ Fitur Event Emitter Lanjutan
 
 Eksperimen terbaru menambahkan kemampuan **rekayasa command** dengan memanfaatkan `ev.on()` dan `ev.emit()`.  

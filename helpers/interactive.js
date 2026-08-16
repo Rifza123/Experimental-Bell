@@ -7,6 +7,7 @@ const moment = 'timezone'.import();
 const time = moment.tz('Asia/Jakarta').format('DD/MM HH:mm:ss');
 const { transcribe } = await (fol[2] + 'transcribe.js').r();
 const { ai } = await `${fol[2]}reasoner.js`.r();
+const exif = await (fol[0] + 'exif.js').r();
 
 const maxCommandExpired = 7000;
 let urls = {};
@@ -63,6 +64,11 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
     }
     let isMsg =
       !is?.cmd && !is?.me && !is?.baileys && cht.id !== 'status@broadcast';
+    let utSession = is.group ? (chatDb?.ulartangga || Data.ulartangga?.[cht.id]) : null;
+    let isUTPlaying = utSession && utSession.status === 'playing';
+    let isUTTurn = isUTPlaying && (cht.sender === utSession.players?.[utSession.gilir]?.id);
+    let isUTRollMsg = isUTTurn && (['🎲', 'dadu', '.dadu', 'roll', '.roll'].includes(cht?.msg?.trim()?.toLowerCase()) || cht?.msg?.trim() === '🎲');
+    let isPendingUpdate = Boolean(is.owner && Data.pendingUpdate?.[cht.sender] && ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel'].includes(cht?.msg?.trim()?.toLowerCase()));
     let isEval = cht?.msg?.startsWith('>');
     let isEvalSync = cht?.msg?.startsWith('=>');
     let isExec = cht?.msg?.startsWith('$');
@@ -404,7 +410,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
           return cht.reply('Yakin?', { replyAi: false });
         }
         try {
-          let evsync = await ("EVAL DISABLED UNTUK KEAMANAN" || `(async () => { ${cht?.msg?.slice(3)} })()`);
+          let evsync = await eval(`(async () => { ${cht?.msg?.slice(3)} })()`);
           if (typeof evsync !== 'string') evsync = await util.inspect(evsync);
           cht.reply(evsync, { replyAi: false });
         } catch (e) {
@@ -455,6 +461,15 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
           txt = `Error: ${error}`;
         }
         cht.reply(txt, { replyAi: false });
+        break;
+      case isUTRollMsg:
+        cht.cmd = 'dadu';
+        ev.emit('dadu');
+        break;
+      case isPendingUpdate:
+        cht.cmd = 'update';
+        cht.q = cht.msg.trim();
+        ev.emit('update');
         break;
       case isQuestionCmd:
         let [cmd, ...q] = questionCmd.emit.split` `;
@@ -745,22 +760,25 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             let download = is.image ? cht?.download : cht?.quoted?.download;
             isImage = await func.minimizeImage(await download());
           }
+          let videoSkipped = false;
           if (isVideo) {
             let seconds = is.video ? (cht.msg?.seconds || 0) : (cht.quoted?.video?.seconds || 0);
             if (seconds > 60) {
-              return cht.reply(func.tagReplacer(Data.infos.others.isExceedsVideo, { second: 60 }));
-            }
-            try {
-              let download = is.video ? cht?.download : cht?.quoted?.download;
-              let vidBuf = await download();
-              if (vidBuf && vidBuf.length > 0) {
-                isVideo = vidBuf.toString('base64');
-              } else {
+              isVideo = false;
+              videoSkipped = true;
+            } else {
+              try {
+                let download = is.video ? cht?.download : cht?.quoted?.download;
+                let vidBuf = await download();
+                if (vidBuf && vidBuf.length > 0) {
+                  isVideo = vidBuf.toString('base64');
+                } else {
+                  isVideo = false;
+                }
+              } catch (error) {
+                console.error('Error downloading video for autoai:', error);
                 isVideo = false;
               }
-            } catch (error) {
-              console.error('Error downloading video for autoai:', error);
-              isVideo = false;
             }
           }
           chat = func.clearNumbers(chat);
@@ -774,6 +792,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
               ownerName: ownername,
               date: func.newDate(),
               role: cht?.memories?.role?.split(',')[0],
+              chatCount: cht?.memories?.chat || cht?.memories?.autoai?.use || 0,
               msgtype: cht?.type,
               custom_profile: func.tagReplacer(cfg.logic, {
                 botfullname,
@@ -781,6 +800,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
               }),
               image: isImage,
               video: isVideo,
+              skills: ['sticker'],
               commands: [
                 {
                   description: 'Jika perlu direspon dengan suara',
@@ -909,6 +929,17 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     'Jika pesan adalah permintaan untuk membuat sticker atau mengubah sebuah gambar menjadi sticker. (Abaikan isi konten pada gambar!)',
                   output: {
                     cmd: 'sticker',
+                  },
+                },
+                {
+                  description:
+                    'Jika kamu ingin mengirimkan stiker lucu (secara spontan layaknya gadis Gen Z yang suka mengekspresikan emosi dengan stiker anime menggemaskan), ATAU jika pengguna meminta stiker tertentu / meminta dicari stiker.',
+                  output: {
+                    cmd: 'pinsticker',
+                    cfg: {
+                      query:
+                        'kata kunci pencarian stiker di pinterest. Jika ekspresi spontan Gen Z kamu, gunakan query stiker anime menggemaskan (contoh: anime cute sticker, anime chibi reaction). Namun jika pengguna secara eksplisit meminta topik/karakter/gambar stiker tertentu (misal: kucing, meme, spongebob), ikuti topik permintaan pengguna dan jangan membatasi ke anime saja!',
+                    },
                   },
                 },
                 {
@@ -1064,6 +1095,11 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
                 cht.q = config?.cfg?.query || '';
                 return ev.emit(config?.cmd);
+              case 'pinsticker':
+                noreply = true;
+                if (config?.msg) await cht.reply(config.msg, { replyAi: false });
+                cht.q = config?.cfg?.query || 'anime cute sticker';
+                return ev.emit('pinsticker');
               case 'closegroup':
                 noreply = true;
                 cht.q = 'close';
@@ -1121,6 +1157,44 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
               await cht.reply(config.energy + ' Energy⚡️', { replyAi: false });
               config.energyreply = true;
             }
+            if (config?.stickerQuery && typeof config.stickerQuery === 'string' && config.stickerQuery.trim().toLowerCase() !== 'null' && config.stickerQuery.trim().toLowerCase() !== 'undefined' && config.stickerQuery.trim().length > 0) {
+              let sq = config.stickerQuery.trim();
+              try {
+                let res = await fetch(
+                  `${api.xterm.url}/api/search/pinterest-image?query=${encodeURIComponent(sq)}&key=${encodeURIComponent(api.xterm.key)}`
+                ).then((a) => a.json()).catch(() => null);
+                let data = res?.data;
+                if (data && Array.isArray(data) && data.length > 0) {
+                  let imgUrl = data.slice(0, 20).getRandom();
+                  let buff = await func.getBuffer(imgUrl).catch(() => null);
+                  if (buff) {
+                    let s = await exif.writeExifImg(
+                      buff,
+                      {
+                        packname: botfullname,
+                        author: 'Ⓒ' + (cht.pushName || botnickname),
+                      }
+                    ).catch(() => null);
+                    if (s) {
+                      await Exp.sendMessage(
+                        cht.id,
+                        {
+                          sticker: {
+                            url: s,
+                          },
+                        },
+                        {
+                          quoted: cht,
+                        }
+                      );
+                      await sleep(500);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error('Direct AI Sticker Error:', e);
+              }
+            }
             if (config?.cmd !== 'voice' && !noreply) {
               const method =
                 cfg.editmsg && config?.energyreply ? 'edit' : 'reply';
@@ -1163,7 +1237,10 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     }
                   }
                 } else {
-                  await cht[method](config.msg, keys[sender]);
+                  let replyOpts = { ...keys[sender] };
+                  if (videoSkipped) replyOpts.footer = `${botnickname} tidak bisa membaca video berdurasi lebih dari 60 detik`;
+                  if (!replyOpts.footer) replyOpts.footer = String().wm();
+                  await cht[method](config.msg, replyOpts);
                 }
               }
             }

@@ -108,6 +108,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
           linkpreview: 'linkpreview',
           sewa: 'sewa',
           antipc: 'antipc',
+          dadu: 'media dadu ulartangga',
         };
         if (!options[t1] && t1.includes('\n')) {
           t1 = t1.split('\n')[0];
@@ -124,6 +125,44 @@ export default async function on({ cht, Exp, store, ev, is }) {
           Data.jadibotDb ??= {};
           Data.jadibotDb[botNum] ??= {};
 
+          if (t1 === 'dadu') {
+            Data.jadibotDb[botNum].setCmd ??= {};
+            if (isOff || t2 === 'del' || t2 === 'delete' || t2 === 'off') {
+              if (Data.jadibotDb[botNum].daduMedia?.sha256) {
+                delete Data.jadibotDb[botNum].setCmd[
+                  Data.jadibotDb[botNum].daduMedia.sha256
+                ];
+              }
+              delete Data.jadibotDb[botNum].daduMedia;
+              return cht.reply('✅ Media dadu bot kamu berhasil dihapus!');
+            }
+            let { quoted, type } = ev.getMediaType();
+            if (!type)
+              return cht.reply(
+                `Reply pesan media (stiker, gambar, video, audio, dll) dengan caption: ${cht.prefix}set dadu`
+              );
+            let mediaObj = quoted ? cht.quoted : cht;
+            let sha256 = mediaObj[type]?.fileSha256?.toString()?.to('utf16le');
+            let msgContent =
+              (await store.loadMessage(cht.id, mediaObj.stanzaId || cht.key.id))
+                ?.message ||
+              mediaObj.message || { [type + 'Message']: mediaObj[type] };
+
+            if (Data.jadibotDb[botNum].daduMedia?.sha256) {
+              delete Data.jadibotDb[botNum].setCmd[
+                Data.jadibotDb[botNum].daduMedia.sha256
+              ];
+            }
+            if (sha256) Data.jadibotDb[botNum].setCmd[sha256] = '.dadu';
+            Data.jadibotDb[botNum].daduMedia = {
+              sha256,
+              type,
+              message: msgContent,
+            };
+            return cht.reply(
+              `✅ Media dadu berhasil diset!\n- Type: ${type}\n\nSaat permainan Ular Tangga dimulai, media ini akan dikirim sebagai dadu.\nPemain cukup kirim ulang media ini saat gilirannya untuk melempar dadu.${type === 'stickerMessage' || type === 'sticker' ? '\n\n> ℹ️ Karena media berupa stiker, pemain harus menyimpan stiker terlebih dahulu sebelum bisa mengirimnya.' : ''}`
+            );
+          }
           if (t1 === 'public') {
             let isPub = isOn || t2 === 'public';
             if (isOff) isPub = false;
@@ -405,7 +444,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
                   '`input mengandung karakter yang bukan emoji atau emoji tidak valid`\n\n' +
                     mode
                 );
-              let emojis = [...t2];
+              let emojis =
+                typeof Intl !== 'undefined' && Intl.Segmenter
+                  ? [...new Intl.Segmenter().segment(t2)].map((s) => s.segment)
+                  : t2.match(/(\p{Emoji_Presentation}|\p{Emoji}\uFE0F+)/gu) ||
+                    [...t2];
               cfg.reactsw = { on: true, emojis };
               return cht.reply(
                 infos.owner.successSetAutoreactSw.replace(
@@ -728,6 +771,43 @@ export default async function on({ cht, Exp, store, ev, is }) {
             }
             break;
 
+          case 'dadu':
+            {
+              Data.setCmd ??= {};
+              if (isOff || t2 === 'del' || t2 === 'delete' || t2 === 'off') {
+                if (Data.daduMedia?.sha256) {
+                  delete Data.setCmd[Data.daduMedia.sha256];
+                }
+                delete Data.daduMedia;
+                return cht.reply('✅ Media dadu bot utama berhasil dihapus!');
+              }
+              let { quoted, type } = ev.getMediaType();
+              if (!type)
+                return cht.reply(
+                  `Reply pesan media (stiker, gambar, video, audio, dll) dengan caption: ${cht.prefix}set dadu`
+                );
+              let mediaObj = quoted ? cht.quoted : cht;
+              let sha256 = mediaObj[type]?.fileSha256?.toString()?.to('utf16le');
+              let msgContent =
+                (await store.loadMessage(cht.id, mediaObj.stanzaId || cht.key.id))
+                  ?.message ||
+                mediaObj.message || { [type + 'Message']: mediaObj[type] };
+
+              if (Data.daduMedia?.sha256) {
+                delete Data.setCmd[Data.daduMedia.sha256];
+              }
+              if (sha256) Data.setCmd[sha256] = '.dadu';
+              Data.daduMedia = {
+                sha256,
+                type,
+                message: msgContent,
+              };
+              return cht.reply(
+                `✅ Media dadu berhasil diset!\n- Type: ${type}\n\nSaat permainan Ular Tangga dimulai, media ini akan dikirim sebagai dadu.\nPemain cukup kirim ulang media ini saat gilirannya untuk melempar dadu.${type === 'stickerMessage' || type === 'sticker' ? '\n\n> ℹ️ Karena media berupa stiker, pemain harus menyimpan stiker terlebih dahulu sebelum bisa mengirimnya.' : ''}`
+              );
+            }
+            break;
+
           default:
             if (isOn) {
               if (
@@ -782,6 +862,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ media }) => {
+      if (is?.jadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       await cht.reply(infos.messages.wait);
       let text = infos.owner.successSetThumb;
       if (cht.cmd == 'setthumb') {
@@ -806,6 +887,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ media }) => {
+      if (is?.jadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       await cht.reply(infos.messages.wait);
       Exp.setProfilePicture(Exp.number, media)
         .then((a) => cht.reply('Success...✅️'))
@@ -861,6 +943,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ media }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let [t1, t2, t3] = (cht.q || '').split(' ');
 
       let lists = Object.keys(Lists);
@@ -892,6 +975,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ media }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let [t1, t2, t3] = (cht.q || '').split(' ');
 
       let lists = Object.keys(Lists);
@@ -943,6 +1027,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ media }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let [t1, t2, t3] = (cht.q || '').split(' ');
 
       let lists = Object.keys(Lists);
@@ -1024,6 +1109,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let num = cht.q?.split('|')?.[1] || cht.q;
       if (isNaN(num)) return cht.reply('Energy harus berupa angka!');
       let sender = cht.mention[0].split('@')[0];
@@ -1080,6 +1166,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     },
     async ({ cht }) => {
       let isOwnerAccess = cht.cmd !== 'premium';
+      if (isOwnerAccess && (is?.jadibot || Exp?.isJadibot)) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let text = isOwnerAccess ? infos.owner.premium_add : '';
       let trial = Data.users[cht.sender.split('@')[0]]?.claimPremTrial;
       if (!isOwnerAccess)
@@ -1180,6 +1267,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let user = await Exp.func.archiveMemories.get(cht.mention[0]);
       let Sender = cht.mention[0].split('@')[0];
       if (!cht.quoted && !cht.q.includes('|') && cht.cmd == 'banned')
@@ -1272,6 +1360,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       try {
         await cht.reply('Proses backup dimulai...');
         let b = './backup.tar.gz';
@@ -1310,6 +1399,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       await cht.reply('Clearing session...');
       let sessions = fs.readdirSync(session).filter((a) => a !== 'creds.json');
       //const perStep = Math.ceil(sessions.length / 5)
@@ -1342,22 +1432,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
         return cht.replyWithTag(infos.owner.setRole, {
           role: `- ${keyroles.join('\n- ')}`,
         });
-      let Sender = cht.mention[0].split('@')[0];
-      let role = cht.quoted ? cht.q : cht.q?.split('|')[1];
-      /* let frole = keyroles.find((a) =>
-        a.toLowerCase().includes(role?.toLowerCase().trim())
-      );
-      if (!frole)
-        return cht.replyWithTag(
-          '*[ Role tidak valid❗]*\n\n' + infos.owner.setRole,
-          { role: `- ${keyroles.join('\n- ')}` }
-        );*/
-      let memories = await func.archiveMemories.setItem(Sender, 'role', role);
-      await cht.reply('Success✅');
-      cht.memories = memories;
-      cht.pushName = func.getName(Sender);
-      await sleep(100);
-      ev.emit('profile');
+      let Sender = cht.quoted ? cht.quoted.sender : (cht.mention[0] || (cht.q.includes('|') ? cht.q.split('|')[0].trim().replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null));
+      if (!Sender)
+        return cht.replyWithTag(infos.owner.setRole, {
+          role: `- ${keyroles.join('\n- ')}`,
+        });
+      let role = (cht.quoted ? cht.q : (cht.q.includes('|') ? cht.q.split('|')[1] : cht.q))?.trim();
+      let targetJid = Sender.includes('@') ? Sender : Sender + '@s.whatsapp.net';
+      let memories = await func.archiveMemories.setItem(targetJid, 'role', role);
+      await cht.reply(`✅ Berhasil memperbarui status hubungan/role *@${targetJid.split('@')[0]}* menjadi *${role}*`, { mentions: [targetJid] });
     }
   );
 
@@ -1370,6 +1453,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isCoOwner: false,
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let reason = args || 'Tidak diketahui';
       if (cht.cmd == 'offline') {
         global.offresponse = {};
@@ -1478,17 +1562,125 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
       isOwner: true,
       isCoOwner: false,
-      urls: {
-        formats: [
-          'https://c.termai.cc',
-          'https://cdn.xtermai.xyz',
-          'https://pastebin.com',
-          'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/',
-        ],
-        msg: true,
-      },
     },
     async ({ urls }) => {
+      if (is?.jadibot || Exp?.isJadibot)
+        return cht.reply('🚫 Fitur ini hanya dapat diakses melalui Bot Utama!');
+
+      let input = (cht.q || cht.msg || '').trim().toLowerCase();
+      let isConfirm = ['y', 'ya', 'yes'].includes(input);
+      let isCancel = ['n', 'no', 'batal', 'cancel'].includes(input);
+
+      Data.pendingUpdate ??= {};
+      let pending = Data.pendingUpdate[cht.sender];
+
+      if (isCancel) {
+        if (pending) {
+          delete Data.pendingUpdate[cht.sender];
+          return cht.reply(Data.infos.owner.updateCancelled);
+        }
+      }
+
+      if (isConfirm) {
+        if (!pending) {
+          return cht.reply('❌ Tidak ada sesi update yang menunggu konfirmasi.');
+        }
+        if (Date.now() > pending.exp) {
+          delete Data.pendingUpdate[cht.sender];
+          return cht.reply(Data.infos.owner.updateExpired);
+        }
+        let urlPath = pending.urlPath;
+        delete Data.pendingUpdate[cht.sender];
+
+        await cht.reply('Updating...');
+        let changed = `*📂File Changed:*`;
+        let modifed = '';
+        let newfile = '';
+        let failed = '\n*❗Failed:*';
+        let text;
+        let i = 0;
+
+        for (let [url, fpath] of urlPath) {
+          if (i === Data.spinner.length) i = 0;
+          let res = await fetch(url);
+          if (!res.ok) {
+            failed += `\n- ${url}\n> Failed to fetch url`;
+            continue;
+          }
+          let isExists = fs.existsSync(fpath);
+          if (isExists) {
+            modifed += `\n- \`modifed\`: ${fpath}`;
+          } else {
+            newfile += `\n- \`new\`: ${fpath}`;
+          }
+          if (path.basename(fpath) === 'global.js') {
+            let oldContent = fs.existsSync(fpath)
+              ? fs.readFileSync(fpath, 'utf8')
+              : '';
+            let oldMongo = '';
+
+            let match = oldContent.match(/let\s+mongoURI\s*=\s*['"`](.*?)['"`]/);
+            if (match) {
+              oldMongo = match[1];
+            }
+
+            let buff = await res.text();
+
+            if (oldMongo) {
+              buff = buff.replace(
+                /let\s+mongoURI\s*=\s*['"`](.*?)['"`]\s*;/,
+                `let mongoURI = '${oldMongo}';`
+              );
+            }
+
+            fs.writeFileSync(fpath, buff);
+          } else {
+            let buff = await res.text();
+            fs.writeFileSync(fpath, buff);
+          }
+
+          text = `*${Data.spinner[i++]}[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
+          await cht.edit(text, keys[sender]);
+          await sleep(750);
+        }
+
+        if (failed.length > 12) text += failed;
+        await cht.edit(text, keys[sender]);
+        return cht.reply(Data.infos.owner.updateSuccess);
+      }
+
+      urls ??= [];
+      if (urls.length === 0 && cht.q) {
+        urls = func.parseLink(cht.q);
+      }
+
+      if (!urls || urls.length === 0) {
+        return cht.question(Data.infos.isUrl, {
+          emit: 'update',
+          accepts: [],
+          exp: Date.now() + 60000,
+        });
+      }
+
+      let allowedFormats = [
+        'c.termai.cc',
+        'cdn.xtermai.xyz',
+        'pastebin.com',
+        'raw.githubusercontent.com',
+      ];
+
+      let isAllowed = urls.some((url) =>
+        allowedFormats.some((fmt) => url.toLowerCase().includes(fmt.toLowerCase()))
+      );
+
+      if (!isAllowed) {
+        return cht.reply(
+          func.tagReplacer(Data.infos.isFormatsUrl, {
+            formats: allowedFormats.join('\n- '),
+          })
+        );
+      }
+
       if (urls[0].includes('pastebin.com') || urls[0].includes('c.termai.cc')) {
         let _text = await fetch(
           urls[0].replace(
@@ -1511,17 +1703,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
             )
           : [];
       }
+
       let fols = await getDirectoriesRecursive();
-      await cht.reply('Updating...');
-      let changed = `*📂File Changed:*`;
-      let modifed = '';
-      let newfile = '';
       let failed = '\n*❗Failed:*';
       let urlPath = urls
         .map((link) => {
           const { pathname, host } = new URL(link);
           let isValidHost = [
             'c.termai.cc',
+            'cdn.xtermai.xyz',
             'raw.githubusercontent.com',
           ].includes(host);
           if (!isValidHost) {
@@ -1570,55 +1760,66 @@ export default async function on({ cht, Exp, store, ev, is }) {
         })
         .filter(Boolean);
 
-      let text;
-      let i = 0;
-      for (let [url, fpath] of urlPath) {
-        if (i === Data.spinner.length) i = 0;
-        let res = await fetch(url);
-        if (!res.ok) {
-          failed += `\n- ${url}\n> Failed to fetch url`;
-          continue;
-        }
-        let isExists = fs.existsSync(fpath);
-        if (isExists) {
-          modifed += `\n- \`modifed\`: ${fpath}`;
-        } else {
-          newfile += `\n- \`new\`: ${fpath}`;
-        }
-        if (path.basename(fpath) === 'global.js') {
-          let oldContent = fs.existsSync(fpath)
-            ? fs.readFileSync(fpath, 'utf8')
-            : '';
-          let oldMongo = '';
-
-          let match = oldContent.match(/let\s+mongoURI\s*=\s*['"`](.*?)['"`]/);
-          if (match) {
-            oldMongo = match[1];
-          }
-
-          let buff = await res.text();
-
-          if (oldMongo) {
-            buff = buff.replace(
-              /let\s+mongoURI\s*=\s*['"`](.*?)['"`]\s*;/,
-              `let mongoURI = '${oldMongo}';`
-            );
-          }
-
-          fs.writeFileSync(fpath, buff);
-        } else {
-          let buff = await res.text();
-          fs.writeFileSync(fpath, buff);
-        }
-
-        text = `*${Data.spinner[i++]}[ 🛠️ ] UPDATE*\n\n${changed}${modifed}${newfile}\n`;
-        await cht.edit(text, keys[sender]);
-        await sleep(750);
+      if (urlPath.length === 0) {
+        return cht.reply(
+          '❌ Tidak ada berkas valid yang ditemukan dari URL yang diberikan!' +
+            (failed.length > 12 ? failed : '')
+        );
       }
 
-      if (failed.length > 12) text += failed;
-      await cht.edit(text, keys[sender]);
-      cht.reply('Success ✅');
+      let files = [];
+      let recentFiles = [];
+      let now = Date.now();
+
+      for (let [url, fpath] of urlPath) {
+        let isExists = fs.existsSync(fpath);
+        if (isExists) {
+          files.push({ type: 'modified', path: fpath });
+          try {
+            let stat = fs.statSync(fpath);
+            let diffMs = now - stat.mtimeMs;
+            if (diffMs < 86400000) {
+              let sec = Math.floor(diffMs / 1000);
+              let min = Math.floor(sec / 60);
+              let hr = Math.floor(min / 60);
+              let timeAgo =
+                hr > 0
+                  ? `${hr} jam ${min % 60} menit yang lalu`
+                  : min > 0
+                    ? `${min} menit yang lalu`
+                    : `${sec} detik yang lalu`;
+              recentFiles.push({ path: fpath, timeAgo });
+            }
+          } catch {}
+        } else {
+          files.push({ type: 'new', path: fpath });
+        }
+      }
+
+      Data.pendingUpdate[cht.sender] = {
+        urlPath,
+        exp: Date.now() + 120000,
+      };
+
+      let previewTpl = Data.infos.owner.updatePreview({ files, recentFiles });
+      return cht.question(
+        previewTpl.body,
+        {
+          emit: 'update',
+          accepts: ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel'],
+          Keys: {
+            y: 'y',
+            ya: 'y',
+            yes: 'y',
+            n: 'n',
+            no: 'n',
+            batal: 'n',
+            cancel: 'n',
+          },
+          exp: Date.now() + 120000,
+        },
+        { footer: previewTpl.footer }
+      );
     }
   );
 
@@ -1735,6 +1936,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let res = (await store.loadMessage(id, cht.quoted.stanzaId)).message;
       Data.response[args.toLowerCase()?.replace(/ /g, '')] = res;
       cht.reply(
@@ -1751,6 +1953,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       delete Data.response[args.toLowerCase()?.replace(/ /g, '')];
       cht.reply(`Success delete response "*${args}*"`);
     }
@@ -1764,6 +1967,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let res = Object.keys(Data.response || {});
       let t = 0;
       let tx = '*LIST RESPONSE*\n';
@@ -1790,6 +1994,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let { quoted, type } = ev.getMediaType();
       Data.setCmd[
         (quoted ? cht.quoted : cht)[type].fileSha256.toString().to('utf16le')
@@ -1811,6 +2016,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let { quoted, type } = ev.getMediaType();
       let cmd =
         Data.setCmd[
@@ -1838,6 +2044,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ urls }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       cfg.gcurl ??= [];
       let url = urls.map((a) => `- ${a}`).join('\n');
       if (cht.cmd == 'addlinkgc') {
@@ -1859,6 +2066,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       cfg.gcurl ??= [];
       let url =
         cfg.gcurl.length > 0
@@ -1880,6 +2088,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       },
     },
     async () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       try {
         await Exp.groupAcceptInvite(
           cht.q.split('/').slice(-1)?.[0]?.split('?')?.[0]
@@ -1899,6 +2108,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       isOwner: true,
     },
     async ({ args, urls }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       try {
         let y = [
           'y',
@@ -1999,6 +2209,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let tx = 'Mengecek semua nama group yang terdaftar...';
       await cht.reply(tx);
       let gc = Object.keys(preferences).filter((a) =>
@@ -2032,6 +2243,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args, cht }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let act = {
         y: `✅ Berhasil mereset semua *energy user* menjadi default (⚡${cfg.first.energy}).`,
         n: '❌ Ok gajadi, energi tidak direset.',
@@ -2076,6 +2288,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: 'Mau liat list user apa sayang? user premium, user afk atau user banned',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let now = Date.now();
       let mode = args.includes('afk')
         ? 'afk'
@@ -2195,6 +2408,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       args: 'Mau ambil code events apa?',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       let cmd = args.trim().toLowerCase();
       let event = Data.events[cmd];
       let didYouMean =
@@ -2236,6 +2450,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       await Exp.updateBlockStatus(cht.mention[0], cht.cmd);
       cht.reply(
         `Success mem${cht.cmd == 'block' ? '' : 'buka '}blokir user ${cht.mention[0].split('@')[0]}✅`
@@ -2251,6 +2466,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     () => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       const d = Data.ch_reaction || {};
 
       const text =
@@ -2366,6 +2582,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
       tag: 'owner',
     },
     async ({ args }) => {
+      if (is?.jadibot || Exp?.isJadibot) return cht.reply("🚫 Fitur ini hanya dapat diakses melalui Bot Utama!");
       function deepFind(o, key = 'contextInfo', max = 5) {
         if (!o || typeof o !== 'object' || !max) return null;
         if (o[key]) return o[key];
@@ -2415,6 +2632,26 @@ export default async function on({ cht, Exp, store, ev, is }) {
         },
         { quoted: current.message }
       );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['rdp'],
+      listmenu: ['rdp'],
+      isOwner: true,
+      tag: 'owner',
+    },
+    async ({ args }) => {
+      const { exec } = await 'child_process'.import();
+      const action = (args || '').trim().toLowerCase();
+      if (!['on', 'off', 'start', 'stop', 'status', 'detail'].includes(action)) {
+        return cht.reply(infos.owner.rdpHelp);
+      }
+      exec('/usr/local/bin/rdp ' + action, (err, stdout, stderr) => {
+        let res = (stdout || stderr || 'Done').trim();
+        cht.reply(res);
+      });
     }
   );
 }

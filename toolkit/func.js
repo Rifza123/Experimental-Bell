@@ -1126,24 +1126,51 @@ export class func {
       let outputPath = path.resolve(output);
       const tarFilePath = outputPath.replace(/\.gz$/, '');
 
-      const excludeArgs = [
-        "--exclude='node_modules'",
-        "--exclude='.git'",
-        "--exclude='.npm'",
-        "--exclude='connection/session/*'",
-        "--exclude='connection/session/**'",
-      ].join(' ');
+      const baseIgnored = [
+        'node_modules',
+        '.git',
+        '.npm',
+        '.config',
+        '.pm2',
+        'tmp',
+      ];
+      let excludes = baseIgnored.map((dir) => `--exclude='${dir}'`);
+      let credsToAppend = [];
 
-      const credsPath = path.join(
-        sourceFolder,
-        'connection',
-        'session',
-        'creds.json'
-      );
-      const relativeCreds = `${path.basename(sourceFolder)}/connection/session/creds.json`;
+      const connDir = path.join(sourceFolder, 'connection');
+      if (fs.existsSync(connDir)) {
+        try {
+          const connEntries = fs.readdirSync(connDir, { withFileTypes: true });
+          for (const entry of connEntries) {
+            if (entry.isDirectory()) {
+              const relSessionDir = path.posix.join('connection', entry.name);
+              excludes.push(`--exclude='${relSessionDir}/*'`);
+              excludes.push(`--exclude='${relSessionDir}/**'`);
 
-      const appendCreds = fs.existsSync(credsPath)
-        ? `&& tar --append -f ${tarFilePath} -C ${path.dirname(sourceFolder)} ${relativeCreds}`
+              const credsPath = path.join(
+                sourceFolder,
+                'connection',
+                entry.name,
+                'creds.json'
+              );
+              if (fs.existsSync(credsPath)) {
+                credsToAppend.push(
+                  `${path.basename(sourceFolder)}/connection/${entry.name}/creds.json`
+                );
+              }
+            }
+          }
+        } catch {}
+      }
+
+      const excludeArgs = excludes.join(' ');
+      const appendCreds = credsToAppend.length
+        ? credsToAppend
+            .map(
+              (relCreds) =>
+                `&& tar --append -f ${tarFilePath} -C ${path.dirname(sourceFolder)} ${relCreds}`
+            )
+            .join(' ')
         : '';
 
       const tarCmd = `

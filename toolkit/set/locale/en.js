@@ -347,12 +347,152 @@ Data.infos.group = {
     `Successfully ${cmd === 'on' ? 'enabled' : 'disabled'} *${input}* in this group!`,
 
   nallowPlayGame: `Playing games is not allowed here!\n_To allow it type *.on playgame* (only admin/owner can do this)_`,
+
+  absen: {
+    guide: `📋 *GROUP ATTENDANCE GUIDE*
+
+\`HOW TO START ATTENDANCE (ADMIN):\`
+• \`.absen start <Title> | <Duration> | <MentionAll>\`
+  > *Example:* \`.absen start Project Meeting | 30m | yes\`
+  > *Duration:* 15m, 30m, 1h, 2h (Default: 1h)
+  > *MentionAll:* \`yes\` or \`no\` (Default: \`yes\`)
+
+\`HOW TO FILL ATTENDANCE (MEMBER):\`
+• \`.absen <UPPERCASE_NAME>\`
+  > *Example:* \`.absen RIFZA\`
+  > *Note:* Name MUST be strictly in ALL UPPERCASE letters.
+
+\`HOW TO STOP ATTENDANCE (ADMIN):\`
+• \`.absen stop\` or \`.absen delete\`
+  > Stop attendance session and view final report.`,
+
+    alreadyActive: `⚠️ *ATTENDANCE SESSION ALREADY ACTIVE!*
+
+Attendance in this group is currently in progress.
+Type \`.absen stop\` to stop it first before creating a new one.`,
+
+    notActive: `⚠️ *NO ACTIVE ATTENDANCE!*
+
+There is no attendance session currently running in this group.
+Admin can start a new attendance by typing \`.absen start <Title>\`.`,
+
+    alreadySubmitted: `⚠️ *ALREADY SUBMITTED!*
+
+You are already registered in the attendance list for this session.`,
+
+    mustCapital: `⚠️ *INVALID NAME FORMAT!*
+
+Attendance name **MUST** be strictly in **ALL UPPERCASE LETTERS**.
+_Correct example:_ \`.absen RIFZA\`
+_Wrong example:_ \`.absen Rifza\` or \`.absen rifza\``,
+
+    onlyAdmin: `⚠️ *ACCESS DENIED!*
+
+This command can only be executed by **Group Admins**!`,
+
+    started: (data) => `\`${data.groupName}\`
+📌 *${data.title}*
+
+📅 *Date:* ${data.date}
+⏰ *Time:* ${data.time} WIB
+
+📝 *Attendees (Total: ${data.list.length}):*
+${data.listText || '_No one has checked in yet_'}
+
+⏳ *Duration:* ${data.durationText} (Ends at ${data.expireTimeStr} WIB)
+💡 *Type \`.absen <UPPERCASE_NAME>\` to check in*`,
+
+    updated: (data) => `\`${data.groupName}\`
+📌 *${data.title}*
+
+📅 *Date:* ${data.date}
+⏰ *Time:* ${data.time} WIB
+
+📝 *Attendees (Total: ${data.list.length}):*
+${data.listText}
+
+⏳ *Duration:* ${data.durationText} (Ends at ${data.expireTimeStr} WIB)
+💡 *Type \`.absen <UPPERCASE_NAME>\` to check in*`,
+
+    stopped: (data) => ({
+      body: `\`${data.groupName}\`
+📋 *ATTENDANCE REPORT*
+📌 *${data.title}*
+
+📝 *Attendees (Total: ${data.list.length}):*
+${data.listText || '_No one attended_'}
+
+❌ *Absent Members (Total: ${data.absentList.length}):*
+${data.absentText || '_All members attended_'}`,
+      footer: `Attendance session stopped.`
+    }),
+
+    autoStopped: (data) => ({
+      body: `\`${data.groupName}\`
+📋 *ATTENDANCE REPORT (TIME EXPIRED)*
+📌 *${data.title}*
+
+📝 *Attendees (Total: ${data.list.length}):*
+${data.listText || '_No one attended_'}
+
+❌ *Absent Members (Total: ${data.absentList.length}):*
+${data.absentText || '_All members attended_'}`,
+      footer: `Attendance time expired automatically.`
+    })
+  }
 };
 
 /*
   ====== Messages.js ======
 */
 Data.infos.messages = {
+  termaiApiError: (err, cmd = '') => {
+    const type = err?.type || 'API_ERROR';
+    const msg = err?.apiMsg || err?.message || 'An error occurred on the API system';
+    if (type === 'FEATURE_LIMIT') {
+      return (
+        '⚠️ *TERMAI API FEATURE LIMIT*\n\n' +
+        '• ' + msg + '\n' +
+        '> Please upgrade your plan or wait for your API Key to reset tomorrow.\n\n' +
+        '🛒 *Buy / Upgrade Key:* https://termai.cc#pricing'
+      );
+    }
+    if (type === 'KEY_LIMIT') {
+      return (
+        '⚠️ *API KEY LIMIT EXHAUSTED*\n\n' +
+        '• Your API Key usage quota has been exhausted / rate limit reached.\n' +
+        '> Please upgrade your plan or wait for your API Key to reset tomorrow.\n\n' +
+        '🛒 *Buy / Upgrade Key:* https://termai.cc#pricing\n' +
+        '🔑 *Set Key:* `.jadibot apikey <new_key>`'
+      );
+    }
+    if (type === 'EXPIRED') {
+      return (
+        '⚠️ *API KEY EXPIRED*\n\n' +
+        '• Your API Key expiration period has ended.\n' +
+        '> Please get a new API Key or upgrade your plan at https://termai.cc#pricing\n\n' +
+        '🔑 *Set Key:* `.jadibot apikey <new_key>`'
+      );
+    }
+    if (type === 'MAINTENANCE') {
+      return (
+        '🛠️ *FEATURE UNDER MAINTENANCE*\n\n' +
+        '• ' + msg + '\n\n' +
+        '💡 _Update info can be checked on our channel: https://whatsapp.com/channel/0029VaauxAt4Y9li9UtlCu1V_'
+      );
+    }
+    const status = err?.status || 500;
+    if (msg.includes('id not found') || msg.includes('session not found')) {
+      return 'ℹ️ AI chat history is empty or already cleared.';
+    }
+    if (status < 500) {
+      return 'ℹ️ ' + msg;
+    }
+    return (
+      '⚠️ *TERMAI API ERROR*\n\n' +
+      '• ' + msg
+    );
+  },
   // Default Message
   isGroup: 'Group only!',
   isAdmin: 'You are not an admin!',
@@ -460,13 +600,16 @@ Data.infos.others = {
   jadibotStartingBotNumberN: (original, botNumber, cht, ownerNumber) => `Starting bot for number ${botNumber} with owner ${ownerNumber}...`,
   jadibotErrorSessionTelahDireset: (e) => `An error occurred. Session has been reset.\n\nError: ${e}`,
 
+  videoPlayHint: '\n\n> Video cannot be played? Reply to this message with "y"',
+
   // Read More
   readMore: '͏'.repeat(3646),
 };
 
 Data.infos.jadibot = {
   menu: () =>
-    '🤖 *JADIBOT MANAGER*\n\n' +
+    '🤖 *JADIBOT MANAGER*\n' +
+    '> Cost to link a new bot: 1,500 energy\n\n' +
     '📱 *CONNECTION & MANAGEMENT*\n' +
     '• `.jadibot <number>`\n' +
     '> Link new sub-bot\n\n' +
@@ -662,7 +805,7 @@ Data.infos.jadibot = {
     '> Requesting new pairing code, all data & bot database remain safe...',
 
   restrictedNested:
-    '🚫 *ACCESS RESTRICTED*\n> Command to link new bot (`.jadibot <number>`) can only be performed from the *Main Bot* for server stability.',
+    '🚫 *ACCESS RESTRICTED*\n> Command to link or reconnect bot (`.jadibot`) can only be performed through the *Main Bot* for server stability.',
 
   pairingCode: (realNumber, code, expireDate, slot) =>
     '🔑 *JADIBOT PAIRING CODE*\n\n' +
@@ -751,9 +894,20 @@ Data.infos.owner = {
   listSetmenu: `\`List of available menu types:\`\n\n- <list>`,
   successSetMenu: `Successfully changed menu to <menu>`,
   audiolist: `Success added audio to list <list>✅️\n\nAudio: <url>\n> To see the list type *.getdata audio <list>*`,
-  menuLiveLocationInfo:
-    '_Menu liveLocation cannot be viewed in private chat. Please reconsider using this menu_',
   checkJson: `Please check your JSON Object again!\n\nTypeError:\n<rm>\n> <e>`,
+  updatePreview: ({ files, recentFiles }) => {
+    let listFiles = files.map((f) => `• \`${f.type}\`: ${f.path}`).join('\n');
+    let warning = recentFiles.length > 0
+      ? `\n\n⚠️ *WARNING:*\nThe following files were recently modified by you:\n${recentFiles.map((f) => `• ${f.path} (modified ${f.timeAgo})`).join('\n')}\n> Updating via this link will overwrite those changes!`
+      : '';
+    return {
+      body: `*[ 🛠️ ] PREVIEW UPDATE*\n\n📂 *List of Changes:*\n${listFiles}${warning}\n\nAre you sure you want to proceed with this update? (y/n)`,
+      footer: 'Type y to proceed or n to cancel',
+    };
+  },
+  updateCancelled: '❌ *Update cancelled.*',
+  updateExpired: '⏱️ *Update session has expired.*',
+  updateSuccess: 'Success ✅',
 
   // ------- Set Info -------
   set: `
@@ -790,6 +944,8 @@ Data.infos.owner = {
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
+- dadu <reply media>
+> Set custom media as dice for Snake & Ladder game. Reply media (sticker/image/video/audio) then type .set dadu. To remove: .set dadu off
 
 _Example: .set public on_`,
 
@@ -1034,6 +1190,16 @@ making replies feel more natural._`,
     '⟡ listuser afk\n\n' +
     'Example:\n' +
     '.listuser afk',
+  rdpHelp:
+    '🖥️ *RDP MANAGER*\n\n' +
+    '• .rdp on\n' +
+    '> Turn on RDP VPS service\n\n' +
+    '• .rdp off\n' +
+    '> Turn off RDP VPS service\n\n' +
+    '• .rdp status\n' +
+    '> Check active status of RDP\n\n' +
+    '• .rdp detail\n' +
+    '> Show host details and logs',
 };
 
 /*
@@ -1105,6 +1271,42 @@ _*React to target message with one of emojis above*_`,
   ====== Tools.js ======
 */
 Data.infos.tools = {
+  sitekey: {
+    result: (sitekey, details) => {
+      let text = `🔑 *SITEKEY FOUND*\n\n`;
+      text += `• *Sitekey:* ${sitekey}\n`;
+      text += `• *Source:* ${details.source}\n`;
+      text += `• *Method:* ${details.method === 1 ? 'HTTP Fetch' : 'Puppeteer Browser'}\n`;
+      text += `• *Puppeteer:* ${details.puppeteer_used ? 'Yes' : 'No'}\n`;
+      text += `• *Duration:* ${details.duration_ms}ms\n`;
+      if (details.found_in) text += `• *Found in:* ${details.found_in}\n`;
+      text += `\n📊 *HTTP Scan*\n`;
+      text += `• Fetched: ${details.http_scan?.performed ? 'Yes' : 'No'}\n`;
+      if (details.http_scan?.status_code) text += `• Status: ${details.http_scan.status_code}\n`;
+      if (details.http_scan?.html_length) text += `• HTML Length: ${details.http_scan.html_length.toLocaleString()} chars\n`;
+      if (details.http_scan?.patterns_checked?.length) text += `• Patterns Checked: ${details.http_scan.patterns_checked.join(', ')}\n`;
+      if (details.http_scan?.external_scripts_found) text += `• External Scripts: ${details.http_scan.external_scripts_scanned}/${details.http_scan.external_scripts_found} scanned\n`;
+      if (details.browser_scan) {
+        text += `\n🌐 *Browser Scan*\n`;
+        text += `• Network Requests: ${details.browser_scan.network_requests_intercepted}\n`;
+        text += `• DOM Scanned: ${details.browser_scan.dom_scanned ? 'Yes' : 'No'}\n`;
+        text += `• Iframes Checked: ${details.browser_scan.iframes_checked ? 'Yes' : 'No'}\n`;
+        if (details.browser_scan.dynamic_scripts_found) text += `• Dynamic Scripts: ${details.browser_scan.dynamic_scripts_scanned}/${details.browser_scan.dynamic_scripts_found} scanned\n`;
+      }
+      return text;
+    },
+    notFound: (details) => {
+      let text = `❌ *SITEKEY NOT FOUND*\n\nFailed to find Turnstile Sitekey on the target website.\n`;
+      text += `\n• *Duration:* ${details.duration_ms}ms\n`;
+      text += `• *Puppeteer:* ${details.puppeteer_used ? 'Yes' : 'No'}\n`;
+      if (details.http_scan?.status_code) text += `• *HTTP Status:* ${details.http_scan.status_code}\n`;
+      if (details.http_scan?.external_scripts_found) text += `• *Scripts Scanned:* ${details.http_scan.external_scripts_scanned}/${details.http_scan.external_scripts_found}\n`;
+      if (details.http_scan?.error) text += `• *HTTP Error:* ${details.http_scan.error}\n`;
+      if (details.browser_scan?.error) text += `• *Browser Error:* ${details.browser_scan.error}\n`;
+      return text;
+    },
+    busy: 'ᤡ *SERVER BUSY*\n\nServer is currently busy handling browser requests. Please try again in a few seconds.',
+  },
   enhance: `
 *PLEASE CHOOSE AVAILABLE TYPE!*
 ▪︎ Photo style
@@ -1170,6 +1372,28 @@ _*You can use .hint to get answer hint*_
   timeUp: (answer) => `*TIME'S UP*
 
 Answer: ${answer}`,
+
+  ulartanggaInvite: (p1, targets) => `🐍 *SNAKES & LADDERS INVITATION* 🐍\n\n@${p1} invited: ${targets.map(a => '@' + a).join(', ')}\n\n📜 *GAME COMMANDS:*\n• *.ut join* / *join*\n> Join the lobby\n• *.ut cancel* / *cancel*\n> Cancel lobby\n• *.ut start*\n> Start game (Min 2 players)\n• *🎲* / *.dadu* / *dice media*\n> Roll the dice (on your turn)\n• *.ut*\n> Check game status & turn\n• *.delsesiut*\n> Delete / stop game session (Creator / Admin)`,
+  ulartanggaJoined: (player, count) => `@${player} joined the game! (${count}/4 players)\n\n• Type *.ut start* to start the game.\n• Type *.delsesiut* to delete/stop session.`,
+  ulartanggaFull: 'Snakes & Ladders game room is full! (Max 4 players)',
+  ulartanggaMinPlayers: 'At least 2 players are required to start the game!',
+  ulartanggaHasSession: 'There is still an active game session here!\n\n• Type *.ut* to check game status.\n• Type *.delsesiut* to stop the game.',
+  ulartanggaOnlyGroup: 'This feature can only be used in groups!',
+  ulartanggaTagTarget: 'Tag people to invite or type .ulartangga to open a lobby!',
+  ulartanggaNoSelf: 'You cannot invite yourself!',
+  ulartanggaDeclined: 'Game cancelled!',
+  ulartanggaDaduMediaNotice: (players, isSticker) => `🎲 *GAME DICE MEDIA*\n\nHello ${players.map(p => '@' + p).join(' ')}! ${isSticker ? 'Save the dice sticker below first!' : 'Save the dice media below first!'}\nOn your turn, you can roll the dice by:\n• Sending this dice media directly in the group\n• Or replying to the game board message with dice emoji (🎲)\n• Or sending 🎲 emoji directly in the group`,
+  ulartanggaStart: (p1, dadu) => `*[ Snakes and Ladders 🐍 ]*\n\nGame started!\nFirst turn: @${p1}\n\n• Send dice media or reply to this message with dice emoji (🎲)\n\n> ℹ️ Type *.delsesiut* to stop/delete game.`,
+  ulartanggaNextTurn: (currPlayer, nextPlayer, statusNotice, rollMsg) => `${rollMsg}${statusNotice}\n\n*[ Snakes and Ladders 🐍 ]*\n\nNext turn: @${nextPlayer}\n\n• Send dice media or reply to this message with dice emoji (🎲)\n\n> ℹ️ Type *.delsesiut* to stop game`,
+  ulartanggaRoll: (player, num) => `@${player} rolled a ${num} on dice 🎲`,
+  ulartanggaTurn: (player) => `Wait for @${player}'s turn!\n\n• Send dice media or reply to the turn message with dice emoji (🎲)`,
+  ulartanggaLadder: (player, diff) => `@${player} Climbed a ladder 🪜\n+${diff}`,
+  ulartanggaSnake: (player, diff) => `@${player} Oh no, bitten by a snake 🐍 :(\n-${diff}`,
+  ulartanggaWin: (player, limit) => `🎉 *SNAKES & LADDERS WINNER* 🎉\n\nCongratulations @${player}!\nYou reached the finish line first! 🏆\nReceived : ${limit} Energy⚡`,
+  ulartanggaTimeoutWin: (player, pos, limit) => `⏱️ *TIME'S UP (10 MINUTES)* ⏱️\n\nNo game activity for 10 minutes.\nThe game has ended and the player with the furthest position wins!\n\n🏆 *Winner:* @${player} (Tile ${pos})\n🎁 *Reward:* +${limit} Energy⚡`,
+  ulartanggaTimeoutLobby: '⏱️ *Snakes & Ladders lobby cancelled automatically due to 10 minutes of inactivity.*',
+  ulartanggaNoSession: 'No active snakes and ladders game in this group!\nType *.ut* or *.ut @tag* to create a new game.',
+  ulartanggaDeleted: 'Snakes and ladders session successfully deleted!',
 };
 
 /*

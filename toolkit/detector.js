@@ -919,6 +919,58 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     }
   }
 
+  async function cekAbsen() {
+    try {
+      const now = Date.now();
+      const prefs = Data.preferences || {};
+      for (const id of Object.keys(prefs)) {
+        const d = prefs[id]?.absen;
+        if (!d || !d.expiredTime) continue;
+
+        if (now >= d.expiredTime) {
+          let metadata = await func.getGroupMetadata(id).catch(() => null);
+          let participants = metadata?.participants || [];
+          let presentJids = new Set((d.list || []).map(x => x.jid));
+          let absentList = participants.filter(p => !presentJids.has(p.id));
+
+          let listText = (d.list || []).map((item, idx) => {
+            let num = item.jid.split('@')[0];
+            return `${idx + 1}. ${item.name} (@${num}) - ${item.time}`;
+          }).join('\n');
+
+          let absentText = absentList.map((item, idx) => {
+            let num = item.id.split('@')[0];
+            return `${idx + 1}. @${num}`;
+          }).join('\n');
+
+          let tplData = {
+            groupName: d.groupName || 'GROUP',
+            title: d.title || 'Absen Anggota Group',
+            list: d.list || [],
+            listText,
+            absentList,
+            absentText
+          };
+
+          let localeAbsen = Data.infos?.group?.absen || {};
+          let tpl = localeAbsen.autoStopped ? localeAbsen.autoStopped(tplData) : null;
+          let mentions = [...(d.list || []).map(x => x.jid), ...absentList.map(x => x.id)];
+
+          if (tpl) {
+            await Exp.sendMessage(id, {
+              text: typeof tpl === 'string' ? tpl : tpl.body,
+              ...(typeof tpl === 'object' && tpl.footer ? { footer: tpl.footer } : {}),
+              mentions
+            }).catch(() => null);
+          }
+          delete prefs[id].absen;
+        }
+      }
+    } catch (e) {
+      console.error('Error in detector.js > cekAbsen:', e);
+    }
+  }
+
   let jdwl = {};
   Object.entries(Data.preferences)
     .filter(([a, b]) => a.endsWith(from.group) && b.jadwalsholat)
@@ -952,6 +1004,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     await safeExec(autoBackup);
     await safeExec(schedule);
     await safeExec(executeSchedules);
+    await safeExec(cekAbsen);
     await safeExec(() => cfg.keyChecker && keyChecker(), 'keyChecker');
 
     await safeExec(() => livechartNotifier(), 'livechartNotifier');

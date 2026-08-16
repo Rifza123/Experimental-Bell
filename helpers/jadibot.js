@@ -146,6 +146,16 @@ setInterval(() => {
 }, 10 * 60 * 1000)
 
 async function jadibot({ Exp, cht, id, botNumber, pairing = false, useQr = false, expired = 0, userSender = null }) {
+  if (Exp?.isJadibot) {
+    console.log(`[JADIBOT] Blocked nested jadibot request on sub-bot (${Exp.jadibotNumber || 'sub-bot'})`)
+    try {
+      if (cht && cht.reply) {
+        await cht.reply(Data.infos.jadibot.restrictedNested)
+      }
+    } catch {}
+    return null
+  }
+
   let cleanupTimer = null
   let countdownInterval = null
   let slot = null
@@ -445,9 +455,9 @@ async function jadibot({ Exp, cht, id, botNumber, pairing = false, useQr = false
         if (!_Exp._energyDeducted && userSender) {
           _Exp._energyDeducted = true;
           try {
-            const res = defaultFunc.archiveMemories.reduceEnergy(userSender, 200);
+            const res = defaultFunc.archiveMemories.reduceEnergy(userSender, 1500);
             const newEnergy = res?.energy ?? 0;
-            _Exp._energyInfo = { deducted: 200, remaining: newEnergy };
+            _Exp._energyInfo = { deducted: 1500, remaining: newEnergy };
           } catch (e) {
             console.error('[JADIBOT] Energy deduction error:', e);
           }
@@ -595,7 +605,8 @@ export function listAllJadibots() {
   Data.jadibot ??= {}
   return Object.keys(Data.jadibot).map(slot => {
     const info = Data.jadibot[slot]
-    const isOnline = !!Data.jadibotSocket?.[info.botNumber]
+    const sock = Data.jadibotSocket?.[info.botNumber]
+    const isOnline = info.status === 'online' && !!sock && sock?.ws?.readyState !== 3 && sock?.ws?.readyState !== 2
     
     let expiredText = 'Unlimited ∞'
     let isExpired = false
@@ -611,7 +622,7 @@ export function listAllJadibots() {
     
     let statusText = info.status === 'logged_out' ? '🟠 Logged Out (.jadibot relink)' : '🔴 Offline'
     if (isOnline) {
-      statusText = info.status === 'connecting' ? '🟡 Connecting...' : '🟢 Online'
+      statusText = '🟢 Online'
     } else if (info.status === 'connecting') {
       statusText = '🟡 Connecting...'
     }
@@ -626,6 +637,7 @@ export function listAllJadibots() {
       slot: Number(slot),
       botNumber: info.botNumber,
       owner: info.owner,
+      owners: info.owners || [info.owner],
       expired: info.expired || 0,
       expiredText,
       isExpired,
@@ -650,7 +662,8 @@ export function getJadibotStatus(ownerNum) {
   }
   
   const info = Data.jadibot[slot]
-  const isOnline = !!Data.jadibotSocket?.[info.botNumber]
+  const sock = Data.jadibotSocket?.[info.botNumber]
+  const isOnline = info.status === 'online' && !!sock && sock?.ws?.readyState !== 3 && sock?.ws?.readyState !== 2
   
   let expiredText = 'Unlimited ∞'
   let isExpired = false
@@ -666,7 +679,7 @@ export function getJadibotStatus(ownerNum) {
   
   let statusText = info.status === 'logged_out' ? '🟠 Logged Out (.jadibot relink)' : '🔴 Offline'
   if (isOnline) {
-    statusText = info.status === 'connecting' ? '🟡 Connecting...' : '🟢 Online'
+    statusText = '🟢 Online'
   } else if (info.status === 'connecting') {
     statusText = '🟡 Connecting...'
   }
@@ -682,6 +695,7 @@ export function getJadibotStatus(ownerNum) {
     slot,
     botNumber: info.botNumber,
     owner: info.owner,
+    owners: info.owners || [info.owner],
     expired: info.expired || 0,
     expiredText,
     isExpired,

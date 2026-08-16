@@ -67,7 +67,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
                   : head,
             },
             footer: {
-              text: '',
+              text: '© Supported by termai.cc',
             },
             nativeFlowMessage: {
               buttons: [
@@ -108,16 +108,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
         Exp.relayMessage(cht.id, _m, {});
       } else if (cfg?.menu_type == 'text') {
         menu.text = text;
+        menu.footer = '© Supported by termai.cc';
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'image') {
         menu.image = fs.readFileSync(fol[3] + 'bell.jpg');
         menu.caption = text;
+        menu.footer = '© Supported by termai.cc';
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'video') {
         menu.video = {
           url: cfg.menu.video || 'https://c.termai.cc/v86/J剗K尿fY',
         };
         menu.caption = text;
+        menu.footer = '© Supported by termai.cc';
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'liveLocation') {
         await Exp.relayMessage(
@@ -233,29 +236,27 @@ export default async function on({ cht, Exp, store, ev, is }) {
           {}
         );
       } else {
+        const rawBuf = fs.readFileSync(fol[3] + 'bell.jpg');
+        const { prepareWAMessageMedia } = await import('@whiskeysockets/baileys/lib/Utils/messages.js');
+        const { imageMessage } = await prepareWAMessageMedia(
+          { image: rawBuf },
+          { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+        );
+
         menu = {
-          text,
-          contextInfo: {
-            externalAdReply: {
-              title: cht.pushName,
-              body: 'Artificial Intelligence, The beginning of the robot era',
-              thumbnail: fs.readFileSync(fol[3] + 'bell.jpg'),
-              sourceUrl: 'https://github.com/Rifza123',
-              mediaUrl: `http://ẉa.me/6283110928302/${Math.floor(Math.random() * 100000000000000000)}`,
-              renderLargerThumbnail: true,
-
-              mediaType: 1,
-
-              sourceId: 'IMAGE',
-              sourceUrl: 'https://instagram.com/rifza.p.p',
-            },
-            forwardingScore: 19,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: cfg.chId || {
-              newsletterJid: '120363205560908891@newsletter',
-              newslettedName: 'Termai',
-              serverMessageId: 152,
-            },
+          text: `https://termai.cc\n` + text,
+          linkPreview: {
+            'matched-text': 'https://termai.cc',
+            title: cht.pushName,
+            description: 'Artificial Intelligence, The beginning of the robot era',
+            jpegThumbnail: imageMessage?.jpegThumbnail ? Buffer.from(imageMessage.jpegThumbnail) : undefined,
+            highQualityThumbnail: imageMessage
+              ? {
+                  ...imageMessage,
+                  width: 1280,
+                  height: 720,
+                }
+              : undefined,
           },
         };
         await Exp.sendMessage(id, menu, { quoted: cht });
@@ -503,11 +504,11 @@ ${infos.others.readMore}
     async () => {
       try {
         let userEnergy = cht.memories.energy || 0;
-        if (userEnergy < 200) {
+        if (userEnergy < 1500) {
           return cht.reply(
             Data.infos.messages.isEnergy({
               uEnergy: userEnergy,
-              energy: 200,
+              energy: 1500,
               charging: cht.memories.charging,
             })
           );
@@ -624,8 +625,11 @@ ${infos.others.readMore}
         if (action === "list" || action === "daftar") {
           await checkExpiredJadibots();
           let bots = listAllJadibots();
+          if (!is.owner) {
+            bots = bots.filter(b => String(b.owner).replace(/[^0-9]/g, '') === senderNum || (b.owners || []).map(o => String(o).replace(/[^0-9]/g, '')).includes(senderNum));
+          }
           if (!bots || bots.length === 0) {
-            return cht.reply(jdbLang.listEmpty);
+            return cht.reply(!is.owner ? jdbLang.notFound(null, false) : jdbLang.listEmpty);
           }
           let text = jdbLang.listHeader(bots.length);
           for (let b of bots) {
@@ -789,6 +793,9 @@ ${infos.others.readMore}
         }
 
         if (action === "relink" || action === "tautulang" || action.startsWith("relink ") || action.startsWith("tautulang ")) {
+          if (Exp?.isJadibot || is?.jadibot) {
+            return cht.reply(jdbLang.restrictedNested);
+          }
           let isQrMode = action.endsWith(" qr") || action.includes(" qr") || cht.q.toLowerCase().includes("qr");
           let cleanQ = action.replace(/relink/gi, "").replace(/tautulang/gi, "").replace(/qr/gi, "").trim();
           let targetSlot = resolveJadibotSlot(cleanQ, senderNum);
@@ -834,10 +841,13 @@ ${infos.others.readMore}
         }
 
         if (!cht.q) {
+          if (Exp?.isJadibot || is?.jadibot) {
+            return cht.reply(jdbLang.restrictedNested);
+          }
           return cht.reply(jdbLang.menu(botName));
         }
 
-        if (is?.jadibot) {
+        if (Exp?.isJadibot || is?.jadibot) {
           return cht.reply(jdbLang.restrictedNested);
         }
 
