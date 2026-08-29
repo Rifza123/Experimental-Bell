@@ -135,9 +135,11 @@ export default async function detector({ Exp, store }) {
   );
 
   /*!-======[ Locale Update detector ]======-!*/
-  setupWatcher(path.resolve(fol[9], '**/*.js'), 500, async (filePath) => {
-    await filePath.r();
-    console.log(chalk.yellow(`Locale file reloaded: ${filePath}`));
+  setupWatcher(path.resolve(fol[9], '**/*.js'), 500, async () => {
+    await (fol[9] + (global.locale || 'id') + '.js').r();
+    console.log(
+      chalk.yellow(`Locale file reloaded: ${fol[9]}${global.locale || 'id'}.js`)
+    );
   });
 
   /*!-======[ Toolkit Update detector ]======-!*/
@@ -242,6 +244,7 @@ export default async function detector({ Exp, store }) {
   }
 
   async function schedule() {
+    if (!Exp?.user || !Exp?.authState?.creds?.me) return;
     let chatDb = Object.entries(Data.preferences).filter(
       ([a, b]) => a.endsWith(from.group) && b.schedules?.length > 0
     );
@@ -294,6 +297,7 @@ export default async function detector({ Exp, store }) {
     }
   }
   async function sholat() {
+    if (!Exp?.user || !Exp?.authState?.creds?.me) return;
     let chatDb = Object.entries(Data.preferences).filter(
       ([a, b]) => a.endsWith(from.group) && b.jadwalsholat
     );
@@ -550,6 +554,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
     }
   }
   async function executeSchedules() {
+    if (!Exp?.user || !Exp?.authState?.creds?.me) return;
     const now = new Date();
     const { formatDateTimeParts } = Exp.func;
 
@@ -798,7 +803,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
   async function autoBackup() {
     try {
-      if (!cfg?.autoBackup) return;
+      if (!cfg?.autoBackup || !Exp?.user || !Exp?.authState?.creds?.me) return;
 
       const now = new Date(
         new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })
@@ -826,9 +831,11 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
           `• *File name* : ${fileName}\n` +
           `• *File size* : ${fileSize}\n` +
           `• *Status* : ✅Suksess`;
-        for (let i of owner) {
+        const targetOwners = [
+          ...new Set(owner.map((i) => String(i).split('@')[0] + from.sender)),
+        ];
+        for (let own of targetOwners) {
           try {
-            let own = String(i).split('@')[0] + from.sender;
             await Exp.sendMessage(own, {
               document: { url: b },
               mimetype: 'application/zip',
@@ -837,12 +844,12 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
             });
             await sleep(5000);
           } catch (e) {
-            console.warn(`Cannot send backupnya file to: ${i}`, e);
+            console.warn(`Cannot send backupnya file to: ${own}`, e);
             continue;
           }
         }
 
-        fs.unlinkSync(b);
+        if (fs.existsSync(b)) fs.unlinkSync(b);
         console.log(
           chalk.cyan(
             `[ AUTO BACKUP ] sukses mengirim backup (${fileName}, ${fileSize})`
@@ -851,18 +858,12 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
       }
     } catch (e) {
       console.error('Error auto backup:', e);
-      const text =
-        '乂  *A U T O  B A C K U P*\n\n' + `*Error*:\n` + `- ${e.message}`;
-
-      await Exp.sendMessage(own, {
-        text,
-      });
-      throw new Error(e);
     }
   }
 
   async function cekSewa() {
     try {
+      if (!Exp?.user || !Exp?.authState?.creds?.me) return;
       const now = Date.now();
       const ONE_DAY = 24 * 60 * 60 * 1000;
 
@@ -921,6 +922,7 @@ Semoga puasa kita diterima Allah dan diberikan kekuatan serta kelancaran sepanja
 
   async function cekAbsen() {
     try {
+      if (!Exp?.user || !Exp?.authState?.creds?.me) return;
       const now = Date.now();
       const prefs = Data.preferences || {};
       for (const id of Object.keys(prefs)) {

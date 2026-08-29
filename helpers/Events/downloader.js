@@ -140,10 +140,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await cht.edit(infos.messages.sending, _key);
       let type = data.type;
       if (!isAudio && type == 'image') {
-        for (let image of data.media) {
+        if (data.media.length > 1) {
           await Exp.sendMessage(
             id,
-            { image: { url: image.url } },
+            {
+              album: data.media.map((image) => ({
+                image: { url: image.url },
+              })),
+            },
+            { quoted: cht }
+          );
+        } else if (data.media.length === 1) {
+          await Exp.sendMessage(
+            id,
+            { image: { url: data.media[0].url } },
             { quoted: cht }
           );
         }
@@ -227,7 +237,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await cht.edit(infos.messages.sending, _key);
       await Exp.sendMessage(
         id,
-        { audio: { url: data.downloadUrl }, mimetype: 'audio/mpeg' },
+        {
+          audio: { url: data.downloadUrl },
+          mimetype: 'audio/mpeg',
+          ...(cht.reaction ? { ptt: true } : {}),
+        },
         { quoted: cht.reaction || cht }
       );
     }
@@ -289,13 +303,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
       await cht.edit(infos.messages.sending, _key);
       let type = data.type;
       if (type == 'image') {
-        for (let image of data.images) {
+        if (data.images.length > 1) {
           await Exp.sendMessage(
             id,
             {
-              image: { url: image.url },
-              // caption: image.width + 'x' + image.height,
+              album: data.images.map((image) => ({
+                image: { url: image.url },
+              })),
             },
+            { quoted: cht.reaction || cht }
+          );
+        } else if (data.images.length === 1) {
+          await Exp.sendMessage(
+            id,
+            { image: { url: data.images[0].url } },
             { quoted: cht.reaction || cht }
           );
         }
@@ -320,8 +341,10 @@ export default async function on({ cht, Exp, store, ev, is }) {
         'dlvlink',
         'yts',
         'ytsearch',
+        'youtube',
+        'yt',
       ],
-      listmenu: ['ytmp3', 'ytm4a', 'play', 'ytmp4'],
+      listmenu: ['ytmp3', 'ytm4a', 'play', 'playvn', 'ytmp4', 'ytsearch'],
       tag: 'downloader',
       badword: true,
       args: 'Harap sertakan url/judul videonya!',
@@ -330,7 +353,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
     async ({ args, urls }) => {
       const _key = keys[sender];
       let isDl = cht.cmd == 'dlvlink';
-      let isYts = ['yts', 'ytsearch', 'play'].includes(cht.cmd);
+      let isYts = ['yts', 'ytsearch', 'youtube', 'yt'].includes(cht.cmd);
       let q = urls?.[0] || args || null;
       let [dlink, json] = args.split('|||||');
       let item = json ? JSON.parse(json) : {};
@@ -345,74 +368,89 @@ export default async function on({ cht, Exp, store, ev, is }) {
           ).data;
           item = search?.items?.[0];
           if (!item) return cht.reply('Hasil pencarian tidak ditemukan!');
-          if (cfg.button && isYts) {
-            let imageMessage = await func.uploadToServer(item.thumbnail);
-            let paramJson = {
-              title: `🔎Click and see all search results➡️`,
-              has_multiple_buttons: true,
-              sections: search.items.map((v, i) => ({
-                title: `#${i + 1}. ${v.title}`,
-                highlight_label: `${v.duration}`,
-                rows: [
-                  {
-                    title: 'Download Audio/M4A 🎵',
-                    description: 'Audio Biasa',
-                    id: `.ytm4a ${v.url}`,
-                  },
-                  {
-                    title: 'Download Audio/WAV 🎙️',
-                    description: 'Voice Note',
-                    id: `.playvn ${v.url}`,
-                  },
-                  {
-                    title: 'Download Video/MP4 📹',
-                    description: 'Video',
-                    id: `.ytmp4 ${v.url}`,
-                  },
-                  {
-                    title: 'Download Audio/MP3 💽',
-                    description: 'Audio MP3 (dalam bentuk dokumen)',
-                    id: `.ytmp3 ${v.url}`,
-                  },
-                ],
-              })),
-            };
-
-            let _m = {
-              interactiveMessage: {
-                header: {
-                  title: '',
-                  imageMessage,
-                  hasMediaAttachment: true,
-                },
-                body: {
-                  text: `🔍 YouTube Search\n${item.title}`.font('bold'),
-                },
-
-                footer: {
-                  text: `👤 Channel: ${item.author?.name}\n⏱ Duration: ${item.duration}\n📅 Rilis: ${item.publishedAt}\n👁️ Views: ${item.viewCount.toLocaleString()}\n🔗 ${item.url}`,
-                },
-                nativeFlowMessage: {
-                  buttons: [
+          if (isYts) {
+            if (cfg.button) {
+              let imageMessage = await func.uploadToServer(item.thumbnail);
+              let paramJson = {
+                title: `🔎Click and see all search results➡️`,
+                has_multiple_buttons: true,
+                sections: search.items.map((v, i) => ({
+                  title: `#${i + 1}. ${v.title}`,
+                  highlight_label: `${v.duration}`,
+                  rows: [
                     {
-                      name: 'single_select',
-                      buttonParamsJson: '{"has_multiple_buttons":true}',
+                      title: 'Download Audio/M4A 🎵',
+                      description: 'Audio Biasa',
+                      id: `.ytm4a ${v.url}`,
                     },
                     {
-                      name: 'single_select',
-                      buttonParamsJson: paramJson.String(),
+                      title: 'Download Audio/WAV 🎙️',
+                      description: 'Voice Note',
+                      id: `.playvn ${v.url}`,
+                    },
+                    {
+                      title: 'Download Video/MP4 📹',
+                      description: 'Video',
+                      id: `.ytmp4 ${v.url}`,
+                    },
+                    {
+                      title: 'Download Audio/MP3 💽',
+                      description: 'Audio MP3 (dalam bentuk dokumen)',
+                      id: `.ytmp3 ${v.url}`,
                     },
                   ],
-                },
-                contextInfo: {
-                  stanzaId: cht.key.id,
-                  participant: cht.key.participant,
-                  quotedMessage: cht,
-                },
-              },
-            };
+                })),
+              };
 
-            return Exp.relayMessage(cht.id, _m, {});
+              let _m = {
+                interactiveMessage: {
+                  header: {
+                    title: '',
+                    imageMessage,
+                    hasMediaAttachment: true,
+                  },
+                  body: {
+                    text: `🔍 YouTube Search\n${item.title}`.font('bold'),
+                  },
+
+                  footer: {
+                    text: `👤 Channel: ${item.author?.name}\n⏱ Duration: ${item.duration}\n📅 Rilis: ${item.publishedAt}\n👁️ Views: ${item.viewCount.toLocaleString()}\n🔗 ${item.url}`,
+                  },
+                  nativeFlowMessage: {
+                    buttons: [
+                      {
+                        name: 'single_select',
+                        buttonParamsJson: '{"has_multiple_buttons":true}',
+                      },
+                      {
+                        name: 'single_select',
+                        buttonParamsJson: paramJson.String(),
+                      },
+                    ],
+                  },
+                  contextInfo: {
+                    stanzaId: cht.key.id,
+                    participant: cht.key.participant,
+                    quotedMessage: cht,
+                  },
+                },
+              };
+
+              return Exp.relayMessage(cht.id, _m, {});
+            }
+
+            let text = `*🔍 YOUTUBE SEARCH*\n\n`;
+            for (let [i, v] of search.items.slice(0, 10).entries()) {
+              text += `*${i + 1}. ${v.title}*\n`;
+              text += `• Durasi: ${v.duration}\n`;
+              text += `• Channel: ${v.author?.name || '-'}\n`;
+              text += `• Link: ${v.url}\n\n`;
+            }
+            if (_key) {
+              return cht.edit(text.trim(), _key);
+            } else {
+              return cht.reply(text.trim());
+            }
           }
         }
         let data = (
@@ -430,16 +468,20 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if (cfg.button && !isDl && cht.cmd == 'ytmp4') {
           let downloads = data?.downloads || [];
           let imageMessage = await func.uploadToServer(data.thumb);
-          let videoDownloads = downloads.filter((v) => v && (v.hasVideo || v.ext === 'mp4'));
+          let videoDownloads = downloads.filter(
+            (v) => v && (v.hasVideo || v.ext === 'mp4')
+          );
           let paramJson = {
             title: `📥 Pilih format download`,
             has_multiple_buttons: true,
             sections: [
               {
                 title: `🎬 Video (MP4)`,
-                rows: (videoDownloads.length > 0 ? videoDownloads : downloads).map((v) => ({
-                  title:
-                    `${v.resolution} ${v.ext.toUpperCase()} 🔊`.trim(),
+                rows: (videoDownloads.length > 0
+                  ? videoDownloads
+                  : downloads
+                ).map((v) => ({
+                  title: `${v.resolution} ${v.ext.toUpperCase()} 🔊`.trim(),
                   description: `ITag: ${v.format_id} • FPS: ${v.fps || 30} • ${v.note || ''}`,
                   id: `.dlvlink ${v.dlink}|||||${JSON.stringify(item)}`,
                 })),
@@ -501,6 +543,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
         let converted = saved;
         console.log(converted);
+        let isVn = cht.cmd.includes('vn') || Boolean(cht.reaction);
         let audio = {
           [cht.cmd === 'ytmp4' || isDl
             ? 'video'
@@ -517,28 +560,44 @@ export default async function on({ cht, Exp, store, ev, is }) {
                 : 'audio/mpeg',
           fileName:
             (item.title || 'video') +
-            (cht.cmd === 'ytmp4' || cht.cmd == 'dlvlink' ? '.mp4' : '.mp3'),
-          caption: (cht.cmd === 'ytmp4' || isDl)
-            ? (item.title ? item.title + '\n\n' : '') + '> Video tidak dapat diputar? Reply pesan ini dengan ketik "y" atau .fixvideo'
-            : undefined,
-          contextInfo: (cht.cmd === 'ytmp4' || isDl) ? {
-            externalAdReply: {
-              title: 'Title: ' + (item.title || 'YouTube'),
-              body: 'Channel: ' + (item.creator || item.author?.name || 'YouTube'),
-              thumbnailUrl: item.thumbnail,
-              sourceUrl: item.url,
-              mediaUrl:
-                'http://ẉa.me/6283110928302?text=Idmsg: ' +
-                Math.floor(Math.random() * 100000000000000000),
-              renderLargerThumbnail: false,
-              showAdAttribution: true,
-              mediaType: 2,
-            },
-          } : undefined,
+            (cht.cmd === 'ytmp4' || cht.cmd == 'dlvlink'
+              ? '.mp4'
+              : isVn
+                ? '.opus'
+                : cht.cmd === 'ytmp3'
+                  ? '.mp3'
+                  : '.m4a'),
+          ...(isVn ? { ptt: true } : {}),
+          caption:
+            cht.cmd === 'ytmp4' || isDl
+              ? (item.title ? item.title + '\n\n' : '') +
+                '> Video tidak dapat diputar? Reply pesan ini dengan ketik "y" atau .fixvideo'
+              : undefined,
+          contextInfo:
+            cht.cmd === 'ytmp4' || isDl
+              ? {
+                  externalAdReply: {
+                    title: 'Title: ' + (item.title || 'YouTube'),
+                    body:
+                      'Channel: ' +
+                      (item.creator || item.author?.name || 'YouTube'),
+                    thumbnailUrl: item.thumbnail,
+                    sourceUrl: item.url,
+                    mediaUrl:
+                      'http://ẉa.me/6283110928302?text=Idmsg: ' +
+                      Math.floor(Math.random() * 100000000000000000),
+                    renderLargerThumbnail: false,
+                    showAdAttribution: true,
+                    mediaType: 2,
+                  },
+                }
+              : undefined,
         };
         console.log(audio);
         await cht.edit('Sending...', _key);
-        let sentMsg = await Exp.sendMessage(cht.id, audio, { quoted: cht.reaction || cht });
+        let sentMsg = await Exp.sendMessage(cht.id, audio, {
+          quoted: cht.reaction || cht,
+        });
         if ((cht.cmd === 'ytmp4' || isDl) && sentMsg?.key?.id) {
           let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
           qCmds[sentMsg.key.id] = {
@@ -646,11 +705,23 @@ export default async function on({ cht, Exp, store, ev, is }) {
       };
       await Exp.sendMessage(id, info, { quoted: cht.reaction || cht });
       let { content } = f;
-      for (let i of content) {
+      if (content.length > 1) {
         try {
           await Exp.sendMessage(
             id,
-            { [i.type]: { url: i.url } },
+            {
+              album: content.map((i) => ({ [i.type]: { url: i.url } })),
+            },
+            { quoted: cht.reaction || cht }
+          );
+        } catch (e) {
+          console.log(e);
+        }
+      } else if (content.length === 1) {
+        try {
+          await Exp.sendMessage(
+            id,
+            { [content[0].type]: { url: content[0].url } },
             { quoted: cht.reaction || cht }
           );
         } catch (e) {

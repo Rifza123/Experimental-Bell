@@ -137,19 +137,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
         if (!query) return cht.reply('Mau cari sticker apa?');
         let res = await fetch(
           `${api.xterm.url}/api/search/pinterest-image?query=${encodeURIComponent(query)}&key=${encodeURIComponent(api.xterm.key)}`
-        ).then((a) => a.json()).catch(() => null);
+        )
+          .then((a) => a.json())
+          .catch(() => null);
         let data = res?.data;
-        if (!data || !Array.isArray(data) || data.length < 1) return cht.reply('Sticker tidak ditemukan!');
+        if (!data || !Array.isArray(data) || data.length < 1)
+          return cht.reply('Sticker tidak ditemukan!');
         let imgUrl = data.slice(0, 20).getRandom();
         let buff = await func.getBuffer(imgUrl).catch(() => null);
         if (!buff) return cht.reply('Gagal mengambil gambar sticker!');
-        let s = await exif['writeExifImg'](
-          buff,
-          {
-            packname: 'Bella Clarissa',
-            author: 'Ⓒ' + (cht.pushName || 'Bella'),
-          }
-        ).catch((err) => {
+        let s = await exif['writeExifImg'](buff, {
+          packname: 'Bella Clarissa',
+          author: 'Ⓒ' + (cht.pushName || 'Bella'),
+        }).catch((err) => {
           console.error('writeExifImg error:', err);
           return null;
         });

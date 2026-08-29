@@ -1,9 +1,26 @@
 /*!-======[ Module Imports ]======-!*/
 const fs = 'fs'.import();
-const { downloadContentFromMessage } = 'baileys'.import();
+const {
+  downloadContentFromMessage,
+  generateWAMessageFromContent,
+  generateMessageIDV2,
+} = 'baileys'.import();
+const jimp = (await 'jimp'.import()).default || (await 'jimp'.import());
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
 const { dashboard } = await (fol[2] + 'dashboard.js').r();
-const { default: jadibot, stopJadibot, listAllJadibots, getJadibotStatus, setJadibotApikey, setJadibotConfig, restartJadibot, getJadibotDb, resetJadibotDb, resolveJadibotSlot, checkExpiredJadibots } = await `${fol[1]}jadibot.js`.r();
+const {
+  default: jadibot,
+  stopJadibot,
+  listAllJadibots,
+  getJadibotStatus,
+  setJadibotApikey,
+  setJadibotConfig,
+  restartJadibot,
+  getJadibotDb,
+  resetJadibotDb,
+  resolveJadibotSlot,
+  checkExpiredJadibots,
+} = await `${fol[1]}jadibot.js`.r();
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
   const { id } = cht;
@@ -106,6 +123,390 @@ export default async function on({ cht, Exp, store, ev, is }) {
         };
 
         Exp.relayMessage(cht.id, _m, {});
+      } else if (
+        cfg.button &&
+        (cfg?.menu_type == 'buttonImage' ||
+          cfg?.menu_type == 'buttonImage+footer')
+      ) {
+        let isFooterMenu = cfg.menu_type == 'buttonImage+footer';
+        let thumbnail = null;
+        try {
+          keys['thumbnail_300'] ??= await (async () => {
+            const rawBuf = fs.readFileSync(fol[3] + 'bell.jpg');
+            const jimg = await jimp.read(rawBuf);
+            return await jimg.resize(300, 300).getBufferAsync(jimp.MIME_JPEG);
+          })();
+          thumbnail = keys['thumbnail_300'];
+        } catch {}
+
+        let menuContent =
+          type == 'content'
+            ? func.menuFormatter(events, { ...cfg.menu, ...cht })
+            : text;
+
+        const msg = await generateWAMessageFromContent(
+          cht.id,
+          {
+            buttonsMessage: {
+              contentText: isFooterMenu ? head.trim() : menuContent,
+              footerText: isFooterMenu ? menuContent : ''.wm(),
+              headerType: 6,
+              locationMessage: {
+                degreesLatitude: 0,
+                degreesLongitude: 0,
+                name: cfg.botfullname || cfg.botname || 'Bella Clarissa',
+                address: 'Menu System',
+                jpegThumbnail: thumbnail,
+              },
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.sender,
+                quotedMessage: cht.message,
+                forwardedNewsletterMessageInfo: cfg.chId || {
+                  newsletterJid: '120363205560908891@newsletter',
+                  newslettedName: 'Termai',
+                  serverMessageId: 152,
+                },
+              },
+              buttons: [
+                {
+                  buttonId: '.stats',
+                  buttonText: { displayText: '📊 Stats' },
+                  type: 1,
+                },
+                {
+                  buttonId: '.sc',
+                  buttonText: { displayText: '📁 SC' },
+                  type: 1,
+                },
+              ],
+            },
+          },
+          {
+            messageId: generateMessageIDV2(),
+          }
+        );
+
+        await Exp.relayMessage(cht.id, msg.message, {
+          messageId: msg.key.id,
+          additionalNodes: [
+            {
+              tag: 'biz',
+              attrs: {},
+              content: [
+                {
+                  tag: 'interactive',
+                  attrs: { type: 'native_flow', v: '1' },
+                  content: [
+                    { tag: 'native_flow', attrs: { v: '9', name: 'mixed' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+      } else if (cfg.button && cfg?.menu_type == 'buttonListProduct') {
+        keys['product_image'] ??= await (async () => {
+          const rawBuf = fs.readFileSync(fol[3] + 'bell.jpg');
+          const { prepareWAMessageMedia } = await import(
+            '@whiskeysockets/baileys/lib/Utils/messages.js'
+          );
+          const { imageMessage } = await prepareWAMessageMedia(
+            { image: rawBuf },
+            { upload: Exp.waUploadToServer }
+          );
+          return imageMessage;
+        })();
+        let productImage = keys['product_image'];
+
+        let quick_reply = [];
+        for (let i of Object.values(Data.events)
+          .map((a) => a.tag)
+          .removeDuplicate()
+          .clean()) {
+          quick_reply.push({
+            name: 'quick_reply',
+            buttonParamsJson: {
+              display_text: (cfg.menu.tags[i] || i.toUpperCase())
+                .replace(/[*\<>[\]]/g, '')
+                .trim(),
+              id: `.menu ${i} --content`,
+            }.String(),
+          });
+        }
+
+        let _m = {
+          interactiveMessage: {
+            header: {
+              hasMediaAttachment: true,
+              productMessage: {
+                product: {
+                  productImage,
+                  productId: '999999',
+                  title: '© ' + (cfg.botname || 'Bella Clarissa'),
+                  productImageCount: 1,
+                },
+                businessOwnerJid:
+                  Exp?.user?.id
+                    ? Exp.user.id.split(':')[0] + '@s.whatsapp.net'
+                    : '0@s.whatsapp.net',
+              },
+            },
+            body: {
+              text:
+                type == 'content'
+                  ? func.menuFormatter(events, { ...cfg.menu, ...cht })
+                  : head,
+            },
+            footer: {
+              text: '© Supported by termai.cc',
+            },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: { has_multiple_buttons: true }.String(),
+                },
+                ...quick_reply,
+              ],
+              messageParamsJson: {
+                limited_time_offer: {
+                  text: 'Artificial Intelligence, The beginning of the robot era',
+                  url: 'https://termai.cc',
+                  copy_code: 'Termai',
+                  expiration_time: Date.now() + func.parseTimeString('1 hari'),
+                },
+                bottom_sheet: {
+                  in_thread_buttons_limit: 2,
+                  divider_indices: [1, 2, 3, 4, 5, 999],
+                  list_title: 'All Tag',
+                  button_title: 'View List',
+                },
+              }.String(),
+            },
+            contextInfo: {
+              stanzaId: cht.key.id,
+              participant: cht.key.participant,
+              quotedMessage: cht,
+              forwardedNewsletterMessageInfo: cfg.chId || {
+                newsletterJid: '120363205560908891@newsletter',
+                newslettedName: 'Termai',
+                serverMessageId: 152,
+              },
+            },
+          },
+        };
+
+        Exp.relayMessage(cht.id, _m, {});
+      } else if (cfg?.menu_type == 'product') {
+        let productImage;
+        try {
+          keys['product_image'] ??= await (async () => {
+            const rawBuf = fs.readFileSync(fol[3] + 'bell.jpg');
+            const { prepareWAMessageMedia } = await import(
+              '@whiskeysockets/baileys/lib/Utils/messages.js'
+            );
+            const { imageMessage } = await prepareWAMessageMedia(
+              { image: rawBuf },
+              { upload: Exp.waUploadToServer }
+            );
+            return imageMessage;
+          })();
+          productImage = keys['product_image'];
+        } catch (e) {
+          productImage = {
+            url: 'https://mmg.whatsapp.net/o1/v/t24/f2/m232/AQN3l3MMvd8WU1FXXI0bo-J7pyVRGYUAqlUZpN3pUZsH1054DV_nEzCJdRhvSsw2keD6WBSCuKLlc5zNIDxupGSi8YVq7bHo2a3J_mz0Xw?ccb=9-4&oh=01_Q5Aa5QGSBLlW3dKzsWUlaex7DLXgXDOkNbZi-lQf-RAeawXtfQ&oe=6AA8FFCD&_nc_sid=e6ed6c&mms3=true',
+            mimetype: 'image/jpeg',
+            fileSha256: 'E12zddQeAoF/ZBp0GfW7T5Ho1TeVE4EM8OFztzODKQU=',
+            fileLength: '14043',
+            height: 158,
+            width: 280,
+            mediaKey: '47Ax0Eo0GzkXssHF0ZLUcSR02oZiHk+dfoVTpNKcgeE=',
+            fileEncSha256: '5EUMdsludEblyIwcPl+eTh4rUwOUrHtwCK0GCZLmE+g=',
+            directPath:
+              '/o1/v/t24/f2/m232/AQN3l3MMvd8WU1FXXI0bo-J7pyVRGYUAqlUZpN3pUZsH1054DV_nEzCJdRhvSsw2keD6WBSCuKLlc5zNIDxupGSi8YVq7bHo2a3J_mz0Xw?ccb=9-4&oh=01_Q5Aa5QGSBLlW3dKzsWUlaex7DLXgXDOkNbZi-lQf-RAeawXtfQ&oe=6AA8FFCD&_nc_sid=e6ed6c&_nc_hot=1786899693',
+            mediaKeyTimestamp: '1786870832',
+            jpegThumbnail:
+              '/9j/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAASACADASIAAhEBAxEB/8QAGgAAAgIDAAAAAAAAAAAAAAAAAAQBBQIDBv/EACoQAAIBAgMGBgMAAAAAAAAAAAECAwARBBIhBSIxQWFxExQVMjRRYoLB/8QAFgEBAQEAAAAAAAAAAAAAAAAAAgAD/8QAHBEAAgICAwAAAAAAAAAAAAAAAAECETFBA2Hw/9oADAMBAAIRAxEAPwCZ58TNsqcbl/DKsCePWuWjKjEopYqM2/l/lXvqSSo7FY1jG7nvbN+vGqdA8+Jjhy2ZyLfl1oRTWTeck6omWCLzN8OQUuoOY379xWnFRl5WCyZlvoTWeMQwu0AspT3AgBvukwqlXLEhtLUkCT6H9n/K2eOTFr9aTckYkWJGvLvRRUBYQzLrLOTqdNTSh4N3FFFSNeXXts//2Q==',
+          };
+        }
+
+        await Exp.relayMessage(
+          cht.id,
+          {
+            productMessage: {
+              product: {
+                productImage,
+                productId: '999999',
+                title: cht.pushName || cfg.botname || 'Bella Clarissa',
+                description:
+                  'Artificial Intelligence, The beginning of the robot era',
+                productImageCount: 1,
+              },
+              businessOwnerJid:
+                Exp?.user?.id
+                  ? Exp.user.id.split(':')[0] + '@s.whatsapp.net'
+                  : '13135550002@s.whatsapp.net',
+              footer: text,
+              contextInfo: {
+                stanzaId: cht.key.id,
+                participant: cht.sender,
+                quotedMessage: cht.message,
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardOrigin: 'UNKNOWN',
+              },
+            },
+          },
+          {}
+        );
+      } else if (cfg.rich && cfg?.menu_type == 'rich') {
+        const crypto = await 'crypto'.import();
+        keys['rich_banner'] ??= await TermaiCdn(
+          fs.readFileSync(fol[3] + 'bell.jpg')
+        ).catch(() => 'https://c.termai.cc/i196/voBZLx.jpg');
+        let imageUrl =
+          keys['rich_banner'] || 'https://c.termai.cc/i196/voBZLx.jpg';
+
+        let tagList = Object.values(Data.events)
+          .map((a) => a.tag)
+          .removeDuplicate()
+          .clean();
+        let widgets = [];
+        for (let i = 0; i < tagList.length; i += 3) {
+          let chunk = tagList.slice(i, i + 3);
+          let ctas = chunk.map((t, idx) => {
+            let cleanLabel = (cfg.menu.tags[t] || t.toUpperCase())
+              .replace(/[*\<>[\]]/g, '')
+              .trim();
+            let labelReversed =
+              '\u202E' + Array.from(cleanLabel).reverse().join('');
+            return {
+              __typename: 'GenAI3PExtWidgetCTA',
+              label: labelReversed,
+              state: 'PENDING',
+              kind: 'OTHER',
+              tool_call_id: String(i + idx),
+              toast: {
+                __typename: 'GenAI3PExtWidgetToast',
+                label: global.botnickname || 'Bell',
+              },
+            };
+          });
+          widgets.push({
+            __typename: 'GenAI3PExtWidgetPrimitive',
+            header: {
+              __typename: 'GenAI3PExtWidgetStandardHeader',
+              title: `TAGS ${Math.floor(i / 3) + 1}`,
+            },
+            body: {
+              __typename: 'GenAI3PExtCalendarEventList',
+              sections: [],
+              ctas,
+            },
+          });
+        }
+
+        let sections = [
+          {
+            view_model: {
+              primitive: {
+                __typename: 'FOATextPrimitive',
+                text: '# ' + (cfg.botname || 'Bella Clarissa'),
+              },
+              __typename: 'GenAISingleLayoutViewModel',
+            },
+          },
+          {
+            view_model: {
+              primitive: {
+                __typename: 'GenAIImagePrimitive',
+                preview_image: {
+                  __typename: 'GenAIMediaItem',
+                  mime_type: 'image/jpeg',
+                  url: imageUrl,
+                },
+                full_image: {
+                  __typename: 'GenAIMediaItem',
+                  mime_type: 'image/jpeg',
+                  url: imageUrl,
+                },
+              },
+              __typename: 'GenAISingleLayoutViewModel',
+            },
+          },
+          {
+            view_model: {
+              primitive: {
+                text:
+                  type == 'content'
+                    ? func.menuFormatter(events, { ...cfg.menu, ...cht })
+                    : head.trim(),
+                __typename: 'GenAIMarkdownTextUXPrimitive',
+              },
+              __typename: 'GenAISingleLayoutViewModel',
+            },
+          },
+          ...(widgets.length > 0
+            ? [
+                {
+                  view_model: {
+                    primitives: widgets,
+                    __typename: 'GenAIHScrollLayoutViewModel',
+                  },
+                },
+              ]
+            : []),
+          {
+            view_model: {
+              primitives: [
+                {
+                  __typename: 'GenAIFooterActionPrimitive',
+                  cta_text: 'Website Termai',
+                  cta_type: 'OPEN_URL',
+                  cta_url: 'https://termai.cc',
+                },
+                {
+                  __typename: 'GenAIFooterActionPrimitive',
+                  cta_text: 'Dokumentasi API',
+                  cta_type: 'OPEN_URL',
+                  cta_url: 'https://termai.cc/documentation',
+                },
+              ],
+              __typename: 'GenAIHScrollLayoutViewModel',
+            },
+          },
+        ];
+
+        await Exp.relayMessage(
+          cht.id,
+          {
+            botForwardedMessage: {
+              message: {
+                richResponseMessage: {
+                  messageType: 1,
+                  unifiedResponse: {
+                    data: Buffer.from(
+                      JSON.stringify({
+                        response_id: crypto.randomUUID(),
+                        sections,
+                      })
+                    ).toString('base64'),
+                  },
+                  contextInfo: {
+                    stanzaId: cht.key.id,
+                    participant: cht.sender,
+                    quotedMessage: cht.message,
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardOrigin: 4,
+                  },
+                },
+              },
+            },
+          },
+          {}
+        );
       } else if (cfg?.menu_type == 'text') {
         menu.text = text;
         menu.footer = '© Supported by termai.cc';
@@ -237,7 +638,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
         );
       } else {
         const rawBuf = fs.readFileSync(fol[3] + 'bell.jpg');
-        const { prepareWAMessageMedia } = await import('@whiskeysockets/baileys/lib/Utils/messages.js');
+        const { prepareWAMessageMedia } = await import(
+          '@whiskeysockets/baileys/lib/Utils/messages.js'
+        );
         const { imageMessage } = await prepareWAMessageMedia(
           { image: rawBuf },
           { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
@@ -248,8 +651,11 @@ export default async function on({ cht, Exp, store, ev, is }) {
           linkPreview: {
             'matched-text': 'https://termai.cc',
             title: cht.pushName,
-            description: 'Artificial Intelligence, The beginning of the robot era',
-            jpegThumbnail: imageMessage?.jpegThumbnail ? Buffer.from(imageMessage.jpegThumbnail) : undefined,
+            description:
+              'Artificial Intelligence, The beginning of the robot era',
+            jpegThumbnail: imageMessage?.jpegThumbnail
+              ? Buffer.from(imageMessage.jpegThumbnail)
+              : undefined,
             highQualityThumbnail: imageMessage
               ? {
                   ...imageMessage,
@@ -493,10 +899,10 @@ ${infos.others.readMore}
       await cht.reply(teks ? header + teks : 'Belum ada data pesan 🙂');
     }
   );
-  
+
   ev.on(
     {
-      cmd: ["jadibot"],
+      cmd: ['jadibot'],
       listmenu: [`jadibot`],
       tag: `jadibot`,
       premium: true,
@@ -525,61 +931,108 @@ ${infos.others.readMore}
           }
           return `62` + clean;
         };
-        let senderNum = cht.sender ? cht.sender.split('@')[0].replace(/[^0-9]/g, '') : '';
+        let senderNum = cht.sender
+          ? cht.sender.split('@')[0].replace(/[^0-9]/g, '')
+          : '';
         let action = cht.q ? cht.q.trim().toLowerCase() : '';
         let jdbLang = infos.jadibot || Data.infos.jadibot;
         let botName = global.botfullname || 'Jadibot';
         let replyJdb = (tpl, opts) => {
-          return Exp.sendMessage(cht.id, {
-            text: tpl.body,
-            footer: tpl.footer,
-            ...(opts?.mentionedJid ? { mentions: opts.mentionedJid } : {}),
-          }, { quoted: cht });
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: tpl.body,
+              footer: tpl.footer,
+              ...(opts?.mentionedJid ? { mentions: opts.mentionedJid } : {}),
+            },
+            { quoted: cht }
+          );
         };
 
-        if (action === "stop" || action === "logout" || action === "keluar" || action === "matikan" || action.startsWith("stop ") || action.startsWith("logout ") || action.startsWith("keluar ") || action.startsWith("matikan ")) {
-          let parts = action.split(" ");
-          let target = parts.slice(1).join(" ").trim() || null;
+        if (
+          action === 'stop' ||
+          action === 'logout' ||
+          action === 'keluar' ||
+          action === 'matikan' ||
+          action.startsWith('stop ') ||
+          action.startsWith('logout ') ||
+          action.startsWith('keluar ') ||
+          action.startsWith('matikan ')
+        ) {
+          let parts = action.split(' ');
+          let target = parts.slice(1).join(' ').trim() || null;
           let targetSlot = resolveJadibotSlot(target, senderNum);
 
           if (!targetSlot || !Data.jadibot?.[targetSlot]) {
             let activeBots = listAllJadibots();
-            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            let activeBotsStr =
+              activeBots.length > 0
+                ? activeBots
+                    .map((b) => '#' + b.slot + ' (' + b.botNumber + ')')
+                    .join(', ')
+                : '';
             return cht.reply(jdbLang.notFound(target, true, activeBotsStr));
           }
 
           let info = Data.jadibot[targetSlot];
           let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
-          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
-          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
+          let targetOwners = (info.owners || []).map((o) =>
+            String(o).replace(/[^0-9]/g, '')
+          );
+          if (
+            !is.owner &&
+            targetOwner !== senderNum &&
+            !targetOwners.includes(senderNum)
+          ) {
             return cht.reply(
               jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
               { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
-          let ok = await stopJadibot({ slot: targetSlot, removeSession: false });
+          let ok = await stopJadibot({
+            slot: targetSlot,
+            removeSession: false,
+          });
           if (ok) {
             return replyJdb(jdbLang.stopped(targetSlot, info.botNumber));
           } else {
-            return cht.reply('❌ Gagal menghentikan bot Slot ' + targetSlot + '.');
+            return cht.reply(
+              '❌ Gagal menghentikan bot Slot ' + targetSlot + '.'
+            );
           }
         }
 
-        if (action === "delete" || action === "hapus" || action.startsWith("delete ") || action.startsWith("hapus ")) {
-          let parts = action.split(" ");
-          let target = parts.slice(1).join(" ").trim() || null;
+        if (
+          action === 'delete' ||
+          action === 'hapus' ||
+          action.startsWith('delete ') ||
+          action.startsWith('hapus ')
+        ) {
+          let parts = action.split(' ');
+          let target = parts.slice(1).join(' ').trim() || null;
           let targetSlot = resolveJadibotSlot(target, senderNum);
 
           if (!targetSlot || !Data.jadibot?.[targetSlot]) {
             let activeBots = listAllJadibots();
-            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            let activeBotsStr =
+              activeBots.length > 0
+                ? activeBots
+                    .map((b) => '#' + b.slot + ' (' + b.botNumber + ')')
+                    .join(', ')
+                : '';
             return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
           }
 
           let info = Data.jadibot[targetSlot];
           let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
-          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
-          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
+          let targetOwners = (info.owners || []).map((o) =>
+            String(o).replace(/[^0-9]/g, '')
+          );
+          if (
+            !is.owner &&
+            targetOwner !== senderNum &&
+            !targetOwners.includes(senderNum)
+          ) {
             return cht.reply(
               jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
               { mentions: [targetOwner + '@s.whatsapp.net'] }
@@ -587,49 +1040,82 @@ ${infos.others.readMore}
           }
           let ok = await stopJadibot({ slot: targetSlot, removeSession: true });
           if (ok) {
-            return replyJdb(jdbLang.deleted(targetSlot, info.botNumber, botName));
+            return replyJdb(
+              jdbLang.deleted(targetSlot, info.botNumber, botName)
+            );
           } else {
             return cht.reply('❌ Gagal menghapus bot Slot ' + targetSlot + '.');
           }
         }
 
-        if (action === "restart" || action === "mulaiulang" || action.startsWith("restart ") || action.startsWith("mulaiulang ")) {
-          let parts = action.split(" ");
-          let target = parts.slice(1).join(" ").trim() || null;
+        if (
+          action === 'restart' ||
+          action === 'mulaiulang' ||
+          action.startsWith('restart ') ||
+          action.startsWith('mulaiulang ')
+        ) {
+          let parts = action.split(' ');
+          let target = parts.slice(1).join(' ').trim() || null;
           let targetSlot = resolveJadibotSlot(target, senderNum);
 
           if (!targetSlot || !Data.jadibot?.[targetSlot]) {
             let activeBots = listAllJadibots();
-            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            let activeBotsStr =
+              activeBots.length > 0
+                ? activeBots
+                    .map((b) => '#' + b.slot + ' (' + b.botNumber + ')')
+                    .join(', ')
+                : '';
             return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
           }
 
           let info = Data.jadibot[targetSlot];
           let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
-          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
-          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
+          let targetOwners = (info.owners || []).map((o) =>
+            String(o).replace(/[^0-9]/g, '')
+          );
+          if (
+            !is.owner &&
+            targetOwner !== senderNum &&
+            !targetOwners.includes(senderNum)
+          ) {
             return cht.reply(
               jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
               { mentions: [targetOwner + '@s.whatsapp.net'] }
             );
           }
           await cht.reply(jdbLang.restarting(targetSlot, info.botNumber));
-          let ok = await restartJadibot({ Exp, cht, slot: targetSlot, owner: senderNum });
+          let ok = await restartJadibot({
+            Exp,
+            cht,
+            slot: targetSlot,
+            owner: senderNum,
+          });
           if (ok) {
-            return replyJdb(jdbLang.restarted(targetSlot, info.botNumber, botName));
+            return replyJdb(
+              jdbLang.restarted(targetSlot, info.botNumber, botName)
+            );
           } else {
             return cht.reply('❌ Gagal merestart bot Slot ' + targetSlot + '.');
           }
         }
 
-        if (action === "list" || action === "daftar") {
+        if (action === 'list' || action === 'daftar') {
           await checkExpiredJadibots();
           let bots = listAllJadibots();
           if (!is.owner) {
-            bots = bots.filter(b => String(b.owner).replace(/[^0-9]/g, '') === senderNum || (b.owners || []).map(o => String(o).replace(/[^0-9]/g, '')).includes(senderNum));
+            bots = bots.filter(
+              (b) =>
+                String(b.owner).replace(/[^0-9]/g, '') === senderNum ||
+                (b.owners || [])
+                  .map((o) => String(o).replace(/[^0-9]/g, ''))
+                  .includes(senderNum)
+            );
           }
           if (!bots || bots.length === 0) {
-            return cht.reply(!is.owner ? jdbLang.notFound(null, false) : jdbLang.listEmpty);
+            return cht.reply(
+              !is.owner ? jdbLang.notFound(null, false) : jdbLang.listEmpty
+            );
           }
           let text = jdbLang.listHeader(bots.length);
           for (let b of bots) {
@@ -637,17 +1123,29 @@ ${infos.others.readMore}
             text += '  ├ 📱 Nomor: ' + b.botNumber + '\n';
             text += '  ├ 👤 Owner: @' + b.owner + '\n';
             text += '  ├ ⚡ Status: ' + b.statusText + '\n';
-            text += '  ├ 🗝️ API Key: ' + (b.hasApikey ? 'Custom Key ✅' : 'Default 🌐') + '\n';
+            text +=
+              '  ├ 🗝️ API Key: ' +
+              (b.hasApikey ? 'Custom Key ✅' : 'Default 🌐') +
+              '\n';
             text += '  ├ ⏱️ Uptime: ' + b.uptimeText + '\n';
             text += '  ╰ ⏳ Masa Aktif: ' + b.expiredText + '\n\n';
           }
           text += jdbLang.listFooter(botName);
-          return cht.reply(text.trim(), { mentions: bots.map(b => b.owner + '@s.whatsapp.net') });
+          return cht.reply(text.trim(), {
+            mentions: bots.map((b) => b.owner + '@s.whatsapp.net'),
+          });
         }
 
-        if (action === "status" || action === "info" || action === "cek" || action.startsWith("status ") || action.startsWith("info ") || action.startsWith("cek ")) {
-          let parts = cht.q.trim().split(" ");
-          let target = parts.slice(1).join(" ").trim() || null;
+        if (
+          action === 'status' ||
+          action === 'info' ||
+          action === 'cek' ||
+          action.startsWith('status ') ||
+          action.startsWith('info ') ||
+          action.startsWith('cek ')
+        ) {
+          let parts = cht.q.trim().split(' ');
+          let target = parts.slice(1).join(' ').trim() || null;
           let targetSlot = resolveJadibotSlot(target, senderNum);
 
           let resolvedInfo = null;
@@ -657,7 +1155,12 @@ ${infos.others.readMore}
               resolvedInfo = status;
             } else {
               let activeBots = listAllJadibots();
-              let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => '#' + b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+              let activeBotsStr =
+                activeBots.length > 0
+                  ? activeBots
+                      .map((b) => '#' + b.slot + ' (' + b.botNumber + ')')
+                      .join(', ')
+                  : '';
               return cht.reply(jdbLang.notFound(target, false, activeBotsStr));
             }
           } else {
@@ -666,100 +1169,153 @@ ${infos.others.readMore}
               slot: targetSlot,
               botNumber: info.botNumber,
               owner: info.owner,
-              statusText: info.status === 'online' ? 'Online ✅' : (info.status === 'connecting' ? 'Menghubungkan... ⏳' : 'Offline ❌'),
+              statusText:
+                info.status === 'online'
+                  ? 'Online ✅'
+                  : info.status === 'connecting'
+                    ? 'Menghubungkan... ⏳'
+                    : 'Offline ❌',
               hasApikey: !!info.apikey,
-              uptimeText: info.onlineSince ? func.parseMs(Date.now() - info.onlineSince) : '0s',
+              uptimeText: info.onlineSince
+                ? func.parseMs(Date.now() - info.onlineSince)
+                : '0s',
               reconnectCount: info.reconnectCount || 0,
-              expiredText: info.expired && info.expired > Date.now() ? func.parseMs(info.expired - Date.now()) : 'Unlimited'
+              expiredText:
+                info.expired && info.expired > Date.now()
+                  ? func.parseMs(info.expired - Date.now())
+                  : 'Unlimited',
             };
           }
 
           let statusTpl = jdbLang.status(resolvedInfo, botName);
-          return replyJdb(statusTpl, { mentionedJid: [resolvedInfo.owner + '@s.whatsapp.net'] });
+          return replyJdb(statusTpl, {
+            mentionedJid: [resolvedInfo.owner + '@s.whatsapp.net'],
+          });
         }
 
-        if (action.startsWith("apikey ") || action.startsWith("setapikey ") || action === "apikey") {
+        if (
+          action.startsWith('apikey ') ||
+          action.startsWith('setapikey ') ||
+          action === 'apikey'
+        ) {
           let status = getJadibotStatus(senderNum);
           if (!status.active && !is.owner) {
-            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+            return cht.reply('❌ Kamu tidak memiliki sub-bot!');
           }
-          let parts = cht.q.trim().split(" ");
-          let newKey = parts.slice(1).join(" ").trim();
+          let parts = cht.q.trim().split(' ');
+          let newKey = parts.slice(1).join(' ').trim();
           if (!newKey) {
-            return replyJdb(jdbLang.apikeyGuide(status.hasApikey, status.apikey, botName));
+            return replyJdb(
+              jdbLang.apikeyGuide(status.hasApikey, status.apikey, botName)
+            );
           }
-          if (newKey === "reset" || newKey === "delete" || newKey === "hapus") {
-            setJadibotApikey({ slot: status.slot, owner: senderNum, apikey: "" });
-            return cht.reply("✅ API Key sub-bot telah direset ke default!");
+          if (newKey === 'reset' || newKey === 'delete' || newKey === 'hapus') {
+            setJadibotApikey({
+              slot: status.slot,
+              owner: senderNum,
+              apikey: '',
+            });
+            return cht.reply('✅ API Key sub-bot telah direset ke default!');
           }
-          setJadibotApikey({ slot: status.slot, owner: senderNum, apikey: newKey });
-          return cht.reply('✅ API Key sub-bot berhasil diset ke:\n`' + newKey + '`');
+          setJadibotApikey({
+            slot: status.slot,
+            owner: senderNum,
+            apikey: newKey,
+          });
+          return cht.reply(
+            '✅ API Key sub-bot berhasil diset ke:\n`' + newKey + '`'
+          );
         }
 
-        if (action.startsWith("set ") || action.startsWith("setting ")) {
+        if (action.startsWith('set ') || action.startsWith('setting ')) {
           let status = getJadibotStatus(senderNum);
           if (!status.active && !is.owner) {
-            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+            return cht.reply('❌ Kamu tidak memiliki sub-bot!');
           }
-          let parts = cht.q.trim().split(" ");
-          let opt = (parts[1] || "").toLowerCase();
-          let val = parts.slice(2).join(" ").trim();
-          if (opt === "public") {
-            let isPub = val === "on" || val === "true" || val === "1";
-            setJadibotConfig({ slot: status.slot, owner: senderNum, key: "public", value: isPub });
-            return cht.reply('✅ Mode bot diset ke: *' + (isPub ? "Public" : "Private") + '*');
+          let parts = cht.q.trim().split(' ');
+          let opt = (parts[1] || '').toLowerCase();
+          let val = parts.slice(2).join(' ').trim();
+          if (opt === 'public') {
+            let isPub = val === 'on' || val === 'true' || val === '1';
+            setJadibotConfig({
+              slot: status.slot,
+              owner: senderNum,
+              key: 'public',
+              value: isPub,
+            });
+            return cht.reply(
+              '✅ Mode bot diset ke: *' + (isPub ? 'Public' : 'Private') + '*'
+            );
           }
-          if (opt === "prefix") {
-            let pref = val === "false" || val === "off" ? false : val;
-            setJadibotConfig({ slot: status.slot, owner: senderNum, key: "prefix", value: pref });
-            return cht.reply('✅ Prefix bot diset ke: *' + (pref === false ? "Multi-Prefix" : pref) + '*');
+          if (opt === 'prefix') {
+            let pref = val === 'false' || val === 'off' ? false : val;
+            setJadibotConfig({
+              slot: status.slot,
+              owner: senderNum,
+              key: 'prefix',
+              value: pref,
+            });
+            return cht.reply(
+              '✅ Prefix bot diset ke: *' +
+                (pref === false ? 'Multi-Prefix' : pref) +
+                '*'
+            );
           }
           return replyJdb(jdbLang.settingGuide(botName));
         }
 
-        if (action === "db" || action === "database" || action === "dbstatus") {
+        if (action === 'db' || action === 'database' || action === 'dbstatus') {
           let status = getJadibotStatus(senderNum);
           if (!status.active && !is.owner) {
-            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+            return cht.reply('❌ Kamu tidak memiliki sub-bot!');
           }
           let dbInfo = getJadibotDb(senderNum);
           if (!dbInfo) {
-            return cht.reply("❌ Database sub-bot tidak ditemukan!");
+            return cht.reply('❌ Database sub-bot tidak ditemukan!');
           }
           let userCount = Object.keys(dbInfo.db.users || {}).length;
           let prefCount = Object.keys(dbInfo.db.preferences || {}).length;
           let respCount = Object.keys(dbInfo.db.response || {}).length;
           let cmdCount = Object.keys(dbInfo.db.setCmd || {}).length;
-          return replyJdb(jdbLang.dbStats({
-            slot: dbInfo.slot,
-            botNumber: dbInfo.botNumber,
-            userCount,
-            prefCount,
-            respCount,
-            cmdCount,
-            hasApikey: !!dbInfo.db.apikey,
-            prefix: dbInfo.db.prefix,
-            isPublic: dbInfo.db.public
-          }));
+          return replyJdb(
+            jdbLang.dbStats({
+              slot: dbInfo.slot,
+              botNumber: dbInfo.botNumber,
+              userCount,
+              prefCount,
+              respCount,
+              cmdCount,
+              hasApikey: !!dbInfo.db.apikey,
+              prefix: dbInfo.db.prefix,
+              isPublic: dbInfo.db.public,
+            })
+          );
         }
 
-        if (action === "cleardb" || action === "resetdb") {
+        if (action === 'cleardb' || action === 'resetdb') {
           let status = getJadibotStatus(senderNum);
           if (!status.active && !is.owner) {
-            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+            return cht.reply('❌ Kamu tidak memiliki sub-bot!');
           }
           let ok = resetJadibotDb(senderNum);
           if (ok) {
-            return cht.reply("🗑️ Database sub-bot berhasil direset ke kondisi bersih!");
+            return cht.reply(
+              '🗑️ Database sub-bot berhasil direset ke kondisi bersih!'
+            );
           } else {
-            return cht.reply("❌ Gagal mereset database sub-bot.");
+            return cht.reply('❌ Gagal mereset database sub-bot.');
           }
         }
 
-        if (action.startsWith("addowner ") || action.startsWith("delowner ") || action === "listowner" || action === "owners") {
+        if (
+          action.startsWith('addowner ') ||
+          action.startsWith('delowner ') ||
+          action === 'listowner' ||
+          action === 'owners'
+        ) {
           let status = getJadibotStatus(senderNum);
           if (!status.active && !is.owner) {
-            return cht.reply("❌ Kamu tidak memiliki sub-bot!");
+            return cht.reply('❌ Kamu tidak memiliki sub-bot!');
           }
           let slot = status.slot;
           let info = Data.jadibot[slot];
@@ -767,49 +1323,94 @@ ${infos.others.readMore}
           let botNum = info.botNumber;
           Data.jadibotDb[botNum].owners ??= info.owners;
 
-          if (action === "listowner" || action === "owners") {
-            let ownersStr = info.owners.map(o => '@' + String(o).replace(/[^0-9]/g, '')).join(', ');
-            return replyJdb(jdbLang.listOwner(slot, info.owner, ownersStr, botName), { mentionedJid: info.owners.map(o => String(o).replace(/[^0-9]/g, '') + '@s.whatsapp.net') });
+          if (action === 'listowner' || action === 'owners') {
+            let ownersStr = info.owners
+              .map((o) => '@' + String(o).replace(/[^0-9]/g, ''))
+              .join(', ');
+            return replyJdb(
+              jdbLang.listOwner(slot, info.owner, ownersStr, botName),
+              {
+                mentionedJid: info.owners.map(
+                  (o) => String(o).replace(/[^0-9]/g, '') + '@s.whatsapp.net'
+                ),
+              }
+            );
           }
 
-          let parts = cht.q.trim().split(" ");
-          let target = normalizeNumber(parts.slice(1).join(" "));
+          let parts = cht.q.trim().split(' ');
+          let target = normalizeNumber(parts.slice(1).join(' '));
           if (!target || target.length < 10) {
-            return cht.reply("❌ Nomor target tidak valid!\n\nFormat: `.jadibot addowner 628xxx` atau `.jadibot delowner 628xxx`");
+            return cht.reply(
+              '❌ Nomor target tidak valid!\n\nFormat: `.jadibot addowner 628xxx` atau `.jadibot delowner 628xxx`'
+            );
           }
 
-          if (action.startsWith("addowner ")) {
+          if (action.startsWith('addowner ')) {
             if (!info.owners.includes(target)) info.owners.push(target);
-            if (!Data.jadibotDb[botNum].owners.includes(target)) Data.jadibotDb[botNum].owners.push(target);
-            return cht.reply('✅ Berhasil menambahkan @' + target + ' sebagai owner sub-bot!', { mentions: [target + '@s.whatsapp.net'] });
+            if (!Data.jadibotDb[botNum].owners.includes(target))
+              Data.jadibotDb[botNum].owners.push(target);
+            return cht.reply(
+              '✅ Berhasil menambahkan @' + target + ' sebagai owner sub-bot!',
+              { mentions: [target + '@s.whatsapp.net'] }
+            );
           } else {
             if (target === info.owner) {
-              return cht.reply("❌ Tidak dapat menghapus owner utama sub-bot!");
+              return cht.reply('❌ Tidak dapat menghapus owner utama sub-bot!');
             }
-            info.owners = info.owners.filter(o => o !== target);
-            Data.jadibotDb[botNum].owners = Data.jadibotDb[botNum].owners.filter(o => o !== target);
-            return cht.reply('✅ Berhasil menghapus @' + target + ' dari daftar owner sub-bot!', { mentions: [target + '@s.whatsapp.net'] });
+            info.owners = info.owners.filter((o) => o !== target);
+            Data.jadibotDb[botNum].owners = Data.jadibotDb[
+              botNum
+            ].owners.filter((o) => o !== target);
+            return cht.reply(
+              '✅ Berhasil menghapus @' +
+                target +
+                ' dari daftar owner sub-bot!',
+              { mentions: [target + '@s.whatsapp.net'] }
+            );
           }
         }
 
-        if (action === "relink" || action === "tautulang" || action.startsWith("relink ") || action.startsWith("tautulang ")) {
+        if (
+          action === 'relink' ||
+          action === 'tautulang' ||
+          action.startsWith('relink ') ||
+          action.startsWith('tautulang ')
+        ) {
           if (Exp?.isJadibot || is?.jadibot) {
             return cht.reply(jdbLang.restrictedNested);
           }
-          let isQrMode = action.endsWith(" qr") || action.includes(" qr") || cht.q.toLowerCase().includes("qr");
-          let cleanQ = action.replace(/relink/gi, "").replace(/tautulang/gi, "").replace(/qr/gi, "").trim();
+          let isQrMode =
+            action.endsWith(' qr') ||
+            action.includes(' qr') ||
+            cht.q.toLowerCase().includes('qr');
+          let cleanQ = action
+            .replace(/relink/gi, '')
+            .replace(/tautulang/gi, '')
+            .replace(/qr/gi, '')
+            .trim();
           let targetSlot = resolveJadibotSlot(cleanQ, senderNum);
 
           if (!targetSlot || !Data.jadibot?.[targetSlot]) {
             let activeBots = listAllJadibots();
-            let activeBotsStr = activeBots.length > 0 ? activeBots.map(b => b.slot + ' (' + b.botNumber + ')').join(', ') : '';
+            let activeBotsStr =
+              activeBots.length > 0
+                ? activeBots
+                    .map((b) => b.slot + ' (' + b.botNumber + ')')
+                    .join(', ')
+                : '';
             return cht.reply(jdbLang.notFound(cleanQ, false, activeBotsStr));
           }
 
           let info = Data.jadibot[targetSlot];
           let targetOwner = String(info.owner || '').replace(/[^0-9]/g, '');
-          let targetOwners = (info.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
-          if (!is.owner && targetOwner !== senderNum && !targetOwners.includes(senderNum)) {
+          let targetOwners = (info.owners || []).map((o) =>
+            String(o).replace(/[^0-9]/g, '')
+          );
+          if (
+            !is.owner &&
+            targetOwner !== senderNum &&
+            !targetOwners.includes(senderNum)
+          ) {
             return cht.reply(
               jdbLang.accessDenied(targetSlot, info.botNumber, targetOwner),
               { mentions: [targetOwner + '@s.whatsapp.net'] }
@@ -817,15 +1418,25 @@ ${infos.others.readMore}
           }
 
           if (info.status === 'online') {
-            return cht.reply(jdbLang.alreadyConnected(targetSlot, info.botNumber));
+            return cht.reply(
+              jdbLang.alreadyConnected(targetSlot, info.botNumber)
+            );
           }
 
           if (info.expired && info.expired > 0 && info.expired < Date.now()) {
-            return cht.reply('❌ Masa aktif Bot (Slot ' + targetSlot + ') telah kadaluarsa! Silakan buat jadibot baru.');
+            return cht.reply(
+              '❌ Masa aktif Bot (Slot ' +
+                targetSlot +
+                ') telah kadaluarsa! Silakan buat jadibot baru.'
+            );
           }
 
-          let expiredText = info.expired ? func.parseMs(info.expired - Date.now()) : 'Unlimited';
-          await cht.reply(jdbLang.relinkHeader(targetSlot, info.botNumber, expiredText));
+          let expiredText = info.expired
+            ? func.parseMs(info.expired - Date.now())
+            : 'Unlimited';
+          await cht.reply(
+            jdbLang.relinkHeader(targetSlot, info.botNumber, expiredText)
+          );
 
           await jadibot({
             Exp,
@@ -851,21 +1462,39 @@ ${infos.others.readMore}
           return cht.reply(jdbLang.restrictedNested);
         }
 
-        let isQrMode = action.endsWith(" qr") || action === "qr" || cht.q.toLowerCase().includes("qr") || (cht.quoted && cht.quoted.text && (cht.quoted.text.includes("PAIRING") || cht.quoted.text.includes("pairing")));
-        let cleanQ = cht.q.replace(/qr/gi, "").trim();
+        let isQrMode =
+          action.endsWith(' qr') ||
+          action === 'qr' ||
+          cht.q.toLowerCase().includes('qr') ||
+          (cht.quoted &&
+            cht.quoted.text &&
+            (cht.quoted.text.includes('PAIRING') ||
+              cht.quoted.text.includes('pairing')));
+        let cleanQ = cht.q.replace(/qr/gi, '').trim();
 
         let inputTokens = cleanQ ? cleanQ.split(/\s+/) : [];
         let botNumber = '';
         let ownerNumber = senderNum;
 
         let fullNormalized = normalizeNumber(cleanQ);
-        if (fullNormalized && fullNormalized.length >= 10 && fullNormalized.length <= 15) {
+        if (
+          fullNormalized &&
+          fullNormalized.length >= 10 &&
+          fullNormalized.length <= 15
+        ) {
           botNumber = fullNormalized;
         } else if (inputTokens.length >= 2) {
           let lastToken = inputTokens[inputTokens.length - 1];
           let lastNum = normalizeNumber(lastToken);
-          let firstPartNum = normalizeNumber(inputTokens.slice(0, inputTokens.length - 1).join(" "));
-          if (firstPartNum && firstPartNum.length >= 10 && lastNum && lastNum.length >= 10) {
+          let firstPartNum = normalizeNumber(
+            inputTokens.slice(0, inputTokens.length - 1).join(' ')
+          );
+          if (
+            firstPartNum &&
+            firstPartNum.length >= 10 &&
+            lastNum &&
+            lastNum.length >= 10
+          ) {
             botNumber = firstPartNum;
             ownerNumber = lastNum;
           } else {
@@ -887,7 +1516,7 @@ ${infos.others.readMore}
 
         if (!botNumber || botNumber.length < 10) {
           return cht.reply(
-            typeof infos.others?.nomorBotTidakValidInput === "function"
+            typeof infos.others?.nomorBotTidakValidInput === 'function'
               ? infos.others.nomorBotTidakValidInput(cht, botNumber)
               : `Nomor bot ${botNumber} tidak valid!`
           );
@@ -895,7 +1524,7 @@ ${infos.others.readMore}
         let isOnWhatsapp = (await Exp.onWhatsApp(botNumber))?.length > 0;
         if (!isOnWhatsapp) {
           return cht.reply(
-            typeof infos.others?.nomorTidakTerdaftarDiWhatsapp === "function"
+            typeof infos.others?.nomorTidakTerdaftarDiWhatsapp === 'function'
               ? infos.others.nomorTidakTerdaftarDiWhatsapp(cht, botNumber)
               : `Nomor ${botNumber} tidak terdaftar di WhatsApp!`
           );
@@ -906,11 +1535,19 @@ ${infos.others.readMore}
         );
 
         let registeredOwner = registeredDb?.owner || registeredSlot?.[1]?.owner;
-        let registeredOwners = (registeredDb?.owners || registeredSlot?.[1]?.owners || []).map(o => String(o).replace(/[^0-9]/g, ''));
+        let registeredOwners = (
+          registeredDb?.owners ||
+          registeredSlot?.[1]?.owners ||
+          []
+        ).map((o) => String(o).replace(/[^0-9]/g, ''));
 
         if (registeredOwner) {
           registeredOwner = String(registeredOwner).replace(/[^0-9]/g, '');
-          if (!is.owner && registeredOwner !== senderNum && !registeredOwners.includes(senderNum)) {
+          if (
+            !is.owner &&
+            registeredOwner !== senderNum &&
+            !registeredOwners.includes(senderNum)
+          ) {
             let slotNum = registeredSlot?.[0] || '1';
             return cht.reply(
               jdbLang.accessDenied(slotNum, botNumber, registeredOwner),
@@ -925,24 +1562,29 @@ ${infos.others.readMore}
           if (slotStatus === 'online') {
             return cht.reply(jdbLang.alreadyConnected(slotNum, botNumber));
           }
-          return cht.reply(jdbLang.alreadyRegistered(slotNum, botNumber, slotStatus));
+          return cht.reply(
+            jdbLang.alreadyRegistered(slotNum, botNumber, slotStatus)
+          );
         }
 
         if (!is.owner) {
-          const userEnergy = (await memories.getItem(cht.sender, 'energy')) ?? cht.memories?.energy ?? 0;
+          const userEnergy =
+            (await memories.getItem(cht.sender, 'energy')) ??
+            cht.memories?.energy ??
+            0;
           if (userEnergy < 200) {
             return cht.reply(
               '⚡ *ENERGY TIDAK CUKUP*\n\n' +
-              '• *Dibutuhkan:* 200 Energy\n' +
-              `• *Energy Kamu:* ${userEnergy} Energy\n\n` +
-              '> Kamu membutuhkan minimal *200 Energy* untuk menautkan bot.'
+                '• *Dibutuhkan:* 200 Energy\n' +
+                `• *Energy Kamu:* ${userEnergy} Energy\n\n` +
+                '> Kamu membutuhkan minimal *200 Energy* untuk menautkan bot.'
             );
           }
         }
         memories.setItem(cht.sender, `jadibot_sess`, null);
         memories.setItem(cht.sender, `questionCmd`, null);
         await cht.reply(
-          typeof infos.others?.jadibotStartingBotNumberN === "function"
+          typeof infos.others?.jadibotStartingBotNumberN === 'function'
             ? infos.others.jadibotStartingBotNumberN(
                 botNumber,
                 botNumber,
@@ -967,11 +1609,89 @@ ${infos.others.readMore}
         memories.setItem(cht.sender, `jadibot_sess`, null);
         memories.setItem(cht.sender, `questionCmd`, null);
         return cht.reply(
-          typeof infos.others?.jadibotErrorSessionTelahDireset === "function"
+          typeof infos.others?.jadibotErrorSessionTelahDireset === 'function'
             ? infos.others.jadibotErrorSessionTelahDireset(e)
             : `Terjadi kesalahan. Sesi telah direset.\n\nError: ${e?.message || e}`
         );
       }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['sc', 'script', 'sourcecode'],
+      listmenu: ['sc'],
+      tag: 'other',
     },
+    async () => {
+      try {
+        const cfg = JSON.parse(fs.readFileSync(fol[3] + 'config.json'));
+        const botName = cfg.botfullname || cfg.botname || 'Bella Clarissa';
+        keys['bell_jpg'] ??= await func.uploadToServer(
+          fs.readFileSync(fol[3] + 'bell.jpg')
+        );
+
+        const caption =
+          `🌸 *${botName} - Source Code*\n\n` +
+          `📦 *Repository GitHub:*\n` +
+          `https://github.com/Rifza123/Experimental-Bell\n\n` +
+          `✨ *Fitur Unggulan:*\n` +
+          `• EventEmitter Architecture\n` +
+          `• Termai API Multi-Engine\n` +
+          `• Meta AI Rich Response & ButtonV2\n` +
+          `• Jadibot Multi-Device Engine\n` +
+          `• AI Automation & Helper Tools\n\n` +
+          `Jangan lupa berikan Star ⭐ pada repositori!`;
+
+        const footer =
+          `CARA DOWNLOAD & INSTALL:\n` +
+          `1. git clone https://github.com/Rifza123/Experimental-Bell.git\n` +
+          `2. cd Experimental-Bell\n` +
+          `3. npm install\n` +
+          `4. node index.js`;
+
+        let _m = {
+          interactiveMessage: {
+            header: {
+              title: '',
+              imageMessage: keys['bell_jpg'],
+              hasMediaAttachment: true,
+            },
+            body: {
+              text: caption,
+            },
+            footer: {
+              text: footer,
+            },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'cta_url',
+                  buttonParamsJson: {
+                    display_text: '⭐ Open GitHub Repository',
+                    url: 'https://github.com/Rifza123/Experimental-Bell',
+                    merchant_url: 'https://github.com/Rifza123/Experimental-Bell',
+                  }.String(),
+                },
+              ],
+            },
+            contextInfo: {
+              stanzaId: cht.key.id,
+              participant: cht.key.participant,
+              quotedMessage: cht,
+              forwardedNewsletterMessageInfo: cfg.chId || {
+                newsletterJid: '120363205560908891@newsletter',
+                newslettedName: 'Termai',
+                serverMessageId: 152,
+              },
+            },
+          },
+        };
+
+        await Exp.relayMessage(cht.id, _m, {});
+      } catch (err) {
+        await cht.reply('❌ Gagal menampilkan SC: ' + (err.message || err));
+      }
+    }
   );
 }

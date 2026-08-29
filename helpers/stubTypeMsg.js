@@ -4,7 +4,9 @@ let infos = Data.infos;
 export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
   try {
     //console.log({ sewaDb, id: cht.id, sewadb2: Data.sewa[cht.id] }, JSON.stringify(Data.sewa,0,2))
-    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+    const preferences = is?.jadibot
+      ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+      : (Data.preferences ??= {});
     let { func } = Exp,
       chatDb = preferences[cht.id],
       { wtype, ltype } = chatDb;
@@ -175,13 +177,8 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
       case StubType.GROUP_PARTICIPANT_REMOVE:
       case StubType.GROUP_PARTICIPANT_LEAVE: {
         func.getGroupMetadata(cht.id, true);
-        if (_members.includes(Exp.number))
-          return delete preferences[cht.id];
-        if (
-          'leave' in chatDb
-            ? !chatDb?.leave
-            : !preferences[cht.id]?.welcome
-        )
+        if (_members.includes(Exp.number)) return delete preferences[cht.id];
+        if ('leave' in chatDb ? !chatDb?.leave : !preferences[cht.id]?.welcome)
           return;
         let text = genText(ltype, members, group.subject, group.desc, 'leave');
         ltype ||= 'linkpreview';

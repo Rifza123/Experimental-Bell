@@ -64,11 +64,25 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
     }
     let isMsg =
       !is?.cmd && !is?.me && !is?.baileys && cht.id !== 'status@broadcast';
-    let utSession = is.group ? (chatDb?.ulartangga || Data.ulartangga?.[cht.id]) : null;
+    let utSession = is.group
+      ? chatDb?.ulartangga || Data.ulartangga?.[cht.id]
+      : null;
     let isUTPlaying = utSession && utSession.status === 'playing';
-    let isUTTurn = isUTPlaying && (cht.sender === utSession.players?.[utSession.gilir]?.id);
-    let isUTRollMsg = isUTTurn && (['🎲', 'dadu', '.dadu', 'roll', '.roll'].includes(cht?.msg?.trim()?.toLowerCase()) || cht?.msg?.trim() === '🎲');
-    let isPendingUpdate = Boolean(is.owner && Data.pendingUpdate?.[cht.sender] && ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel'].includes(cht?.msg?.trim()?.toLowerCase()));
+    let isUTTurn =
+      isUTPlaying && cht.sender === utSession.players?.[utSession.gilir]?.id;
+    let isUTRollMsg =
+      isUTTurn &&
+      (['🎲', 'dadu', '.dadu', 'roll', '.roll'].includes(
+        cht?.msg?.trim()?.toLowerCase()
+      ) ||
+        cht?.msg?.trim() === '🎲');
+    let isPendingUpdate = Boolean(
+      is.owner &&
+        Data.pendingUpdate?.[cht.sender] &&
+        ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel'].includes(
+          cht?.msg?.trim()?.toLowerCase()
+        )
+    );
     let isEval = cht?.msg?.startsWith('>');
     let isEvalSync = cht?.msg?.startsWith('=>');
     let isExec = cht?.msg?.startsWith('$');
@@ -390,15 +404,20 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         Data.antispam[cht.id][cht.sender].count = 0;
         Data.antispam[cht.id][cht.sender].time = Date.now();
 
-        cht.warnGc({
+        await cht.warnGc({
           type: 'antispam',
-          warn: Data.infos.interactive.warn,
-          kick: Data.infos.interactive.kick,
+          warn: Data.infos.interactive.antispamWarn,
+          kick: Data.infos.interactive.antispamKick,
           max: 5,
         });
+        cht.delete();
         break;
       case isEvalSync:
-        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
+        if (is?.jadibot)
+          return cht.reply(
+            '❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!',
+            { replyAi: false }
+          );
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -419,7 +438,11 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         break;
 
       case isEval:
-        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
+        if (is?.jadibot)
+          return cht.reply(
+            '❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!',
+            { replyAi: false }
+          );
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -442,7 +465,11 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         break;
 
       case isExec:
-        if (is?.jadibot) return cht.reply('❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!', { replyAi: false });
+        if (is?.jadibot)
+          return cht.reply(
+            '❌ Fitur eval/exec (=>, >, $) tidak diizinkan pada jadibot demi keamanan server!',
+            { replyAi: false }
+          );
         if (!is?.owner) return;
         if (isDangerous) {
           memories.setItem(sender, 'command', cht.msg);
@@ -465,6 +492,59 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
       case isUTRollMsg:
         cht.cmd = 'dadu';
         ev.emit('dadu');
+        break;
+      case Boolean(
+        (() => {
+          if (!cht?.msg || typeof cht.msg !== 'string') return false;
+          let raw = cht.msg.trim();
+          let hasRtl = raw.startsWith('\u202E');
+          let rawClean = raw.replace(/^\u202E/, '').trim();
+          let reversed = Array.from(rawClean).reverse().join('').trim();
+          let rawLower = rawClean.toLowerCase();
+          let revLower = reversed.toLowerCase();
+          let rawNoEmoji = rawClean
+            .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
+            .trim()
+            .toLowerCase();
+          let revNoEmoji = reversed
+            .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
+            .trim()
+            .toLowerCase();
+
+          let matched = Object.values(Data.events)
+            .map((a) => a.tag)
+            .removeDuplicate()
+            .clean()
+            .find((t) => {
+              let l = (cfg.menu.tags[t] || t)
+                .replace(/[*\<>[\]]/g, '')
+                .trim()
+                .toLowerCase();
+              let lNoEmoji = l
+                .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
+                .trim();
+              let tLower = t.toLowerCase();
+              return (
+                l === revLower ||
+                (hasRtl && l === rawLower) ||
+                (lNoEmoji &&
+                  (lNoEmoji === revNoEmoji ||
+                    (hasRtl && lNoEmoji === rawNoEmoji))) ||
+                tLower === revLower ||
+                (hasRtl && tLower === rawLower)
+              );
+            });
+
+          if (matched) {
+            cht.matchedMenuTag = matched;
+            return true;
+          }
+          return false;
+        })()
+      ):
+        cht.cmd = 'menu';
+        cht.q = `${cht.matchedMenuTag} --content`;
+        ev.emit('menu', { args: `${cht.matchedMenuTag} --content` });
         break;
       case isPendingUpdate:
         cht.cmd = 'update';
@@ -520,6 +600,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             isImage = await func.minimizeImage(await download());
           }
 
+          if (!chat && !isImage) return;
           try {
             let _ai = await ai({
               text: chat,
@@ -561,7 +642,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     cht?.id,
                     {
                       audio: {
-                        url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=${cfg.ai_voice}&speed=0.9`,
+                        url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${encodeURIComponent(config?.msg || '')}&voice=${cfg.ai_voice}&speed=0.9`,
                       },
                       mimetype: 'audio/mpeg',
                       ptt: true,
@@ -571,7 +652,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     }
                   );
                 } catch (e) {
-                  return console.error(e.response);
+                  return console.error(e.response || e);
                 }
             }
 
@@ -734,7 +815,12 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
 
           let chat = cht?.msg || '';
           if (is?.botMention) {
-            [/@\u2068\u202e\d+~\u2069/g, /@\d+/g, /@\(\d+\)/g, /@<\d+>/g].forEach((pattern) => {
+            [
+              /@\u2068\u202e\d+~\u2069/g,
+              /@\d+/g,
+              /@\(\d+\)/g,
+              /@<\d+>/g,
+            ].forEach((pattern) => {
               chat = chat.replace(pattern, botnickname);
             });
           }
@@ -762,7 +848,9 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
           }
           let videoSkipped = false;
           if (isVideo) {
-            let seconds = is.video ? (cht.msg?.seconds || 0) : (cht.quoted?.video?.seconds || 0);
+            let seconds = is.video
+              ? cht.msg?.seconds || 0
+              : cht.quoted?.video?.seconds || 0;
             if (seconds > 60) {
               isVideo = false;
               videoSkipped = true;
@@ -782,6 +870,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             }
           }
           chat = func.clearNumbers(chat);
+          if (!chat && !isImage && !isVideo) return;
           try {
             let _ai = await ai({
               text: chat,
@@ -794,10 +883,12 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
               role: cht?.memories?.role?.split(',')[0],
               chatCount: cht?.memories?.chat || cht?.memories?.autoai?.use || 0,
               msgtype: cht?.type,
-              custom_profile: func.tagReplacer(cfg.logic, {
-                botfullname,
-                botnickname,
-              }),
+              custom_profile:
+                func.tagReplacer(cfg.logic, {
+                  botfullname,
+                  botnickname,
+                }) +
+                `\n- Kamu memegang ponsel berkamera (cmd: lora) dan suka berfoto selfie. Ketika orang terdekatmu (seperti Pacar, Soulmate, atau Owner) meminta PAP atau ingin melihat penampilanmu, naluri alamimu adalah dengan senang hati dan manja mengambil foto selfie untuk mereka.`,
               image: isImage,
               video: isVideo,
               skills: ['sticker'],
@@ -864,12 +955,13 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 },
                 {
                   description:
-                    'Jika pesan adalah meminta pap atau meminta foto kamu',
+                    'Jika pesan adalah meminta pap, foto kamu, selfie, atau ingin melihat penampilan/wajah kamu (ambil foto selfie menggunakan kameramu)',
                   output: {
                     cmd: 'lora',
+                    msg: 'isi pesan atau caption manja/ramah kamu yang menyertai foto selfie tersebut',
                     cfg: {
                       prompt:
-                        'isi teks prompt yang menggambarkan tentang kamu, prompt yang menghasilkan gambar seolah-olah kamu itu sedang selfie ((tulis prompt dalam bahasa inggris, wajib menggunakan bahasa inggris!!))',
+                        'isi teks prompt yang menggambarkan tentang kamu, difoto selfie close-up, prompt yang menghasilkan gambar seolah-olah kamu sedang berfoto selfie (tulis dalam bahasa inggris)',
                     },
                   },
                 },
@@ -933,12 +1025,12 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 },
                 {
                   description:
-                    'Jika kamu ingin mengirimkan stiker lucu (secara spontan layaknya gadis Gen Z yang suka mengekspresikan emosi dengan stiker anime menggemaskan), ATAU jika pengguna meminta stiker tertentu / meminta dicari stiker.',
+                    'jika pengguna meminta stiker tertentu / meminta dicari stiker.',
                   output: {
                     cmd: 'pinsticker',
                     cfg: {
                       query:
-                        'kata kunci pencarian stiker di pinterest. Jika ekspresi spontan Gen Z kamu, gunakan query stiker anime menggemaskan (contoh: anime cute sticker, anime chibi reaction). Namun jika pengguna secara eksplisit meminta topik/karakter/gambar stiker tertentu (misal: kucing, meme, spongebob), ikuti topik permintaan pengguna dan jangan membatasi ke anime saja!',
+                        'kata kunci pencarian stiker di pinterest dalam Bahasa Indonesia yang simpel, singkat, dan umum (contoh: anime cemberut, anime ngambek, anime kaget, anime nangis, anime lucu, anime senyum, anime malu, meme lucu). DILARANG menggunakan bahasa Inggris panjang karena hasil pencarian sering kosong di Pinterest! Jika pengguna meminta topik/karakter tertentu (misal: kucing lucu, spongebob), ikuti topik permintaan pengguna dalam bahasa Indonesia.',
                     },
                   },
                 },
@@ -985,6 +1077,16 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             });
             let config = _ai?.data || {};
             await func.addAiResponse();
+            let isStickerQuery = Boolean(
+              config?.stickerQuery &&
+                typeof config.stickerQuery === 'string' &&
+                config.stickerQuery.trim().toLowerCase() !== 'null' &&
+                config.stickerQuery.trim().toLowerCase() !== 'undefined' &&
+                config.stickerQuery.trim().length > 0
+            );
+            if (isStickerQuery || config?.cmd === 'pinsticker') {
+              await Exp.sendPresenceUpdate('composing', cht.id);
+            }
             let noreply = false;
             console.log('ai_response', config);
             if (
@@ -1002,7 +1104,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
             switch (config?.cmd) {
               case 'sticker':
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
-                return ev.emit('s');
+                return ev.emit('s', { silent: true });
               case 'afk':
                 await cht.reply(config?.msg || 'ok', { replyAi: false });
                 cht.q = config?.cfg?.reason;
@@ -1029,7 +1131,7 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     cht?.id,
                     {
                       audio: {
-                        url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${config?.msg}&voice=${cfg.ai_voice}&speed=0.9`,
+                        url: `${api.xterm.url}/api/text2speech/elevenlabs?key=${api.xterm.key}&text=${encodeURIComponent(config?.msg || '')}&voice=${cfg.ai_voice}&speed=0.9`,
                       },
                       mimetype: 'audio/mpeg',
                       ptt: true,
@@ -1039,7 +1141,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                     }
                   );
                 } catch (e) {
-                  console.log(e.response);
+                  console.log(e.response || e);
+                  return;
                 }
               case 'donasi':
                 noreply = true;
@@ -1097,9 +1200,10 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 return ev.emit(config?.cmd);
               case 'pinsticker':
                 noreply = true;
-                if (config?.msg) await cht.reply(config.msg, { replyAi: false });
+                if (config?.msg)
+                  await cht.reply(config.msg, { replyAi: false });
                 cht.q = config?.cfg?.query || 'anime cute sticker';
-                return ev.emit('pinsticker');
+                return ev.emit('pinsticker', { silent: true });
               case 'closegroup':
                 noreply = true;
                 cht.q = 'close';
@@ -1140,6 +1244,13 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 break;
             }
 
+            let isStickerRelated = Boolean(
+              isStickerQuery ||
+                config?.cmd === 'pinsticker' ||
+                config?.cmd === 'sticker' ||
+                is?.sticker
+            );
+
             if (config?.energy && cfg.ai_interactive.energy) {
               let conf = {};
               conf.energy = /[+-]/.test(`${config.energy}`)
@@ -1154,28 +1265,37 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                 cht?.sender,
                 parseInt(conf.energy.slice(1))
               );
-              await cht.reply(config.energy + ' Energy⚡️', { replyAi: false });
-              config.energyreply = true;
+              if (!isStickerRelated) {
+                await cht.reply(config.energy + ' Energy⚡️', {
+                  replyAi: false,
+                });
+                config.energyreply = true;
+              }
             }
-            if (config?.stickerQuery && typeof config.stickerQuery === 'string' && config.stickerQuery.trim().toLowerCase() !== 'null' && config.stickerQuery.trim().toLowerCase() !== 'undefined' && config.stickerQuery.trim().length > 0) {
+            if (isStickerQuery) {
               let sq = config.stickerQuery.trim();
               try {
+                await Exp.sendPresenceUpdate('composing', cht.id);
                 let res = await fetch(
                   `${api.xterm.url}/api/search/pinterest-image?query=${encodeURIComponent(sq)}&key=${encodeURIComponent(api.xterm.key)}`
-                ).then((a) => a.json()).catch(() => null);
+                )
+                  .then((a) => a.json())
+                  .catch(() => null);
                 let data = res?.data;
                 if (data && Array.isArray(data) && data.length > 0) {
                   let imgUrl = data.slice(0, 20).getRandom();
                   let buff = await func.getBuffer(imgUrl).catch(() => null);
                   if (buff) {
-                    let s = await exif.writeExifImg(
-                      buff,
-                      {
+                    await Exp.sendPresenceUpdate('composing', cht.id);
+                    let s = await exif
+                      .writeExifImg(buff, {
                         packname: botfullname,
                         author: 'Ⓒ' + (cht.pushName || botnickname),
-                      }
-                    ).catch(() => null);
+                      })
+                      .catch(() => null);
                     if (s) {
+                      await Exp.sendPresenceUpdate('composing', cht.id);
+                      await sleep(1000);
                       await Exp.sendMessage(
                         cht.id,
                         {
@@ -1238,8 +1358,8 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
                   }
                 } else {
                   let replyOpts = { ...keys[sender] };
-                  if (videoSkipped) replyOpts.footer = `${botnickname} tidak bisa membaca video berdurasi lebih dari 60 detik`;
-                  if (!replyOpts.footer) replyOpts.footer = String().wm();
+                  if (videoSkipped)
+                    replyOpts.footer = `${botnickname} tidak bisa membaca video berdurasi lebih dari 60 detik`;
                   await cht[method](config.msg, replyOpts);
                 }
               }

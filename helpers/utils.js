@@ -2,7 +2,9 @@ const { proto, getContentType, generateWAMessage } = 'baileys'.import();
 
 export default async function utils({ Exp, cht, is, store }) {
   try {
-    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+    const preferences = is?.jadibot
+      ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+      : (Data.preferences ??= {});
     preferences[cht?.id] ??= {};
     Data.setCmd ??= {};
 
@@ -26,7 +28,14 @@ export default async function utils({ Exp, cht, is, store }) {
     const isProtocol = /^(protocolMessage)/.test(type);
     let isDelete = isProtocol && cht.message[type].type === 0;
 
-    if (isProtocol && !isDelete) return 'SKIP';
+    if (
+      (isProtocol && !isDelete) ||
+      cht?.sender?.includes('13135550002') ||
+      cht?.id?.includes('13135550002') ||
+      cht?.sender?.endsWith('@bot') ||
+      cht?.id?.endsWith('@bot')
+    )
+      return 'SKIP';
 
     const msgType =
       type === 'extendedTextMessage'
@@ -36,11 +45,11 @@ export default async function utils({ Exp, cht, is, store }) {
 
     cht.quoted = cht?.message?.[type]?.contextInfo?.quotedMessage || false;
 
-    let cmdFromMedia = (is?.jadibot
-      ? (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.setCmd ?? {})
-      : (Data.setCmd ?? {}))[
-      cht?.message?.[type]?.fileSha256?.toString()?.to('utf16le')
-    ];
+    let cmdFromMedia = (
+      is?.jadibot
+        ? (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.setCmd ?? {})
+        : (Data.setCmd ?? {})
+    )[cht?.message?.[type]?.fileSha256?.toString()?.to('utf16le')];
     if (cmdFromMedia === 'dadu') cmdFromMedia = '.dadu';
 
     cht.msg =
@@ -52,6 +61,7 @@ export default async function utils({ Exp, cht, is, store }) {
             { type: 'extendedTextMessage', msg: cht?.message?.[type]?.text },
             { type: 'imageMessage', msg: cht?.message?.[type]?.caption },
             { type: 'videoMessage', msg: cht?.message?.[type]?.caption },
+            { type: 'ptvMessage', msg: cht?.message?.[type]?.caption },
             { type: 'pollCreationMessageV3', msg: cht?.message?.[type]?.name },
             {
               type: 'ephemeralMessage',
@@ -211,22 +221,33 @@ export default async function utils({ Exp, cht, is, store }) {
     Exp.number = Exp?.user?.id?.split(':')[0] + from.sender;
 
     Exp.apiKey = is?.jadibot
-      ? (Data.jadibot?.[is.jadibotId]?.apikey || (Data.preferencesBot?.[Exp?.user?.id?.split(':')[0]] ?? {}).apikey || api.xterm.key)
+      ? Data.jadibot?.[is.jadibotId]?.apikey ||
+        (Data.preferencesBot?.[Exp?.user?.id?.split(':')[0]] ?? {}).apikey ||
+        api.xterm.key
       : api.xterm.key;
     cht.apiKey = Exp.apiKey;
 
     is.me = cht?.key?.fromMe || cht.sender == Exp.number;
 
     const senderNum = cht.sender.split('@')[0].replace(/[^0-9]/g, '');
-    const isJadibotOwner = is?.jadibot && (
-      (Exp.jadibotOwner && String(Exp.jadibotOwner).replace(/[^0-9]/g, '') === senderNum) ||
-      (Data.jadibot?.[is.jadibotId]?.owners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum) ||
-      (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.owners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum)
-    );
-    const isJadibotCoOwner = is?.jadibot && (
-      (Data.jadibot?.[is.jadibotId]?.coowners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum) ||
-      (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.coowners || []).some(o => String(o).replace(/[^0-9]/g, '') === senderNum)
-    );
+    const isJadibotOwner =
+      is?.jadibot &&
+      ((Exp.jadibotOwner &&
+        String(Exp.jadibotOwner).replace(/[^0-9]/g, '') === senderNum) ||
+        (Data.jadibot?.[is.jadibotId]?.owners || []).some(
+          (o) => String(o).replace(/[^0-9]/g, '') === senderNum
+        ) ||
+        (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.owners || []).some(
+          (o) => String(o).replace(/[^0-9]/g, '') === senderNum
+        ));
+    const isJadibotCoOwner =
+      is?.jadibot &&
+      ((Data.jadibot?.[is.jadibotId]?.coowners || []).some(
+        (o) => String(o).replace(/[^0-9]/g, '') === senderNum
+      ) ||
+        (Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.coowners || []).some(
+          (o) => String(o).replace(/[^0-9]/g, '') === senderNum
+        ));
 
     is.owner =
       global.owner.some((a) => {
@@ -234,14 +255,17 @@ export default async function utils({ Exp, cht, is, store }) {
           ?.split('@')[0]
           ?.replace(/[^0-9]/g, '');
         return jid && jid + from.sender === cht.sender;
-      }) || is.me || isJadibotOwner;
+      }) ||
+      is.me ||
+      isJadibotOwner;
 
-    is.coowner = global.coowner.some((a) => {
-      const jid = String(a)
-        ?.split('@')[0]
-        ?.replace(/[^0-9]/g, '');
-      return jid && jid + from.sender === cht.sender;
-    }) || isJadibotCoOwner;
+    is.coowner =
+      global.coowner.some((a) => {
+        const jid = String(a)
+          ?.split('@')[0]
+          ?.replace(/[^0-9]/g, '');
+        return jid && jid + from.sender === cht.sender;
+      }) || isJadibotCoOwner;
     is.group = cht.id?.endsWith(from.group);
     const groupDb = is.group ? preferences[cht.id] : {};
     if (is.group) {
@@ -432,6 +456,25 @@ export default async function utils({ Exp, cht, is, store }) {
       !is.coowner &&
       !is.me;
 
+    if (
+      groupDb?.antispam &&
+      is.group &&
+      !is.me &&
+      !is.owner &&
+      !is.coowner &&
+      !is.groupAdmins
+    ) {
+      Data.antispam ??= {};
+      Data.antispam[cht.id] ??= {};
+      const now = Date.now();
+      const spamUser = Data.antispam[cht.id][cht.sender];
+      if (!spamUser || now - spamUser.time > 10000) {
+        Data.antispam[cht.id][cht.sender] = { count: 1, time: now };
+      } else {
+        spamUser.count++;
+      }
+    }
+
     is.spam =
       groupDb?.antispam &&
       !is.me &&
@@ -440,7 +483,7 @@ export default async function utils({ Exp, cht, is, store }) {
       !is.groupAdmins &&
       is.group &&
       Data.antispam?.[cht.id]?.[cht.sender] &&
-      Data.antispam[cht.id][cht.sender].count > 6 &&
+      Data.antispam[cht.id][cht.sender].count >= 5 &&
       Date.now() - Data.antispam[cht.id][cht.sender].time <= 10000;
     cht.reply = async function (text, etc = {}, quoted = { quoted: true }) {
       try {
@@ -523,6 +566,7 @@ Balasan akhir (teks yang sudah diubah sesuai profil):`;
 
     cht.edit = async function (text, key, force) {
       if (!('editmsg' in cfg)) cfg.editmsg = true;
+      if (!key && !force) return;
       let msg = { text: text || '...' };
       if (cfg.editmsg || force) msg.edit = key;
       try {

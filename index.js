@@ -55,6 +55,55 @@ let Func = new func({ store });
 
 let Exp, Detector;
 
+global.debug = process.argv.includes('debug') || process.argv.includes('--debug');
+
+if (global.debug) {
+  console.log(chalk.bold.yellow('╔══════════════════════════════════════════════════╗'));
+  console.log(chalk.bold.yellow('║') + chalk.bold.green('   🐞 DEBUG MODE AKTIF: MONITOR PESAN MASUK       ') + chalk.bold.yellow('║'));
+  console.log(chalk.bold.yellow('╚══════════════════════════════════════════════════╝'));
+}
+
+function debugLogMessage(message, type = 'notify') {
+  if (message?.key?.fromMe) return;
+  try {
+    const key = message?.key || {};
+    const remoteJid = key.remoteJid || 'unknown';
+    const isGroup = remoteJid.endsWith('@g.us');
+    const isStatus = remoteJid === 'status@broadcast';
+    const isNewsletter = remoteJid.endsWith('@newsletter');
+    const chatType = isGroup ? 'GROUP' : isStatus ? 'STATUS' : isNewsletter ? 'CHANNEL' : 'PRIVATE';
+    const sender = key.participant || message?.participant || remoteJid;
+    const pushName = message?.pushName || '-';
+    const msgType = getContentType(message?.message) || (message?.messageStubType ? `stubType:${message.messageStubType}` : 'unknown');
+    const msgId = key.id || '-';
+    const ts = message?.messageTimestamp;
+    const timeStr = ts
+      ? new Date((typeof ts === 'object' && ts.low ? ts.low : Number(ts)) * 1000).toLocaleString('id-ID')
+      : new Date().toLocaleString('id-ID');
+
+    console.log(chalk.bold.yellow(`\n┌─── [DEBUG] PESAN MASUK ──────────────────────────────────────────`));
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Event Type')}   : ${chalk.white(type)}`);
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Chat')}         : ${chalk.green(remoteJid)} ${chalk.gray(`(${chatType})`)}`);
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Sender')}       : ${chalk.green(sender)} ${chalk.gray(`[${pushName}]`)}`);
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Message ID')}   : ${chalk.white(msgId)}`);
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Message Type')} : ${chalk.magenta(msgType)}`);
+    console.log(`${chalk.cyan('│')} ${chalk.bold('Waktu')}        : ${chalk.gray(timeStr)}`);
+    console.log(chalk.yellow('├─── [ PAYLOAD LENGKAP ] ──────────────────────────────────────────'));
+    try {
+      if (typeof message.String === 'function') {
+        console.log(message.String(2));
+      } else {
+        console.log(JSON.stringify(message, null, 2));
+      }
+    } catch {
+      console.log(message);
+    }
+    console.log(chalk.yellow('└───────────────────────────────────────────────────────────────────\n'));
+  } catch (err) {
+    console.error('[DEBUG LOG ERROR]', err);
+  }
+}
+
 async function launch() {
   try {
     const rl = readline.createInterface({
@@ -92,7 +141,16 @@ async function launch() {
         3000,
         await fetch(
           'https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/version'
-        ).then((a) => a.text()),
+        )
+          .then((a) => a.text())
+          .then(async (t) =>
+            /^\d+$/.test(t.trim())
+              ? Number(t.trim())
+              : Number((await fs.readFile('./version', 'utf8')).trim())
+          )
+          .catch(async () =>
+            Number((await fs.readFile('./version', 'utf8')).trim())
+          ),
       ],
       printQRInTerminal: !global.pairingCode,
       browser: Browsers.ubuntu('Chrome'),
@@ -193,6 +251,47 @@ async function launch() {
 
     Exp.ev.on('messages.upsert', async ({ type, messages }) => {
       for (let message of messages) {
+        if (global.debug && !message?.key?.fromMe) {
+          debugLogMessage(message, type);
+        }
+        let isMeta =
+          message?.key?.remoteJid?.includes('13135550002') ||
+          message?.key?.remoteJid?.endsWith('@bot') ||
+          message?.key?.participant?.includes('13135550002') ||
+          message?.participant?.includes('13135550002');
+
+        if (
+          isMeta ||
+          message?.message?.botForwardedMessage ||
+          message?.message?.messageContextInfo?.botMetadata
+        ) {
+          if (message?.message) {
+            const relayJson = JSON.stringify(
+              message.message,
+              (k, v) =>
+                v instanceof Uint8Array ||
+                Buffer.isBuffer(v) ||
+                (v?.type === 'Buffer' && Array.isArray(v?.data))
+                  ? Buffer.from(v?.data || v).toString('base64')
+                  : v,
+              2
+            );
+            console.log('[META_RELAY_PAYLOAD_JSON]\n' + relayJson);
+          } else {
+            const cleanStr = JSON.stringify(
+              message,
+              (k, v) =>
+                v instanceof Uint8Array ||
+                Buffer.isBuffer(v) ||
+                (v?.type === 'Buffer' && Array.isArray(v?.data))
+                  ? `<Buffer ${v.length || v.data?.length} bytes>`
+                  : v,
+              2
+            );
+            console.log('[META AI MSG JSON]\n' + cleanStr);
+          }
+          if (isMeta) continue;
+        }
         const cht = {
           ...message,
           id: message?.key?.remoteJid,

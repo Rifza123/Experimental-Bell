@@ -16,7 +16,12 @@ export default async function client({ Exp, store, cht, is, chatDb, sewaDb }) {
       memories.delItem(cht.sender, 'banned');
     }
 
-    chatDb.ai_interactive ??= Data.preferences[cht.id].ai_interactive =
+    if (is.blacklist) {
+      await cht.delete();
+      return;
+    }
+
+    chatDb.ai_interactive ??= (Data.preferences[cht.id] ??= {}).ai_interactive ??=
       cfg.ai_interactive[is.group ? 'group' : 'private'];
     let frmtEdMsg = cht.reaction
       ? cht.reaction.emoji

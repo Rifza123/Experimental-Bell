@@ -459,16 +459,31 @@ export default class EventEmitter {
                 */
       }
 
-      const isAudioEvent = ev.tag === 'tts' || (Array.isArray(ev.type) && ev.type.includes('audio'));
+      const isAudioEvent =
+        ev.tag === 'tts' ||
+        (Array.isArray(ev.type) && ev.type.includes('audio')) ||
+        cht.cmd === 'play' ||
+        cht.cmd === 'playvn' ||
+        (Array.isArray(ev.cmd) &&
+          (ev.cmd.includes('play') || ev.cmd.includes('playvn')));
+
+      const isReactionAudio =
+        Boolean(this.is?.reaction || cht?.reaction) && isAudioEvent;
+
+      const isSilent = Boolean(opts?.silent || isReactionAudio);
 
       if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
         await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
-        await cht.reply(`-${ev.energy} Energy⚡`, {
-          replyAi: false,
-          ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
-        });
+        if (!isSilent) {
+          await cht.reply(`-${ev.energy} Energy⚡`, {
+            replyAi: false,
+            ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
+          });
+        }
       } else {
-        ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
+        if (!isSilent) {
+          ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
+        }
       }
 
       const resolves = {
@@ -495,8 +510,11 @@ export default class EventEmitter {
       try {
         let cht = opts?.cht || this.cht;
         let sender = cht?.sender;
-        let isApiErr = error?.name === 'TermaiApiError' || error?.apiError || String(error?.stack || error?.message).includes('TermaiApiError');
-        if (isApiErr || error instanceof TypeError) {
+        let isApiErr =
+          error?.name === 'TermaiApiError' ||
+          error?.apiError ||
+          String(error?.stack || error?.message).includes('TermaiApiError');
+        if (isApiErr) {
           let errMsg = messages.termaiApiError(error, event);
           let _key = global.keys?.[sender];
           if (_key && cht.edit) {

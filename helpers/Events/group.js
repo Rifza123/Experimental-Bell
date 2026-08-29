@@ -4,7 +4,9 @@ const baileys = 'baileys'.import();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is, chatDb }) {
-    const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+  const preferences = is?.jadibot
+    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+    : (Data.preferences ??= {});
   const { id, sender } = cht;
   const { func } = Exp;
   const { archiveMemories: memories, dateFormatter } = func;
@@ -421,7 +423,7 @@ ${topEnergy}
     async () => {
       if (preferences[id]['antitagall'])
         return cht.reply('Tagall tidak di izinkan disini!');
-      let mentions = Exp.groupMembers.map((a) => a.id).filter(Boolean)
+      let mentions = Exp.groupMembers.map((a) => a.id).filter(Boolean);
       let text =
         cht.cmd == 'tagall'
           ? `\`${cht?.q ? await func.replaceLidToPn(cht.q, cht) : 'TAG ALL'}\`\n`
@@ -1487,7 +1489,7 @@ _⏳ ${remainingHours} jam ${remainingMinutes} menit lagi._
     }
   );
 
-/*  ev.on(
+  /*  ev.on(
     {
       cmd: ['opentime', 'closetime', 'schedule'],
       tag: 'group',
@@ -1785,7 +1787,9 @@ List tag yang bisa digunakan:
     { cmd: ['listsewa'], tag: 'owner', listmenu: true, isOwner: true },
     async () => {
       if (is?.jadibot || Exp?.isJadibot)
-        return cht.reply('🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!');
+        return cht.reply(
+          '🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!'
+        );
       if (!cfg.sewa)
         return cht.reply(
           'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
@@ -1840,7 +1844,9 @@ List tag yang bisa digunakan:
     },
     async ({ args }) => {
       if (is?.jadibot || Exp?.isJadibot)
-        return cht.reply('🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!');
+        return cht.reply(
+          '🚫 Fitur sewa hanya dapat dikelola melalui Bot Utama!'
+        );
       if (!cfg.sewa)
         return cht.reply(
           'Anda belum mengaktifkan sewa!, aktifkan dengan mengetik *.set sewa on* untuk mengizinkan fitur sewa'
@@ -2196,11 +2202,22 @@ Example:
     },
     async ({ args }) => {
       try {
-        let { quoted, type: mediaType } = ev.getMediaType(cht);
+        let { quoted, type } = ev.getMediaType();
         let caption = args || null;
-        let messageSecret = await 'crypto'
-          .import()
-          .then((a) => a.randomBytes(32));
+        let content = {
+          text: caption || 'Haii semua!! yang buat sw ini adalah ' + cht.pushName,
+        };
+
+        type = type === 'sticker' ? 'image' : type;
+        if (['image', 'video', 'audio'].includes(type)) {
+          let media = await (quoted ? cht.quoted : cht).download().catch(() => null);
+          if (media) {
+            content =
+              type === 'audio'
+                ? { audio: media, mimetype: 'audio/mpeg', ptt: false }
+                : { [type]: media, caption };
+          }
+        }
 
         await Exp.sendMessage(id, {
           react: {
@@ -2209,44 +2226,15 @@ Example:
           },
         });
 
-        let content = {
-          text:
-            caption || 'Haii semua!! yang buat sw ini adalah ' + cht.pushName,
-        };
-
-        if (quoted && mediaType) {
-          let media = await cht.quoted.download();
-          switch (mediaType) {
-            case 'sticker':
-            case 'image':
-            case 'video':
-              content = { [mediaType]: media, caption };
-              break;
-            case 'audio':
-              content = { audio: media, mimetype: 'audio/mpeg', ptt: false };
-              break;
-          }
-        }
-
         let inside = await baileys.generateWAMessageContent(content, {
           upload: Exp.waUploadToServer,
         });
+        delete inside.messageContextInfo;
 
-        const m = baileys.generateWAMessageFromContent(
-          id,
-          {
-            groupStatusMessageV2: {
-              message: {
-                ...inside,
-                messageContextInfo: { messageSecret },
-              },
-            },
-          },
-          {}
-        );
+        let message = Object.create(content[type] ? { [type + 'Message']: inside[type + 'Message'] } : {});
+        message.groupStatusMessageV2 = { message: inside };
 
-        await Exp.relayMessage(id, m.message, { messageId: m.key.id });
-
+        let res = await Exp.relayMessage(id, message, {});
         await Exp.sendMessage(id, {
           react: {
             text: '✅',

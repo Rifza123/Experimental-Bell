@@ -68,7 +68,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
   let { sender, id } = cht;
   ev.on(
     {
-      cmd: Data.voices.map((a) => a.toLowerCase()), //tambah voice di global.js
+      cmd: Data.voices.map((a) => a.toLowerCase()),
       listmenu: Data.voices,
       args: 'Harap sertakan teks untuk diucapkan!',
       tag: 'tts',
@@ -76,7 +76,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
     async ({ args }) => {
       let v = Data.voices.find((a) => a.toLowerCase() == cht.cmd.toLowerCase());
       cht.q = `${v}|${args}`;
-      ev.emit('elevenlabs');
+      await ev.emit('elevenlabs', { silent: Boolean(cht.reaction) });
     }
   );
 
@@ -94,7 +94,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       if (!text) return cht.reply(txtreply);
       await Exp.sendPresenceUpdate('recording', cht.id);
       let res = await fetch(
-        `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${text}`
+        `${api.xterm.url}/api/text2speech/elevenlabs?voice=${voice}&key=${api.xterm.key}&text=${encodeURIComponent(text)}`
       );
       if (res.headers.get('content-type').includes('application/json')) {
         let { status, message: msg } = await res.json();
@@ -108,8 +108,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           audio: await Buffer.from(await res.arrayBuffer()),
           mimetype: 'audio/mpeg',
           ai: true,
+          ptt: true,
         },
-        { quoted: cht }
+        { quoted: cht.reaction || cht }
       );
     }
   );
@@ -134,10 +135,15 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
         exec(
           `ffmpeg -i ${name} -ar 48000 -vn -c:a libopus ${output}`,
           async () => {
-            await Exp.sendMessage(cht.id, {
-              audio: { url: './' + output },
-              mimetype: 'audio/mpeg',
-            });
+            await Exp.sendMessage(
+              cht.id,
+              {
+                audio: { url: './' + output },
+                mimetype: 'audio/mpeg',
+                ptt: true,
+              },
+              { quoted: cht.reaction || cht }
+            );
             await fs.unlinkSync(name);
             fs.unlinkSync(output);
           }

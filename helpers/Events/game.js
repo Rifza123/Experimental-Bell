@@ -25,11 +25,36 @@ cfg.hadiah = cfg.hadiah || {
 };
 
 const baseUTPositions = [
-  [-165, 128], [-103, 128], [-35, 128], [33, 128], [103, 128], [163, 145],
-  [163, 63], [103, 63], [33, 63], [-35, 63], [-103, 63], [-165, 63],
-  [-165, -6], [-103, -6], [-35, -6], [33, -6], [103, -6], [163, -6],
-  [163, -75], [103, -75], [33, -75], [-35, -75], [-103, -75], [-165, -75],
-  [-165, -128], [-103, -128], [-35, -128], [33, -128], [103, -128], [163, -132]
+  [-165, 128],
+  [-103, 128],
+  [-35, 128],
+  [33, 128],
+  [103, 128],
+  [163, 145],
+  [163, 63],
+  [103, 63],
+  [33, 63],
+  [-35, 63],
+  [-103, 63],
+  [-165, 63],
+  [-165, -6],
+  [-103, -6],
+  [-35, -6],
+  [33, -6],
+  [103, -6],
+  [163, -6],
+  [163, -75],
+  [103, -75],
+  [33, -75],
+  [-35, -75],
+  [-103, -75],
+  [-165, -75],
+  [-165, -128],
+  [-103, -128],
+  [-35, -128],
+  [33, -128],
+  [103, -128],
+  [163, -132],
 ];
 
 const getUTPos = (locate, usrIdx) => {
@@ -39,12 +64,12 @@ const getUTPos = (locate, usrIdx) => {
     { dx: -10, dy: -10 },
     { dx: 10, dy: 10 },
     { dx: -10, dy: 10 },
-    { dx: 10, dy: -10 }
+    { dx: 10, dy: -10 },
   ];
   let off = offsets[(usrIdx - 1) % offsets.length];
   return {
     x: Math.round(208 + base[0] + off.dx - 14),
-    y: Math.round(173 + base[1] + off.dy - 14)
+    y: Math.round(173 + base[1] + off.dy - 14),
   };
 };
 
@@ -95,7 +120,9 @@ const renderUTBoard = async (bgPath, players) => {
 export default async function on({ Exp, cht, ev, chatDb, is }) {
   const { id } = cht;
   const { func } = Exp;
-  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
+  const preferences = is?.jadibot
+    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+    : (Data.preferences ??= {});
   let {
     archiveMemories: memories,
     parseTimeString,
@@ -1474,8 +1501,15 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
 
       let now = Date.now();
       if (session) {
-        let isExpired = session.exp ? now > session.exp : (session.lastActivity ? now - session.lastActivity > 600000 : false);
-        let isCorrupted = !Array.isArray(session.players) || session.players.length === 0 || !session.status;
+        let isExpired = session.exp
+          ? now > session.exp
+          : session.lastActivity
+            ? now - session.lastActivity > 600000
+            : false;
+        let isCorrupted =
+          !Array.isArray(session.players) ||
+          session.players.length === 0 ||
+          !session.status;
         if (isExpired || isCorrupted) {
           clearUTTimer(cht.id);
           let delKeys = session.keys || [];
@@ -1498,7 +1532,10 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
       let getAvatar = async (jid) => {
         let targetJid =
           jid && jid.endsWith('@lid')
-            ? (cht.key?.participantAlt || jid).replace(/@lid$/, '@s.whatsapp.net')
+            ? (cht.key?.participantAlt || jid).replace(
+                /@lid$/,
+                '@s.whatsapp.net'
+              )
             : jid;
         try {
           return await Promise.race([
@@ -1514,11 +1551,20 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
 
       if (!session) {
         let inputStr = (cht.q || cht.msg || '').trim();
-        let hasAtInText = /@\d+/.test(cht.msg || '') || (cht.msg || '').includes('@') || /@\d+/.test(cht.q || '');
+        let hasAtInText =
+          /@\d+/.test(cht.msg || '') ||
+          (cht.msg || '').includes('@') ||
+          /@\d+/.test(cht.q || '');
         let mentions = hasAtInText
-          ? Array.from(new Set(cht.mention || [])).filter((a) => a !== cht.sender)
+          ? Array.from(new Set(cht.mention || [])).filter(
+              (a) => a !== cht.sender
+            )
           : [];
-        let isCreateCmd = mentions.length > 0 || /^(create|open|lobby|play|start|\.ut create|\.ut open|\.ut lobby)$/i.test(inputStr.toLowerCase());
+        let isCreateCmd =
+          mentions.length > 0 ||
+          /^(create|open|lobby|play|start|\.ut create|\.ut open|\.ut lobby)$/i.test(
+            inputStr.toLowerCase()
+          );
 
         if (!isCreateCmd) {
           let cap =
@@ -1538,7 +1584,9 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         }
 
         if (mentions.length > 3) {
-          return cht.reply('Maksimal 3 orang yang dapat diundang (total 4 pemain)!');
+          return cht.reply(
+            'Maksimal 3 orang yang dapat diundang (total 4 pemain)!'
+          );
         }
 
         let ppCreator = await getAvatar(cht.sender);
@@ -1575,51 +1623,55 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
 
         if (mentions.length > 0) {
           let targetsNum = mentions.map((a) => a.split('@')[0]);
-          return cht.question(
-            Data.infos.game.ulartanggaInvite(
-              cht.sender.split('@')[0],
-              targetsNum
-            ),
-            {
-              emit: 'ulartangga',
-              sender: mentions[0],
-              accepts: [
-                'join',
-                '.join',
-                '.ut join',
-                'cancel',
-                '.cancel',
-                '.ut cancel',
-                'start',
-                '.start',
-                '.ut start',
-              ],
-              exp: Date.now() + 600000,
-            },
-            { mentions: [cht.sender, ...mentions] }
-          ).then((r) => {
-            if (r?.key?.id) {
-              session.keys = session.keys || [];
-              session.keys.push(r.key.id);
-              chatDb.ulartangga = session;
-            }
-          });
+          return cht
+            .question(
+              Data.infos.game.ulartanggaInvite(
+                cht.sender.split('@')[0],
+                targetsNum
+              ),
+              {
+                emit: 'ulartangga',
+                sender: mentions[0],
+                accepts: [
+                  'join',
+                  '.join',
+                  '.ut join',
+                  'cancel',
+                  '.cancel',
+                  '.ut cancel',
+                  'start',
+                  '.start',
+                  '.ut start',
+                ],
+                exp: Date.now() + 600000,
+              },
+              { mentions: [cht.sender, ...mentions] }
+            )
+            .then((r) => {
+              if (r?.key?.id) {
+                session.keys = session.keys || [];
+                session.keys.push(r.key.id);
+                chatDb.ulartangga = session;
+              }
+            });
         } else {
           let cap = `🐍 *LOBBY PERMAINAN ULAR TANGGA* 🐍\n\n👤 *Pemain (1/4):*\n1. @${cht.sender.split('@')[0]}\n\n📜 *COMMAND PERMAINAN:*\n• *.ut join* / *join*\n> Bergabung ke lobby\n• *.ut start*\n> Memulai game (Min 2 pemain)\n• *.ut cancel* / *cancel*\n> Membatalkan lobby\n• *🎲* / *.dadu* / *media dadu*\n> Melempar dadu (saat game berjalan)\n• *.ut*\n> Cek status & giliran game\n• *.delsesiut*\n> Hapus / menghentikan sesi game (Pembuat / Admin)`;
-          return cht.question(
-            cap,
-            {
-              emit: 'ulartangga',
-              exp: Date.now() + 600000,
-            },
-            { mentions: [cht.sender] }
-          ).then((r) => {
-            if (r?.key?.id) {
-              session.keys = session.keys || [];
-              session.keys.push(r.key.id);
-              chatDb.ulartangga = session;
-            }
-          });
+          return cht
+            .question(
+              cap,
+              {
+                emit: 'ulartangga',
+                exp: Date.now() + 600000,
+              },
+              { mentions: [cht.sender] }
+            )
+            .then((r) => {
+              if (r?.key?.id) {
+                session.keys = session.keys || [];
+                session.keys.push(r.key.id);
+                chatDb.ulartangga = session;
+              }
+            });
         }
       }
 
@@ -1674,9 +1726,14 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
             ? Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.daduMedia
             : Data.daduMedia;
           if (daduMedia?.message) {
-            let isSticker = daduMedia.type === 'stickerMessage' || daduMedia.type === 'sticker';
+            let isSticker =
+              daduMedia.type === 'stickerMessage' ||
+              daduMedia.type === 'sticker';
             let playerNums = session.players.map((p) => p.id.split('@')[0]);
-            let notice = Data.infos.game.ulartanggaDaduMediaNotice(playerNums, isSticker);
+            let notice = Data.infos.game.ulartanggaDaduMediaNotice(
+              playerNums,
+              isSticker
+            );
             await Exp.sendMessage(
               cht.id,
               {
@@ -1685,8 +1742,8 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
               },
               { quoted: cht }
             );
-            await Exp.relayMessage(cht.id, daduMedia.message, {}).catch(
-              (e) => console.error(e)
+            await Exp.relayMessage(cht.id, daduMedia.message, {}).catch((e) =>
+              console.error(e)
             );
           } else if (is.owner) {
             await cht.reply(
@@ -1705,30 +1762,30 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
             '🎲'
           );
 
-          return cht.question(
-            cap,
-            {
-              emit: 'ulartangga',
-              sender: firstPlayer.id,
-              accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
-              exp: Date.now() + 600000,
-            },
-            {
-              image: buf,
-              mentions: session.players.map((p) => p.id),
-            }
-          ).then((r) => {
-            if (r?.key?.id) {
-              session.keys = session.keys || [];
-              session.keys.push(r.key.id);
-              chatDb.ulartangga = session;
-            }
-          });
+          return cht
+            .question(
+              cap,
+              {
+                emit: 'ulartangga',
+                sender: firstPlayer.id,
+                accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+                exp: Date.now() + 600000,
+              },
+              {
+                image: buf,
+                mentions: session.players.map((p) => p.id),
+              }
+            )
+            .then((r) => {
+              if (r?.key?.id) {
+                session.keys = session.keys || [];
+                session.keys.push(r.key.id);
+                chatDb.ulartangga = session;
+              }
+            });
         }
 
-        let isJoinCmd = /^(join|\.ut join|\.join)$/i.test(
-          input
-        );
+        let isJoinCmd = /^(join|\.ut join|\.join)$/i.test(input);
 
         if (isJoinCmd) {
           let existingPlayer = session.players.find((p) => p.id === cht.sender);
@@ -1773,9 +1830,14 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
               ? Data.jadibotDb?.[Exp?.user?.id?.split(':')[0]]?.daduMedia
               : Data.daduMedia;
             if (daduMedia?.message) {
-              let isSticker = daduMedia.type === 'stickerMessage' || daduMedia.type === 'sticker';
+              let isSticker =
+                daduMedia.type === 'stickerMessage' ||
+                daduMedia.type === 'sticker';
               let playerNums = session.players.map((p) => p.id.split('@')[0]);
-              let notice = Data.infos.game.ulartanggaDaduMediaNotice(playerNums, isSticker);
+              let notice = Data.infos.game.ulartanggaDaduMediaNotice(
+                playerNums,
+                isSticker
+              );
               await Exp.sendMessage(
                 cht.id,
                 {
@@ -1784,8 +1846,8 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
                 },
                 { quoted: cht }
               );
-              await Exp.relayMessage(cht.id, daduMedia.message, {}).catch(
-                (e) => console.error(e)
+              await Exp.relayMessage(cht.id, daduMedia.message, {}).catch((e) =>
+                console.error(e)
               );
             } else if (is.owner) {
               await cht.reply(
@@ -1804,25 +1866,27 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
               '🎲'
             );
 
-            return cht.question(
-              cap,
-              {
-                emit: 'ulartangga',
-                sender: firstPlayer.id,
-                accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
-                exp: Date.now() + 600000,
-              },
-              {
-                image: buf,
-                mentions: session.players.map((p) => p.id),
-              }
-            ).then((r) => {
-              if (r?.key?.id) {
-                session.keys = session.keys || [];
-                session.keys.push(r.key.id);
-                chatDb.ulartangga = session;
-              }
-            });
+            return cht
+              .question(
+                cap,
+                {
+                  emit: 'ulartangga',
+                  sender: firstPlayer.id,
+                  accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+                  exp: Date.now() + 600000,
+                },
+                {
+                  image: buf,
+                  mentions: session.players.map((p) => p.id),
+                }
+              )
+              .then((r) => {
+                if (r?.key?.id) {
+                  session.keys = session.keys || [];
+                  session.keys.push(r.key.id);
+                  chatDb.ulartangga = session;
+                }
+              });
           } else {
             refreshSessionTimeout(session);
             let msg = Data.infos.game.ulartanggaJoined(
@@ -1843,7 +1907,8 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           let playerList = session.players
             .map(
               (p, i) =>
-                (i + 1) +
+                i +
+                1 +
                 '. @' +
                 p.id.split('@')[0] +
                 (p.setuju ? ' ✅' : ' ⏳ (Menunggu)')
@@ -1851,7 +1916,9 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
             .join('\n');
           let cap =
             `🐍 *LOBBY PERMAINAN ULAR TANGGA* 🐍\n\n` +
-            `👤 *Pemain (` + session.players.length + `/4):*\n` +
+            `👤 *Pemain (` +
+            session.players.length +
+            `/4):*\n` +
             playerList +
             `\n\n📜 *COMMAND PERMAINAN:*\n` +
             `• *.ut join* / *join*\n> Bergabung ke lobby\n` +
@@ -1871,14 +1938,17 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         refreshSessionTimeout(session);
 
         let inputLower = (cht.q || cht.msg || '').trim().toLowerCase();
-        let isExplicitStatusCmd = /^(ut|\.ut|ulartangga|\.ulartangga)$/i.test(inputLower);
+        let isExplicitStatusCmd = /^(ut|\.ut|ulartangga|\.ulartangga)$/i.test(
+          inputLower
+        );
 
         if (isExplicitStatusCmd) {
           let currPlayer = session.players[session.gilir];
           let playerList = session.players
             .map(
               (p, i) =>
-                (i + 1) +
+                i +
+                1 +
                 '. @' +
                 p.id.split('@')[0] +
                 ' — Posisi: Kotak ' +
@@ -1908,7 +1978,9 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         if (!currPlayer) {
           delete chatDb.ulartangga;
           if (Data.ulartangga?.[cht.id]) delete Data.ulartangga[cht.id];
-          return cht.reply('⚠️ Sesi Ular Tangga rusak/kadaluwarsa. Silahkan ketik .ut kembali.');
+          return cht.reply(
+            '⚠️ Sesi Ular Tangga rusak/kadaluwarsa. Silahkan ketik .ut kembali.'
+          );
         }
         if (cht.sender !== currPlayer.id) {
           return cht.reply(
@@ -1925,7 +1997,10 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           currPlayer.jalan += dice;
         }
 
-        let rollMsg = Data.infos.game.ulartanggaRoll(currPlayer.id.split('@')[0], dice);
+        let rollMsg = Data.infos.game.ulartanggaRoll(
+          currPlayer.id.split('@')[0],
+          dice
+        );
 
         let specialMsg = '';
         if (currPlayer.jalan === 3) {
@@ -1978,7 +2053,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           );
         }
 
-        let statusNotice = specialMsg ? ('\n' + specialMsg) : '';
+        let statusNotice = specialMsg ? '\n' + specialMsg : '';
 
         let buf = await renderUTBoard(
           './toolkit/set/ulartangga.jpg',
@@ -1995,10 +2070,11 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
             cht.id,
             {
               image: buf,
-              caption: rollMsg + statusNotice + '\n\n' + Data.infos.game.ulartanggaWin(
-                currPlayer.id.split('@')[0],
-                25
-              ),
+              caption:
+                rollMsg +
+                statusNotice +
+                '\n\n' +
+                Data.infos.game.ulartanggaWin(currPlayer.id.split('@')[0], 25),
               mentions: [currPlayer.id],
             },
             { quoted: cht }
@@ -2031,25 +2107,27 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
           rollMsg
         );
 
-        return cht.question(
-          cap,
-          {
-            emit: 'ulartangga',
-            sender: nextPlayer.id,
-            accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
-            exp: Date.now() + 600000,
-          },
-          {
-            image: buf,
-            mentions: [currPlayer.id, nextPlayer.id],
-          }
-        ).then((r) => {
-          if (r?.key?.id) {
-            session.keys = session.keys || [];
-            session.keys.push(r.key.id);
-            chatDb.ulartangga = session;
-          }
-        });
+        return cht
+          .question(
+            cap,
+            {
+              emit: 'ulartangga',
+              sender: nextPlayer.id,
+              accepts: ['🎲', 'dadu', '.dadu', 'roll', '.roll'],
+              exp: Date.now() + 600000,
+            },
+            {
+              image: buf,
+              mentions: [currPlayer.id, nextPlayer.id],
+            }
+          )
+          .then((r) => {
+            if (r?.key?.id) {
+              session.keys = session.keys || [];
+              session.keys.push(r.key.id);
+              chatDb.ulartangga = session;
+            }
+          });
       }
     }
   );
@@ -2063,8 +2141,7 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
     async () => {
       let chatDb = (preferences[cht.id] ??= {});
       let session = chatDb.ulartangga || Data.ulartangga?.[cht.id];
-      if (!session)
-        return cht.reply(Data.infos.game.ulartanggaNoSession);
+      if (!session) return cht.reply(Data.infos.game.ulartanggaNoSession);
       let isCreator = cht.sender === session.creator;
       let isAdmin = is.groupAdmins || is.owner;
       if (!isCreator && !isAdmin) {
@@ -2088,6 +2165,343 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         }).catch(() => {});
       }
       return cht.reply(Data.infos.game.ulartanggaDeleted);
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['cek'],
+      listmenu: [
+        'cek femboy',
+        'cek imut',
+        'cek malas',
+        'cek wibu',
+        'cek psikopat',
+        'cek kaya',
+        'cek sabar',
+        'cek pintar',
+        'cek hoki',
+        'cek overpower',
+        'cek gacha',
+        'cek karbit',
+        'cek setia',
+        'cek ganteng',
+        'cek cantik',
+        'cek jomblo',
+      ],
+      args: 'Mau cek apa? femboy atau imut ??',
+      tag: 'CEK',
+      energy: 15,
+      premium: false,
+    },
+    async ({ cht, args }) => {
+      const action = cht.cmd;
+
+      const mentioned = cht.mention?.[0] || cht.sender;
+
+      const targetName =
+        mentioned === cht.sender
+          ? cht.pushName || 'Kamu'
+          : `@${mentioned.split('@')[0]}`;
+
+      const percent = Math.floor(Math.random() * 101);
+
+      let [mode] = args.split(' ');
+
+      let title = `Cek ${mode}`;
+      const DATA = {
+        imut: [
+          {
+            min: 90,
+            desc: 'IMUT BANGET! Kawaii~~ 🥺💕',
+            img: 'https://c.termai.cc/i151/kXJq.jpg',
+          },
+          {
+            min: 70,
+            desc: 'Imutnya kebangetan! 😍',
+            img: 'https://c.termai.cc/i134/rrfUp.jpg',
+          },
+          {
+            min: 50,
+            desc: 'Lumayan imut~ 🌸',
+            img: 'https://c.termai.cc/i141/ALSB3Z.jpg',
+          },
+          {
+            min: 30,
+            desc: 'Ada imutnya dikit 😊',
+            img: 'https://c.termai.cc/i152/0VDd.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Ireng gitu mau jadi imut',
+            img: 'https://c.termai.cc/i106/wfsw4.jpg',
+          },
+        ],
+        femboy: [
+          {
+            min: 80,
+            desc: 'FEMBOY DEWA 🔥💖',
+            img: 'https://c.termai.cc/i191/3QyqZm.jpg',
+          },
+          {
+            min: 60,
+            desc: 'Femboy sejati 💅✨',
+            img: 'https://c.termai.cc/i130/SefU0t.jpg',
+          },
+          {
+            min: 40,
+            desc: 'Lumayan femboy 😘',
+            img: 'https://c.termai.cc/i165/k78.jpg',
+          },
+          {
+            min: 20,
+            desc: 'Ada aura lembutnya dikit~ 🌸',
+            img: 'https://c.termai.cc/i123/GoiaZi.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Cowok banget! 😎',
+            img: 'https://c.termai.cc/i126/RAJp8om.jpg',
+          },
+        ],
+        malas: [
+          {
+            min: 80,
+            desc: 'Pemalas inimah',
+            img: 'https://c.termai.cc/v166/VLLQUy.mp4',
+          },
+          {
+            min: 60,
+            desc: 'Malas tingkat lanjut',
+            img: 'https://c.termai.cc/i193/PaeLfQd.jpg',
+          },
+          {
+            min: 40,
+            desc: 'Malas tingkat menengah',
+            img: 'https://c.termai.cc/i126/P3RrQ4R.jpg',
+          },
+          {
+            min: 20,
+            desc: 'Mulai keliatan malas',
+            img: 'https://c.termai.cc/i122/QDnH.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Produktif banget inimah',
+            img: 'https://c.termai.cc/i111/lGL.jpg',
+          },
+        ],
+        wibu: [
+          {
+            min: 80,
+            desc: 'Wibu Sejati',
+            img: 'https://c.termai.cc/i168/n3jVgQ.jpg',
+          },
+          {
+            min: 60,
+            desc: 'Wibu Akut',
+            img: 'https://c.termai.cc/i167/v0tCy.jpg',
+          },
+          {
+            min: 40,
+            desc: 'Wibu Bau Bawang',
+            img: 'https://c.termai.cc/i161/b2m.jpg',
+          },
+          {
+            min: 20,
+            desc: 'Mulai kerasa aura wibunya',
+            img: 'https://c.termai.cc/i122/iuTKy3.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Normies inimah',
+            img: 'https://c.termai.cc/i124/0ShP.jpg',
+          },
+        ],
+        psikopat: [
+          {
+            min: 86,
+            desc: 'PSIKOPAT AKUT! Jauhi! 😈',
+            img: 'https://c.termai.cc/i125/cdje.jpg',
+          },
+          {
+            min: 65,
+            desc: 'Hati-hati sama orang ini 👀',
+            img: 'https://c.termai.cc/i193/4N0h9Bf.jpg',
+          },
+          {
+            min: 36,
+            desc: 'Ada sisi gelapnya 🌑',
+            img: 'https://c.termai.cc/i100/unWz.jpg',
+          },
+          {
+            min: 15,
+            desc: 'Sedikit misterius 🤔',
+            img: 'https://c.termai.cc/i140/KfWi.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Orang Baik  😇',
+            img: 'https://c.termai.cc/i125/xl9hHpA.jpg',
+          },
+        ],
+        kaya: [
+          { min: 90, desc: 'Sultan! Crazy rich! 💎 👑' },
+          { min: 70, desc: 'Tajir melintir! 💰 💎' },
+          { min: 50, desc: 'Lumayan berada 💵 💰' },
+          { min: 30, desc: 'Cukup lah buat hidup 😊 💵' },
+          { min: 0, desc: 'Semangat nabung! 🙏 🪙' },
+        ],
+        pintar: [
+          { min: 150, desc: 'JENIUS! Einstein level! 🧠✨' },
+          { min: 130, desc: 'Sangat cerdas! 🎓' },
+          { min: 110, desc: 'Di atas rata-rata! 👍' },
+          { min: 90, desc: 'Normal, rata-rata 😊' },
+          { min: 0, desc: 'Tetap semangat belajar! 📚' },
+        ],
+        sabar: [
+          {
+            min: 90,
+            desc: 'Sabar level dewa! Zen master~ 🧘',
+            img: 'https://c.termai.cc/i146/VrhP2.jpg',
+          },
+          {
+            min: 70,
+            desc: 'Sangat sabar! Terpuji 👏',
+            img: 'https://c.termai.cc/i114/csJ.jpg',
+          },
+          {
+            min: 50,
+            desc: 'Cukup sabar 😊',
+            img: 'https://c.termai.cc/i187/L8CI.jpg',
+          },
+          {
+            min: 30,
+            desc: 'Kadang emosian dikit ',
+            img: 'https://c.termai.cc/i156/TID85.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Gampang marah nih... 😤',
+            img: 'https://c.termai.cc/i114/csJ.jpg',
+          },
+        ],
+        overpower: [
+          { min: 90, desc: 'OVERPOWER BANGET! LEGEND! 👑🔥' },
+          { min: 70, desc: 'Kuat banget nih! 💪' },
+          { min: 50, desc: 'Lumayan strong~ 😎' },
+          { min: 30, desc: 'Biasa aja sih 🤔' },
+          { min: 0, desc: 'Masih perlu latihan 📝' },
+        ],
+        hoki: [
+          { min: 90, desc: 'HOKI DEWA! Main gacha pasti menang! 🍀✨' },
+          { min: 70, desc: 'Hoki banget! 🎰' },
+          { min: 50, desc: 'Lumayan hoki 🍀' },
+          { min: 30, desc: 'Sedikit hoki 😊' },
+          { min: 0, desc: 'Sabar ya, lagi apes 😅' },
+        ],
+        gacha: [
+          { min: 90, desc: 'HOKI PARAH! SSR GUARANTEED! ✨💎' },
+          { min: 70, desc: 'Lucky! Pasti dapet SR keatas! 🍀' },
+          { min: 50, desc: 'Hoki-hoki dikit 😊' },
+          { min: 30, desc: 'Hmm... pray harder! 🙏' },
+          { min: 0, desc: 'SIAL! Nanti aja gachanya! 💔' },
+        ],
+        karbit: [
+          {
+            min: 90,
+            desc: 'KARBIT SEJATI! Semua waifu diklaim punya sendiri 😭👑',
+            img: 'https://c.termai.cc/i163/BLZjyB.jpg',
+          },
+          {
+            min: 70,
+            desc: 'Karbit parah! Baru muncul langsung di-claim 💀',
+            img: 'https://c.termai.cc/i147/Alyg.jpg',
+          },
+          {
+            min: 50,
+            desc: 'Lumayan karbit, waifu favorit mulai banyak 😭',
+            img: 'https://c.termai.cc/i182/RVK2q.jpg',
+          },
+          {
+            min: 30,
+            desc: 'Ada jiwa karbitnya dikit 😂',
+            img: 'https://c.termai.cc/i182/RVK2q.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Masih aman, belum banyak claim waifu 😇',
+            img: 'https://c.termai.cc/i128/ncmORW.jpg',
+          },
+        ],
+        setia: [
+          {
+            min: 90,
+            desc: 'SETIA MATI! Idaman banget! 💍❤️',
+            img: 'https://c.termai.cc/i141/ALSB3Z.jpg',
+          },
+          {
+            min: 70,
+            desc: 'Sangat setia! Patut dijaga 💖',
+            img: 'https://c.termai.cc/i152/0VDd.jpg',
+          },
+          {
+            min: 50,
+            desc: 'Cukup setia kok 😊',
+            img: 'https://c.termai.cc/i134/rrfUp.jpg',
+          },
+          {
+            min: 30,
+            desc: 'Mulai lirik-lirik yang lain 👀',
+            img: 'https://c.termai.cc/i156/TID85.jpg',
+          },
+          {
+            min: 0,
+            desc: 'Buaya darat terdeteksi! 🐊💀',
+            img: 'https://c.termai.cc/i106/wfsw4.jpg',
+          },
+        ],
+        ganteng: [
+          { min: 90, desc: 'GANTENG BANGET! Mirip idol K-Pop! ✨😎' },
+          { min: 70, desc: 'Ganteng di atas rata-rata! 😎' },
+          { min: 50, desc: 'Lumayan manis lah 😊' },
+          { min: 30, desc: 'Manis dikit kalau senyum 😉' },
+          { min: 0, desc: 'Yang penting hatinya baik! 😇' },
+        ],
+        cantik: [
+          { min: 90, desc: 'CANTIK BANGET! Bidadari turun ke bumi! 🌸👑' },
+          { min: 70, desc: 'Cantik mempesona! ✨💖' },
+          { min: 50, desc: 'Manis dan enak dilihat 😊' },
+          { min: 30, desc: 'Cantik natural dikit 🌸' },
+          { min: 0, desc: 'Pesona dari dalam yang utama! 😇' },
+        ],
+        jomblo: [
+          { min: 90, desc: 'JOMBLO ABADI! KTP-nya jomblo seumur hidup 😂' },
+          { min: 70, desc: 'Jomblo berkarat tapi tetep santai 😎' },
+          { min: 50, desc: 'Lagi nyaman sendiri dulu ☕' },
+          { min: 30, desc: 'Ada yang lagi diincer nih 👀' },
+          { min: 0, desc: 'Bukan jomblo, udah ada ayang! 👩‍❤️‍👨' },
+        ],
+      };
+      if (!DATA[mode]) return cht.reply(`Cek ${mode} tidak ada!`);
+
+      const getMatch = (type) => DATA[type].find((item) => percent >= item.min);
+
+      let { desc, img } = getMatch(mode);
+
+      const text =
+        mentioned === cht.sender
+          ? `╭━━━〔 ${title} 〕━━━⬣\n┃\n┃ 👤 @${mentioned.split('@')[0]}\n┃\n┃ 📊 Persentase: *${percent}%*\n┃\n┃ 💬 ${desc}\n┃\n╰━━━━━━━━━━━━━━━━⬣`
+          : `╭━━━〔 ${title} 〕━━━⬣\n┃\n┃ 👤 Target: @${mentioned.split('@')[0]}\n┃\n┃ 📊 Persentase: *${percent}%*\n┃\n┃ 💬 ${desc}\n┃\n╰━━━━━━━━━━━━━━━━⬣`;
+      Exp.sendMessage(
+        cht.id,
+        {
+          [img ? 'image' : 'text']: img ? { url: img } : text,
+          ...(img ? { caption: text } : {}),
+          mentions: [mentioned],
+        },
+        {}
+      );
     }
   );
 }

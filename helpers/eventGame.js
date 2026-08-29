@@ -8,10 +8,12 @@ function calcMinThreshold(text) {
 
 export default async function game({ cht, Exp, store, is, ev, chatDb }) {
   let similar = calcMinThreshold(cht.msg);
-  
-  const preferences = is?.jadibot ? (Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {} : (Data.preferences ??= {});
 
-  let metadata = preferences[cht.id] ??= {};
+  const preferences = is?.jadibot
+    ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
+    : (Data.preferences ??= {});
+
+  let metadata = (preferences[cht.id] ??= {});
   let { game } = chatDb;
   let {
     type,

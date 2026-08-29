@@ -474,7 +474,14 @@ Data.infos.messages = {
         '🔑 *Set Key:* `.jadibot apikey <new_key>`'
       );
     }
-    if (type === 'MAINTENANCE') {
+    if (type === 'FORBIDDEN') {
+      return (
+        '⚠️ *ACCESS FORBIDDEN*\n\n' +
+        '• ' + msg + '\n\n' +
+        '🔑 *Set Key:* `.jadibot apikey <new_key>`'
+      );
+    }
+    if (type === 'MAINTENANCE' || err?.status === 503) {
       return (
         '🛠️ *FEATURE UNDER MAINTENANCE*\n\n' +
         '• ' + msg + '\n\n' +
@@ -489,7 +496,7 @@ Data.infos.messages = {
       return 'ℹ️ ' + msg;
     }
     return (
-      '⚠️ *TERMAI API ERROR*\n\n' +
+      '⚠️ *FAILED TO PROCESS REQUEST*\n\n' +
       '• ' + msg
     );
   },
@@ -891,7 +898,8 @@ Data.infos.owner = {
   badword: `Do you want add, delete or view list?\nExample: <cmd> add|tobrut`,
   badwordAddNotfound: `Action may not exist in the list!\n*List Action*: add, delete, list\n\n_Example: <cmd> add|tobrut_`,
 
-  listSetmenu: `\`List of available menu types:\`\n\n- <list>`,
+  listSetmenu: `\`List of available menu types:\`\n\n<list>`,
+  richDisabled: 'Rich feature is not active. Please type .set rich on first!',
   successSetMenu: `Successfully changed menu to <menu>`,
   audiolist: `Success added audio to list <list>✅️\n\nAudio: <url>\n> To see the list type *.getdata audio <list>*`,
   checkJson: `Please check your JSON Object again!\n\nTypeError:\n<rm>\n> <e>`,
@@ -908,6 +916,48 @@ Data.infos.owner = {
   updateCancelled: '❌ *Update cancelled.*',
   updateExpired: '⏱️ *Update session has expired.*',
   updateSuccess: 'Success ✅',
+  setChidHelp: `*GUIDE TO SET CHANNEL*
+
+• *.set chid <channel link>*
+> Provide WhatsApp channel link.
+• *.set chid* (Reply message forwarded from channel)
+> Forward a message from the target channel and reply to it with .set chid`,
+  setChidSuccess: (name, jid) =>
+    `✅ *SUCCESSFULLY SET CHANNEL*\n\n• *Channel Name:* ${name}\n• *Channel ID:* ${jid}`,
+  noChId: `⚠️ *Channel ID has not been set!*
+> Please set channel ID first with:
+• .set chid <channel link>
+• .set chid (Reply message forwarded from channel)`,
+  sendchHelp: `📤 *GUIDE SEND TO CHANNEL*
+
+Send various message types to WhatsApp channel.
+
+*Usage Format:*
+• *.sendch <text>*
+> Send text to the default configured channel.
+• *.sendch <channel_id@newsletter> <text>*
+> Send text to a specific channel ID.
+• *.sendch* (Reply text/image/video/audio/sticker/document)
+> Forward replied media/message to default channel.
+• *.sendch <channel_id@newsletter>* (Reply media)
+> Forward replied media to a specific channel ID.
+• *.sendch <caption>* (Reply image/video)
+> Send replied media with custom caption.`,
+  sendchSuccess: (target, type) =>
+    `✅ *SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${type}`,
+  playchHelp: `🎙️ *GUIDE PLAYCH (SEND VN TO CHANNEL)*
+
+Send a voice note (PTT) to WhatsApp Channel by replying to an audio message.
+
+*Usage Format:*
+• *.playch* (Reply audio / voice note)
+> Send replied audio/voice note to default channel as VN (PTT).
+• *.playch <channel_id@newsletter>* (Reply audio / voice note)
+> Send replied audio/voice note to a specific channel ID as VN (PTT).
+
+_Example: Reply audio then type .playch or .playch 120363205560908891@newsletter_`,
+  playchSuccess: (target, title) =>
+    `✅ *AUDIO SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${title}`,
 
   // ------- Set Info -------
   set: `
@@ -941,6 +991,7 @@ Data.infos.owner = {
 - didYouMean <on/off>
 - energy_mode <on/off>
 - button <on/off>
+- rich <on/off>
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
@@ -1307,6 +1358,41 @@ Data.infos.tools = {
     },
     busy: 'ᤡ *SERVER BUSY*\n\nServer is currently busy handling browser requests. Please try again in a few seconds.',
   },
+  compress: {
+    start: '⏳ *PROCESSING COMPRESSION*\n\nPreparing media for compression...',
+    progress: (spinner, percentage, bar, processed, duration, speed, remaining) => {
+      let text = `${spinner} *COMPRESSING VIDEO*\n\n`;
+      text += `\`[${bar}] ${percentage.toFixed(1)}%\`\n\n`;
+      text += `• *Duration:* ${processed} / ${duration}\n`;
+      text += `• *Speed:* ${speed}x\n`;
+      text += `• *ETA:* ${remaining}`;
+      return text;
+    },
+    successVideo: (originalSize, compressedSize, savedSize, savedPercent, duration) => {
+      let pct = parseFloat(savedPercent) || 0;
+      let text = `✅ *VIDEO COMPRESSION COMPLETED*\n\n`;
+      text += `• *Original Size:* ${originalSize}\n`;
+      text += `• *Compressed Size:* ${compressedSize}\n`;
+      text += `• *Saved:* ${savedSize} (${pct >= 0 ? '-' : '+'}${Math.abs(pct).toFixed(1)}%)\n`;
+      text += `• *Duration:* ${duration}`;
+      return text;
+    },
+    successImage: (originalSize, compressedSize, savedSize, savedPercent) => {
+      let pct = parseFloat(savedPercent) || 0;
+      let text = `✅ *IMAGE COMPRESSION COMPLETED*\n\n`;
+      text += `• *Original Size:* ${originalSize}\n`;
+      text += `• *Compressed Size:* ${compressedSize}\n`;
+      text += `• *Saved:* ${savedSize} (${pct >= 0 ? '-' : '+'}${Math.abs(pct).toFixed(1)}%)`;
+      return text;
+    },
+    failed: '❌ *COMPRESSION FAILED*\n\nAn error occurred while compressing the media.',
+  },
+  burik: {
+    wait: '⏳ Processing pixelated media...',
+    success: (width) => `📉 *Pixelated Media* (${width}px)`,
+    failed: '❌ Failed to process pixelated media.',
+    refund: (energy) => `❌ Failed to process pixelated media.\n> Energy has been refunded (+${energy}⚡)`,
+  },
   enhance: `
 *PLEASE CHOOSE AVAILABLE TYPE!*
 ▪︎ Photo style
@@ -1502,6 +1588,8 @@ Data.infos.interactive = {
   tagallKick: `You were kicked from group for breaking rules by using tagall/hidetag until last warning!`,
   antiMediaWarn: `You are detected sending <mediaType>. Please follow the rules here and do not send <mediaType> in this group!`,
   antiMediaKick: `You have been removed for violating the group rules by sending <mediaType> after the final warning!`,
+  antispamWarn: `You were detected spamming messages! Please follow group rules not to spam!`,
+  antispamKick: `You were kicked for breaking group rules by spamming messages until last warning!`,
 
   limitExpired: (formatTimeDur, resetOn) =>
     `*Interaction limit expired!*\n\n*Waiting time:*\n- ${formatTimeDur.days}d ${formatTimeDur.hours}h ${formatTimeDur.minutes}m ${formatTimeDur.seconds}s ${formatTimeDur.milliseconds}ms\n🗓*Reset On:* ${resetOn}\n\n*Want unlimited interaction?*\nGet premium!, type *.premium* for more info`,

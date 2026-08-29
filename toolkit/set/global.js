@@ -98,6 +98,7 @@ global.cfg.logic =
 `;
 global.cfg.replyAi ??= false;
 global.cfg.register ??= false;
+global.cfg.rich ??= false;
 cfg.rpg.cratePool ??= {
   common: [
     {

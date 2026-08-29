@@ -1,8 +1,11 @@
 import jimp from 'jimp';
+import crypto from 'crypto';
 const {
   getBinaryNodeChild,
   generateMessageIDV2,
   generateWAMessageContent,
+  generateWAMessageFromContent,
+  generateWAMessage,
   getContentType,
   jidNormalizedUser,
   prepareWAMessageMedia,
@@ -12,9 +15,289 @@ const { func } = await `${fol[0]}func.js`.r();
 let { generateWaveform, convertToOpus } = await './toolkit/ffmpeg.js'.r();
 const { processMedia } = await './toolkit/ffmpeg.js'.r();
 
+const injectMessageMentions = (message) => {
+  if (!message || typeof message !== 'object') return message;
+
+  if (typeof message.conversation === 'string') {
+    const mentions = message.conversation.mentions();
+    if (mentions.length > 0) {
+      message.extendedTextMessage = {
+        text: message.conversation,
+        contextInfo: {
+          mentionedJid: mentions,
+        },
+      };
+      delete message.conversation;
+    }
+  }
+
+  if (message.extendedTextMessage) {
+    const text = message.extendedTextMessage.text || '';
+    const ctx = message.extendedTextMessage.contextInfo || {};
+    if (!ctx.mentionedJid || ctx.mentionedJid.length === 0) {
+      const mentions = text.mentions();
+      if (mentions.length > 0) {
+        message.extendedTextMessage.contextInfo = {
+          ...ctx,
+          mentionedJid: mentions,
+        };
+      }
+    }
+  }
+
+  for (const key of [
+    'imageMessage',
+    'videoMessage',
+    'documentMessage',
+    'audioMessage',
+  ]) {
+    if (message[key]) {
+      const text = message[key].caption || '';
+      const ctx = message[key].contextInfo || {};
+      if (!ctx.mentionedJid || ctx.mentionedJid.length === 0) {
+        const mentions = text.mentions();
+        if (mentions.length > 0) {
+          message[key].contextInfo = {
+            ...ctx,
+            mentionedJid: mentions,
+          };
+        }
+      }
+    }
+  }
+
+  if (message.interactiveMessage) {
+    const text =
+      message.interactiveMessage.body?.text ||
+      message.interactiveMessage.header?.title ||
+      '';
+    const ctx = message.interactiveMessage.contextInfo || {};
+    if (!ctx.mentionedJid || ctx.mentionedJid.length === 0) {
+      const mentions = text.mentions();
+      if (mentions.length > 0) {
+        message.interactiveMessage.contextInfo = {
+          ...ctx,
+          mentionedJid: mentions,
+        };
+      }
+    }
+  }
+
+  const inner =
+    message.viewOnceMessage?.message ||
+    message.viewOnceMessageV2?.message ||
+    message.ephemeralMessage?.message ||
+    message.documentWithCaptionMessage?.message;
+  if (inner) {
+    injectMessageMentions(inner);
+  }
+
+  return message;
+};
+
+const injectRichResponseMessage = (message) => {
+  if (!message || typeof message !== 'object') return false;
+
+  let rich =
+    message?.richResponseMessage ||
+    message?.botForwardedMessage?.richResponseMessage ||
+    message?.botForwardedMessage?.message?.richResponseMessage ||
+    message?.protocolMessage?.editedMessage?.richResponseMessage ||
+    message?.protocolMessage?.editedMessage?.botForwardedMessage?.message
+      ?.richResponseMessage ||
+    message?.botForwardedMessage?.message?.protocolMessage?.editedMessage
+      ?.richResponseMessage ||
+    message?.botForwardedMessage?.message?.protocolMessage?.editedMessage
+      ?.botForwardedMessage?.message?.richResponseMessage;
+
+  if (!rich) return false;
+
+  if (typeof rich.messageType === 'string' || !rich.messageType) {
+    const map = {
+      AI_RICH_RESPONSE_TYPE_STANDARD: 1,
+      AI_RICH_RESPONSE_TYPE_CAROUSEL: 2,
+    };
+    rich.messageType = map[rich.messageType] || 1;
+  }
+
+  if (rich.sections && !rich.unifiedResponse) {
+    rich.unifiedResponse = { data: { sections: rich.sections } };
+    delete rich.sections;
+  }
+
+  if (rich.unifiedResponse?.data) {
+    try {
+      let decodedJson = null;
+      if (
+        typeof rich.unifiedResponse.data === 'object' &&
+        rich.unifiedResponse.data !== null
+      ) {
+        decodedJson = rich.unifiedResponse.data;
+      } else if (typeof rich.unifiedResponse.data === 'string') {
+        const rawStr = rich.unifiedResponse.data.trim();
+        if (rawStr.startsWith('{') || rawStr.startsWith('[')) {
+          decodedJson = JSON.parse(rawStr);
+        } else {
+          try {
+            decodedJson = JSON.parse(
+              Buffer.from(rawStr, 'base64').toString('utf8')
+            );
+          } catch {
+            decodedJson = null;
+          }
+        }
+      }
+
+      if (decodedJson) {
+        if (Array.isArray(decodedJson)) {
+          decodedJson = { sections: decodedJson };
+        }
+        decodedJson.response_id ??= ''.uuid();
+
+        rich.unifiedResponse.data = Buffer.from(
+          JSON.stringify(decodedJson)
+        ).toString('base64');
+      }
+    } catch {}
+  }
+
+  if (Array.isArray(rich.submessages)) {
+    const subMap = {
+      AI_RICH_RESPONSE_IMAGE: 1,
+      AI_RICH_RESPONSE_TEXT: 2,
+      AI_RICH_RESPONSE_TABLE: 4,
+      AI_RICH_RESPONSE_CODE: 5,
+      AI_RICH_RESPONSE_REELS: 9,
+    };
+    for (let sub of rich.submessages) {
+      if (typeof sub.messageType === 'string' || !sub.messageType) {
+        sub.messageType =
+          subMap[sub.messageType] ||
+          (sub.gridImageMetadata
+            ? 1
+            : sub.codeMetadata
+              ? 5
+              : sub.tableMetadata
+                ? 4
+                : sub.contentItemsMetadata
+                  ? 9
+                  : 2);
+      }
+    }
+  } else {
+    rich.submessages = [];
+  }
+
+  rich.contextInfo ??= {};
+  if (
+    rich.contextInfo.forwardOrigin === 'META_AI' ||
+    typeof rich.contextInfo.forwardOrigin === 'string'
+  ) {
+    rich.contextInfo.forwardOrigin = 4;
+  }
+  rich.contextInfo.isForwarded ??= true;
+  rich.contextInfo.forwardingScore ??= 1;
+  rich.contextInfo.forwardedAiBotMessageInfo ??= {
+    botJid: '867051314767696@bot',
+  };
+  rich.contextInfo.botMessageSharingInfo ??= {
+    botEntryPointOrigin: 'AI_TAB',
+    forwardScore: 1,
+  };
+
+  message.messageContextInfo ??= {};
+  if (!message.messageContextInfo.messageSecret) {
+    delete message.messageContextInfo.messageSecret;
+    message.messageContextInfo.deviceListMetadata ??= {};
+    message.messageContextInfo.deviceListMetadataVersion ??= 2;
+    message.messageContextInfo.botMetadata ??= {};
+    message.messageContextInfo.botMetadata.messageDisclaimerText ??= '';
+    message.messageContextInfo.botMetadata.verificationMetadata =
+      {}.verificationMetadata();
+    message.messageContextInfo.botMetadata.botResponseId ??= ''.uuid();
+  }
+
+  if (message.richResponseMessage) {
+    message.botForwardedMessage = {
+      message: {
+        richResponseMessage: rich,
+      },
+    };
+    delete message.richResponseMessage;
+  } else if (message.botForwardedMessage?.richResponseMessage) {
+    message.botForwardedMessage.message = {
+      richResponseMessage: rich,
+    };
+    delete message.botForwardedMessage.richResponseMessage;
+  }
+
+  return true;
+};
+
 export default async function initialize({ Exp, store }) {
   try {
     const { sendMessage, relayMessage } = Exp;
+
+    Exp.relayMessage = async (jid, message, options = {}) => {
+      injectMessageMentions(message);
+      const isRich = injectRichResponseMessage(message);
+      const isEdit = Boolean(
+        message?.protocolMessage ||
+          message?.botForwardedMessage?.message?.protocolMessage ||
+          message?.botForwardedMessage?.protocolMessage
+      );
+
+      if (isRich && !isEdit) {
+        const fullMsg = await generateWAMessageFromContent(
+          jid,
+          message,
+          {
+            messageId: options.messageId || generateMessageIDV2(),
+          }
+        );
+
+        const res = await relayMessage.call(
+          Exp,
+          jid,
+          fullMsg.message,
+          {
+            messageId: fullMsg.key.id,
+            ...options,
+          }
+        );
+
+        try {
+          const editMsg = await generateWAMessageFromContent(
+            jid,
+            {
+              botForwardedMessage: {
+                message: {
+                  protocolMessage: {
+                    key: {
+                      remoteJid: jid,
+                      fromMe: true,
+                      id: fullMsg.key.id,
+                    },
+                    type: 14,
+                    editedMessage: fullMsg.message,
+                  },
+                },
+              },
+            },
+            {
+              messageId: generateMessageIDV2(),
+            }
+          );
+          await relayMessage.call(Exp, jid, editMsg.message, {
+            messageId: editMsg.key.id,
+          });
+        } catch (e) {}
+
+        return res;
+      }
+
+      return relayMessage.call(Exp, jid, message, options);
+    };
 
     Exp.number ??= Exp?.user?.id?.split(':')[0] + from.sender;
     Exp.profilePictureUrl = async (jid, type = 'image', timeoutMs) => {
@@ -118,15 +401,104 @@ export default async function initialize({ Exp, store }) {
     Exp.sendMessage = async (id, config, etc = {}) => {
       let msg;
       let buffer;
-      const isNotice = typeof config?.text === 'string' && (
-        config.text.includes('Energy⚡') ||
-        config.text.includes('⏱️Wait...') ||
-        config.text.includes('Bntr...') ||
-        config.text.includes('Cooldown') ||
-        config.text.includes('Pesan API:')
-      );
 
-      if (config?.footer && (config?.audio || config?.document || config?.sticker))
+      if (typeof config === 'string') config = { text: config };
+      const rawText = config?.text || config?.caption || '';
+      const autoMentions = rawText.mentions();
+
+      if (autoMentions.length > 0) {
+        if (
+          !config?.mentions &&
+          !config?.mentionedJid &&
+          !config?.contextInfo?.mentionedJid
+        ) {
+          config.mentions = autoMentions;
+          if (config.contextInfo) {
+            config.contextInfo.mentionedJid = autoMentions;
+          }
+        }
+      }
+
+      if (Array.isArray(config?.album) || Array.isArray(config?.albumMessage)) {
+        const items = config.album || config.albumMessage;
+        const imgCount = items.filter(
+          (a) => a && ('image' in a || a.image)
+        ).length;
+        const vidCount = items.filter(
+          (a) => a && ('video' in a || a.video)
+        ).length;
+
+        let parentMsg = await generateWAMessageFromContent(
+          id,
+          {
+            messageContextInfo: {
+              messageSecret: crypto.randomBytes(32),
+            },
+            albumMessage: {
+              expectedImageCount: imgCount,
+              expectedVideoCount: vidCount,
+              ...(config.contextInfo
+                ? { contextInfo: config.contextInfo }
+                : {}),
+            },
+          },
+          {
+            userJid: jidNormalizedUser(Exp.user?.id || ''),
+            quoted: etc.quoted,
+            upload: Exp.waUploadToServer,
+          }
+        );
+
+        if (etc.quoted) {
+          parentMsg.message.albumMessage.contextInfo = {
+            ...(parentMsg.message.albumMessage.contextInfo || {}),
+            stanzaId: etc.quoted.key.id,
+            participant: etc.quoted.key.participant || etc.quoted.key.remoteJid,
+            quotedMessage: etc.quoted,
+            mentionedJid:
+              config.mentionedJid || config.mentions || autoMentions || [],
+          };
+        }
+
+        await Exp.relayMessage(id, parentMsg.message, {
+          messageId: parentMsg.key.id,
+        });
+
+        for (let item of items) {
+          if (config.contextInfo && !item.contextInfo) {
+            item = { ...item, contextInfo: config.contextInfo };
+          }
+          const mediaMsg = await generateWAMessage(id, item, {
+            upload: Exp.waUploadToServer,
+            userJid: jidNormalizedUser(Exp.user?.id || ''),
+          });
+          mediaMsg.message.messageContextInfo = {
+            messageSecret: crypto.randomBytes(32),
+            messageAssociation: {
+              associationType: 1,
+              parentMessageKey: parentMsg.key,
+            },
+          };
+          await Exp.relayMessage(id, mediaMsg.message, {
+            messageId: mediaMsg.key.id,
+          });
+        }
+
+        return parentMsg;
+      }
+
+      const isNotice =
+        typeof config?.text === 'string' &&
+        (config.text.includes('Energy⚡') ||
+          config.text.includes('⏱️Wait...') ||
+          config.text.includes('Bntr...') ||
+          config.text.includes('Cooldown') ||
+          config.text.includes('Pesan API:'));
+
+      if (
+        config?.footer &&
+        (config?.audio || config?.document || config?.sticker)
+      )
         delete config.footer;
 
       const externalAd = config?.contextInfo?.externalAdReply;
@@ -164,7 +536,10 @@ export default async function initialize({ Exp, store }) {
             try {
               const resMedia = await prepareWAMessageMedia(
                 { image: thumbBuffer },
-                { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+                {
+                  upload: Exp.waUploadToServer,
+                  mediaTypeOverride: 'thumbnail-link',
+                }
               );
               imageMessage = resMedia?.imageMessage;
             } catch {}
@@ -227,7 +602,10 @@ export default async function initialize({ Exp, store }) {
               if (!keys['termai_favicon_media']) {
                 const favRes = await prepareWAMessageMedia(
                   { image: { url: 'https://c.termai.cc/i170/88Oj.png' } },
-                  { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+                  {
+                    upload: Exp.waUploadToServer,
+                    mediaTypeOverride: 'thumbnail-link',
+                  }
                 );
                 if (favRes?.imageMessage) {
                   keys['termai_favicon_media'] = {
@@ -235,7 +613,9 @@ export default async function initialize({ Exp, store }) {
                     thumbnailSha256: favRes.imageMessage.fileSha256,
                     thumbnailEncSha256: favRes.imageMessage.fileEncSha256,
                     mediaKey: favRes.imageMessage.mediaKey,
-                    mediaKeyTimestamp: String(favRes.imageMessage.mediaKeyTimestamp || ts),
+                    mediaKeyTimestamp: String(
+                      favRes.imageMessage.mediaKeyTimestamp || ts
+                    ),
                   };
                 }
               }
@@ -304,7 +684,12 @@ export default async function initialize({ Exp, store }) {
           stanzaId: etc.quoted.key.id,
           participant: etc.quoted.key.participant || etc.quoted.key.remoteJid,
           quotedMessage: etc.quoted,
-          mentionedJid: config.mentionedJid || config.mentions || [],
+          mentionedJid:
+            config.mentionedJid ||
+            config.mentions ||
+            message[type]?.contextInfo?.mentionedJid ||
+            autoMentions ||
+            [],
         };
       } else if (config.contextInfo) {
         message[type].contextInfo = {
@@ -338,6 +723,10 @@ export default async function initialize({ Exp, store }) {
           remoteJid: id,
         },
       };
+    };
+
+    Exp.sendAlbum = async (id, medias, etc = {}) => {
+      return Exp.sendMessage(id, { album: medias }, etc);
     };
 
     Exp.groupSetMemberLabel = async (jid, label) => {

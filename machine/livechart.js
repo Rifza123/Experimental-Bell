@@ -3,7 +3,18 @@ const { default: WebSocket } = await import('ws');
 let hasErrorLogged = false;
 const ky = '__livechart_ws__';
 keys[ky] = Object.assign(
-  { ws: null, interval: null, reconnectTimeout: null, isConnected: false },
+  {
+    ws: null,
+    interval: null,
+    watchdogInterval: null,
+    reconnectTimeout: null,
+    connectTimeout: null,
+    lastActivity: 0,
+    retryCount: 0,
+    isConnected: true,
+    boundExp: null,
+    connectWs: null,
+  },
   keys[ky]
 );
 const RCH_SPAM_LIMIT = 60;
@@ -104,21 +115,42 @@ const getHourKey = () => {
 };
 
 function livechart({ Exp } = {}) {
-  if (!Exp) return;
+  if (Exp) {
+    keys[ky].boundExp = Exp;
+    if (Exp.ev && (!keys[ky].hasBoundListener || keys[ky].lastExp !== Exp)) {
+      keys[ky].lastExp = Exp;
+      keys[ky].hasBoundListener = true;
+      Exp.ev.on('connection.update', ({ connection }) => {
+        if (connection === 'open') {
+          keys[ky].boundExp = Exp;
+          connectWs();
+        }
+      });
+    }
+  }
 
   const connectWs = () => {
     const prev = keys[ky];
-    if (
-      prev.ws &&
-      (prev.ws.readyState === WebSocket.OPEN ||
-        prev.ws.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
+    if (prev.ws) {
+      if (prev.ws.readyState === WebSocket.OPEN) {
+        return;
+      }
+      if (prev.ws.readyState === WebSocket.CONNECTING) {
+        return;
+      }
+      try {
+        prev.ws.terminate();
+      } catch {}
+      prev.ws = null;
     }
 
     if (prev.reconnectTimeout) {
       clearTimeout(prev.reconnectTimeout);
       prev.reconnectTimeout = null;
+    }
+    if (prev.connectTimeout) {
+      clearTimeout(prev.connectTimeout);
+      prev.connectTimeout = null;
     }
 
     cfg.remoteReaction ??= true;
@@ -163,20 +195,60 @@ function livechart({ Exp } = {}) {
 
     keys[ky].ws = ws;
 
-    ws.on('open', () => {
-      logLivechart('WebSocket connected', 'success');
-      hasErrorLogged = false;
+    keys[ky].connectTimeout = setTimeout(() => {
+      if (ws.readyState === WebSocket.CONNECTING) {
+        logLivechart('WebSocket connection timed out (10s), terminating...', 'warn');
+        try {
+          ws.terminate();
+        } catch {}
+      }
+    }, 10000);
 
+    ws.on('open', () => {
+      if (keys[ky].connectTimeout) {
+        clearTimeout(keys[ky].connectTimeout);
+        keys[ky].connectTimeout = null;
+      }
+      keys[ky].retryCount = 0;
+      keys[ky].lastActivity = Date.now();
+      hasErrorLogged = false;
+      logLivechart('WebSocket connected', 'success');
+
+      if (keys[ky].interval) {
+        clearInterval(keys[ky].interval);
+      }
       keys[ky].interval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'ping' }));
+          try {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          } catch {}
+          if (Date.now() - keys[ky].lastActivity > 45000) {
+            logLivechart('WebSocket ping-pong timeout (>45s unresponsive), terminating...', 'warn');
+            try {
+              ws.terminate();
+            } catch {}
+          }
         }
-      }, 60000);
+      }, 15000);
     });
 
     ws.on('message', async (msg) => {
+      keys[ky].lastActivity = Date.now();
       try {
         const parsed = JSON.parse(msg);
+
+        if (parsed.type === 'ping') {
+          if (ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send(JSON.stringify({ type: 'pong' }));
+            } catch {}
+          }
+          return;
+        }
+
+        if (parsed.type === 'pong') {
+          return;
+        }
 
         switch (parsed.type) {
           case 'data':
@@ -188,10 +260,11 @@ function livechart({ Exp } = {}) {
 
           case 'rch': {
             if (!cfg.remoteReaction) return;
-            console.log(parsed);
+            const currentExp = keys[ky].boundExp || Exp;
+            if (!currentExp) return;
             const { newsletterId, server_id, reaction } = parsed.data || {};
 
-            if (checkRchSpam({ Exp })) {
+            if (checkRchSpam({ Exp: currentExp })) {
               logLivechart(
                 '[remote] Reaction Channel skipped (spam detected)',
                 'warn'
@@ -200,7 +273,7 @@ function livechart({ Exp } = {}) {
             }
 
             try {
-              await Exp.newsletterReactMessage(newsletterId, server_id, reaction);
+              await currentExp.newsletterReactMessage(newsletterId, server_id, reaction);
 
               const now = Date.now();
               const hourKey = getHourKey();
@@ -208,7 +281,7 @@ function livechart({ Exp } = {}) {
 
               stats.totalReact++;
               stats.reactSuccess++;
-              stats.lastSuccess = Exp.func.dateFormatter(now, 'Asia/Jakarta');
+              stats.lastSuccess = currentExp.func.dateFormatter(now, 'Asia/Jakarta');
 
               stats.perType[reaction] ??= { count: 0, last: null };
               stats.perType[reaction].count++;
@@ -237,7 +310,7 @@ function livechart({ Exp } = {}) {
               );
             } catch (e) {
               stats.reactError++;
-              stats.lastError = Exp.func.dateFormatter(
+              stats.lastError = currentExp.func.dateFormatter(
                 Date.now(),
                 'Asia/Jakarta'
               );
@@ -264,62 +337,68 @@ function livechart({ Exp } = {}) {
     });
 
     ws.on('close', () => {
-      clearInterval(keys[ky].interval);
-      keys[ky].interval = null;
+      if (keys[ky].connectTimeout) {
+        clearTimeout(keys[ky].connectTimeout);
+        keys[ky].connectTimeout = null;
+      }
+      if (keys[ky].interval) {
+        clearInterval(keys[ky].interval);
+        keys[ky].interval = null;
+      }
 
       if (keys[ky].ws === ws) {
         keys[ky].ws = null;
       }
 
-      if (keys[ky].isConnected) {
-        logLivechart('WebSocket closed, reconnecting in 30s', 'warn');
-        keys[ky].reconnectTimeout = setTimeout(() => {
-          if (keys[ky].isConnected) {
-            connectWs();
-          }
-        }, 30000);
+      keys[ky].retryCount = Math.min((keys[ky].retryCount || 0) + 1, 5);
+      const delayMs = Math.min(3000 * Math.pow(1.5, keys[ky].retryCount - 1), 15000);
+
+      logLivechart(`WebSocket closed, reconnecting in ${(delayMs / 1000).toFixed(1)}s`, 'warn');
+      if (keys[ky].reconnectTimeout) {
+        clearTimeout(keys[ky].reconnectTimeout);
       }
+      keys[ky].reconnectTimeout = setTimeout(() => {
+        connectWs();
+      }, delayMs);
     });
   };
 
-  const closeWs = () => {
-    keys[ky].isConnected = false;
-    if (keys[ky].reconnectTimeout) {
-      clearTimeout(keys[ky].reconnectTimeout);
-      keys[ky].reconnectTimeout = null;
-    }
-    if (keys[ky].interval) {
-      clearInterval(keys[ky].interval);
-      keys[ky].interval = null;
-    }
-    if (keys[ky].ws) {
-      try {
-        keys[ky].ws.removeAllListeners();
-        keys[ky].ws.close(1000, 'WhatsApp connection closed');
-      } catch {}
-      keys[ky].ws = null;
-    }
-  };
+  keys[ky].connectWs = connectWs;
 
-  if (!keys[ky].boundExp || keys[ky].boundExp !== Exp) {
-    keys[ky].boundExp = Exp;
-    if (Exp.ev) {
-      Exp.ev.on('connection.update', ({ connection }) => {
-        if (connection === 'open') {
-          keys[ky].isConnected = true;
-          connectWs();
-        } else if (connection === 'close') {
-          closeWs();
-        }
-      });
-    }
+  if (!keys[ky].watchdogInterval) {
+    keys[ky].watchdogInterval = setInterval(() => {
+      const current = keys[ky].ws;
+      if (!current || current.readyState === WebSocket.CLOSED || current.readyState === WebSocket.CLOSING) {
+        connectWs();
+      }
+    }, 20000);
   }
 
-  if (Exp.user?.id) {
-    keys[ky].isConnected = true;
-    connectWs();
-  }
+  connectWs();
 }
+
+async function ensureConnected(timeoutMs = 6000) {
+  const state = keys[ky];
+  if (state?.ws && state.ws.readyState === WebSocket.OPEN) {
+    return true;
+  }
+  if (typeof state?.connectWs !== 'function') {
+    livechart();
+  } else if (!state?.ws || state.ws.readyState >= 2) {
+    state.retryCount = 0;
+    state.connectWs();
+  }
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeoutMs) {
+    if (keys[ky]?.ws && keys[ky].ws.readyState === WebSocket.OPEN) {
+      return true;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return keys[ky]?.ws?.readyState === WebSocket.OPEN;
+}
+
+livechart.ensureConnected = ensureConnected;
 
 process.on('exit', () => {
   try {
@@ -353,4 +432,5 @@ function logLivechart(msg, type = 'info') {
   );
 }
 
+export { ensureConnected };
 export default livechart;

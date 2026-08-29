@@ -496,7 +496,14 @@ Data.infos.messages = {
         '🔑 *Set Key:* `.jadibot apikey <key_baru>`'
       );
     }
-    if (type === 'MAINTENANCE') {
+    if (type === 'FORBIDDEN') {
+      return (
+        '⚠️ *AKSES DITOLAK*\n\n' +
+        '• ' + msg + '\n\n' +
+        '🔑 *Set Key:* `.jadibot apikey <key_baru>`'
+      );
+    }
+    if (type === 'MAINTENANCE' || err?.status === 503) {
       return (
         '🛠️ *FITUR DALAM MAINTENANCE*\n\n' +
         '• ' + msg + '\n\n' +
@@ -511,7 +518,7 @@ Data.infos.messages = {
       return 'ℹ️ ' + msg;
     }
     return (
-      '⚠️ *TERMAI API ERROR*\n\n' +
+      '⚠️ *GAGAL MEMPROSES PERMINTAAN*\n\n' +
       '• ' + msg
     );
   },
@@ -913,7 +920,8 @@ Data.infos.owner = {
   badword: `Mau add, delete atau lihat list?\nContoh: <cmd> add|tobrut`,
   badwordAddNotfound: `Action mungkin tidak ada dalam list!\n*List Action*: add, delete, list\n\n_Contoh: <cmd> add|tobrut_`,
 
-  listSetmenu: `\`List type menu yang tersedia:\`\n\n- <list>`,
+  listSetmenu: `\`List type menu yang tersedia:\`\n\n<list>`,
+  richDisabled: 'Fitur rich belum aktif. Silahkan ketik .set rich on terlebih dahulu!',
   successSetMenu: `Berhasil mengganti menu ke <menu>`,
   audiolist: `Sukses menambahkan audio ke dalam list <list>✅️\n\nAudio: <url>\n> Untuk melihat list silahkan ketik *.getdata audio <list>*`,
   checkJson: `Harap periksa kembali JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`,
@@ -930,6 +938,48 @@ Data.infos.owner = {
   updateCancelled: '❌ *Update dibatalkan.*',
   updateExpired: '⏱️ *Sesi update telah kadaluwarsa.*',
   updateSuccess: 'Success ✅',
+  setChidHelp: `*PANDUAN SET CHANNEL / SALURAN*
+
+• *.set chid <link channel>*
+> Masukkan tautan saluran WhatsApp.
+• *.set chid* (Reply pesan terusan dari saluran)
+> Teruskan pesan dari saluran target lalu balas pesan tersebut dengan .set chid`,
+  setChidSuccess: (name, jid) =>
+    `✅ *BERHASIL MENGATUR SALURAN*\n\n• *Nama Saluran:* ${name}\n• *ID Saluran:* ${jid}`,
+  noChId: `⚠️ *ID Saluran belum diatur!*
+> Silakan atur ID saluran terlebih dahulu dengan:
+• .set chid <link channel>
+• .set chid (Reply pesan yang diteruskan dari saluran)`,
+  sendchHelp: `📤 *PANDUAN SEND TO CHANNEL*
+
+Kirim berbagai jenis pesan ke saluran WhatsApp.
+
+*Format Penggunaan:*
+• *.sendch <teks>*
+> Mengirim teks ke saluran default yang telah diset.
+• *.sendch <id_channel@newsletter> <teks>*
+> Mengirim teks ke ID saluran spesifik.
+• *.sendch* (Reply teks/gambar/video/audio/stiker/dokumen)
+> Meneruskan media/pesan yang dibalas ke saluran default.
+• *.sendch <id_channel@newsletter>* (Reply media)
+> Meneruskan media yang dibalas ke ID saluran spesifik.
+• *.sendch <caption>* (Reply gambar/video)
+> Mengirim media yang dibalas dengan caption kustom.`,
+  sendchSuccess: (target, type) =>
+    `✅ *BERHASIL TERKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${type}`,
+  playchHelp: `🎙️ *PANDUAN PLAYCH (SEND VN TO CHANNEL)*
+
+Kirim pesan suara (Voice Note / PTT) ke Saluran WhatsApp dengan membalas pesan audio.
+
+*Format Penggunaan:*
+• *.playch* (Reply audio / voice note)
+> Mengirimkan audio/pesan suara yang dibalas ke saluran default sebagai VN (PTT).
+• *.playch <id_channel@newsletter>* (Reply audio / voice note)
+> Mengirimkan audio/pesan suara yang dibalas ke ID saluran spesifik sebagai VN (PTT).
+
+_Contoh: Reply audio lalu ketik .playch atau .playch 120363205560908891@newsletter_`,
+  playchSuccess: (target, title) =>
+    `✅ *AUDIO BERHASIL DIKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${title}`,
 
   // ------- Set Info -------
   set: `
@@ -963,6 +1013,7 @@ Data.infos.owner = {
 - didYouMean <on/off>
 - energy_mode <on/off>
 - button <on/off>
+- rich <on/off>
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
@@ -1341,6 +1392,41 @@ Data.infos.tools = {
     },
     busy: 'ᤡ *SERVER BUSY*\n\nServer sedang sibuk memproses antrean browser. Silakan coba lagi dalam beberapa detik.',
   },
+  compress: {
+    start: '⏳ *MEMPROSES KOMPRESI*\n\nSedang menyiapkan media untuk dikompresi...',
+    progress: (spinner, percentage, bar, processed, duration, speed, remaining) => {
+      let text = `${spinner} *MENGOMPRESI VIDEO*\n\n`;
+      text += `\`[${bar}] ${percentage.toFixed(1)}%\`\n\n`;
+      text += `• *Durasi:* ${processed} / ${duration}\n`;
+      text += `• *Kecepatan:* ${speed}x\n`;
+      text += `• *Estimasi Sisa:* ${remaining}`;
+      return text;
+    },
+    successVideo: (originalSize, compressedSize, savedSize, savedPercent, duration) => {
+      let pct = parseFloat(savedPercent) || 0;
+      let text = `✅ *KOMPRESI VIDEO SELESAI*\n\n`;
+      text += `• *Ukuran Asli:* ${originalSize}\n`;
+      text += `• *Ukuran Baru:* ${compressedSize}\n`;
+      text += `• *Terkikis:* ${savedSize} (${pct >= 0 ? '-' : '+'}${Math.abs(pct).toFixed(1)}%)\n`;
+      text += `• *Durasi:* ${duration}`;
+      return text;
+    },
+    successImage: (originalSize, compressedSize, savedSize, savedPercent) => {
+      let pct = parseFloat(savedPercent) || 0;
+      let text = `✅ *KOMPRESI GAMBAR SELESAI*\n\n`;
+      text += `• *Ukuran Asli:* ${originalSize}\n`;
+      text += `• *Ukuran Baru:* ${compressedSize}\n`;
+      text += `• *Terkikis:* ${savedSize} (${pct >= 0 ? '-' : '+'}${Math.abs(pct).toFixed(1)}%)`;
+      return text;
+    },
+    failed: '❌ *KOMPRESI GAGAL*\n\nTerjadi kesalahan saat melakukan kompresi media.',
+  },
+  burik: {
+    wait: '⏳ Memproses media burik...',
+    success: (width) => `📉 *Media Burik* (${width}px)`,
+    failed: '❌ Gagal memproses media burik.',
+    refund: (energy) => `❌ Gagal memproses media burik.\n> Energy telah dikembalikan (+${energy}⚡)`,
+  },
   enhance: `
 *SILAHKAN PILIH TYPE YANG TERSEDIA!*
 ▪︎ Photo style
@@ -1532,6 +1618,8 @@ Data.infos.interactive = {
   antiMediaKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirimkan <mediaType> hingga peringatan terakhir!`,
   antiChWarn: `Anda terdeteksi mengirimkan pesan/link channel, harap ikuti peraturan group untuk tidak mengirimkan pesan/link channel!`,
   antiChKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak mengirimkan pesan/link channel! hingga peringatan terakhir.`,
+  antispamWarn: `Anda terdeteksi melakukan spam chat!. Harap ikuti peraturan grup untuk tidak melakukan spam!`,
+  antispamKick: `Anda dikeluarkan karena melanggar peraturan grup untuk tidak melakukan spam chat hingga peringatan terakhir!`,
   limitExpired: (formatTimeDur, resetOn) =>
     `*Limit interaksi telah habis!*\n\n*Waktu tunggu:*\n- ${formatTimeDur.days}hari ${formatTimeDur.hours}jam ${formatTimeDur.minutes}menit ${formatTimeDur.seconds}detik ${formatTimeDur.milliseconds}ms\n🗓*Direset Pada:* ${resetOn}\n\n*Ingin interaksi tanpa batas?*\nDapatkan premium!, untuk info lebih lanjut ketik *.premium*`,
   notOwner: `Maaf, males nanggepin`,

@@ -9,6 +9,8 @@ const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r();
 const { catbox } = await (fol[0] + 'catbox.js').r();
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
 const { EncryptJs } = await (fol[2] + 'encrypt.js').r();
+const { compressVideo, compressImage } = await './toolkit/ffmpeg.js'.r();
+const { ensureConnected: ensureLivechart } = await (fol[2] + 'livechart.js').r();
 
 /*!-======[ Default Export Function ]======-!*/
 export default async function on({ cht, Exp, store, ev, is }) {
@@ -18,8 +20,95 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
   ev.on(
     {
-      cmd: ['remini'],
-      listmenu: ['remini'],
+      cmd: ['compress', 'kompres'],
+      listmenu: ['compress'],
+      tag: 'tools',
+      energy: 10,
+      media: {
+        type: ['image', 'video'],
+      },
+    },
+    async ({ media }) => {
+      const _key = keys[sender];
+      await cht.edit(infos.tools.compress.start, _key, true);
+      const isVideo = !!(is?.video || is?.quoted?.video || cht.type === 'video');
+
+      if (isVideo) {
+        let lastEditTime = 0;
+        let spinnerIndex = 0;
+
+        try {
+          const res = await compressVideo(media, async (progress) => {
+            const now = Date.now();
+            if (now - lastEditTime >= 5000) {
+              lastEditTime = now;
+              const sp = Data.spinner[spinnerIndex++ % Data.spinner.length];
+              const formatTime = (sec) => {
+                const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                const s = Math.floor(sec % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+              };
+              const remainingStr = progress.remainingSeconds > 60
+                ? `${Math.floor(progress.remainingSeconds / 60)}m ${progress.remainingSeconds % 60}s`
+                : `${progress.remainingSeconds}s`;
+              const bar = func.progressBar(progress.percentage);
+              const text = infos.tools.compress.progress(
+                sp,
+                progress.percentage,
+                bar,
+                formatTime(progress.processedSeconds),
+                formatTime(progress.duration),
+                progress.speed,
+                remainingStr
+              );
+              await cht.edit(text, _key, true);
+            }
+          });
+
+          const caption = infos.tools.compress.successVideo(
+            func.formatBytes(res.originalSize),
+            func.formatBytes(res.compressedSize),
+            func.formatBytes(Math.abs(res.savedSize)),
+            res.savedPercent,
+            `${res.duration.toFixed(0)}s`
+          );
+
+          await Exp.sendMessage(
+            id,
+            { video: res.buffer, caption },
+            { quoted: cht }
+          );
+        } catch (err) {
+          console.error(err);
+          await cht.reply(infos.tools.compress.failed);
+        }
+      } else {
+        try {
+          const res = await compressImage(media);
+          const caption = infos.tools.compress.successImage(
+            func.formatBytes(res.originalSize),
+            func.formatBytes(res.compressedSize),
+            func.formatBytes(Math.abs(res.savedSize)),
+            res.savedPercent
+          );
+
+          await Exp.sendMessage(
+            id,
+            { image: res.buffer, caption },
+            { quoted: cht }
+          );
+        } catch (err) {
+          console.error(err);
+          await cht.reply(infos.tools.compress.failed);
+        }
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['remini', 'hd'],
+      listmenu: ['remini', 'hd'],
       tag: 'tools',
       energy: 30,
       media: {
@@ -164,8 +253,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
           ).then((response) => response.json());
           if (!s.status)
             return cht.reply(`Status: ${s?.status}\nMessage: Failed!`);
+          let pVal = parseFloat(s?.progress) || 0;
           await cht.edit(
-            `Status: ${s?.status}\nProgress: ${s?.progress}%`,
+            `Status: ${s?.status}\n> \`[${func.progressBar(pVal)}] ${s?.progress}%\``,
             _key,
             true
           );
@@ -309,11 +399,21 @@ export default async function on({ cht, Exp, store, ev, is }) {
 ${desc}
 `;
 
-        if (cfg.button) {
-          let imageMessage = await func.uploadToServer(
-            'https://mmg.whatsapp.net' + meta.preview?.direct_path
-          );
+        let imageMessage = null;
+        if (meta.preview?.direct_path) {
+          imageMessage = await func
+            .uploadToServer(
+              'https://mmg.whatsapp.net' + meta.preview.direct_path
+            )
+            .catch(() => null);
+        }
+        if (!imageMessage) {
+          imageMessage = await func
+            .uploadToServer(fol[3] + 'bell.jpg')
+            .catch(() => null);
+        }
 
+        if (cfg.button && imageMessage) {
           let _m = {
             interactiveMessage: {
               header: {
@@ -348,7 +448,11 @@ ${desc}
           };
           return Exp.relayMessage(cht.id, _m, {});
         }
-        await cht.edit('📡 Informasi Channel\n\n' + text, keys[sender]);
+        if (keys[sender]) {
+          await cht.edit('📡 Informasi Channel\n\n' + text, keys[sender]);
+        } else {
+          await cht.reply('📡 Informasi Channel\n\n' + text);
+        }
       } catch (e) {
         cht.reply('Error get Channel id' + e.message);
       }
@@ -563,6 +667,9 @@ ${desc}
         ) || ['😂', '😢', '👍', '😯', '🙏', '❤️'];
 
         let newsletterId = d.id;
+        if (typeof ensureLivechart === 'function') {
+          await ensureLivechart(5000);
+        }
         cht.reply(
           (
             await {

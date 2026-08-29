@@ -218,7 +218,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
       }
 
       if (!messageText) {
-        return cht.reply('Silakan masukkan teks atau reply pesan yang ingin dijadikan quote!');
+        return cht.reply(
+          'Silakan masukkan teks atau reply pesan yang ingin dijadikan quote!'
+        );
       }
 
       let avatar;

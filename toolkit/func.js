@@ -165,21 +165,23 @@ export class func {
       ? 'sticker'
       : type === 'videoMessage'
         ? 'video'
-        : type === 'liveLocationMessage'
-          ? 'liveLocation'
-          : type === 'locationMessage'
-            ? 'location'
-            : type === 'documentMessage'
-              ? 'document'
-              : type === 'audioMessage'
-                ? 'audio'
-                : type === 'imageMessage'
-                  ? 'image'
-                  : type === 'viewOnceMessage'
-                    ? 'viewOnce'
-                    : type === 'viewOnceMessageV2'
+        : type === 'ptvMessage'
+          ? 'video'
+          : type === 'liveLocationMessage'
+            ? 'liveLocation'
+            : type === 'locationMessage'
+              ? 'location'
+              : type === 'documentMessage'
+                ? 'document'
+                : type === 'audioMessage'
+                  ? 'audio'
+                  : type === 'imageMessage'
+                    ? 'image'
+                    : type === 'viewOnceMessage'
                       ? 'viewOnce'
-                      : type;
+                      : type === 'viewOnceMessageV2'
+                        ? 'viewOnce'
+                        : type;
   };
 
   getGroupAdmins = (participants) => {
@@ -913,6 +915,12 @@ export class func {
     else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
     else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
     else return (bytes / 1073741824).toFixed(2) + ' GB';
+  };
+
+  progressBar = (percent, length = 10, fillChar = '█', emptyChar = '░') => {
+    let p = Math.min(100, Math.max(0, parseFloat(percent) || 0));
+    let filled = Math.min(length, Math.max(0, Math.round((p / 100) * length)));
+    return fillChar.repeat(filled) + emptyChar.repeat(length - filled);
   };
 
   getSystemStats = async () => {
