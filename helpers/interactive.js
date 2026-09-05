@@ -41,25 +41,32 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
       await memories.delItem(sender, 'commandExpired');
     }
     let quotedQuestionCmd = memories.getItem(sender, 'quotedQuestionCmd') || {};
+    let globalQuotedQ = Data.quotedQuestionCmd?.[cht?.quoted?.stanzaId];
     let questionCmd =
       quotedQuestionCmd[cht?.quoted?.stanzaId] ||
+      globalQuotedQ ||
       memories.getItem(sender, 'questionCmd');
     let isQuestionCmd =
       questionCmd &&
       cht.quoted &&
       (quotedQuestionCmd[cht?.quoted?.stanzaId] ||
+        globalQuotedQ ||
         String(cht.quoted.sender) === String(Exp.number))
-        ? questionCmd.accepts.some((i) => i == cht?.msg?.toLowerCase()) ||
+        ? questionCmd.accepts.some((i) => i == cht?.msg?.toLowerCase()?.trim()) ||
           questionCmd.accepts.length < 1
         : false;
     if (isQuestionCmd) {
-      if (Date.now() > questionCmd.emit.exp) {
-        if (quotedQuestionCmd?.[cht?.quoted?.stanzaId]) {
+      let expTime = questionCmd.exp || questionCmd.emit?.exp || 0;
+      if (expTime && Date.now() > expTime) {
+        if (globalQuotedQ) {
+          delete Data.quotedQuestionCmd[cht.quoted.stanzaId];
+        } else if (quotedQuestionCmd?.[cht?.quoted?.stanzaId]) {
           delete quotedQuestionCmd[cht.quoted.stanzaId];
           memories.setItem(sender, 'quotedQuestionCmd', quotedQuestionCmd);
         } else {
           memories.delItem(sender, 'questionCmd');
         }
+        isQuestionCmd = false;
       }
     }
     let isMsg =
@@ -76,13 +83,49 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         cht?.msg?.trim()?.toLowerCase()
       ) ||
         cht?.msg?.trim() === '🎲');
-    let isPendingUpdate = Boolean(
+    let isPendingDm = Boolean(
       is.owner &&
-        Data.pendingUpdate?.[cht.sender] &&
-        ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel'].includes(
+        Data.pendingDmSession &&
+        Date.now() < Data.pendingDmSession.exp &&
+        ['y', 'ya', 'yes', 'n', 'no', 'batal', 'cancel', 'accept', 'reject'].includes(
           cht?.msg?.trim()?.toLowerCase()
         )
     );
+    let isActiveDm = Boolean(
+      is.owner &&
+        Data.activeDmSession?.active &&
+        !is?.group &&
+        !cht?.cmd
+    );
+    let quotedTicketMatch =
+      !is?.cmd &&
+      cht?.msg &&
+      cht?.quoted?.text &&
+      (cht.quoted.text.match(/UPDATE STATUS TIKET #(TCK-[A-Z0-9]+)/i) ||
+       cht.quoted.text.match(/DETAIL TIKET #(TCK-[A-Z0-9]+)/i) ||
+       cht.quoted.text.match(/TIKET BERHASIL DIBUAT[\s\S]*#(TCK-[A-Z0-9]+)/i) ||
+       cht.quoted.text.match(/#(TCK-[A-Z0-9]+)/i));
+
+    if (quotedTicketMatch && typeof global.updateTicketUser === 'function') {
+      let ticketId = quotedTicketMatch[1];
+      let replyText = (cht.msg || cht.text || '').trim();
+      if (replyText) {
+        try {
+          await global.updateTicketUser({
+            ticketId,
+            actionType: 'reply',
+            replyText
+          });
+          let successMsg = Data.infos?.ticketReplySuccess
+            ? Data.infos.ticketReplySuccess(ticketId)
+            : `💬 *Balasan tiket #${ticketId} berhasil dikirimkan ke tim pengembang.*`;
+          return cht.reply(successMsg);
+        } catch (e) {
+          return cht.reply(`❌ *Gagal mengirim balasan tiket:* ${e.message}`);
+        }
+      }
+    }
+
     let isEval = cht?.msg?.startsWith('>');
     let isEvalSync = cht?.msg?.startsWith('=>');
     let isExec = cht?.msg?.startsWith('$');
@@ -546,31 +589,54 @@ export default async function In({ cht, Exp, store, is, ev, chatDb, sewaDb }) {
         cht.q = `${cht.matchedMenuTag} --content`;
         ev.emit('menu', { args: `${cht.matchedMenuTag} --content` });
         break;
-      case isPendingUpdate:
-        cht.cmd = 'update';
+      case isPendingDm:
+        cht.cmd = 'dm';
         cht.q = cht.msg.trim();
-        ev.emit('update');
+        ev.emit('dm');
+        break;
+      case isActiveDm:
+        cht.cmd = 'dm';
+        cht.q = cht.msg.trim();
+        ev.emit('dm');
         break;
       case isQuestionCmd:
-        let [cmd, ...q] = questionCmd.emit.split` `;
-        cht.cmd = cmd;
-        cht.isQuestionCmd = true;
-        let quotedQData = quotedQuestionCmd?.[cht?.quoted?.stanzaId];
+        let quotedQData = globalQuotedQ || quotedQuestionCmd?.[cht?.quoted?.stanzaId];
         let quotedQ = quotedQData?.Keys?.[cht.msg?.trim()] || cht.msg?.trim();
-        cht.url = func.parseLink(quotedQ);
-        cht.q =
-          q && q.length > 0 ? `${q.join(' ')} ${quotedQ}`.trim() : `${quotedQ}`;
-        for (let i of Object.keys(questionCmd.etc || {})) {
-          cht[i] = questionCmd.etc?.[i];
+        if (questionCmd.emit) {
+          let [cmd, ...q] = questionCmd.emit.split` `;
+          cht.cmd = cmd;
+          cht.isQuestionCmd = true;
+          cht.url = func.parseLink(quotedQ);
+          cht.q =
+            q && q.length > 0 ? `${q.join(' ')} ${quotedQ}`.trim() : `${quotedQ}`;
+          for (let i of Object.keys(questionCmd.etc || {})) {
+            cht[i] = questionCmd.etc?.[i];
+          }
+          ev.emit(cmd);
+        } else if (quotedQ) {
+          let targetCmdStr = quotedQ.trim();
+          let cleanCmdStr = targetCmdStr.replace(/^[./!#]/, '');
+          let [targetCmd, ...targetArgs] = cleanCmdStr.split(' ');
+          let targetQ = targetArgs.join(' ');
+          cht.cmd = targetCmd;
+          cht.isQuestionCmd = true;
+          cht.msg = targetCmdStr;
+          cht.q = targetQ;
+          cht.url = func.parseLink(targetQ);
+          ev.emit(targetCmd);
         }
-        ev.emit(cmd);
         memories.delItem(sender, 'questionCmd');
 
         if (quotedQData) {
           quotedQData.use++;
-          if (quotedQData.use > quotedQData.maxUse)
-            delete quotedQuestionCmd[cht.quoted.stanzaId];
-          memories.setItem(sender, 'quotedQuestionCmd', quotedQuestionCmd);
+          if (quotedQData.maxUse && quotedQData.use >= quotedQData.maxUse) {
+            if (globalQuotedQ) {
+              delete Data.quotedQuestionCmd[cht.quoted.stanzaId];
+            } else {
+              delete quotedQuestionCmd[cht.quoted.stanzaId];
+              memories.setItem(sender, 'quotedQuestionCmd', quotedQuestionCmd);
+            }
+          }
         } else {
           memories.delItem(sender, 'questionCmd');
         }

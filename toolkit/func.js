@@ -345,6 +345,7 @@ export class func {
   };
 
   getGroupMetadata = async (chtId, update = false, force = false) => {
+    if (!chtId || !chtId.endsWith('@g.us')) return null;
     this.metadata.init();
     let hasData = this.metadata.has(chtId);
     let now = Date.now();
@@ -390,36 +391,51 @@ export class func {
           `getGroupMetadata: percobaan ${attempt} gagal saat get`,
           err
         );
-        if (attempt === 2) throw err;
+        if (attempt === 2) {
+          if (hasData && metadata?.metadata) {
+            return metadata.metadata;
+          }
+          return null;
+        }
         await sleep(5000);
       }
     }
 
-    if (groupMetadata.addressingMode == 'lid') {
-      const group = await getBinaryNodeChild(
-        await this.Exp.query({
-          tag: 'iq',
-          attrs: {
-            type: 'get',
-            xmlns: 'w:g2',
-            to: chtId,
-          },
-          content: [{ tag: 'query', attrs: { request: 'interactive' } }],
-        }),
-        'group'
-      );
+    if (!groupMetadata) {
+      return hasData && metadata?.metadata ? metadata.metadata : null;
+    }
 
-      groupMetadata.participants = await getBinaryNodeChildren(
-        group,
-        'participant'
-      ).map(({ attrs }) => {
-        return {
-          id: attrs.phone_number,
-          lid: attrs.lid || attrs.jid,
-          admin: attrs.type || null,
-        };
-      });
-      console.log(this.lid(groupMetadata.participants));
+    if (groupMetadata.addressingMode == 'lid') {
+      try {
+        const group = await getBinaryNodeChild(
+          await this.Exp.query({
+            tag: 'iq',
+            attrs: {
+              type: 'get',
+              xmlns: 'w:g2',
+              to: chtId,
+            },
+            content: [{ tag: 'query', attrs: { request: 'interactive' } }],
+          }),
+          'group'
+        );
+
+        if (group) {
+          groupMetadata.participants = await getBinaryNodeChildren(
+            group,
+            'participant'
+          ).map(({ attrs }) => {
+            return {
+              id: attrs.phone_number,
+              lid: attrs.lid || attrs.jid,
+              admin: attrs.type || null,
+            };
+          });
+          console.log(this.lid(groupMetadata.participants));
+        }
+      } catch (e) {
+        console.error('Error fetching lid participants:', e);
+      }
     }
 
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -434,7 +450,6 @@ export class func {
           `getGroupMetadata: percobaan ${attempt} gagal saat set metadata`,
           err
         );
-        if (attempt === 2) throw err;
       }
     }
     return groupMetadata;

@@ -97,6 +97,7 @@ const injectMessageMentions = (message) => {
 
 const injectRichResponseMessage = (message) => {
   if (!message || typeof message !== 'object') return false;
+  if (!cfg.rich) return false;
 
   let rich =
     message?.richResponseMessage ||
@@ -234,11 +235,366 @@ const injectRichResponseMessage = (message) => {
   return true;
 };
 
+const extractListSectionItems = (im) => {
+  const buttons = im?.nativeFlowMessage?.buttons || [];
+  let items = [];
+  for (let b of buttons) {
+    let params = null;
+    if (typeof b?.buttonParamsJson === 'string') {
+      try {
+        params = JSON.parse(b.buttonParamsJson);
+      } catch {}
+    } else if (typeof b?.buttonParamsJson === 'object' && b.buttonParamsJson !== null) {
+      params = b.buttonParamsJson;
+    }
+    if (params) {
+      if (Array.isArray(params.sections)) {
+        for (let sec of params.sections) {
+          let secTitle = sec.title || '';
+          if (Array.isArray(sec.rows)) {
+            for (let row of sec.rows) {
+              items.push({
+                title: row.title || row.header || '',
+                description: row.description || '',
+                id: row.id || row.rowId || '',
+                sectionTitle: secTitle,
+              });
+            }
+          }
+        }
+      } else if (Array.isArray(params.rows)) {
+        for (let row of params.rows) {
+          items.push({
+            title: row.title || row.header || '',
+            description: row.description || '',
+            id: row.id || row.rowId || '',
+            sectionTitle: params.title || '',
+          });
+        }
+      }
+    }
+    if (b?.name === 'quick_reply' && params && (params.display_text || params.id)) {
+      items.push({
+        title: params.display_text || params.id,
+        description: '',
+        id: params.id || params.display_text,
+        sectionTitle: '',
+      });
+    }
+  }
+  return items;
+};
+
+const isListSectionMessage = (im) => {
+  if (!im?.nativeFlowMessage?.buttons) return false;
+  const buttons = im.nativeFlowMessage.buttons;
+  if (buttons.some((b) => b?.name === 'single_select')) return true;
+  for (let b of buttons) {
+    if (!b?.buttonParamsJson) continue;
+    try {
+      const p =
+        typeof b.buttonParamsJson === 'string'
+          ? JSON.parse(b.buttonParamsJson)
+          : b.buttonParamsJson;
+      if (Array.isArray(p?.sections) && p.sections.length > 0) return true;
+      if (Array.isArray(p?.rows) && p.rows.length > 0) return true;
+    } catch {}
+  }
+  return false;
+};
+
+const normalizeContextInfo = (ctx, quoted) => {
+  let contextInfo = ctx ? { ...ctx } : {};
+  if (quoted) {
+    contextInfo.stanzaId = contextInfo.stanzaId || quoted.key?.id || quoted.stanzaId;
+    contextInfo.participant = contextInfo.participant || quoted.key?.participant || quoted.sender || quoted.key?.remoteJid;
+    contextInfo.quotedMessage = contextInfo.quotedMessage || quoted.message || (quoted.msg || quoted.text ? { conversation: quoted.msg || quoted.text } : undefined);
+  }
+  if (contextInfo.quotedMessage) {
+    if (contextInfo.quotedMessage.message) {
+      contextInfo.quotedMessage = contextInfo.quotedMessage.message;
+    } else if (
+      !contextInfo.quotedMessage.conversation &&
+      !contextInfo.quotedMessage.extendedTextMessage &&
+      !contextInfo.quotedMessage.imageMessage &&
+      !contextInfo.quotedMessage.videoMessage &&
+      !contextInfo.quotedMessage.documentMessage &&
+      !contextInfo.quotedMessage.audioMessage &&
+      !contextInfo.quotedMessage.stickerMessage &&
+      (contextInfo.quotedMessage.msg || contextInfo.quotedMessage.text)
+    ) {
+      contextInfo.quotedMessage = {
+        conversation: contextInfo.quotedMessage.msg || contextInfo.quotedMessage.text,
+      };
+    }
+  }
+  return Object.keys(contextInfo).length > 0 ? contextInfo : undefined;
+};
+
+const parseTitle = (str) =>
+  (str || '')
+    .replace(
+      /^[#\s]*\[?\d+\]?[\.\)\:\-]\s*|^\[\d+\]\s*|^#\d+\s+|^[#\s]*\d+\s*-\s*/,
+      ''
+    )
+    .trim();
+
+const unwrapInteractiveMessage = (message, options = {}) => {
+  if (!message || typeof message !== 'object') return message;
+
+  let im =
+    message.interactiveMessage ||
+    message.viewOnceMessage?.message?.interactiveMessage ||
+    message.viewOnceMessageV2?.message?.interactiveMessage;
+
+  if (im) {
+    const isList = isListSectionMessage(im);
+    const listNotice =
+      Data.infos?.others?.listSectionNotice ||
+      'ℹ️ Jika menu list ini tidak berfungsi atau gagal muncul karena kebijakan WhatsApp, nonaktifkan fitur ini dengan: .set listSection off (Khusus Owner)';
+
+    if (isList && cfg.listSection !== false) {
+      im.footer = im.footer || {};
+      if (im.footer.text) {
+        if (!im.footer.text.includes('listSection off')) {
+          im.footer.text = `${im.footer.text}\n${listNotice}`;
+        }
+      } else {
+        im.footer.text = listNotice;
+      }
+    }
+
+    if (!cfg.button || (isList && cfg.listSection === false)) {
+      const header = im.header || {};
+      const title = header.title ? `*${header.title}*\n\n` : '';
+      const subtitle = header.subtitle ? `_${header.subtitle}_\n\n` : '';
+      const body = im.body?.text || '';
+
+      let rawCtx =
+        im.contextInfo ||
+        message.viewOnceMessage?.message?.contextInfo ||
+        message.viewOnceMessage?.contextInfo ||
+        message.viewOnceMessageV2?.message?.contextInfo ||
+        message.viewOnceMessageV2?.contextInfo ||
+        message.contextInfo;
+      const contextInfo = normalizeContextInfo(rawCtx, options?.quoted);
+
+      let listItems = isList ? extractListSectionItems(im) : [];
+      let textList = '';
+      let Keys = {};
+      let questionData = null;
+
+      if (listItems.length > 0) {
+        let currentSec = null;
+        for (let i = 0; i < listItems.length; i++) {
+          let item = listItems[i];
+          let num = i + 1;
+          Keys[String(num)] = item.id;
+          if (item.sectionTitle && item.sectionTitle !== currentSec) {
+            currentSec = item.sectionTitle;
+            let cleanSec = parseTitle(currentSec) || currentSec;
+            if (cleanSec) {
+              textList += `\n*${cleanSec}*\n`;
+            }
+          }
+          let cleanTitle = parseTitle(item.title) || item.title;
+          let desc = item.description ? `\n> ${item.description}` : '';
+          textList += `${num}. *${cleanTitle}*${desc}\n`;
+        }
+        questionData = {
+          Keys,
+          accepts: Object.keys(Keys),
+        };
+      }
+
+      const instruction =
+        listItems.length > 0
+          ? `\n\n- Balas pesan ini dengan angka 1 sampai ${listItems.length} untuk memilih!`
+          : '';
+      const footer = im.footer?.text ? `\n\n${im.footer.text}` : '';
+      const contentBody =
+        listItems.length > 0
+          ? (body ? `${body}\n\n` : '') + textList.trim()
+          : body;
+      const fullText =
+        `${title}${subtitle}${contentBody}${instruction}${footer}`.trim();
+
+      let unwrappedPayload;
+      if (header.hasMediaAttachment && header.imageMessage) {
+        unwrappedPayload = {
+          imageMessage: {
+            ...header.imageMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      } else if (header.hasMediaAttachment && header.videoMessage) {
+        unwrappedPayload = {
+          videoMessage: {
+            ...header.videoMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      } else if (header.hasMediaAttachment && header.documentMessage) {
+        unwrappedPayload = {
+          documentMessage: {
+            ...header.documentMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      } else {
+        unwrappedPayload = {
+          extendedTextMessage: {
+            text: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      }
+
+      if (questionData) {
+        return {
+          payload: unwrappedPayload,
+          questionData,
+        };
+      }
+      return unwrappedPayload;
+    }
+  }
+
+  if (message.buttonsMessage && !cfg.button) {
+    const bm = message.buttonsMessage;
+    const body = bm.contentText || '';
+    const footer = bm.footerText ? `\n\n${bm.footerText}` : '';
+    const fullText = `${body}${footer}`.trim();
+    const contextInfo = normalizeContextInfo(bm.contextInfo || message.contextInfo, options?.quoted);
+
+    if (bm.imageMessage) {
+      return {
+        imageMessage: {
+          ...bm.imageMessage,
+          caption: fullText,
+          ...(contextInfo ? { contextInfo } : {}),
+        },
+      };
+    }
+    if (bm.videoMessage) {
+      return {
+        videoMessage: {
+          ...bm.videoMessage,
+          caption: fullText,
+          ...(contextInfo ? { contextInfo } : {}),
+        },
+      };
+    }
+    if (bm.documentMessage) {
+      return {
+        documentMessage: {
+          ...bm.documentMessage,
+          caption: fullText,
+          ...(contextInfo ? { contextInfo } : {}),
+        },
+      };
+    }
+    return {
+      extendedTextMessage: {
+        text: fullText,
+        ...(contextInfo ? { contextInfo } : {}),
+      },
+    };
+  }
+
+  if (message.templateMessage && !cfg.button) {
+    const tm =
+      message.templateMessage.hydratedTemplate ||
+      message.templateMessage.hydratedFourRowTemplate ||
+      message.templateMessage.fourRowTemplate;
+    if (tm) {
+      const title = tm.hydratedTitleText ? `*${tm.hydratedTitleText}*\n\n` : '';
+      const body = tm.hydratedContentText || tm.contentText || '';
+      const footer =
+        tm.hydratedFooterText || tm.footerText
+          ? `\n\n${tm.hydratedFooterText || tm.footerText}`
+          : '';
+      const fullText = `${title}${body}${footer}`.trim();
+      const contextInfo = normalizeContextInfo(tm.contextInfo || message.contextInfo, options?.quoted);
+
+      if (tm.imageMessage) {
+        return {
+          imageMessage: {
+            ...tm.imageMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      }
+      if (tm.videoMessage) {
+        return {
+          videoMessage: {
+            ...tm.videoMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      }
+      if (tm.documentMessage) {
+        return {
+          documentMessage: {
+            ...tm.documentMessage,
+            caption: fullText,
+            ...(contextInfo ? { contextInfo } : {}),
+          },
+        };
+      }
+      return {
+        extendedTextMessage: {
+          text: fullText,
+          ...(contextInfo ? { contextInfo } : {}),
+        },
+      };
+    }
+  }
+
+  return message;
+};
+
 export default async function initialize({ Exp, store }) {
   try {
     const { sendMessage, relayMessage } = Exp;
 
     Exp.relayMessage = async (jid, message, options = {}) => {
+      const targetMsgId = options.messageId || generateMessageIDV2();
+      options.messageId = targetMsgId;
+
+      const unwrapRes = unwrapInteractiveMessage(message, options);
+      let listQData = null;
+      if (
+        unwrapRes &&
+        typeof unwrapRes === 'object' &&
+        unwrapRes.payload &&
+        unwrapRes.questionData
+      ) {
+        message = unwrapRes.payload;
+        listQData = unwrapRes.questionData;
+      } else {
+        message = unwrapRes;
+      }
+
+      if (listQData) {
+        Data.quotedQuestionCmd ??= {};
+        Data.quotedQuestionCmd[targetMsgId] = {
+          key: { id: targetMsgId },
+          emit: '',
+          exp: Date.now() + 10 * 60 * 1000,
+          Keys: listQData.Keys,
+          use: 0,
+          maxUse: 999999,
+          accepts: listQData.accepts,
+          allUsers: true,
+        };
+      }
+
       injectMessageMentions(message);
       const isRich = injectRichResponseMessage(message);
       const isEdit = Boolean(
@@ -266,32 +622,34 @@ export default async function initialize({ Exp, store }) {
           }
         );
 
-        try {
-          const editMsg = await generateWAMessageFromContent(
-            jid,
-            {
-              botForwardedMessage: {
-                message: {
-                  protocolMessage: {
-                    key: {
-                      remoteJid: jid,
-                      fromMe: true,
-                      id: fullMsg.key.id,
+        if (options.edit !== false) {
+          try {
+            const editMsg = await generateWAMessageFromContent(
+              jid,
+              {
+                botForwardedMessage: {
+                  message: {
+                    protocolMessage: {
+                      key: {
+                        remoteJid: jid,
+                        fromMe: true,
+                        id: fullMsg.key.id,
+                      },
+                      type: 14,
+                      editedMessage: fullMsg.message,
                     },
-                    type: 14,
-                    editedMessage: fullMsg.message,
                   },
                 },
               },
-            },
-            {
-              messageId: generateMessageIDV2(),
-            }
-          );
-          await relayMessage.call(Exp, jid, editMsg.message, {
-            messageId: editMsg.key.id,
-          });
-        } catch (e) {}
+              {
+                messageId: generateMessageIDV2(),
+              }
+            );
+            await relayMessage.call(Exp, jid, editMsg.message, {
+              messageId: editMsg.key.id,
+            });
+          } catch (e) {}
+        }
 
         return res;
       }
@@ -403,8 +761,13 @@ export default async function initialize({ Exp, store }) {
       let buffer;
 
       if (typeof config === 'string') config = { text: config };
-      const rawText = config?.text || config?.caption || '';
-      const autoMentions = rawText.mentions();
+      else if (typeof config === 'object' && config !== null) {
+        if (config.body && !config.text) {
+          config.text = config.body;
+        }
+      }
+      const rawText = typeof config?.text === 'string' ? config.text : typeof config?.caption === 'string' ? config.caption : '';
+      const autoMentions = typeof rawText.mentions === 'function' ? rawText.mentions() : [];
 
       if (autoMentions.length > 0) {
         if (
@@ -558,14 +921,18 @@ export default async function initialize({ Exp, store }) {
         }
       }
 
+      if (config.linkPreview && config.footer) {
+        delete config.footer;
+      }
+
       let mtype = getContentType(config),
         isAI = !!config.ai && !id.endsWith(from.group),
         isPTT = config.ptt === true,
-        isFooter = !!config.footer,
+        isFooter = !!config.footer && !config.linkPreview,
         isLinkPreview = !!config.linkPreview,
         isInteractive =
           mtype == 'interactiveMessage' ||
-          isFooter ||
+          (isFooter && !isLinkPreview) ||
           config.nativeFlowMessage ||
           config.limited_time_offer;
       if (!isAI && !isPTT && !isInteractive && !isFooter && !isLinkPreview) {
@@ -586,6 +953,8 @@ export default async function initialize({ Exp, store }) {
 
       let message = await generateWAMessageContent(config, {
         upload: Exp.waUploadToServer,
+        ...etc,
+        jid: id,
       });
       let type = getContentType(message);
 

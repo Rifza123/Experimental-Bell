@@ -6,6 +6,7 @@ const {
   generateWAMessage,
   STORIES_JID,
   generateWAMessageFromContent,
+  prepareWAMessageMedia,
 } = 'baileys'.import();
 
 /*!-======[ Function Imports ]======-!*/
@@ -83,10 +84,23 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['set'],
       tag: 'owner',
       isOwner: true,
-      args: infos.owner.set,
     },
     async ({ args, urls }) => {
       try {
+        if (!args) {
+          const isWsConnected = keys['__livechart_ws__']?.ws?.readyState === 1;
+          const ownerSection = infos.owner?.statsOwnerSection
+            ? infos.owner.statsOwnerSection({
+                version: cfg.version || '1.0.0',
+                isWsConnected,
+              })
+            : null;
+          let txt = infos.owner.set;
+          if (ownerSection) {
+            txt += '\n\n' + (typeof ownerSection === 'object' && ownerSection?.body ? ownerSection.body : ownerSection);
+          }
+          return cht.reply(txt);
+        }
         let fquotedKeys = Object.keys(Data.fquoted);
         let [t1, t2, t3, t4] = args.split(' ');
         const options = {
@@ -109,10 +123,13 @@ export default async function on({ cht, Exp, store, ev, is }) {
           rich: 'Rich Response Meta AI',
           remoteReaction: 'remoteReaction',
           linkpreview: 'linkpreview',
+          listSection: 'List Section',
           sewa: 'sewa',
           antipc: 'antipc',
           dadu: 'media dadu ulartangga',
         };
+        let optKey = Object.keys(options).find((k) => k.toLowerCase() === t1?.toLowerCase());
+        if (optKey) t1 = optKey;
         if (!options[t1] && t1.includes('\n')) {
           t1 = t1.split('\n')[0];
         }
@@ -349,9 +366,9 @@ export default async function on({ cht, Exp, store, ev, is }) {
               }
               if (!list.includes(t2))
                 return cht.reply(`Tipe menu ${t2} tidak ditemukan!\n\n${tlist}`);
-              if (t2 === 'rich' && !cfg.rich)
+              if ((t2 === 'rich' || t2.includes('rich')) && !cfg.rich)
                 return cht.reply(infos.owner.richDisabled);
-              if (t2.includes('button') && !cfg.button)
+              if ((t2.includes('button') || t2.includes('interactive')) && !cfg.button)
                 return cht.reply(
                   'Fitur button belum aktif. Silahkan ketik .set button on terlebih dahulu!'
                 );
@@ -655,7 +672,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               let fwdInfo = null;
               if (is.quoted) {
                 let quotedRaw =
-                  cht?.message?.[type]?.contextInfo?.quotedMessage;
+                  cht?.message?.[cht.type]?.contextInfo?.quotedMessage;
                 let qMtype = cht.quoted?.mtype || (quotedRaw ? Object.keys(quotedRaw)[0] : null);
                 fwdInfo =
                   quotedRaw?.[qMtype]?.contextInfo?.forwardedNewsletterMessageInfo ||
@@ -674,7 +691,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               }
 
               if (!fwdInfo) {
-                fwdInfo = cht?.message?.[type]?.contextInfo?.forwardedNewsletterMessageInfo;
+                fwdInfo = cht?.message?.[cht.type]?.contextInfo?.forwardedNewsletterMessageInfo;
               }
 
               if (fwdInfo?.newsletterJid) {
@@ -1406,6 +1423,38 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }
   );
 
+  const getCekApiKeyLinkPreview = async () => {
+    if (!keys['cekapikey_lp_media']) {
+      try {
+        let rawBuf = await Exp.func.getBuffer('https://c.termai.cc/i138/SqHbc.png');
+        let resMedia = await prepareWAMessageMedia(
+          { image: rawBuf },
+          { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+        );
+        if (resMedia?.imageMessage) {
+          keys['cekapikey_lp_media'] = resMedia.imageMessage;
+          keys['cekapikey_lp_thumb'] = rawBuf;
+        }
+      } catch {}
+    }
+    let imgMsg = keys['cekapikey_lp_media'];
+    return {
+      'matched-text': 'https://termai.cc',
+      title: '🔑 Termai API • Key Checker & Usage Status',
+      description: 'Pantau sisa kuota hit, limit harian, dan masa aktif API Key',
+      jpegThumbnail: imgMsg?.jpegThumbnail
+        ? Buffer.from(imgMsg.jpegThumbnail)
+        : keys['cekapikey_lp_thumb'] || undefined,
+      highQualityThumbnail: imgMsg
+        ? {
+            ...imgMsg,
+            width: 1280,
+            height: 720,
+          }
+        : undefined,
+    };
+  };
+
   ev.on(
     {
       cmd: ['cekapikey'],
@@ -1418,27 +1467,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let res = await fetch(
         api.xterm.url + '/api/tools/key-checker?key=' + args
       ).then((a) => a.json());
-      const {
-        limit,
-        usage,
-        totalHit,
-        remaining,
-        resetEvery,
-        reset,
-        expired,
-        isExpired,
-        features,
-      } = res.data;
-      const resetTime = resetEvery.format;
-      const featuresList = Object.entries(features)
-        .map(
-          ([feature, details]) =>
-            `🔹 **${feature}**:\n   - Maksimal: ${details.max} penggunaan/hari\n   - Hit Today: ${details.use} kali\n   - Total Hit: ${details.hit}\n`
-        )
-        .join('\n');
+      let text = infos.owner?.cekapikeyFormat
+        ? infos.owner.cekapikeyFormat(res.data)
+        : `🔑 *STATUS TERMAI API KEY*\n\n• *Status:* ${res?.data?.isExpired ? '⛔ Kedaluwarsa' : '🟢 Aktif'}`;
 
-      cht.reply(
-        `✅ **Status API Key**: ${isExpired ? '⛔ Kedaluwarsa' : '✅ Aktif'}\n🔒 **Batas Harian**: ${limit} hit\n📊 **Penggunaan Saat Ini**: ${usage} hit\n📈 **Total Hit**: ${totalHit} hit\n🟢 **Sisa Hit**: ${remaining} hit\n\n⏳ **Reset Limit**:\n   - **Waktu Reset**: ${reset}\n   - **Interval Reset**: ${resetTime.days} hari ${resetTime.hours} jam ${resetTime.minutes} menit ${resetTime.seconds} detik\n📅 **Masa Berlaku**:\n   - **Berakhir Pada**: ${expired}\n   - **Status Kedaluwarsa**: ${isExpired ? '✅ Sudah Kedaluwarsa' : '❌ Belum Kedaluwarsa'}\n\n✨ **Fitur yang Tersedia**:\n${featuresList}\n📌 **Catatan**: Gunakan API secara bijak dan sesuai dengan batas penggunaan.\n  `
+      let linkPreview = await getCekApiKeyLinkPreview();
+      return Exp.sendMessage(
+        cht.id,
+        {
+          text: `https://termai.cc\n` + text,
+          linkPreview,
+        },
+        { quoted: cht }
       );
     }
   );
@@ -1681,10 +1721,42 @@ export default async function on({ cht, Exp, store, ev, is }) {
     }
   );
 
+  const getUpdateLinkPreview = async () => {
+    if (!keys['update_lp_media']) {
+      try {
+        let rawBuf = await Exp.func.getBuffer('https://c.termai.cc/i116/M0PLc.png');
+        let resMedia = await prepareWAMessageMedia(
+          { image: rawBuf },
+          { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+        );
+        if (resMedia?.imageMessage) {
+          keys['update_lp_media'] = resMedia.imageMessage;
+          keys['update_lp_thumb'] = rawBuf;
+        }
+      } catch {}
+    }
+    let imgMsg = keys['update_lp_media'];
+    return {
+      'matched-text': 'https://termai.cc',
+      title: '🔔 Experimental-Bell • System Update',
+      description: 'Termai Ecosystem • Cumulative Update Engine',
+      jpegThumbnail: imgMsg?.jpegThumbnail
+        ? Buffer.from(imgMsg.jpegThumbnail)
+        : keys['update_lp_thumb'] || undefined,
+      highQualityThumbnail: imgMsg
+        ? {
+            ...imgMsg,
+            width: 1280,
+            height: 720,
+          }
+        : undefined,
+    };
+  };
+
   ev.on(
     {
-      cmd: ['update'],
-      listmenu: ['update'],
+      cmd: ['update', 'checkupdate'],
+      listmenu: ['update', 'checkupdate'],
       tag: 'owner',
       isOwner: true,
       isCoOwner: false,
@@ -1694,31 +1766,210 @@ export default async function on({ cht, Exp, store, ev, is }) {
         return cht.reply('🚫 Fitur ini hanya dapat diakses melalui Bot Utama!');
 
       let input = (cht.q || cht.msg || '').trim().toLowerCase();
+
+      if (cht.cmd === 'checkupdate' || input === 'check' || input === 'cek') {
+        try {
+          await cht.reply('⏳ *Memeriksa pembaruan ke server Termai...*');
+          let updateInfo = await global.checkUpdate();
+          if (!updateInfo || !updateInfo.hasUpdate) {
+            return cht.reply(`✅ *Bot Anda sudah menggunakan versi terbaru (v${updateInfo?.currentVersion || cfg.version || '1.0.0'}).*`);
+          }
+
+          if (updateInfo.isMajorGap) {
+            let majorText = Data.infos?.updateMajorNotify
+              ? Data.infos.updateMajorNotify({
+                  version: updateInfo.latestVersion,
+                  currentVersion: updateInfo.currentVersion,
+                  pendingCount: updateInfo.pendingReleasesCount,
+                  files: updateInfo.files || [],
+                  changelog: updateInfo.changelogs,
+                })
+              : `> ⚠️ *UPDATE NOTIFICATION (MAJOR)*\n\n` +
+                `• *Versi Baru:* *v${updateInfo.latestVersion}*\n` +
+                `• *Versi Bot Anda:* *v${updateInfo.currentVersion}*\n` +
+                `• *Total Rilis Tertinggal:* ${updateInfo.pendingReleasesCount} update\n` +
+                `• *Total Berkas:* ${(updateInfo.files || []).length} file unik\n\n` +
+                (updateInfo.changelogs ? `📋 *Catatan Perubahan:*\n${updateInfo.changelogs}\n\n` : '') +
+                `_Versi bot Anda tertinggal cukup jauh. Disarankan untuk melakukan git pull atau clone ulang script terbaru agar seluruh struktur sinkron._\n\n` +
+                `🌐 *Repository:* https://github.com/Rifza123/Experimental-Bell`;
+            let linkPreview = await getUpdateLinkPreview();
+            return Exp.sendMessage(
+              cht.id,
+              {
+                text: `https://termai.cc\n` + majorText,
+                linkPreview,
+              },
+              { quoted: cht }
+            );
+          }
+
+          let rawUrls = updateInfo.files || [];
+          let fols = await (Exp.func?.getDirectoriesRecursive?.() || []);
+          let urlPath = rawUrls
+            .map((link) => {
+              try {
+                const { pathname, host } = new URL(link);
+                let f = (
+                  host === 'raw.githubusercontent.com'
+                    ? pathname.split('heads/')[1]
+                    : pathname
+                )
+                  ?.split('/')
+                  ?.slice(1)
+                  ?.join('/')
+                  ?.split('/');
+                const filename = f.slice(-1)[0];
+                if (!filename) return null;
+                const _path = f.slice(0, -1).join('/');
+
+                for (const folder of fols) {
+                  const folderPath = folder.split('./')[1].slice(0, -1);
+                  if (folderPath.includes(_path) && _path) {
+                    return [link, `${folder}${filename}`];
+                  }
+                  if (
+                    ['index.js', 'package', 'readme.md'].some((a) =>
+                      filename.includes(a)
+                    )
+                  ) {
+                    return [link, `./${filename}`];
+                  }
+                }
+                return null;
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean);
+
+          let fileTree = urlPath.map(([url, fpath]) => ({
+            type: fs.existsSync(fpath) ? 'modified' : 'new',
+            path: fpath,
+            url
+          }));
+
+          let text = Data.infos?.updateNotify
+            ? Data.infos.updateNotify({
+                version: updateInfo.latestVersion,
+                currentVersion: updateInfo.currentVersion,
+                pendingCount: updateInfo.pendingReleasesCount,
+                files: rawUrls,
+                fileTree,
+                changelog: updateInfo.changelogs,
+              })
+            : `> 🔔 *UPDATE NOTIFICATION*\n\n` +
+              `• *Versi Baru:* *v${updateInfo.latestVersion}* (Saat ini: *v${updateInfo.currentVersion || '1.0.0'}*)\n` +
+              (updateInfo.pendingReleasesCount > 1 ? `• *Total Rilis Kumulatif:* ${updateInfo.pendingReleasesCount} update\n` : '') +
+              `• *Total Berkas:* ${rawUrls.length} file unik\n\n` +
+              (updateInfo.changelogs ? `📋 *Catatan Perubahan:*\n${updateInfo.changelogs}\n\n` : '') +
+              `📂 *File Changed:*\n${fileTree.map((f, i) => `${i === fileTree.length - 1 ? '└──' : '├──'} \`${f.type}\`: ${f.path}`).join('\n')}\n\n` +
+              `💡 *CARA MENERAPKAN PEMBARUAN:*\n` +
+              `• Balas (quote / reply) pesan ini dengan *y* saat bot sedang aktif/online.\n` +
+              `• Perintah tetap bekerja meski bot sempat di-restart atau dalam jangka waktu lama.\n` +
+              `• Alternatif update manual: Ketik *.checkupdate* lalu balas *y*, atau gunakan *.update <link>*.\n` +
+              `• Ketik *n* atau *batal* untuk membatalkan update.`;
+
+          let linkPreview = await getUpdateLinkPreview();
+          let sentMsg = await Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + text,
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+
+          if (sentMsg?.key?.id && rawUrls.length > 0) {
+            Data.quotedQuestionCmd ??= {};
+            Data.quotedQuestionCmd[sentMsg.key.id] = {
+              key: { id: sentMsg.key.id },
+              emit: `update ${rawUrls.join(' ')}`,
+              exp: Date.now() + 2 * 24 * 60 * 60 * 1000,
+              accepts: ['y', 'ya', 'yes'],
+              Keys: { y: '', ya: '', yes: '' },
+              use: 0,
+              maxUse: 1,
+            };
+          }
+          return sentMsg;
+        } catch (err) {
+          return cht.reply(`❌ *Gagal memeriksa update:* ${err.message}`);
+        }
+      }
+
       let isConfirm = ['y', 'ya', 'yes'].includes(input);
       let isCancel = ['n', 'no', 'batal', 'cancel'].includes(input);
 
       Data.pendingUpdate ??= {};
-      let pending = Data.pendingUpdate[cht.sender];
+      let pending = Data.pendingUpdate[cht.sender] || memories.getItem(cht.sender, 'pendingUpdate');
 
       if (isCancel) {
         if (pending) {
           delete Data.pendingUpdate[cht.sender];
+          memories.delItem(cht.sender, 'pendingUpdate');
           return cht.reply(Data.infos.owner.updateCancelled);
         }
       }
 
       if (isConfirm) {
-        if (!pending) {
-          return cht.reply(
-            '❌ Tidak ada sesi update yang menunggu konfirmasi.'
-          );
+        let urlPath = pending?.urlPath;
+
+        if (!urlPath || !Array.isArray(urlPath) || urlPath.length === 0) {
+          try {
+            await cht.reply('⏳ *Memeriksa dan menyiapkan pembaruan sistem...*');
+            let updateInfo = await global.checkUpdate();
+            if (!updateInfo || !updateInfo.hasUpdate) {
+              return cht.reply(`✅ *Bot Anda sudah menggunakan versi terbaru (v${updateInfo?.currentVersion || cfg.version || '1.0.0'}).*`);
+            }
+            let rawUrls = updateInfo.files || [];
+            let fols = await (Exp.func?.getDirectoriesRecursive?.() || []);
+            urlPath = rawUrls
+              .map((link) => {
+                try {
+                  const { pathname, host } = new URL(link);
+                  let f = (
+                    host === 'raw.githubusercontent.com'
+                      ? pathname.split('heads/')[1]
+                      : pathname
+                  )
+                    ?.split('/')
+                    ?.slice(1)
+                    ?.join('/')
+                    ?.split('/');
+                  const filename = f.slice(-1)[0];
+                  if (!filename) return null;
+                  const _path = f.slice(0, -1).join('/');
+
+                  for (const folder of fols) {
+                    const folderPath = folder.split('./')[1].slice(0, -1);
+                    if (folderPath.includes(_path) && _path) {
+                      return [link, `${folder}${filename}`];
+                    }
+                    if (
+                      ['index.js', 'package', 'readme.md'].some((a) =>
+                        filename.includes(a)
+                      )
+                    ) {
+                      return [link, `./${filename}`];
+                    }
+                  }
+                  return null;
+                } catch {
+                  return null;
+                }
+              })
+              .filter(Boolean);
+          } catch (e) {
+            return cht.reply(`❌ *Gagal memuat sesi update:* ${e.message}`);
+          }
         }
-        if (Date.now() > pending.exp) {
-          delete Data.pendingUpdate[cht.sender];
-          return cht.reply(Data.infos.owner.updateExpired);
+
+        if (!urlPath || urlPath.length === 0) {
+          return cht.reply('❌ Tidak ada berkas pembaruan yang dapat diproses saat ini.');
         }
-        let urlPath = pending.urlPath;
+
         delete Data.pendingUpdate[cht.sender];
+        memories.delItem(cht.sender, 'pendingUpdate');
 
         await cht.reply('Updating...');
         let changed = `*📂File Changed:*`;
@@ -2832,6 +3083,23 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let chName = customJid ? chJid : (cfg.menu?.chId?.newsletterName || cfg.chId?.newsletterName || chJid);
       if (!chJid) return cht.reply(infos.owner.noChId);
 
+      let getChLink = async (jid) => {
+        try {
+          if (cfg.menu?.chId?.newsletterJid === jid && cfg.menu?.chId?.invite) {
+            return `https://whatsapp.com/channel/${cfg.menu.chId.invite}`;
+          }
+          let meta = await Exp.newsletterMetadata('jid', jid).catch(() => null);
+          let invite = meta?.thread_metadata?.invite || meta?.invite;
+          if (invite) {
+            if (cfg.menu?.chId?.newsletterJid === jid) {
+              cfg.menu.chId.invite = invite;
+            }
+            return `https://whatsapp.com/channel/${invite}`;
+          }
+        } catch {}
+        return null;
+      };
+
       if (is.quoted) {
         let qType = cht.quoted.type;
         if (['image', 'video'].includes(qType)) {
@@ -2842,31 +3110,33 @@ export default async function on({ cht, Exp, store, ev, is }) {
               video: buffer,
               ptv: true,
             });
-            return cht.reply(infos.owner.sendchSuccess(chName, 'Video Note (PTV)'));
+            let chLink = await getChLink(chJid);
+            return cht.reply(infos.owner.sendchSuccess(chName, 'Video Note (PTV)', chLink));
           }
           let caption = textArgs || cht.quoted.text || '';
           await Exp.sendMessage(chJid, {
             [qType]: buffer,
             caption: caption || undefined,
           });
-          return cht.reply(infos.owner.sendchSuccess(chName, qType === 'image' ? 'Gambar' : 'Video'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, qType === 'image' ? 'Gambar' : 'Video', chLink));
         }
 
         if (qType === 'audio') {
           let buffer = await cht.quoted.download();
-          let ptt = cht.quoted.audio?.ptt ?? false;
           await Exp.sendMessage(chJid, {
             audio: buffer,
-            mimetype: cht.quoted.audio?.mimetype || 'audio/mp4',
-            ptt,
+            ptt: true,
           });
-          return cht.reply(infos.owner.sendchSuccess(chName, ptt ? 'Pesan Suara (PTT)' : 'Audio'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, 'Voice Note (PTT)', chLink));
         }
 
         if (qType === 'sticker') {
           let buffer = await cht.quoted.download();
           await Exp.sendMessage(chJid, { sticker: buffer });
-          return cht.reply(infos.owner.sendchSuccess(chName, 'Stiker'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, 'Stiker', chLink));
         }
 
         if (qType === 'document') {
@@ -2876,14 +3146,16 @@ export default async function on({ cht, Exp, store, ev, is }) {
             mimetype: cht.quoted.document?.mimetype || 'application/octet-stream',
             fileName: cht.quoted.document?.fileName || 'document',
           });
-          return cht.reply(infos.owner.sendchSuccess(chName, 'Dokumen'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, 'Dokumen', chLink));
         }
 
         if (qType === 'conversation' || qType === 'extendedTextMessage') {
           let textToSend = textArgs || cht.quoted.text || '';
           if (textToSend) {
             await Exp.sendMessage(chJid, { text: textToSend });
-            return cht.reply(infos.owner.sendchSuccess(chName, 'Teks'));
+            let chLink = await getChLink(chJid);
+            return cht.reply(infos.owner.sendchSuccess(chName, 'Teks', chLink));
           }
         }
 
@@ -2902,19 +3174,22 @@ export default async function on({ cht, Exp, store, ev, is }) {
 
         if (quotedRaw) {
           await Exp.relayMessage(chJid, quotedRaw, {});
-          return cht.reply(infos.owner.sendchSuccess(chName, 'Relay Message'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, 'Relay Message', chLink));
         }
 
         let textToSend = textArgs || cht.quoted.text || '';
         if (textToSend) {
           await Exp.sendMessage(chJid, { text: textToSend });
-          return cht.reply(infos.owner.sendchSuccess(chName, 'Teks'));
+          let chLink = await getChLink(chJid);
+          return cht.reply(infos.owner.sendchSuccess(chName, 'Teks', chLink));
         }
       }
 
       if (textArgs) {
         await Exp.sendMessage(chJid, { text: textArgs });
-        return cht.reply(infos.owner.sendchSuccess(chName, 'Teks'));
+        let chLink = await getChLink(chJid);
+        return cht.reply(infos.owner.sendchSuccess(chName, 'Teks', chLink));
       }
 
       return cht.reply(infos.owner.sendchHelp);
@@ -2971,8 +3246,385 @@ export default async function on({ cht, Exp, store, ev, is }) {
         ptt: true,
       });
 
+      let getChLink = async (jid) => {
+        try {
+          if (cfg.menu?.chId?.newsletterJid === jid && cfg.menu?.chId?.invite) {
+            return `https://whatsapp.com/channel/${cfg.menu.chId.invite}`;
+          }
+          let meta = await Exp.newsletterMetadata('jid', jid).catch(() => null);
+          let invite = meta?.thread_metadata?.invite || meta?.invite;
+          if (invite) {
+            if (cfg.menu?.chId?.newsletterJid === jid) {
+              cfg.menu.chId.invite = invite;
+            }
+            return `https://whatsapp.com/channel/${invite}`;
+          }
+        } catch {}
+        return null;
+      };
+
+      let chLink = await getChLink(chJid);
       return cht.reply(
-        infos.owner.playchSuccess(chName, 'Voice Note (PTT)')
+        infos.owner.playchSuccess(chName, 'Voice Note (PTT)', chLink)
+      );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['ticket', 'report'],
+      listmenu: ['ticket'],
+      tag: 'owner',
+      isOwner: true,
+      isCoOwner: false,
+    },
+    async () => {
+      const getTicketLinkPreview = async () => {
+        if (!keys['ticket_lp_media']) {
+          try {
+            let rawBuf = await Exp.func.getBuffer('https://c.termai.cc/i135/fZ6dc.png');
+            let resMedia = await prepareWAMessageMedia(
+              { image: rawBuf },
+              { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+            );
+            if (resMedia?.imageMessage) {
+              keys['ticket_lp_media'] = resMedia.imageMessage;
+              keys['ticket_lp_thumb'] = rawBuf;
+            }
+          } catch {}
+        }
+        let imgMsg = keys['ticket_lp_media'];
+        return {
+          'matched-text': 'https://termai.cc',
+          title: '🎫 Helpdesk & Developer Support',
+          description: 'Termai Support & Developer Ticket System',
+          jpegThumbnail: imgMsg?.jpegThumbnail
+            ? Buffer.from(imgMsg.jpegThumbnail)
+            : keys['ticket_lp_thumb'] || undefined,
+          highQualityThumbnail: imgMsg
+            ? {
+                ...imgMsg,
+                width: 1280,
+                height: 720,
+              }
+            : undefined,
+        };
+      };
+
+      let q = (cht.q || '').trim();
+      if (!q || q === 'help' || q === 'menu') {
+        let helpTpl = infos.owner.ticketHelp;
+        let text = typeof helpTpl === 'object' && helpTpl?.body ? helpTpl.body : helpTpl;
+        let linkPreview = await getTicketLinkPreview();
+        return Exp.sendMessage(
+          cht.id,
+          {
+            text: `https://termai.cc\n` + text,
+            linkPreview,
+          },
+          { quoted: cht }
+        );
+      }
+
+      let lowerQ = q.toLowerCase();
+
+      if (q === 'list' || q === 'my') {
+        let senderNumber = String(cht.sender || '').replace(/[^0-9]/g, '');
+        try {
+          let tickets = await global.listTickets(senderNumber);
+          if (!tickets || tickets.length === 0) {
+            return cht.reply(infos.owner.ticketListEmpty);
+          }
+          let text = infos.owner.ticketList(tickets);
+          let linkPreview = await getTicketLinkPreview();
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + text,
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+        } catch (e) {
+          return cht.reply(infos.owner.ticketFailed(e.message));
+        }
+      }
+
+      if (lowerQ.startsWith('check ') || lowerQ.startsWith('status ') || lowerQ.startsWith('info ') || /^#?tck-[a-z0-9]+/i.test(q)) {
+        let ticketId = q.replace(/^(check|status|info)\s+/i, '').trim();
+        try {
+          let ticket = await global.getTicket(ticketId);
+          let text = infos.owner.ticketDetail(ticket);
+          let linkPreview = await getTicketLinkPreview();
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + text,
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+        } catch (e) {
+          return cht.reply(infos.owner.ticketFailed(e.message));
+        }
+      }
+
+      if (lowerQ.startsWith('close ') || lowerQ.startsWith('tutup ')) {
+        let ticketId = q.replace(/^(close|tutup)\s+/i, '').trim();
+        try {
+          let res = await global.updateTicketUser({ ticketId, actionType: 'close' });
+          let linkPreview = await getTicketLinkPreview();
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + infos.owner.ticketCloseSuccess(res.ticketId || ticketId),
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+        } catch (e) {
+          return cht.reply(infos.owner.ticketFailed(e.message));
+        }
+      }
+
+      if (lowerQ.startsWith('reopen ') || lowerQ.startsWith('buka ')) {
+        let ticketId = q.replace(/^(reopen|buka)\s+/i, '').trim();
+        try {
+          let res = await global.updateTicketUser({ ticketId, actionType: 'reopen' });
+          let linkPreview = await getTicketLinkPreview();
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + infos.owner.ticketReopenSuccess(res.ticketId || ticketId),
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+        } catch (e) {
+          return cht.reply(infos.owner.ticketFailed(e.message));
+        }
+      }
+
+      if (lowerQ.startsWith('reply ') || lowerQ.startsWith('balas ')) {
+        let cleanText = q.replace(/^(reply|balas)\s+/i, '').trim();
+        let ticketId = cleanText.includes('|')
+          ? cleanText.split('|')[0].trim()
+          : cleanText.split(/\s+/)[0].trim();
+        let replyText = cleanText.includes('|')
+          ? cleanText.split('|').slice(1).join('|').trim()
+          : cleanText.split(/\s+/).slice(1).join(' ').trim();
+
+        if (!ticketId || !replyText) {
+          return cht.reply('Format salah. Gunakan: .ticket reply <ID_Tiket> | <pesan>');
+        }
+
+        try {
+          let res = await global.updateTicketUser({ ticketId, actionType: 'reply', replyText });
+          let linkPreview = await getTicketLinkPreview();
+          return Exp.sendMessage(
+            cht.id,
+            {
+              text: `https://termai.cc\n` + infos.owner.ticketReplySuccess(res.ticketId || ticketId),
+              linkPreview,
+            },
+            { quoted: cht }
+          );
+        } catch (e) {
+          return cht.reply(infos.owner.ticketFailed(e.message));
+        }
+      }
+
+      let category = 'bug';
+      let subject = '';
+      let message = '';
+      const validCategories = ['bug', 'error', 'feature', 'question', 'account', 'general'];
+
+      if (q.includes('|')) {
+        let parts = q.split('|').map((s) => s.trim()).filter(Boolean);
+        if (parts.length >= 3) {
+          let first = parts[0].toLowerCase();
+          category = validCategories.includes(first) ? first : 'bug';
+          subject = parts[1];
+          message = parts.slice(2).join(' | ');
+        } else if (parts.length === 2) {
+          let headTokens = parts[0].split(/\s+/);
+          let firstToken = headTokens[0].toLowerCase();
+          if (validCategories.includes(firstToken)) {
+            category = firstToken;
+            subject = headTokens.slice(1).join(' ') || parts[1];
+            message = parts[1];
+          } else {
+            category = 'bug';
+            subject = parts[0];
+            message = parts[1];
+          }
+        } else {
+          message = parts[0];
+          subject = message.slice(0, 40);
+        }
+      } else {
+        let tokens = q.split(/\s+/);
+        let firstToken = tokens[0].toLowerCase();
+        if (validCategories.includes(firstToken) && tokens.length > 1) {
+          category = firstToken;
+          message = tokens.slice(1).join(' ');
+          subject = message.slice(0, 40) + (message.length > 40 ? '...' : '');
+        } else {
+          category = 'bug';
+          message = q;
+          subject = q.slice(0, 40) + (q.length > 40 ? '...' : '');
+        }
+      }
+
+      if (!subject) subject = message.slice(0, 40) + (message.length > 40 ? '...' : '') || 'Laporan Tiket';
+      if (!message) message = subject;
+
+      await cht.reply(infos.owner.ticketSending);
+
+      try {
+        let senderNumber = String(cht.sender || '').replace(/[^0-9]/g, '');
+        let res = await global.createTicket({
+          category,
+          subject,
+          message,
+          senderNumber,
+          senderJid: cht.sender,
+        });
+
+        let linkPreview = await getTicketLinkPreview();
+        return Exp.sendMessage(
+          cht.id,
+          {
+            text: `https://termai.cc\n` + infos.owner.ticketSuccess(res.ticketId, category, subject),
+            linkPreview,
+          },
+          { quoted: cht }
+        );
+      } catch (err) {
+        return cht.reply(infos.owner.ticketFailed(err.message));
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['dm', 'chatadmin'],
+      tag: 'owner',
+      isOwner: true,
+      isCoOwner: false,
+    },
+    async () => {
+      let rawText = cht.q || cht.msg || '';
+      let q = rawText.trim().toLowerCase();
+      if (['end', 'close', 'stop', '.dm end', '.dm close'].includes(q)) {
+        if (!Data.activeDmSession) {
+          return cht.reply('Tidak ada sesi obrolan aktif saat ini.');
+        }
+        await global.sendDmEnd({ sessionId: Data.activeDmSession.sessionId });
+        Data.activeDmSession = null;
+        let tpl = infos.owner.dmClosed;
+        return Exp.sendMessage(cht.id, { text: tpl.body || tpl, footer: tpl.footer }, { quoted: cht });
+      }
+
+      if (Data.pendingDmSession) {
+        if (['y', 'ya', 'yes', 'accept', 'ok', 'oke'].includes(q)) {
+          await global.sendDmConsent({ sessionId: Data.pendingDmSession.sessionId, accepted: true });
+          Data.activeDmSession = { sessionId: Data.pendingDmSession.sessionId, active: true };
+          Data.pendingDmSession = null;
+          let tpl = infos.owner.dmAccepted;
+          return Exp.sendMessage(cht.id, { text: tpl.body || tpl, footer: tpl.footer }, { quoted: cht });
+        }
+        if (['n', 'no', 'tidak', 'reject', 'batal', 'cancel'].includes(q)) {
+          await global.sendDmConsent({ sessionId: Data.pendingDmSession.sessionId, accepted: false });
+          Data.pendingDmSession = null;
+          let tpl = infos.owner.dmRejected;
+          return Exp.sendMessage(cht.id, { text: tpl.body || tpl, footer: tpl.footer }, { quoted: cht });
+        }
+      }
+
+      if (Data.activeDmSession) {
+        if (rawText) {
+          await global.sendDmReply({ sessionId: Data.activeDmSession.sessionId, text: rawText });
+          return cht.reply('✅ *Pesan diteruskan ke Admin Termai.*');
+        }
+        let tpl = infos.owner.dmAccepted;
+        return Exp.sendMessage(cht.id, { text: tpl.body || tpl, footer: tpl.footer }, { quoted: cht });
+      }
+
+      return cht.reply('Belum ada sesi obrolan aktif dari Admin Termai.');
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['infoupdate', 'updateinfo', 'detailupdate'],
+      listmenu: ['infoupdate'],
+      tag: 'owner',
+      isOwner: true,
+      isCoOwner: false,
+    },
+    async () => {
+      let tpl = infos.owner.infoUpdateHelp;
+      let text = typeof tpl === 'object' && tpl?.body ? tpl.body : tpl;
+      let linkPreview = await getUpdateLinkPreview();
+      return Exp.sendMessage(
+        cht.id,
+        {
+          text: `https://termai.cc\n` + text,
+          linkPreview,
+        },
+        { quoted: cht }
+      );
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['infoticket', 'ticketinfo', 'detailticket'],
+      listmenu: ['infoticket'],
+      tag: 'owner',
+      isOwner: true,
+      isCoOwner: false,
+    },
+    async () => {
+      let tpl = infos.owner.infoTicketHelp;
+      let text = typeof tpl === 'object' && tpl?.body ? tpl.body : tpl;
+      if (!keys['ticket_lp_media']) {
+        try {
+          let rawBuf = await Exp.func.getBuffer('https://c.termai.cc/i135/fZ6dc.png');
+          let resMedia = await prepareWAMessageMedia(
+            { image: rawBuf },
+            { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+          );
+          if (resMedia?.imageMessage) {
+            keys['ticket_lp_media'] = resMedia.imageMessage;
+            keys['ticket_lp_thumb'] = rawBuf;
+          }
+        } catch {}
+      }
+      let imgMsg = keys['ticket_lp_media'];
+      let linkPreview = {
+        'matched-text': 'https://termai.cc',
+        title: '🎫 Helpdesk & Developer Support System',
+        description: 'Termai Support & Developer Ticket Architecture',
+        jpegThumbnail: imgMsg?.jpegThumbnail
+          ? Buffer.from(imgMsg.jpegThumbnail)
+          : keys['ticket_lp_thumb'] || undefined,
+        highQualityThumbnail: imgMsg
+          ? {
+              ...imgMsg,
+              width: 1280,
+              height: 720,
+            }
+          : undefined,
+      };
+      return Exp.sendMessage(
+        cht.id,
+        {
+          text: `https://termai.cc\n` + text,
+          linkPreview,
+        },
+        { quoted: cht }
       );
     }
   );

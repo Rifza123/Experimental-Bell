@@ -10,6 +10,7 @@ const { GeminiImage } = await (fol[2] + 'gemini.js').r();
 const { imageEdit } = await (fol[2] + 'imageEdit.js').r();
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r();
 const { TermaiCdn } = await (fol[0] + 'cdn.termai.js').r();
+const { extractLastFrame, concatVideos } = await (fol[0] + 'ffmpeg.js').r();
 
 let exif = await (fol[0] + 'exif.js').r();
 let { convert } = exif;
@@ -19,6 +20,7 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
   let infos = Data.infos;
   let { sender, id } = cht;
   const { func } = Exp;
+  let { archiveMemories: memories } = func;
   const preferences = is?.jadibot
     ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
     : (Data.preferences ??= {});
@@ -154,12 +156,13 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       tag: 'art',
       premium: true,
       energy: 50,
+      continue: true,
       media: {
         type: ['image'],
         save: false,
       },
     },
-    async ({ media }) => {
+    async ({ media, continue: _continue }) => {
       const _key = keys[sender];
       let tryng = 0;
       let type = 'anime2d';
@@ -171,6 +174,8 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       } else if (['imglarger', 'enlarger', 'enlarge'].includes(cht.cmd)) {
         type = 'enlarger';
       }
+      let ok = await _continue();
+      if (!ok) return;
       let i = 0;
       await cht.edit(infos.messages.wait, _key, true);
       let tph = await TermaiCdn(await func.minimizeImage(media));
@@ -238,8 +243,9 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
       tag: 'stablediffusion',
       args: (isI2i ? infos.messages.replyOrSendImage : '') + infos.ai.txt2img,
       energy: 100,
+      continue: true,
     },
-    async () => {
+    async ({ continue: _continue }) => {
       const _key = keys[sender];
       const img =
         is.quoted.image ||
@@ -300,6 +306,10 @@ export default async function on({ Exp, ev, store, cht, ai, is }) {
           return cht.reply(
             `*Please input checkpoints & prompt!*\n\n${infos.ai.txt2img}`
           );
+
+        let ok = await _continue();
+        if (!ok) return;
+
         await cht.edit(infos.messages.wait, _key, true);
 
         let [checkpointsResponse, lorasResponse] = await Promise.all([
@@ -491,9 +501,12 @@ ${loraText}
       listmenu: ['lorasearch', 'checkpointsearch'],
       tag: 'stablediffusion',
       energy: 3,
+      continue: true,
     },
-    async () => {
+    async ({ continue: _continue }) => {
       if (!cht.q) return cht.reply('Mau cari model apa?');
+      let ok = await _continue();
+      if (!ok) return;
       fetch(
         `${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == 'lorasearch' ? 'loras' : 'checkpoints'}?key=${api.xterm.key}`
       ).then(async (a) => {
@@ -527,10 +540,13 @@ ${loraText}
       listmenu: ['getlora', 'getcheckpoint'],
       tag: 'stablediffusion',
       energy: 3,
+      continue: true,
     },
-    async () => {
+    async ({ continue: _continue }) => {
       if (!cht.q) return cht.reply('Harap masukan id nya!');
       if (isNaN(cht.q)) return cht.reply('Id harus berupa angka!');
+      let ok = await _continue();
+      if (!ok) return;
       fetch(
         `${api.xterm.url}/api/text2img/stablediffusion/list_${cht.cmd == 'getlora' ? 'loras' : 'checkpoints'}?key=${api.xterm.key}`
       ).then(async (a) => {
@@ -560,18 +576,37 @@ ${loraText}
       energy: 185,
       premium: true,
       media: {
-        type: ['image'],
+        type: ['image', 'video'],
       },
     },
     async ({ media }) => {
       const _key = keys[sender];
-      const isRich = Boolean(cfg.rich);
+      const isRich = false;
       let richMsgId = isRich ? generateMessageIDV2() : null;
       let thumbMedia = null;
 
+      let prevVideo = null;
+      let inputImage = media;
+
+      let isVideo = Boolean(
+        cht?.quoted?.video ||
+        cht?.video ||
+        (media?.length > 8 && media.slice(4, 8).toString() === 'ftyp') ||
+        (media?.indexOf(Buffer.from('ftyp')) >= 0 && media.indexOf(Buffer.from('ftyp')) < 30)
+      );
+
+      if (isVideo) {
+        prevVideo = media;
+        try {
+          inputImage = await extractLastFrame(media);
+        } catch (e) {
+          return cht.reply('Gagal mengambil frame terakhir dari video!');
+        }
+      }
+
       if (isRich) {
         thumbMedia = await func
-          .minimizeImage(media, { width: 300, quality: 70 })
+          .minimizeImage(inputImage, { width: 300, quality: 70 })
           .catch(() => null);
         await Exp.relayMessage(
           cht.id,
@@ -654,8 +689,8 @@ ${loraText}
       let response;
       try {
         response = await axios.post(
-          `${api.xterm.url}/api/img2video/luma?key=${api.xterm.key}${cht?.q ? '&prompt=' + cht.q : ''}`,
-          await func.minimizeImage(media),
+          `${api.xterm.url}/api/img2video/luma?key=${api.xterm.key}${cht?.q ? '&prompt=' + encodeURIComponent(cht.q) : ''}`,
+          await func.minimizeImage(inputImage),
           {
             headers: {
               'Content-Type': 'application/octet-stream',
@@ -708,6 +743,22 @@ ${loraText}
                   const videoUrl =
                     data.video?.url || data.video || data.url || data.result;
                   if (!videoUrl) break;
+
+                  let finalVideo = { url: videoUrl };
+                  if (prevVideo) {
+                    if (!isRich) {
+                      await cht.edit('Menggabungkan video...', _key, true);
+                    }
+                    try {
+                      let newVideoRes = await axios.get(videoUrl, { responseType: 'arraybuffer' });
+                      let newVideoBuf = Buffer.from(newVideoRes.data);
+                      finalVideo = await concatVideos([prevVideo, newVideoBuf]);
+                    } catch (errConcat) {
+                      console.error('Concat error:', errConcat);
+                      finalVideo = { url: videoUrl };
+                    }
+                  }
+
                   if (isRich && richMsgId) {
                     await Exp.relayMessage(
                       cht.id,
@@ -788,15 +839,28 @@ ${loraText}
                       {}
                     );
                   } else {
-                    await Exp.sendMessage(
+                    let sentMsg = await Exp.sendMessage(
                       id,
                       {
-                        video: { url: videoUrl },
+                        video: finalVideo,
                         mimetype: 'video/mp4',
+                        footer: '- Balas video ini dengan prompt untuk melanjutkan video!',
                         ai: true,
                       },
                       { quoted: cht }
                     );
+
+                    if (sentMsg?.key?.id) {
+                      let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
+                      qCmds[sentMsg.key.id] = {
+                        key: { id: sentMsg.key.id },
+                        emit: 'luma',
+                        exp: Date.now() + func.parseTimeString('10 menit'),
+                        maxUse: 10,
+                        accepts: [],
+                      };
+                      memories.setItem(sender, 'quotedQuestionCmd', qCmds);
+                    }
                   }
                   response.data.destroy();
                 }
@@ -824,6 +888,7 @@ ${loraText}
       listmenu: ['enhancevideo', 'repairvideo', 'hdvid'],
       tag: 'ai',
       energy: 185,
+      continue: true,
       premium: true,
       media: {
         type: ['video'],
@@ -832,7 +897,7 @@ ${loraText}
         },
       },
     },
-    async ({ media }) => {
+    async ({ media, continue: _continue }) => {
       const _key = keys[sender];
 
       if (cht.cmd === 'wink' && !cht.q) {
@@ -854,6 +919,8 @@ ${loraText}
             `*Contoh*: Balas video dengan mengetik *${prefix}wink uhd*`
         );
       }
+      let ok = await _continue();
+      if (!ok) return;
 
       let taskParam = '';
       let modelParam = '';
@@ -1363,11 +1430,14 @@ ${loraText}
       listmenu: ['bingedit'],
       tag: 'ai',
       energy: 25,
+      continue: true,
       args: infos.ai.isPrompt,
     },
-    async () => {
+    async ({ continue: _continue }) => {
       const img = is.quoted.image || is.image;
       if (!img) return cht.reply(infos.messages.replyOrSendImage);
+      let ok = await _continue();
+      if (!ok) return;
       let media = await (is.image ? cht.download() : cht.quoted.download());
       const _key = keys[sender];
       await cht.edit(infos.messages.wait, _key, true);
@@ -1582,6 +1652,7 @@ ${loraText}
       listmenu: ['faceswap'],
       tag: 'ai',
       energy: 25,
+      continue: true,
       premium: true,
       media: {
         type: ['image'],
@@ -1589,7 +1660,7 @@ ${loraText}
         save: false,
       },
     },
-    async ({ media }) => {
+    async ({ media, continue: _continue }) => {
       const _key = keys[sender];
       let face;
       let target;
@@ -1637,6 +1708,8 @@ ${loraText}
             ? await tmpFiles(await cht.download())
             : false;
       }
+      let ok = await _continue();
+      if (!ok) return;
       await cht.edit(infos.messages.wait, _key, true);
       axios({
         method: 'post',
@@ -1889,12 +1962,15 @@ ${loraText}
       listmenu: ['imageedit'],
       tag: 'ai',
       energy: 30,
+      continue: true,
       args: 'Please input prompt (English recommended)!',
     },
-    async () => {
+    async ({ continue: _continue }) => {
       const img = is.quoted.image || is.image;
       if (!img)
         return cht.reply('Harap kirim gambar atau reply gambar dengan prompt!');
+      let ok = await _continue();
+      if (!ok) return;
       let media = await (is.image ? cht.download() : cht.quoted.download());
       try {
         if (is.sticker || is.quoted?.sticker) {

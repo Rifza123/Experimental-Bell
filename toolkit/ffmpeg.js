@@ -178,7 +178,7 @@ export async function generateWaveform(
           cleanup();
           const samples = rawData.length / 2;
           if (samples === 0) {
-            return resolve(Buffer.alloc(bars).toString('base64'));
+            return resolve(Buffer.alloc(bars));
           }
 
           const amplitudes = [];
@@ -202,7 +202,7 @@ export async function generateWaveform(
           let normalized = max > 0 ? avg.map((v) => Math.floor((v / max) * 100)) : avg.map(() => 0);
 
           let buf = Buffer.from(new Uint8Array(normalized));
-          resolve(buf.toString('base64'));
+          resolve(buf);
         } catch (e) {
           cleanup();
           reject(e);
@@ -246,14 +246,14 @@ export async function convertToOpus(
       .noVideo()
       .audioCodec('libopus')
       .format('ogg')
-      .audioBitrate('48k')
-      .audioChannels(1)
-      .audioFrequency(48000)
+      .audioBitrate('128k')
       .outputOptions([
         '-map_metadata',
         '-1',
+        '-vbr',
+        'on',
         '-application',
-        'voip',
+        'audio',
         '-compression_level',
         '10',
         '-page_duration',
@@ -629,3 +629,295 @@ export async function burikVideo(input, options = {}) {
       .save(tmpFileOut);
   });
 }
+
+export async function process16D(instInput, vocInput, options = {}) {
+  return new Promise((resolve, reject) => {
+    let mode = options.mode || 'default';
+    let isVideo = options.isVideo || false;
+    let videoSource = options.videoSource || null;
+    let format = isVideo ? 'mp4' : 'mp3';
+
+    let tempInst = null;
+    let tempVoc = null;
+    let tempVideo = null;
+    let tempOut = path.resolve('./toolkit/db', `16d_out_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${format}`);
+    let isTempInst = false;
+    let isTempVoc = false;
+    let isTempVideo = false;
+
+    if (Buffer.isBuffer(instInput)) {
+      tempInst = path.resolve('./toolkit/db', `16d_inst_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp3`);
+      fs.writeFileSync(tempInst, instInput);
+      instInput = tempInst;
+      isTempInst = true;
+    }
+    if (Buffer.isBuffer(vocInput)) {
+      tempVoc = path.resolve('./toolkit/db', `16d_voc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp3`);
+      fs.writeFileSync(tempVoc, vocInput);
+      vocInput = tempVoc;
+      isTempVoc = true;
+    }
+    if (isVideo && Buffer.isBuffer(videoSource)) {
+      tempVideo = path.resolve('./toolkit/db', `16d_vid_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp4`);
+      fs.writeFileSync(tempVideo, videoSource);
+      videoSource = tempVideo;
+      isTempVideo = true;
+    }
+
+    const cleanup = () => {
+      if (isTempInst && tempInst && fs.existsSync(tempInst)) { try { fs.unlinkSync(tempInst); } catch (e) {} }
+      if (isTempVoc && tempVoc && fs.existsSync(tempVoc)) { try { fs.unlinkSync(tempVoc); } catch (e) {} }
+      if (isTempVideo && tempVideo && fs.existsSync(tempVideo)) { try { fs.unlinkSync(tempVideo); } catch (e) {} }
+      if (fs.existsSync(tempOut)) { try { fs.unlinkSync(tempOut); } catch (e) {} }
+    };
+
+    let modeStr = typeof mode === 'string' ? mode.toLowerCase().trim() : '';
+    let isReverse = ['reverse', 'balik', 'kiri', 'left', 'swap', 'flip', 'r'].some((k) => modeStr.includes(k));
+    let is8D = ['8d', 'motion', 'rotate', 'putar', 'spin', 'm'].some((k) => modeStr.includes(k));
+
+    let filterComplex = '';
+    if (isReverse) {
+      filterComplex = '[0:a]pan=mono|c0=0.5*c0+0.5*c1[inst];[1:a]pan=mono|c0=0.5*c0+0.5*c1[voc];[voc][inst]join=inputs=2:channel_layout=stereo:map=0.0-FL|1.0-FR[out]';
+    } else if (is8D) {
+      filterComplex = '[0:a]apulsator=hz=0.125:offset_l=0:offset_r=0.5[inst];[1:a]apulsator=hz=0.125:offset_l=0.5:offset_r=0[voc];[inst][voc]amix=inputs=2:normalize=0[out]';
+    } else {
+      filterComplex = '[0:a]pan=mono|c0=0.5*c0+0.5*c1[inst];[1:a]pan=mono|c0=0.5*c0+0.5*c1[voc];[inst][voc]join=inputs=2:channel_layout=stereo:map=0.0-FL|1.0-FR[out]';
+    }
+
+    let args = [];
+    if (isVideo && videoSource) {
+      let vidFilter = filterComplex.replace(/\[0:a\]/g, '[1:a]').replace(/\[1:a\]/g, '[2:a]');
+      args = [
+        '-y',
+        '-i', videoSource,
+        '-i', instInput,
+        '-i', vocInput,
+        '-filter_complex', vidFilter,
+        '-map', '0:v:0',
+        '-map', '[out]',
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        '-b:a', '192k',
+        tempOut
+      ];
+    } else {
+      args = [
+        '-y',
+        '-i', instInput,
+        '-i', vocInput,
+        '-filter_complex', filterComplex,
+        '-map', '[out]',
+        '-c:a', 'libmp3lame',
+        '-b:a', '192k',
+        tempOut
+      ];
+    }
+
+    const ffmpegProc = spawn('ffmpeg', args);
+
+    ffmpegProc.on('close', (code) => {
+      if (code === 0 && fs.existsSync(tempOut)) {
+        try {
+          const resBuffer = fs.readFileSync(tempOut);
+          cleanup();
+          resolve(resBuffer);
+        } catch (err) {
+          cleanup();
+          reject(err);
+        }
+      } else {
+        cleanup();
+        reject(new Error(`FFmpeg exited with code ${code}`));
+      }
+    });
+
+    ffmpegProc.on('error', (err) => {
+      cleanup();
+      reject(err);
+    });
+  });
+}
+
+export async function extractLastFrame(input) {
+  return new Promise((resolve, reject) => {
+    let tempInput = null;
+    let isTempInput = false;
+    if (Buffer.isBuffer(input)) {
+      tempInput = path.resolve('./toolkit/db', `frm_in_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp4`);
+      fs.writeFileSync(tempInput, input);
+      input = tempInput;
+      isTempInput = true;
+    } else if (typeof input === 'string') {
+      input = path.resolve(input);
+      if (!fs.existsSync(input)) {
+        return reject(new Error(`Input file not found: ${input}`));
+      }
+    } else {
+      return reject(new Error('Invalid input type (Buffer | filepath only)'));
+    }
+
+    const tempOutput = path.resolve('./toolkit/db', `frm_out_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`);
+
+    const cleanup = () => {
+      if (isTempInput && tempInput && fs.existsSync(tempInput)) {
+        try { fs.unlinkSync(tempInput); } catch (e) {}
+      }
+      if (fs.existsSync(tempOutput)) {
+        try { fs.unlinkSync(tempOutput); } catch (e) {}
+      }
+    };
+
+    ff.ffprobe(input, (err, metadata) => {
+      if (err) {
+        cleanup();
+        return reject(err);
+      }
+      const duration = metadata?.format?.duration || 1;
+      const targetTime = Math.max(0, duration - 0.1);
+
+      ff(input)
+        .seekInput(targetTime)
+        .outputOptions(['-frames:v 1', '-q:v 2'])
+        .videoCodec('mjpeg')
+        .format('image2')
+        .on('error', (e) => {
+          cleanup();
+          reject(e);
+        })
+        .on('end', () => {
+          try {
+            const buf = fs.readFileSync(tempOutput);
+            cleanup();
+            resolve(buf);
+          } catch (e) {
+            cleanup();
+            reject(e);
+          }
+        })
+        .save(tempOutput);
+    });
+  });
+}
+
+export async function concatVideos(inputs, outputPath = null) {
+  return new Promise((resolve, reject) => {
+    let tempFiles = [];
+    let filePaths = [];
+
+    inputs.forEach((input) => {
+      if (Buffer.isBuffer(input)) {
+        let tmp = path.resolve('./toolkit/db', `cat_in_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp4`);
+        fs.writeFileSync(tmp, input);
+        tempFiles.push(tmp);
+        filePaths.push(tmp);
+      } else if (typeof input === 'string') {
+        filePaths.push(path.resolve(input));
+      }
+    });
+
+    let isTempOutput = false;
+    let tempOutputFile = outputPath;
+    if (!tempOutputFile) {
+      tempOutputFile = path.resolve('./toolkit/db', `cat_out_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp4`);
+      isTempOutput = true;
+    }
+
+    const cleanup = () => {
+      tempFiles.forEach((f) => {
+        if (fs.existsSync(f)) {
+          try { fs.unlinkSync(f); } catch (e) {}
+        }
+      });
+      if (isTempOutput && tempOutputFile && fs.existsSync(tempOutputFile)) {
+        try { fs.unlinkSync(tempOutputFile); } catch (e) {}
+      }
+    };
+
+    const command = ff();
+    filePaths.forEach((f) => command.input(f));
+
+    command
+      .on('error', (err) => {
+        cleanup();
+        reject(err);
+      })
+      .on('end', () => {
+        if (isTempOutput) {
+          try {
+            const resBuf = fs.readFileSync(tempOutputFile);
+            cleanup();
+            resolve(resBuf);
+          } catch (err) {
+            cleanup();
+            reject(err);
+          }
+        } else {
+          cleanup();
+          resolve(tempOutputFile);
+        }
+      })
+      .mergeToFile(tempOutputFile, './toolkit/db');
+  });
+}
+
+export async function concatAudios(inputs, outputPath = null) {
+  return new Promise((resolve, reject) => {
+    let tempFiles = [];
+    let filePaths = [];
+
+    inputs.forEach((input) => {
+      if (Buffer.isBuffer(input)) {
+        let tmp = path.resolve('./toolkit/db', `cat_a_in_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp3`);
+        fs.writeFileSync(tmp, input);
+        tempFiles.push(tmp);
+        filePaths.push(tmp);
+      } else if (typeof input === 'string') {
+        filePaths.push(path.resolve(input));
+      }
+    });
+
+    let isTempOutput = false;
+    let tempOutputFile = outputPath;
+    if (!tempOutputFile) {
+      tempOutputFile = path.resolve('./toolkit/db', `cat_a_out_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp3`);
+      isTempOutput = true;
+    }
+
+    const cleanup = () => {
+      tempFiles.forEach((f) => {
+        if (fs.existsSync(f)) {
+          try { fs.unlinkSync(f); } catch (e) {}
+        }
+      });
+      if (isTempOutput && tempOutputFile && fs.existsSync(tempOutputFile)) {
+        try { fs.unlinkSync(tempOutputFile); } catch (e) {}
+      }
+    };
+
+    const command = ff();
+    filePaths.forEach((f) => command.input(f));
+
+    command
+      .on('error', (err) => {
+        cleanup();
+        reject(err);
+      })
+      .on('end', () => {
+        if (isTempOutput) {
+          try {
+            const resBuf = fs.readFileSync(tempOutputFile);
+            cleanup();
+            resolve(resBuf);
+          } catch (err) {
+            cleanup();
+            reject(err);
+          }
+        } else {
+          cleanup();
+          resolve(tempOutputFile);
+        }
+      })
+      .mergeToFile(tempOutputFile, './toolkit/db');
+  });
+}
+

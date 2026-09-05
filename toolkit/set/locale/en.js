@@ -608,6 +608,8 @@ Data.infos.others = {
   jadibotErrorSessionTelahDireset: (e) => `An error occurred. Session has been reset.\n\nError: ${e}`,
 
   videoPlayHint: '\n\n> Video cannot be played? Reply to this message with "y"',
+  menuOwnerTicketFooter: 'Type .ticket to access developer support ticket menu',
+  listSectionNotice: 'ℹ️ If this list menu does not work or fails to appear due to WhatsApp policy, disable it with: .set listSection off (Owner Only)',
 
   // Read More
   readMore: '͏'.repeat(3646),
@@ -904,7 +906,12 @@ Data.infos.owner = {
   audiolist: `Success added audio to list <list>✅️\n\nAudio: <url>\n> To see the list type *.getdata audio <list>*`,
   checkJson: `Please check your JSON Object again!\n\nTypeError:\n<rm>\n> <e>`,
   updatePreview: ({ files, recentFiles }) => {
-    let listFiles = files.map((f) => `• \`${f.type}\`: ${f.path}`).join('\n');
+    let listFiles = files.map((f, i) => {
+      let isLast = i === files.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+      return `${branch} ${icon} \`${f.path}\``;
+    }).join('\n');
     let warning = recentFiles.length > 0
       ? `\n\n⚠️ *WARNING:*\nThe following files were recently modified by you:\n${recentFiles.map((f) => `• ${f.path} (modified ${f.timeAgo})`).join('\n')}\n> Updating via this link will overwrite those changes!`
       : '';
@@ -916,6 +923,373 @@ Data.infos.owner = {
   updateCancelled: '❌ *Update cancelled.*',
   updateExpired: '⏱️ *Update session has expired.*',
   updateSuccess: 'Success ✅',
+  updateNotify: ({ version, currentVersion, pendingCount, files, changelog, fileTree }) => {
+    let tree = fileTree || files || [];
+    let filesList = tree.map((f, i) => {
+      let isLast = i === tree.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      if (typeof f === 'object') {
+        let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+        return `${branch} ${icon} \`${f.path || f.url}\``;
+      }
+      return `${branch} ✏️ \`${f}\``;
+    }).join('\n');
+    let cl = changelog ? `\n📋 *Changelog:*\n${changelog}\n` : '';
+    let pending = pendingCount > 1 ? `• *Cumulative Releases:* ${pendingCount} updates\n` : '';
+    return (
+      `> 🔔 *UPDATE NOTIFICATION*\n\n` +
+      `• *New Version:* *v${version}* (Current: *v${currentVersion || '1.0.0'}*)\n` +
+      `${pending}• *Total Files:* ${tree.length} unique files\n` +
+      `${cl}\n` +
+      `📂 *File Changed:*\n${filesList}\n\n` +
+      `💡 *HOW TO APPLY UPDATE:*\n` +
+      `• Reply (or quote) this message with *y* or *ya* when the bot is active/online.\n` +
+      `• Confirmation persists even if the bot is restarted or after a long time.\n` +
+      `• Manual update alternative: Type *.checkupdate* then reply *y*, or use *.update <link>*.\n` +
+      `• Type *n* or *cancel* to dismiss.`
+    );
+  },
+  updateMajorNotify: ({ version, currentVersion, pendingCount, files, changelog, fileTree }) => {
+    let tree = fileTree || files || [];
+    let filesList = tree.map((f, i) => {
+      let isLast = i === tree.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      if (typeof f === 'object') {
+        let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+        return `${branch} ${icon} \`${f.path || f.url}\``;
+      }
+      return `${branch} ✏️ \`${f}\``;
+    }).join('\n');
+    let cl = changelog ? `\n📋 *Changelog:*\n${changelog}\n` : '';
+    return `> ⚠️ *UPDATE NOTIFICATION (MAJOR)*\n\n• *New Version:* *v${version}*\n• *Your Bot Version:* *v${currentVersion || 'Outdated'}*\n• *Releases Behind:* ${pendingCount || 1} updates\n• *Total Files:* ${tree.length} unique files\n${cl}\n${filesList ? `📂 *File Changed:*\n${filesList}\n\n` : ''}_Your bot version is significantly outdated. It is recommended to perform a git pull or re-clone the latest script for full synchronization._\n\n🌐 *Repository:* https://github.com/Rifza123/Experimental-Bell`;
+  },
+  statsOwnerSection: ({ version, isWsConnected }) => {
+    let wsStatus = isWsConnected ? '🟢 Connected' : '🔴 Disconnected';
+    return (
+      `⚙️ *UPDATE & SUPPORT TICKET SYSTEM (OWNER)*\n\n` +
+      `• *Bot Version:* *v${version || '1.0.0'}*\n` +
+      `• *Livechart Server:* ${wsStatus}\n\n` +
+      `🔄 *System Updates:*\n` +
+      `• *.checkupdate*\n` +
+      `> Check for latest releases & updated files\n` +
+      `• *.infoupdate*\n` +
+      `> Comprehensive guide for system updates\n\n` +
+      `🎫 *Developer Support Tickets:*\n` +
+      `• *.ticket <message>*\n` +
+      `> Submit a support ticket to developers\n` +
+      `• *.ticket list*\n` +
+      `> View your active support tickets\n` +
+      `• *.infoticket*\n` +
+      `> Comprehensive guide for ticket system & quoted reply`
+    );
+  },
+  infoUpdateHelp: {
+    body: `🔄 *SYSTEM UPDATE GUIDE*
+
+The Experimental-Bell update system is built with *Cumulative Update* and *Anti-Spam Persistence* architecture connected directly to the Termai Ecosystem.
+
+📋 *FEATURES & USAGE*
+
+• *.checkupdate* (or *.update check*)
+> Checks latest releases and compares SemVer in real-time via WebSocket.
+
+• *Quick Update (Reply "y")*
+> When an update notification is received, simply reply with *y* or *ya*. The bot will download and apply all files automatically.
+
+• *.update <GitHub_RAW_URL>*
+> Apply manual file updates directly from GitHub RAW URLs.
+
+• *.infoupdate*
+> Displays this comprehensive update guide and architecture details.
+
+⚙️ *SMART ARCHITECTURE & MECHANISMS*
+
+1. *Cumulative Deduplication:*
+> If your bot is multiple releases behind (e.g. from v1.0.0 to v1.0.4), all changelogs are merged and files are uniquely deduplicated to download only the latest version of each file.
+
+2. *Major Gap Protection:*
+> If updated files exceed the safe threshold (> 15 files), a special major update warning is sent advising a fresh git pull or re-clone.
+
+3. *Persistent Anti-Spam:*
+> Notified version states are permanently stored in database memories to prevent repeated notifications on bot restart or WebSocket reconnect.`,
+    footer: 'Type .checkupdate to check for new updates now',
+  },
+  infoTicketHelp: {
+    body: `🎫 *SUPPORT TICKET SYSTEM GUIDE*
+
+The Centralized Ticket Helpdesk connects your bot directly to the Termai developer web dashboard in real-time via secure WebSocket.
+
+📋 *TICKET COMMAND FORMAT*
+
+• *.ticket <message>*
+> Send a quick issue report (automatically categorized as bug).
+
+• *.ticket <category> | <subject> | <message>*
+> Send a structured ticket with a specific category.
+
+• *.ticket list*
+> View your active support tickets.
+
+• *.ticket check <Ticket_ID>*
+> View detailed ticket status and conversation history.
+
+• *.ticket reply <Ticket_ID> | <message>*
+> Send a follow-up reply to developers.
+
+• *.ticket close <Ticket_ID>*
+> Close ticket once the issue is resolved.
+
+• *.ticket reopen <Ticket_ID>*
+> Reopen a previously closed ticket.
+
+• *.infoticket*
+> Displays this comprehensive ticket guide and features.
+
+💬 *QUOTED REPLY FEATURE (QUICK RESPONSE)*
+> Simply reply (quote) the WhatsApp ticket update message from the bot, and your message will instantly sync to the developer dashboard.
+
+🏷️ *TICKET CATEGORIES*
+• \`bug\` - System errors, broken commands, or crashes
+• \`feature\` - Suggestions or new feature requests
+• \`question\` - Technical inquiries regarding bot & API
+• \`account\` - Limits, balances, or API Key issues
+• \`other\` - General support inquiries`,
+    footer: 'Developer reply notifications will be sent automatically to this WhatsApp chat',
+  },
+  ticketHelp: {
+    body: `🎫 *DEVELOPER SUPPORT TICKET MENU*
+
+Centralized ticket system connected directly to the Termai developer team in real-time via WebSocket.
+
+📋 *HOW TO USE*
+
+• *.ticket <message>*
+> Send a quick bug or issue report.
+
+• *.ticket <category> | <subject> | <message>*
+> Send a structured ticket with a specific category.
+
+• *.ticket list*
+> View your submitted support tickets.
+
+• *.ticket check <Ticket_ID>*
+> View status, details, and developer replies.
+
+• *.ticket reply <Ticket_ID> | <message>*
+> Send a follow-up reply to an ongoing ticket.
+
+• *.ticket close <Ticket_ID>*
+> Close ticket once the issue is resolved.
+
+• *.ticket reopen <Ticket_ID>*
+> Reopen a closed ticket if the issue persists.
+
+🏷️ *CATEGORY OPTIONS*
+• \`bug\` - System errors or broken features
+• \`feature\` - Feature suggestions or requests
+• \`question\` - Technical questions regarding the bot
+• \`account\` - Account, limit, or apikey issues
+
+💡 *EXAMPLES*
+• \`.ticket bot frequently reconnects after update\`
+• \`.ticket bug | Livechart Error | Anime schedule not showing in group\`
+• \`.ticket check TCK-A1B2C3\`
+• \`.ticket reply TCK-A1B2C3 | I restarted but error persists\`
+• \`.ticket close TCK-A1B2C3\``,
+    footer: 'Developer response notifications will be sent automatically to this chat',
+  },
+  ticketSending: '⏳ *Sending ticket to Termai developer server...*',
+  ticketSuccess: (id, category, subject) =>
+    `✅ *TICKET CREATED SUCCESSFULLY*\n\n• *Ticket ID:* *#${id}*\n• *Category:* ${category?.toUpperCase()}\n• *Subject:* ${subject}\n\n_The report has been forwarded to the core development team. You will receive automatic updates when the ticket status changes._`,
+  ticketFailed: (reason) => `❌ *Failed to process ticket:* ${reason}`,
+  ticketListEmpty: '📭 *No support tickets found.*',
+  ticketList: (items) => {
+    let list = items
+      .map((t, i) => {
+        let statusEmoji =
+          t.status === 'resolved'
+            ? '✅ [RESOLVED]'
+            : t.status === 'in_progress'
+              ? '⏳ [IN PROGRESS]'
+              : t.status === 'closed'
+                ? '🔒 [CLOSED]'
+                : '🟡 [OPEN]';
+        return `*${i + 1}. #${t.id}* - ${statusEmoji}\n• *Category:* ${t.category?.toUpperCase()}\n• *Subject:* ${t.subject}\n• *Date:* ${new Date(t.createdAt).toLocaleDateString('en-US')}`;
+      })
+      .join('\n\n');
+    return `📋 *YOUR SUPPORT TICKETS*\n\n${list}\n\n_Type *.ticket check <ID>* to view ticket details._`;
+  },
+  ticketDetail: (t) => {
+    let statusLabel =
+      t.status === 'resolved'
+        ? '✅ RESOLVED'
+        : t.status === 'in_progress'
+          ? '⏳ IN PROGRESS'
+          : t.status === 'closed'
+            ? '🔒 CLOSED'
+            : '🟡 OPEN';
+
+    let replyHistory = '';
+    if (t.replies && t.replies.length > 0) {
+      replyHistory =
+        '\n\n💬 *CONVERSATION HISTORY:*\n' +
+        t.replies
+          .map((r) => {
+            let role = r.from === 'admin' ? '🛡️ Termai Developer' : '👤 User';
+            let time = r.createdAt ? new Date(r.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+            return `• *${role}* ${time ? '(' + time + ')' : ''}:\n  "${r.message}"`;
+          })
+          .join('\n\n');
+    } else if (t.adminReply) {
+      replyHistory = `\n\n💬 *DEVELOPER REPLY:*\n"${t.adminReply}"`;
+    }
+
+    return (
+      `🎫 *TICKET DETAIL #${t.id}*\n\n` +
+      `• *Status:* *${statusLabel}*\n` +
+      `• *Category:* ${t.category?.toUpperCase()}\n` +
+      `• *Subject:* *${t.subject}*\n` +
+      `• *Created:* ${new Date(t.createdAt).toLocaleString('en-US')}\n\n` +
+      `📝 *Initial Message:*\n"${t.message}"` +
+      replyHistory +
+      `\n\n_Type *.ticket reply ${t.id} | <message>* to reply, or *.ticket close ${t.id}* to close this ticket._`
+    );
+  },
+  ticketCloseSuccess: (id) => `🔒 *Ticket #${id} closed successfully.*`,
+  ticketReopenSuccess: (id) => `🔓 *Ticket #${id} reopened successfully.*`,
+  ticketReplySuccess: (id) => `💬 *Reply for ticket #${id} sent to developers.*`,
+  ticketUpdateNotify: (t) => {
+    let statusLabel =
+      t.status === 'resolved'
+        ? '✅ *Resolved*'
+        : t.status === 'in_progress'
+          ? '⏳ *In Progress*'
+          : t.status === 'closed'
+            ? '🔒 *Closed*'
+            : '🟡 *Reopened*';
+
+    let body =
+      `📬 *TICKET STATUS UPDATE*\n\n` +
+      `• *Ticket ID:* *#${t.ticketId || t.id}*\n` +
+      `• *Status:* ${statusLabel}`;
+
+    if (t.adminReply) {
+      body += `\n\n💬 *Developer Response:*\n> ${t.adminReply.replace(/\n/g, '\n> ')}`;
+    }
+
+    body += `\n\n────────────────────────\n_💡 Reply (quote) to this message directly to respond to developers._`;
+    return body;
+  },
+  reconnectAlert: (duration, reason, time) =>
+    `⚠️ *BOT RECONNECTION REPORT*\n\n` +
+    `• *Status:* 🟢 *Reconnected*\n` +
+    `• *Recovery Time:* ${time}\n` +
+    `• *Reason:* ${reason}\n` +
+    `• *Downtime Duration:* ${duration}`,
+  ticketDeliveryFailed: (ticketId, targetNum, reason) =>
+    `⚠️ *FAILED TO DELIVER TICKET NOTIFICATION*\n\n` +
+    `• *Ticket ID:* *#${ticketId}*\n` +
+    `• *Target Number:* +${targetNum}\n` +
+    `• *Reason:* ${reason || 'Unknown error'}\n\n` +
+    `_The update remains saved in the system database._`,
+  dmRequestPrompt: (adminName) => ({
+    body: `🔔 *TERMAI ADMIN CHAT REQUEST*\n\nAdmin *${adminName || 'Termai'}* would like to start a direct chat session with you.\n\nType *y* to accept or *n* to decline.`,
+    footer: 'This request expires in 5 minutes',
+  }),
+  dmAccepted: {
+    body: `✅ *CHAT SESSION ACTIVE*\n\nYou are now directly connected with Termai Admin. All your message replies will be forwarded in real-time to Admin.\n\nType *.dm end* anytime to close the chat session.`,
+    footer: 'Encrypted & secure direct chat',
+  },
+  dmRejected: {
+    body: `❌ *CHAT REQUEST DECLINED*\n\nThe chat request from Termai Admin was declined.`,
+    footer: 'Termai Chat System',
+  },
+  dmClosed: {
+    body: `⏹️ *CHAT SESSION CLOSED*\n\nThe chat session with Termai Admin has ended. Thank you.`,
+    footer: 'Termai Chat System',
+  },
+  cekapikeyFormat: (data) => {
+    const {
+      limit,
+      usage,
+      totalHit,
+      remaining,
+      resetEvery,
+      reset,
+      expired,
+      isExpired,
+      features,
+    } = data;
+
+    const formatInterval = (ms = 0) => {
+      if (!ms || ms <= 0) return 'period';
+      const totalSec = Math.floor(ms / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      const parts = [];
+      if (days) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+      if (hours) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+      if (minutes) parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+      if (secs && !days && !hours && !minutes) parts.push(`${secs} sec${secs > 1 ? 's' : ''}`);
+      return parts.join(' ') || '0 sec';
+    };
+
+    const buildBar = (used, total, len = 10) => {
+      if (!total || total <= 0) return '';
+      const filled = Math.min(len, Math.max(0, Math.round((used / total) * len)));
+      const empty = len - filled;
+      return '▓'.repeat(filled) + '░'.repeat(empty);
+    };
+
+    const mainResetLabel = formatInterval(resetEvery?.ms ?? 0);
+    const usagePct = limit > 0 ? ((usage / limit) * 100).toFixed(1) : '0.0';
+    const bar = buildBar(usage, limit, 10);
+
+    const featureEntries =
+      features && typeof features === 'object'
+        ? Object.entries(features).filter(([, v]) => v !== false)
+        : [];
+
+    const featuresList = featureEntries.length
+      ? featureEntries
+          .map(([name, d]) => {
+            const interval = formatInterval(d.ms ?? 0);
+            const isUnlimited = d.max === null || d.max === undefined || d.max <= 0;
+            const maxLabel = isUnlimited ? '∞' : (d.max || 0).toLocaleString('en-US');
+            const pct = !isUnlimited && d.max > 0 ? ` (${((d.use / d.max) * 100).toFixed(1)}%)` : isUnlimited ? ' (Unlimited)' : '';
+            const lastResetStr = d.lastReset
+              ? new Date(d.lastReset).toLocaleString('en-US', {
+                  timeZone: 'Asia/Jakarta',
+                })
+              : '-';
+            return (
+              `🔹 *${name}*\n` +
+              `   ├ Limit    : ${(d.use || 0).toLocaleString('en-US')}/${maxLabel}${pct} per ${interval}\n` +
+              `   ├ Total Hit: ${(d.hit ?? 0).toLocaleString('en-US')}\n` +
+              `   └ Last Reset: ${lastResetStr}`
+            );
+          })
+          .join('\n\n')
+      : '_No active features_';
+
+    return (
+      `🔑 *TERMAI API KEY STATUS*\n\n` +
+      `• *Status:* ${isExpired ? '⛔ Expired' : '🟢 Active'}\n` +
+      `• *Expired:* ${expired}\n\n` +
+      `📊 *MAIN QUOTA*\n` +
+      `• *Limit per ${mainResetLabel}:* ${(limit || 0).toLocaleString('en-US')} hits\n` +
+      `• *Used:* ${(usage || 0).toLocaleString('en-US')} hits (${usagePct}%)\n` +
+      `• *Remaining:* ${(remaining || 0).toLocaleString('en-US')} hits\n` +
+      `• *Total Hits:* ${(totalHit || 0).toLocaleString('en-US')}\n` +
+      (bar ? `• *Progress:* [${bar}]\n` : '') +
+      `⏱️ *Next Reset:* ${reset}\n\n` +
+      `✨ *AVAILABLE FEATURES*\n\n` +
+      `${featuresList}\n\n` +
+      `📌 *Note:* Please use the API responsibly within usage limits.`
+    );
+  },
   setChidHelp: `*GUIDE TO SET CHANNEL*
 
 • *.set chid <channel link>*
@@ -943,8 +1317,8 @@ Send various message types to WhatsApp channel.
 > Forward replied media to a specific channel ID.
 • *.sendch <caption>* (Reply image/video)
 > Send replied media with custom caption.`,
-  sendchSuccess: (target, type) =>
-    `✅ *SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${type}`,
+  sendchSuccess: (target, type, link) =>
+    `✅ *SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${type}${link ? `\n• *Link:* ${link}` : ''}`,
   playchHelp: `🎙️ *GUIDE PLAYCH (SEND VN TO CHANNEL)*
 
 Send a voice note (PTT) to WhatsApp Channel by replying to an audio message.
@@ -956,8 +1330,8 @@ Send a voice note (PTT) to WhatsApp Channel by replying to an audio message.
 > Send replied audio/voice note to a specific channel ID as VN (PTT).
 
 _Example: Reply audio then type .playch or .playch 120363205560908891@newsletter_`,
-  playchSuccess: (target, title) =>
-    `✅ *AUDIO SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${title}`,
+  playchSuccess: (target, title, link) =>
+    `✅ *AUDIO SUCCESSFULLY SENT TO CHANNEL*\n\n• *Channel:* ${target}\n• *Type:* ${title}${link ? `\n• *Link:* ${link}` : ''}`,
 
   // ------- Set Info -------
   set: `
@@ -995,6 +1369,7 @@ _Example: Reply audio then type .playch or .playch 120363205560908891@newsletter
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
+- listSection <on/off>
 - dadu <reply media>
 > Set custom media as dice for Snake & Ladder game. Reply media (sticker/image/video/audio) then type .set dadu. To remove: .set dadu off
 
@@ -1480,6 +1855,53 @@ Answer: ${answer}`,
   ulartanggaTimeoutLobby: '⏱️ *Snakes & Ladders lobby cancelled automatically due to 10 minutes of inactivity.*',
   ulartanggaNoSession: 'No active snakes and ladders game in this group!\nType *.ut* or *.ut @tag* to create a new game.',
   ulartanggaDeleted: 'Snakes and ladders session successfully deleted!',
+
+  minigameHelp: (prefix = '.') => `🎮 *MINIGAMES ENGINE* 🎮
+
+Explore and play 500+ minigames directly! Includes PSP, NES, Arcade, Puzzle, Action, and more.
+
+📜 *HOW TO USE:*
+• *${prefix}minigame <title/keyword>*
+> Search minigames by name/topic
+• *${prefix}minigame category <category>*
+> Filter games by category (PSP, Action, Casual, etc)
+• *${prefix}minigame list [page]*
+> Browse recent games (e.g. ${prefix}minigame list 1)
+• *${prefix}minigame play <slug/id>*
+> View details and play a specific game
+• *${prefix}minigame refresh*
+> Resync latest minigames data from database
+
+💡 *Examples:*
+> ${prefix}minigame mario
+> ${prefix}minigame naruto
+> ${prefix}minigame category psp
+> ${prefix}minigame refresh`,
+
+  minigameNotFound: (query) => `❌ *Minigame Not Found!*\n\nNo games matched the search for *"${query}"*.\nTry searching with different keywords like *mario*, *naruto*, *sonic*, or type *.minigame* for help.`,
+
+  minigameSearching: `🔍 *Searching Minigames...*`,
+
+  minigameSearchResult: (query, total, textList) => `🎮 *MINIGAME SEARCH RESULTS*\n\n• *Query:* ${query}\n• *Total Found:* ${total} games\n\n${textList}`,
+
+  minigameListResult: (page, totalPages, total, textList, prefix = '.') => `🎮 *MINIGAMES LIST*\n\n• *Page:* ${page}/${totalPages}\n• *Total Games:* ${total} games\n\n${textList}\n\n> Type *${prefix}minigame list ${page + 1 <= totalPages ? page + 1 : 1}* for the next page.`,
+
+  minigamePromptFooter: (count, prefix = '.') => `- Reply to this message with a number from 1 to ${count} to view details & play!\n- Or type *${prefix}minigame play <game_name>*`,
+
+  minigameDetail: (game, formattedDate) => `🎮 *MINIGAME DETAILS*
+
+• *Title:* ${game.title || '-'}
+• *Category:* ${game.category || '-'}
+• *Author:* ${game.author || '-'}
+• *Credits:* ${game.credits || '-'}
+• *Description:* ${game.description || '-'}
+• *Stats:* 👁️ ${(game.views || 0).toLocaleString()} views | ▶️ ${(game.playsCount || 0).toLocaleString()} plays | ❤️ ${(game.likesCount || (Array.isArray(game.likes) ? game.likes.length : 0)).toLocaleString()} likes
+• *Release Date:* ${formattedDate || '-'}
+${game.telegram ? `• *Telegram:* ${game.telegram}\n` : ''}${game.channel ? `• *Channel:* ${game.channel}\n` : ''}`,
+
+  minigamePlayButton: '▶️ Play Now',
+  minigamePlayUrlNotice: (url) => `\n🔗 *Play URL:* ${url}`,
+  minigameFetchError: '❌ Failed to load minigame data. Please try again later.'
 };
 
 /*
@@ -1596,4 +2018,39 @@ Data.infos.interactive = {
   notOwner: `Sorry, not gonna respond`,
   modePublic: `Successfully changed mode to public!`,
   modeSelf: `Successfully changed mode to self!`,
+};
+
+Data.infos.converter = {
+  stems16d: {
+    wait: '⏳ *Separating audio stems & processing 16D filter...*\n> Please wait a moment.',
+    failed: '❌ Failed to process 16D audio filter.',
+    success: (mode) => {
+      let desc = mode === 'reverse'
+        ? '🎧 *Vocals:* Left | *Instrument:* Right'
+        : mode === '8d'
+          ? '🎧 *16D Motion:* Dynamic rotating vocals & instruments'
+          : '🎧 *Instrument:* Left | *Vocals:* Right';
+      return `✨ *16D AUDIO FILTER*\n\n${desc}\n\n> Use earphones/headphones for the best experience!`;
+    },
+    help: `📌 *16D AUDIO FILTER GUIDE*
+
+Separates vocals & instruments and places them in left & right stereo channels.
+
+• *.16d*
+> Default mode (Instrument on Left, Vocals on Right)
+
+• *.16d reverse*
+> Inverted mode (Vocals on Left, Instrument on Right)
+
+• *.16d 8d*
+> 16D rotating motion mode`,
+  },
+  merge: {
+    wait: '⏳ *Merging media...*\n> Please wait a moment.',
+    failed: '❌ Failed to merge media. Make sure media formats are valid and compatible.',
+    noMedia: 'Reply or send a video/audio with the *.merge* command',
+    promptNext: (type) => `📥 *FIRST ${type === 'video' ? 'VIDEO' : 'AUDIO'} SAVED*\n\n> Reply to this message with the next ${type === 'video' ? 'video' : 'audio'} to merge!`,
+    videoFooter: '- Reply to this video with another video to merge again!',
+    audioFooter: '- Reply to this audio with another audio to merge again!',
+  },
 };

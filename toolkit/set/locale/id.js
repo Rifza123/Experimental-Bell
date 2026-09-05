@@ -630,6 +630,8 @@ Data.infos.others = {
   jadibotErrorSessionTelahDireset: (e) => `Terjadi kesalahan. Sesi telah direset.\n\nError: ${e}`,
 
   videoPlayHint: '> Video tidak dapat diputar? Reply pesan ini dengan ketik "y" atau .fixvideo',
+  menuOwnerTicketFooter: 'Ketik .ticket untuk mengakses menu tiket bantuan developer',
+  listSectionNotice: 'ℹ️ Jika menu list ini tidak berfungsi atau gagal muncul karena kebijakan WhatsApp, nonaktifkan fitur ini dengan: .set listSection off (Khusus Owner)',
 
   // Read More
   readMore: '͏'.repeat(3646),
@@ -926,7 +928,12 @@ Data.infos.owner = {
   audiolist: `Sukses menambahkan audio ke dalam list <list>✅️\n\nAudio: <url>\n> Untuk melihat list silahkan ketik *.getdata audio <list>*`,
   checkJson: `Harap periksa kembali JSON Object anda!\n\nTypeError:\n<rm>\n> <e>`,
   updatePreview: ({ files, recentFiles }) => {
-    let listFiles = files.map((f) => `• \`${f.type}\`: ${f.path}`).join('\n');
+    let listFiles = files.map((f, i) => {
+      let isLast = i === files.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+      return `${branch} ${icon} \`${f.path}\``;
+    }).join('\n');
     let warning = recentFiles.length > 0
       ? `\n\n⚠️ *PERINGATAN:*\nFile berikut baru-baru ini telah Anda ubah:\n${recentFiles.map((f) => `• ${f.path} (diubah ${f.timeAgo})`).join('\n')}\n> Update melalui link ini akan menimpa perubahan tersebut!`
       : '';
@@ -938,6 +945,373 @@ Data.infos.owner = {
   updateCancelled: '❌ *Update dibatalkan.*',
   updateExpired: '⏱️ *Sesi update telah kadaluwarsa.*',
   updateSuccess: 'Success ✅',
+  updateNotify: ({ version, currentVersion, pendingCount, files, changelog, fileTree }) => {
+    let tree = fileTree || files || [];
+    let filesList = tree.map((f, i) => {
+      let isLast = i === tree.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      if (typeof f === 'object') {
+        let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+        return `${branch} ${icon} \`${f.path || f.url}\``;
+      }
+      return `${branch} ✏️ \`${f}\``;
+    }).join('\n');
+    let cl = changelog ? `\n📋 *Catatan Perubahan:*\n${changelog}\n` : '';
+    let pending = pendingCount > 1 ? `• *Total Rilis Kumulatif:* ${pendingCount} update\n` : '';
+    return (
+      `> 🔔 *UPDATE NOTIFICATION*\n\n` +
+      `• *Versi Baru:* *v${version}* (Saat ini: *v${currentVersion || '1.0.0'}*)\n` +
+      `${pending}• *Total Berkas:* ${tree.length} file unik\n` +
+      `${cl}\n` +
+      `📂 *File Changed:*\n${filesList}\n\n` +
+      `💡 *CARA MENERAPKAN PEMBARUAN:*\n` +
+      `• Balas (quote / reply) pesan ini dengan *y* saat bot sedang aktif/online.\n` +
+      `• Perintah tetap bekerja meski bot sempat di-restart atau dalam jangka waktu lama.\n` +
+      `• Alternatif update manual: Ketik *.checkupdate* lalu balas *y*, atau gunakan *.update <link>*.\n` +
+      `• Ketik *n* atau *batal* untuk membatalkan update.`
+    );
+  },
+  updateMajorNotify: ({ version, currentVersion, pendingCount, files, changelog, fileTree }) => {
+    let tree = fileTree || files || [];
+    let filesList = tree.map((f, i) => {
+      let isLast = i === tree.length - 1;
+      let branch = isLast ? '└──' : '├──';
+      if (typeof f === 'object') {
+        let icon = (f.type === 'new' || f.type === 'added') ? '➕' : (f.type === 'deleted' ? '➖' : '✏️');
+        return `${branch} ${icon} \`${f.path || f.url}\``;
+      }
+      return `${branch} ✏️ \`${f}\``;
+    }).join('\n');
+    let cl = changelog ? `\n📋 *Catatan Perubahan:*\n${changelog}\n` : '';
+    return `> ⚠️ *UPDATE NOTIFICATION (MAJOR)*\n\n• *Versi Baru:* *v${version}*\n• *Versi Bot Anda:* *v${currentVersion || 'Lama'}*\n• *Total Rilis Tertinggal:* ${pendingCount || 1} update\n• *Total Berkas:* ${tree.length} file unik\n${cl}\n${filesList ? `📂 *File Changed:*\n${filesList}\n\n` : ''}_Versi bot Anda tertinggal cukup jauh. Disarankan untuk melakukan git pull atau clone ulang script terbaru agar seluruh struktur sinkron._\n\n🌐 *Repository:* https://github.com/Rifza123/Experimental-Bell`;
+  },
+  statsOwnerSection: ({ version, isWsConnected }) => {
+    let wsStatus = isWsConnected ? '🟢 Terhubung' : '🔴 Terputus';
+    return (
+      `⚙️ *SISTEM UPDATE & TIKET BANTUAN (OWNER)*\n\n` +
+      `• *Versi Bot:* *v${version || '1.0.0'}*\n` +
+      `• *Livechart Server:* ${wsStatus}\n\n` +
+      `🔄 *Pembaruan Sistem:*\n` +
+      `• *.checkupdate*\n` +
+      `> Periksa rilis & berkas pembaruan terbaru\n` +
+      `• *.infoupdate*\n` +
+      `> Panduan lengkap & alur pembaruan sistem\n\n` +
+      `🎫 *Tiket Bantuan Developer:*\n` +
+      `• *.ticket <pesan>*\n` +
+      `> Kirim tiket laporan kendala ke developer\n` +
+      `• *.ticket list*\n` +
+      `> Lihat daftar tiket yang sedang aktif\n` +
+      `• *.infoticket*\n` +
+      `> Panduan lengkap sistem tiket & quoted reply`
+    );
+  },
+  infoUpdateHelp: {
+    body: `🔄 *PANDUAN DETAIL SISTEM UPDATE*
+
+Sistem pembaruan Experimental-Bell dirancang dengan arsitektur *Cumulative Update* dan *Anti-Spam Persistence* terhubung langsung ke Termai Ecosystem.
+
+📋 *FITUR & CARA PENGGUNAAN*
+
+• *.checkupdate* (atau *.update check*)
+> Memeriksa rilis terbaru dan membandingkan SemVer secara real-time via WebSocket.
+
+• *Pembaruan Cepat (Balas "y")*
+> Saat menerima notifikasi pembaruan, cukup balas pesan tersebut dengan *y* atau *ya*. Bot akan mengunduh dan menerapkan seluruh berkas secara otomatis.
+
+• *.update <URL_RAW_GitHub>*
+> Menerapkan berkas pembaruan manual langsung dari URL GitHub RAW.
+
+• *.infoupdate*
+> Menampilkan panduan lengkap dan arsitektur sistem pembaruan ini.
+
+⚙️ *ARSITEKTUR & MEKANISME CERDAS*
+
+1. *Cumulative Deduplication:*
+> Jika bot tertinggal beberapa versi (misal dari v1.0.0 ke v1.0.4), seluruh catatan rilis digabungkan dan berkas diunduh secara unik hanya pada versi paling mutakhir.
+
+2. *Proteksi Major Gap:*
+> Jika jumlah berkas pembaruan melebihi batas aman (> 15 berkas), sistem memberi peringatan khusus menyarankan clone/git pull ulang demi integritas direktori.
+
+3. *Anti-Spam Persisten:*
+> Status versi yang telah dinotifikasikan disimpan secara permanen di database, sehingga notifikasi tidak akan terkirim berulang kali saat bot restart atau WebSocket reconnect.`,
+    footer: 'Ketik .checkupdate untuk memeriksa pembaruan sekarang',
+  },
+  infoTicketHelp: {
+    body: `🎫 *PANDUAN DETAIL SISTEM TIKET BANTUAN*
+
+Sistem Helpdesk & Tiket Terpadu menghubungkan bot Anda langsung ke dashboard web pengembang Termai secara real-time melalui WebSocket aman.
+
+📋 *FORMAT PERINTAH TIKET*
+
+• *.ticket <pesan>*
+> Kirim tiket laporan kendala cepat (otomatis kategori bug).
+
+• *.ticket <kategori> | <subjek> | <pesan>*
+> Kirim tiket terstruktur dengan kategori spesifik.
+
+• *.ticket list*
+> Menampilkan daftar tiket bantuan aktif milik Anda.
+
+• *.ticket check <ID_Tiket>*
+> Melihat status detail dan riwayat percakapan tiket.
+
+• *.ticket reply <ID_Tiket> | <pesan>*
+> Mengirim balasan lanjutan ke tim developer.
+
+• *.ticket close <ID_Tiket>*
+> Menutup tiket jika kendala sudah terselesaikan.
+
+• *.ticket reopen <ID_Tiket>*
+> Membuka kembali tiket yang sebelumnya ditutup.
+
+• *.infoticket*
+> Menampilkan panduan lengkap dan fitur sistem tiket ini.
+
+💬 *FITUR QUOTED REPLY (BALAS CEPAT)*
+> Cukup balas (quote/reply) pesan notifikasi tiket WhatsApp dari bot, pesan Anda akan langsung tersinkron ke dashboard developer secara instan.
+
+🏷️ *PILIHAN KATEGORI TIKET*
+• \`bug\` - Galat sistem, error command, atau crash
+• \`feature\` - Usulan atau permintaan fitur baru
+• \`question\` - Pertanyaan teknis seputar bot & API
+• \`account\` - Kendala limit, saldo, atau API Key
+• \`other\` - Laporan umum lainnya`,
+    footer: 'Notifikasi balasan developer akan dikirim otomatis ke WhatsApp ini',
+  },
+  ticketHelp: {
+    body: `🎫 *MENU TIKET BANTUAN DEVELOPER*
+
+Sistem tiket terhubung langsung ke tim pengembang Termai secara real-time via WebSocket.
+
+📋 *PANDUAN PENGGUNAAN*
+
+• *.ticket <pesan>*
+> Mengirim laporan kendala atau bug cepat.
+
+• *.ticket <kategori> | <subjek> | <pesan>*
+> Mengirim tiket terstruktur dengan kategori spesifik.
+
+• *.ticket list*
+> Melihat daftar tiket bantuan milik Anda.
+
+• *.ticket check <ID_Tiket>*
+> Melihat status, detail, dan riwayat balasan tiket.
+
+• *.ticket reply <ID_Tiket> | <pesan>*
+> Mengirim balasan ke tiket yang sedang berjalan.
+
+• *.ticket close <ID_Tiket>*
+> Menutup tiket jika kendala telah selesai.
+
+• *.ticket reopen <ID_Tiket>*
+> Membuka kembali tiket yang sudah ditutup.
+
+🏷️ *PILIHAN KATEGORI*
+• \`bug\` - Laporan galat sistem atau error fitur
+• \`feature\` - Usulan atau permintaan fitur baru
+• \`question\` - Pertanyaan teknis seputar bot
+• \`account\` - Kendala akun, limit, atau apikey
+
+💡 *CONTOH*
+• \`.ticket bot sering reconnect setelah update\`
+• \`.ticket bug | Error Livechart | Jadwal anime tidak muncul di grup\`
+• \`.ticket check TCK-A1B2C3\`
+• \`.ticket reply TCK-A1B2C3 | Sudah saya coba restart dan masih error\`
+• \`.ticket close TCK-A1B2C3\``,
+    footer: 'Notifikasi balasan developer akan dikirim otomatis ke chat ini',
+  },
+  ticketSending: '⏳ *Mengirim tiket ke server pengembang Termai...*',
+  ticketSuccess: (id, category, subject) =>
+    `✅ *TIKET BERHASIL DIBUAT*\n\n• *ID Tiket:* *#${id}*\n• *Kategori:* ${category?.toUpperCase()}\n• *Subjek:* ${subject}\n\n_Laporan telah diteruskan ke tim pengembang pusat. Anda akan menerima notifikasi otomatis ketika status tiket diperbarui._`,
+  ticketFailed: (reason) => `❌ *Gagal memproses tiket:* ${reason}`,
+  ticketListEmpty: '📭 *Belum ada tiket bantuan yang tercatat.*',
+  ticketList: (items) => {
+    let list = items
+      .map((t, i) => {
+        let statusEmoji =
+          t.status === 'resolved'
+            ? '✅ [RESOLVED]'
+            : t.status === 'in_progress'
+              ? '⏳ [IN PROGRESS]'
+              : t.status === 'closed'
+                ? '🔒 [CLOSED]'
+                : '🟡 [OPEN]';
+        return `*${i + 1}. #${t.id}* - ${statusEmoji}\n• *Kategori:* ${t.category?.toUpperCase()}\n• *Subjek:* ${t.subject}\n• *Waktu:* ${new Date(t.createdAt).toLocaleDateString('id-ID')}`;
+      })
+      .join('\n\n');
+    return `📋 *DAFTAR TIKET BANTUAN ANDA*\n\n${list}\n\n_Ketik *.ticket check <ID>* untuk melihat detail tiket._`;
+  },
+  ticketDetail: (t) => {
+    let statusLabel =
+      t.status === 'resolved'
+        ? '✅ SELESAI (Resolved)'
+        : t.status === 'in_progress'
+          ? '⏳ SEDANG DITANGANI (In Progress)'
+          : t.status === 'closed'
+            ? '🔒 DITUTUP (Closed)'
+            : '🟡 DIBUKA (Open)';
+
+    let replyHistory = '';
+    if (t.replies && t.replies.length > 0) {
+      replyHistory =
+        '\n\n💬 *RIWAYAT PERCAKAPAN:*\n' +
+        t.replies
+          .map((r) => {
+            let role = r.from === 'admin' ? '🛡️ Developer Termai' : '👤 Pengguna';
+            let time = r.createdAt ? new Date(r.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+            return `• *${role}* ${time ? '(' + time + ')' : ''}:\n  "${r.message}"`;
+          })
+          .join('\n\n');
+    } else if (t.adminReply) {
+      replyHistory = `\n\n💬 *TANGGAPAN DEVELOPER:*\n"${t.adminReply}"`;
+    }
+
+    return (
+      `🎫 *DETAIL TIKET #${t.id}*\n\n` +
+      `• *Status:* *${statusLabel}*\n` +
+      `• *Kategori:* ${t.category?.toUpperCase()}\n` +
+      `• *Subjek:* *${t.subject}*\n` +
+      `• *Dibuat:* ${new Date(t.createdAt).toLocaleString('id-ID')}\n\n` +
+      `📝 *Pesan Awal:*\n"${t.message}"` +
+      replyHistory +
+      `\n\n_Ketik *.ticket reply ${t.id} | <pesan>* untuk membalas, atau *.ticket close ${t.id}* untuk menutup tiket._`
+    );
+  },
+  ticketCloseSuccess: (id) => `🔒 *Tiket #${id} berhasil ditutup.*`,
+  ticketReopenSuccess: (id) => `🔓 *Tiket #${id} berhasil dibuka kembali.*`,
+  ticketReplySuccess: (id) => `💬 *Balasan tiket #${id} berhasil dikirimkan ke tim pengembang.*`,
+  ticketUpdateNotify: (t) => {
+    let statusLabel =
+      t.status === 'resolved'
+        ? '✅ *Selesai*'
+        : t.status === 'in_progress'
+          ? '⏳ *Sedang Ditangani*'
+          : t.status === 'closed'
+            ? '🔒 *Ditutup*'
+            : '🟡 *Dibuka Kembali*';
+
+    let body =
+      `📬 *UPDATE STATUS TIKET*\n\n` +
+      `• *ID Tiket:* *#${t.ticketId || t.id}*\n` +
+      `• *Status:* ${statusLabel}`;
+
+    if (t.adminReply) {
+      body += `\n\n💬 *Tanggapan Developer:*\n> ${t.adminReply.replace(/\n/g, '\n> ')}`;
+    }
+
+    body += `\n\n────────────────────────\n_💡 Balas (quote) pesan ini langsung untuk merespons tim developer._`;
+    return body;
+  },
+  reconnectAlert: (duration, reason, time) =>
+    `⚠️ *LAPORAN PEMULIHAN KONEKSI BOT*\n\n` +
+    `• *Status:* 🟢 *Tersambung Kembali*\n` +
+    `• *Waktu Pulih:* ${time} WIB\n` +
+    `• *Penyebab:* ${reason}\n` +
+    `• *Durasi Downtime:* ${duration}`,
+  ticketDeliveryFailed: (ticketId, targetNum, reason) =>
+    `⚠️ *GAGAL MENGIRIM NOTIFIKASI TIKET*\n\n` +
+    `• *ID Tiket:* *#${ticketId}*\n` +
+    `• *Nomor Tujuan:* +${targetNum}\n` +
+    `• *Penyebab:* ${reason || 'Error tidak diketahui'}\n\n` +
+    `_Pesan pembaruan tetap tersimpan di database sistem._`,
+  dmRequestPrompt: (adminName) => ({
+    body: `🔔 *PERMINTAAN SESI OBROLAN ADMIN TERMAI*\n\nAdmin *${adminName || 'Termai'}* mengajak Anda untuk memulai sesi obrolan langsung.\n\nKetik *y* untuk menerima atau *n* untuk menolak.`,
+    footer: 'Permintaan ini berlaku selama 5 menit',
+  }),
+  dmAccepted: {
+    body: `✅ *SESI OBROLAN AKTIF*\n\nAnda sekarang terhubung langsung dengan Admin Termai. Semua balasan pesan Anda akan diteruskan secara realtime ke Admin.\n\nKetik *.dm end* untuk mengakhiri sesi obrolan kapan saja.`,
+    footer: 'Sesi obrolan aman & terenkripsi',
+  },
+  dmRejected: {
+    body: `❌ *PERMINTAAN OBROLAN DITOLAK*\n\nPermintaan sesi obrolan dari Admin Termai telah ditolak.`,
+    footer: 'Sistem Obrolan Termai',
+  },
+  dmClosed: {
+    body: `⏹️ *SESI OBROLAN DITUTUP*\n\nSesi obrolan dengan Admin Termai telah diakhiri. Terima kasih.`,
+    footer: 'Sistem Obrolan Termai',
+  },
+  cekapikeyFormat: (data) => {
+    const {
+      limit,
+      usage,
+      totalHit,
+      remaining,
+      resetEvery,
+      reset,
+      expired,
+      isExpired,
+      features,
+    } = data;
+
+    const formatInterval = (ms = 0) => {
+      if (!ms || ms <= 0) return 'periode';
+      const totalSec = Math.floor(ms / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      const parts = [];
+      if (days) parts.push(`${days} hari`);
+      if (hours) parts.push(`${hours} jam`);
+      if (minutes) parts.push(`${minutes} menit`);
+      if (secs && !days && !hours && !minutes) parts.push(`${secs} detik`);
+      return parts.join(' ') || '0 detik';
+    };
+
+    const buildBar = (used, total, len = 10) => {
+      if (!total || total <= 0) return '';
+      const filled = Math.min(len, Math.max(0, Math.round((used / total) * len)));
+      const empty = len - filled;
+      return '▓'.repeat(filled) + '░'.repeat(empty);
+    };
+
+    const mainResetLabel = formatInterval(resetEvery?.ms ?? 0);
+    const usagePct = limit > 0 ? ((usage / limit) * 100).toFixed(1) : '0.0';
+    const bar = buildBar(usage, limit, 10);
+
+    const featureEntries =
+      features && typeof features === 'object'
+        ? Object.entries(features).filter(([, v]) => v !== false)
+        : [];
+
+    const featuresList = featureEntries.length
+      ? featureEntries
+          .map(([name, d]) => {
+            const interval = formatInterval(d.ms ?? 0);
+            const isUnlimited = d.max === null || d.max === undefined || d.max <= 0;
+            const maxLabel = isUnlimited ? '∞' : (d.max || 0).toLocaleString('id-ID');
+            const pct = !isUnlimited && d.max > 0 ? ` (${((d.use / d.max) * 100).toFixed(1)}%)` : isUnlimited ? ' (Unlimited)' : '';
+            const lastResetStr = d.lastReset
+              ? new Date(d.lastReset).toLocaleString('id-ID', {
+                  timeZone: 'Asia/Jakarta',
+                })
+              : '-';
+            return (
+              `🔹 *${name}*\n` +
+              `   ├ Limit    : ${(d.use || 0).toLocaleString('id-ID')}/${maxLabel}${pct} per ${interval}\n` +
+              `   ├ Total Hit: ${(d.hit ?? 0).toLocaleString('id-ID')}\n` +
+              `   └ Last Reset: ${lastResetStr}`
+            );
+          })
+          .join('\n\n')
+      : '_Tidak ada fitur aktif_';
+
+    return (
+      `🔑 *STATUS TERMAI API KEY*\n\n` +
+      `• *Status:* ${isExpired ? '⛔ Kedaluwarsa' : '🟢 Aktif'}\n` +
+      `• *Expired:* ${expired}\n\n` +
+      `📊 *KUOTA UTAMA*\n` +
+      `• *Batas per ${mainResetLabel}:* ${(limit || 0).toLocaleString('id-ID')} hit\n` +
+      `• *Terpakai:* ${(usage || 0).toLocaleString('id-ID')} hit (${usagePct}%)\n` +
+      `• *Sisa:* ${(remaining || 0).toLocaleString('id-ID')} hit\n` +
+      `• *Total Hit:* ${(totalHit || 0).toLocaleString('id-ID')}\n` +
+      (bar ? `• *Progress:* [${bar}]\n` : '') +
+      `⏱️ *Reset Berikutnya:* ${reset}\n\n` +
+      `✨ *FITUR TERSEDIA*\n\n` +
+      `${featuresList}\n\n` +
+      `📌 *Catatan:* Gunakan API secara bijak sesuai dengan batas penggunaan.`
+    );
+  },
   setChidHelp: `*PANDUAN SET CHANNEL / SALURAN*
 
 • *.set chid <link channel>*
@@ -965,8 +1339,8 @@ Kirim berbagai jenis pesan ke saluran WhatsApp.
 > Meneruskan media yang dibalas ke ID saluran spesifik.
 • *.sendch <caption>* (Reply gambar/video)
 > Mengirim media yang dibalas dengan caption kustom.`,
-  sendchSuccess: (target, type) =>
-    `✅ *BERHASIL TERKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${type}`,
+  sendchSuccess: (target, type, link) =>
+    `✅ *BERHASIL TERKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${type}${link ? `\n• *Tautan:* ${link}` : ''}`,
   playchHelp: `🎙️ *PANDUAN PLAYCH (SEND VN TO CHANNEL)*
 
 Kirim pesan suara (Voice Note / PTT) ke Saluran WhatsApp dengan membalas pesan audio.
@@ -978,8 +1352,8 @@ Kirim pesan suara (Voice Note / PTT) ke Saluran WhatsApp dengan membalas pesan a
 > Mengirimkan audio/pesan suara yang dibalas ke ID saluran spesifik sebagai VN (PTT).
 
 _Contoh: Reply audio lalu ketik .playch atau .playch 120363205560908891@newsletter_`,
-  playchSuccess: (target, title) =>
-    `✅ *AUDIO BERHASIL DIKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${title}`,
+  playchSuccess: (target, title, link) =>
+    `✅ *AUDIO BERHASIL DIKIRIM KE SALURAN*\n\n• *Saluran:* ${target}\n• *Tipe:* ${title}${link ? `\n• *Tautan:* ${link}` : ''}`,
 
   // ------- Set Info -------
   set: `
@@ -1017,6 +1391,7 @@ _Contoh: Reply audio lalu ketik .playch atau .playch 120363205560908891@newslett
 - inflasi <on/off>
 - remoteReaction <on/off>
 - linkpreview <on/off>
+- listSection <on/off>
 - dadu <reply media>
 > Set media kustom sebagai dadu permainan Ular Tangga. Reply media (stiker/gambar/video/audio) lalu ketik .set dadu. Untuk menghapus: .set dadu off
 
@@ -1507,6 +1882,53 @@ Jawaban: ${answer}`,
   ulartanggaTimeoutLobby: '⏱️ *Lobby Ular Tangga dibatalkan otomatis karena tidak ada aktivitas selama 10 menit.*',
   ulartanggaNoSession: 'Tidak ada sesi permainan Ular Tangga di grup ini!\nKetik *.ut* atau *.ut @tag* untuk membuat permainan baru.',
   ulartanggaDeleted: 'Sesi permainan Ular Tangga berhasil dihapus!',
+
+  minigameHelp: (prefix = '.') => `🎮 *MINIGAMES ENGINE* 🎮
+
+Jelajahi dan mainkan 500+ minigame langsung! Tersedia game PSP, NES, Arcade, Puzzle, Action, dan lainnya.
+
+📜 *PANDUAN PENGGUNAAN:*
+• *${prefix}minigame <judul/kata kunci>*
+> Cari minigame berdasarkan nama/topik
+• *${prefix}minigame category <kategori>*
+> Filter game berdasarkan kategori (PSP, Action, Casual, dll)
+• *${prefix}minigame list [halaman]*
+> Tampilkan daftar game terbaru (contoh: ${prefix}minigame list 1)
+• *${prefix}minigame play <slug/id>*
+> Buka detail dan mainkan game tertentu
+• *${prefix}minigame refresh*
+> Sinkronkan ulang data minigame terbaru dari database
+
+💡 *Contoh:*
+> ${prefix}minigame mario
+> ${prefix}minigame naruto
+> ${prefix}minigame category psp
+> ${prefix}minigame refresh`,
+
+  minigameNotFound: (query) => `❌ *Minigame Tidak Ditemukan!*\n\nTidak ada game yang cocok dengan pencarian *"${query}"*.\nCoba gunakan kata kunci lain seperti *mario*, *naruto*, *sonic*, atau ketik *.minigame* untuk bantuan.`,
+
+  minigameSearching: `🔍 *Mencari Minigame...*`,
+
+  minigameSearchResult: (query, total, textList) => `🎮 *HASIL PENCARIAN MINIGAME*\n\n• *Kata Kunci:* ${query}\n• *Total Ditemukan:* ${total} game\n\n${textList}`,
+
+  minigameListResult: (page, totalPages, total, textList, prefix = '.') => `🎮 *DAFTAR MINIGAMES*\n\n• *Halaman:* ${page}/${totalPages}\n• *Total Game:* ${total} game\n\n${textList}\n\n> Ketik *${prefix}minigame list ${page + 1 <= totalPages ? page + 1 : 1}* untuk halaman berikutnya.`,
+
+  minigamePromptFooter: (count, prefix = '.') => `- Balas pesan ini dengan angka 1 sampai ${count} untuk melihat detail & memainkan game!\n- Atau ketik *${prefix}minigame play <nama_game>*`,
+
+  minigameDetail: (game, formattedDate) => `🎮 *DETAIL MINIGAME*
+
+• *Judul:* ${game.title || '-'}
+• *Kategori:* ${game.category || '-'}
+• *Author:* ${game.author || '-'}
+• *Credits:* ${game.credits || '-'}
+• *Deskripsi:* ${game.description || '-'}
+• *Statistik:* 👁️ ${(game.views || 0).toLocaleString()} views | ▶️ ${(game.playsCount || 0).toLocaleString()} plays | ❤️ ${(game.likesCount || (Array.isArray(game.likes) ? game.likes.length : 0)).toLocaleString()} likes
+• *Tanggal Rilis:* ${formattedDate || '-'}
+${game.telegram ? `• *Telegram:* ${game.telegram}\n` : ''}${game.channel ? `• *Saluran:* ${game.channel}\n` : ''}`,
+
+  minigamePlayButton: '▶️ Mainkan Sekarang',
+  minigamePlayUrlNotice: (url) => `\n🔗 *Link Bermain:* ${url}`,
+  minigameFetchError: '❌ Gagal memuat data minigame. Silakan coba beberapa saat lagi.',
 };
 
 /*
@@ -1625,4 +2047,39 @@ Data.infos.interactive = {
   notOwner: `Maaf, males nanggepin`,
   modePublic: `Berhasil mengubah mode menjadi public!`,
   modeSelf: `Berhasil mengubah mode menjadi public!`,
+};
+
+Data.infos.converter = {
+  stems16d: {
+    wait: '⏳ *Sedang memisahkan audio & memproses filter 16D...*\n> Mohon tunggu sebentar ya.',
+    failed: '❌ Gagal memproses pemisahan audio 16D.',
+    success: (mode) => {
+      let desc = mode === 'reverse'
+        ? '🎧 *Vokal:* Kiri (Left) | *Instrumen:* Kanan (Right)'
+        : mode === '8d'
+          ? '🎧 *16D Motion:* Vokal & Instrumen berputar dinamis'
+          : '🎧 *Instrumen:* Kiri (Left) | *Vokal:* Kanan (Right)';
+      return `✨ *16D AUDIO FILTER*\n\n${desc}\n\n> Gunakan earphone/headphone untuk hasil maksimal!`;
+    },
+    help: `📌 *PANDUAN 16D AUDIO FILTER*
+
+Memisahkan vokal & instrumen lalu menyusunnya ke kanal stereo telinga kiri & kanan.
+
+• *.16d*
+> Mode default (Instrumen di Kiri, Vokal di Kanan)
+
+• *.16d reverse* atau *.16d balik*
+> Mode dibalik (Vokal di Kiri, Instrumen di Kanan)
+
+• *.16d 8d* atau *.16d motion*
+> Mode 16D berputar (Vokal & Instrumen saling berputar)`,
+  },
+  merge: {
+    wait: '⏳ *Sedang menggabungkan media...*\n> Mohon tunggu sebentar ya.',
+    failed: '❌ Gagal menggabungkan media. Pastikan format media valid dan kompatibel.',
+    noMedia: 'Balas atau kirim video/audio dengan perintah *.merge*',
+    promptNext: (type) => `📥 *${type === 'video' ? 'VIDEO' : 'AUDIO'} PERTAMA TERSIMPAN*\n\n> Balas (reply) pesan ini dengan ${type === 'video' ? 'video' : 'audio'} berikutnya untuk menggabungkan!`,
+    videoFooter: '- Balas video ini dengan video lain untuk menggabungkan lagi!',
+    audioFooter: '- Balas audio ini dengan audio lain untuk menggabungkan lagi!',
+  },
 };

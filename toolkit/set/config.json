@@ -18,6 +18,7 @@
     "autoreadpc": false,
     "autoreadgc": true,
     "welcome": "linkpreview",
+    "listSection": true,
     "first": {
       "energy": 200,
       "flow": 1,

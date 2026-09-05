@@ -127,8 +127,39 @@ export default async function utils({ Exp, cht, is, store }) {
           return cmd;
         })()
       : null;
-    cht.download = async () =>
-      Exp.func.download(cht?.message?.[type], cht.type);
+    cht.download = async () => {
+      let rawMsg = cht?.message?.[type];
+      let unwrapped =
+        rawMsg?.viewOnceMessage?.message ||
+        rawMsg?.viewOnceMessageV2?.message ||
+        rawMsg?.viewOnceMessageV2Extension?.message ||
+        rawMsg?.documentWithCaptionMessage?.message ||
+        rawMsg;
+      let interHeader = unwrapped?.interactiveMessage?.header;
+      let mediaObj =
+        interHeader?.videoMessage ||
+        interHeader?.imageMessage ||
+        interHeader?.documentMessage ||
+        cht.video ||
+        cht.image ||
+        cht.audio ||
+        cht.document ||
+        cht.sticker ||
+        unwrapped;
+      let mtype =
+        interHeader?.videoMessage || cht.video
+          ? 'video'
+          : interHeader?.imageMessage || cht.image
+            ? 'image'
+            : interHeader?.documentMessage || cht.document
+              ? 'document'
+              : cht.audio
+                ? 'audio'
+                : cht.sticker
+                  ? 'sticker'
+                  : cht.type;
+      return Exp.func.download(mediaObj, mtype);
+    };
 
     cht[cht.type] = cht?.message?.[type];
 
@@ -180,22 +211,97 @@ export default async function utils({ Exp, cht, is, store }) {
       cht.quoted.sender = await Exp.func['getSender'](quotedParticipant, {
         cht,
       });
-      cht.quoted.mtype = Object.keys(cht.quoted)[0];
+
+      let rawQuoted =
+        cht.quoted.viewOnceMessage?.message ||
+        cht.quoted.viewOnceMessageV2?.message ||
+        cht.quoted.viewOnceMessageV2Extension?.message ||
+        cht.quoted.documentWithCaptionMessage?.message ||
+        cht.quoted;
+
+      let inter = rawQuoted?.interactiveMessage;
+      let interHeader = inter?.header;
+
+      if (interHeader) {
+        if (interHeader.videoMessage) {
+          cht.quoted.videoMessage = interHeader.videoMessage;
+          cht.quoted.video = interHeader.videoMessage;
+        } else if (interHeader.imageMessage) {
+          cht.quoted.imageMessage = interHeader.imageMessage;
+          cht.quoted.image = interHeader.imageMessage;
+        } else if (interHeader.documentMessage) {
+          cht.quoted.documentMessage = interHeader.documentMessage;
+          cht.quoted.document = interHeader.documentMessage;
+        }
+      }
+
+      cht.quoted.mtype =
+        interHeader?.videoMessage
+          ? 'videoMessage'
+          : interHeader?.imageMessage
+            ? 'imageMessage'
+            : interHeader?.documentMessage
+              ? 'documentMessage'
+              : Object.keys(cht.quoted)[0];
+
       cht.quoted.type = Exp.func['getType'](cht.quoted.mtype);
       cht.quoted.memories = cfg?.register
         ? memories.has(cht.quoted.sender)
           ? await memories.get(cht.quoted.sender)
           : {}
         : await memories.get(cht.quoted.sender);
-      cht.quoted[cht.quoted.type] = cht?.quoted?.[cht.quoted.mtype];
+      cht.quoted[cht.quoted.type] =
+        interHeader?.videoMessage ||
+        interHeader?.imageMessage ||
+        interHeader?.documentMessage ||
+        cht?.quoted?.[cht.quoted.mtype] ||
+        rawQuoted?.[cht.quoted.mtype];
+
       cht.quoted.text =
         cht.quoted?.[cht.quoted.type]?.caption ||
         cht.quoted?.[cht.quoted.type]?.text ||
         cht.quoted?.conversation ||
+        inter?.body?.text ||
+        interHeader?.title ||
+        inter?.footer?.text ||
         false;
       cht.quoted.url = cht.quoted.text ? func.parseLink(cht?.quoted?.text) : [];
-      cht.quoted.download = async () =>
-        Exp.func.download(cht.quoted?.[cht.quoted.type], cht.quoted.type);
+      cht.quoted.download = async () => {
+        let q = cht.quoted;
+        let qRaw =
+          q.viewOnceMessage?.message ||
+          q.viewOnceMessageV2?.message ||
+          q.viewOnceMessageV2Extension?.message ||
+          q.documentWithCaptionMessage?.message ||
+          q;
+        let qHeader = qRaw?.interactiveMessage?.header;
+        let mediaObj =
+          qHeader?.videoMessage ||
+          qHeader?.imageMessage ||
+          qHeader?.documentMessage ||
+          q.video ||
+          q.image ||
+          q.audio ||
+          q.document ||
+          q.sticker ||
+          q[q.type] ||
+          q[q.mtype] ||
+          qRaw[q.mtype] ||
+          qRaw;
+        let mtype =
+          qHeader?.videoMessage || q.video
+            ? 'video'
+            : qHeader?.imageMessage || q.image
+              ? 'image'
+              : qHeader?.documentMessage || q.document
+                ? 'document'
+                : q.audio
+                  ? 'audio'
+                  : q.sticker
+                    ? 'sticker'
+                    : q.type || Exp.func['getType'](q.mtype);
+        return Exp.func.download(mediaObj, mtype);
+      };
       cht.quoted.stanzaId = cht?.message?.[type]?.contextInfo?.stanzaId;
       cht.quoted.delete = cht.quoted.del = async () =>
         Exp.sendMessage(cht.id, {
@@ -285,7 +391,9 @@ export default async function utils({ Exp, cht, is, store }) {
 
     let url = cht?.msg ? func.parseLink(cht?.msg) : [];
 
-    is.baileys = /^(3EB|BAE5|BELL409|Laurine|B1E)/.test(cht.key.id);
+    is.baileys =
+      /^(3EB|BAE5|BELL409|Laurine|B1E)/.test(cht.key.id) &&
+      !(is.owner || is.coowner);
     is.botMention = cht?.mention?.includes(Exp.number);
     is.cmd = cht.cmd;
     is.sticker = cht.type === 'sticker';
@@ -487,7 +595,10 @@ export default async function utils({ Exp, cht, is, store }) {
       Date.now() - Data.antispam[cht.id][cht.sender].time <= 10000;
     cht.reply = async function (text, etc = {}, quoted = { quoted: true }) {
       try {
-        // kalo cfg.replyAi = true bakal ngubah balasan pake AI
+        if (typeof text === 'object' && text !== null && text.body) {
+          etc = { footer: text.footer, ...etc };
+          text = text.body;
+        }
         let finalText =
           typeof cfg.font == 'string' && cfg.font !== 'normal'
             ? text.font(cfg.font)

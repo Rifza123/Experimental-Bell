@@ -3,7 +3,7 @@ let exif = await (fol[0] + 'exif.js').r();
 let { convert } = exif;
 
 const { tmpFiles } = await (fol[0] + 'tmpfiles.js').r();
-const { processMedia, burikVideo } = await './toolkit/ffmpeg.js'.r();
+const { processMedia, burikVideo, process16D, concatVideos, concatAudios } = await './toolkit/ffmpeg.js'.r();
 const fs = await 'fs'.import();
 const path = await 'path'.import();
 
@@ -720,6 +720,217 @@ Contoh: .echo 0.8 0.9 1000 0.3`,
     },
     async ({ media }) => {
       Exp.sendMessage(id, { video: media, ptv: true }, { quoted: cht });
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['16d', '16daudio', 'stems16d'],
+      listmenu: ['16d'],
+      tag: 'converter',
+      energy: 25,
+      media: {
+        type: ['audio', 'video'],
+        etc: {
+          seconds: 360,
+        },
+      },
+    },
+    async ({ media, args }) => {
+      let isVideo = ev.getMediaType().type === 'video';
+      await cht.edit(infos.converter?.stems16d?.wait || '⏳ *Sedang memisahkan audio & memproses filter 16D...*\n> Mohon tunggu sebentar ya.', keys[sender]);
+
+      try {
+        let audioToSeparate = media;
+        if (isVideo) {
+          audioToSeparate = await processMedia(media, ['-vn', '-ac', '2', '-b:a', '128k'], 'mp3');
+        }
+
+        let response = await fetch(
+          `${api.xterm.url}/api/audioProcessing/stems?key=${api.xterm.key}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+            },
+            body: audioToSeparate,
+          }
+        );
+
+        let json = await response.json();
+        if (!json.status || !json.data || json.data.length < 2) {
+          return cht.reply(infos.converter?.stems16d?.failed || '❌ Gagal memproses pemisahan audio 16D.');
+        }
+
+        let instItem = json.data.find((x) => x.filename.includes('accompaniment') || x.filename.includes('inst')) || json.data[0];
+        let vocItem = json.data.find((x) => x.filename.includes('vocals') || x.filename.includes('vocal')) || json.data[1];
+
+        let [instRes, vocRes] = await Promise.all([
+          fetch(instItem.link).then((r) => r.arrayBuffer()).then((b) => Buffer.from(b)),
+          fetch(vocItem.link).then((r) => r.arrayBuffer()).then((b) => Buffer.from(b)),
+        ]);
+
+        let mode = typeof args === 'string' ? args.toLowerCase().trim() : '';
+        let result = await process16D(instRes, vocRes, {
+          mode,
+          isVideo,
+          videoSource: isVideo ? media : null,
+        });
+
+        let detectedMode = ['reverse', 'balik', 'kiri', 'left', 'swap', 'flip', 'r'].some((k) => mode.includes(k))
+          ? 'reverse'
+          : ['8d', 'motion', 'rotate', 'putar', 'spin', 'm'].some((k) => mode.includes(k))
+            ? '8d'
+            : 'default';
+
+        let caption = infos.converter?.stems16d?.success?.(detectedMode) || '✨ *16D AUDIO FILTER*';
+
+        if (isVideo) {
+          await Exp.sendMessage(
+            id,
+            { video: result, mimetype: 'video/mp4', caption },
+            { quoted: cht }
+          );
+        } else {
+          await Exp.sendMessage(
+            id,
+            { audio: result, mimetype: 'audio/mpeg', ptt: false },
+            { quoted: cht }
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        cht.reply(infos.converter?.stems16d?.failed || '❌ Gagal memproses pemisahan audio 16D.');
+      }
+    }
+  );
+
+  ev.on(
+    {
+      cmd: ['merge', 'concat', 'gabung', 'gabungmedia'],
+      listmenu: ['merge'],
+      tag: 'converter',
+      energy: 5,
+    },
+    async ({ args }) => {
+      let _key = keys[sender];
+      let hasCurrentMedia = Boolean(cht?.video || cht?.audio || (cht?.msg && (cht.msg.videoMessage || cht.msg.audioMessage)));
+      let hasQuotedMedia = Boolean(cht?.quoted?.video || cht?.quoted?.audio || (cht?.quoted?.msg && (cht.quoted.msg.videoMessage || cht.quoted.msg.audioMessage)));
+
+      if (!hasCurrentMedia && !hasQuotedMedia) {
+        return cht.reply(infos.converter?.merge?.noMedia || 'Balas atau kirim video/audio dengan perintah *.merge*');
+      }
+
+      let currentBuf = null;
+      let currentType = null;
+      let quotedBuf = null;
+      let quotedType = null;
+
+      try {
+        if (hasCurrentMedia) {
+          currentBuf = await cht.download().catch(() => null);
+          currentType = cht.video || cht.msg?.videoMessage ? 'video' : 'audio';
+        }
+        if (hasQuotedMedia) {
+          quotedBuf = await cht.quoted.download().catch(() => null);
+          quotedType = cht.quoted.video || cht.quoted.msg?.videoMessage ? 'video' : 'audio';
+        }
+
+        if (quotedBuf && currentBuf) {
+          let mediaType = quotedType === 'video' || currentType === 'video' ? 'video' : 'audio';
+          await cht.edit(infos.converter?.merge?.wait || '⏳ *Sedang menggabungkan media...*', _key, true);
+
+          let mergedBuf;
+          if (mediaType === 'video') {
+            mergedBuf = await concatVideos([quotedBuf, currentBuf]);
+          } else {
+            mergedBuf = await concatAudios([quotedBuf, currentBuf]);
+          }
+
+          let caption = (args || cht.q || '').trim();
+          let sentMsg;
+
+          if (mediaType === 'video') {
+            sentMsg = await Exp.sendMessage(
+              id,
+              {
+                video: mergedBuf,
+                mimetype: 'video/mp4',
+                ...(caption ? { caption } : {}),
+                footer: infos.converter?.merge?.videoFooter || '- Balas video ini dengan video lain untuk menggabungkan lagi!',
+              },
+              { quoted: cht }
+            );
+          } else {
+            sentMsg = await Exp.sendMessage(
+              id,
+              {
+                audio: mergedBuf,
+                mimetype: 'audio/mpeg',
+                ptt: false,
+              },
+              { quoted: cht }
+            );
+          }
+
+          if (sentMsg?.key?.id) {
+            let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
+            qCmds[sentMsg.key.id] = {
+              key: { id: sentMsg.key.id },
+              emit: 'merge',
+              exp: Date.now() + func.parseTimeString('15 menit'),
+              maxUse: 50,
+              accepts: [],
+            };
+            memories.setItem(sender, 'quotedQuestionCmd', qCmds);
+          }
+          return;
+        }
+
+        if (quotedBuf && !currentBuf) {
+          let mediaType = quotedType;
+          let replyMsg = await cht.reply(
+            infos.converter?.merge?.promptNext?.(mediaType) ||
+              `📥 *${mediaType === 'video' ? 'VIDEO' : 'AUDIO'} PERTAMA TERSIMPAN*\n\n> Balas (reply) pesan ini dengan ${mediaType === 'video' ? 'video' : 'audio'} berikutnya untuk menggabungkan!`
+          );
+
+          if (replyMsg?.key?.id) {
+            let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
+            qCmds[replyMsg.key.id] = {
+              key: { id: replyMsg.key.id },
+              emit: 'merge',
+              exp: Date.now() + func.parseTimeString('15 menit'),
+              maxUse: 50,
+              accepts: [],
+            };
+            memories.setItem(sender, 'quotedQuestionCmd', qCmds);
+          }
+          return;
+        }
+
+        if (currentBuf && !quotedBuf) {
+          let replyMsg = await cht.reply(
+            infos.converter?.merge?.promptNext?.(currentType) ||
+              `📥 *${currentType === 'video' ? 'VIDEO' : 'AUDIO'} PERTAMA TERSIMPAN*\n\n> Balas (reply) pesan ini dengan ${currentType === 'video' ? 'video' : 'audio'} berikutnya untuk menggabungkan!`
+          );
+
+          if (replyMsg?.key?.id) {
+            let qCmds = memories.getItem(sender, 'quotedQuestionCmd') || {};
+            qCmds[replyMsg.key.id] = {
+              key: { id: replyMsg.key.id },
+              emit: 'merge',
+              exp: Date.now() + func.parseTimeString('15 menit'),
+              maxUse: 50,
+              accepts: [],
+            };
+            memories.setItem(sender, 'quotedQuestionCmd', qCmds);
+          }
+          return;
+        }
+      } catch (err) {
+        console.error('Merge error:', err);
+        cht.reply(infos.converter?.merge?.failed || '❌ Gagal menggabungkan media. Pastikan format media valid dan kompatibel.');
+      }
     }
   );
 }

@@ -51,6 +51,19 @@ export default async function on({ cht, Exp, store, ev, is }) {
       let text =
         head +
         `${args.includes('reaction') ? '' : func.menuFormatter(events, { ...cfg.menu, ...cht }) + '\n'}${Data.infos.reaction.menu}`;
+
+      if (is.owner && args && args.toLowerCase().includes('owner')) {
+        const isWsConnected = keys['__livechart_ws__']?.ws?.readyState === 1;
+        const ownerSection = infos.owner?.statsOwnerSection
+          ? infos.owner.statsOwnerSection({
+              version: cfg.version || '1.0.0',
+              isWsConnected,
+            })
+          : null;
+        if (ownerSection) {
+          text += '\n\n' + (typeof ownerSection === 'object' && ownerSection?.body ? ownerSection.body : ownerSection);
+        }
+      }
       let menu = {};
       if (cfg.button && cfg?.menu_type == 'buttonListImage') {
         keys['bell_jpg'] ??= await func.uploadToServer(
@@ -514,14 +527,18 @@ export default async function on({ cht, Exp, store, ev, is }) {
       } else if (cfg?.menu_type == 'image') {
         menu.image = fs.readFileSync(fol[3] + 'bell.jpg');
         menu.caption = text;
-        menu.footer = '© Supported by termai.cc';
+        menu.footer = is.owner
+          ? (infos.others?.menuOwnerTicketFooter || 'Ketik .ticket untuk mengakses menu tiket bantuan developer')
+          : '© Supported by termai.cc';
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'video') {
         menu.video = {
           url: cfg.menu.video || 'https://c.termai.cc/v86/J剗K尿fY',
         };
         menu.caption = text;
-        menu.footer = '© Supported by termai.cc';
+        menu.footer = is.owner
+          ? (infos.others?.menuOwnerTicketFooter || 'Ketik .ticket untuk mengakses menu tiket bantuan developer')
+          : '© Supported by termai.cc';
         await Exp.sendMessage(id, menu, { quoted: cht });
       } else if (cfg?.menu_type == 'liveLocation') {
         await Exp.relayMessage(
@@ -646,8 +663,15 @@ export default async function on({ cht, Exp, store, ev, is }) {
           { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
         );
 
+        let menuText =
+          `https://termai.cc\n` +
+          text +
+          (is.owner
+            ? `\n> ${infos.others?.menuOwnerTicketFooter || 'Ketik .ticket untuk mengakses menu tiket bantuan developer'}`
+            : '');
+
         menu = {
-          text: `https://termai.cc\n` + text,
+          text: menuText,
           linkPreview: {
             'matched-text': 'https://termai.cc',
             title: cht.pushName,
@@ -747,7 +771,7 @@ ${infos.others.readMore}
 
   ev.on(
     {
-      cmd: ['statistic', 'stats'],
+      cmd: ['statistic', 'stats', 'ping', 'speed', 'info'],
       listmenu: ['stats'],
       tag: 'other',
     },
@@ -756,7 +780,7 @@ ${infos.others.readMore}
         await func.getSystemStats();
       const runtimeText = processStats.runtime;
 
-      const txt =
+      let txt =
         cpuUsage
           .map(
             (cpu) =>
@@ -781,6 +805,20 @@ ${infos.others.readMore}
         `   PID: ${processStats.pid}\n` +
         `   Title: ${processStats.title}\n` +
         `   Exec Path: ${processStats.execPath}`;
+
+      if (is.owner) {
+        const isWsConnected = keys['__livechart_ws__']?.ws?.readyState === 1;
+        const ownerSection = infos.owner?.statsOwnerSection
+          ? infos.owner.statsOwnerSection({
+              version: cfg.version || '1.0.0',
+              isWsConnected,
+            })
+          : null;
+        if (ownerSection) {
+          txt += '\n\n' + (typeof ownerSection === 'object' && ownerSection?.body ? ownerSection.body : ownerSection);
+        }
+      }
+
       Exp.sendMessage(
         cht.id,
         { image: await dashboard(), caption: txt },

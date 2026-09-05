@@ -4,13 +4,15 @@ let infos = Data.infos;
 export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
   try {
     //console.log({ sewaDb, id: cht.id, sewadb2: Data.sewa[cht.id] }, JSON.stringify(Data.sewa,0,2))
+    if (!cht?.id || !cht.id.endsWith('@g.us')) return;
     const preferences = is?.jadibot
       ? ((Data.preferencesBot ??= {})[Exp.user.id.split(':')[0]] ??= {})
       : (Data.preferences ??= {});
     let { func } = Exp,
-      chatDb = preferences[cht.id],
+      chatDb = (preferences[cht.id] ??= {}),
       { wtype, ltype } = chatDb;
-    const group = await func.getGroupMetadata(cht.id);
+    const group = await func.getGroupMetadata(cht.id).catch(() => null);
+    if (!group) return;
 
     //console.log({ group })
     const getSenders = async (cht) =>
@@ -73,7 +75,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
           `${func.color.white('Event:')} ${func.color.cyan(stubName)}`
       );
 
-      return await func.getGroupMetadata(cht.id, true);
+      return await func.getGroupMetadata(cht.id, true).catch(() => null);
     };
     //console.log({ genText: genText(wtype, members, group.subject, group.desc, 'welcome') })
     let stubType =
@@ -83,7 +85,7 @@ export default async function stubTypeMsg({ Exp, cht, sewaDb, is }) {
     switch (stubType) {
       case StubType.GROUP_PARTICIPANT_ADD:
       case StubType.GROUP_PARTICIPANT_ADD_REQUEST_JOIN: {
-        await func.getGroupMetadata(cht.id, true);
+        await func.getGroupMetadata(cht.id, true).catch(() => null);
         if (!preferences[cht.id]?.welcome) return;
         let text = genText(
           wtype,

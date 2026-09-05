@@ -215,11 +215,12 @@ export default async function on({ cht, Exp, store, ev, is }) {
       listmenu: ['enhance', 'enhance list'],
       tag: 'tools',
       energy: 35,
+      continue: true,
       media: {
         type: ['image'],
       },
     },
-    async ({ media }) => {
+    async ({ media, continue: _continue }) => {
       const _key = keys[sender];
       let type = cht.q ? cht.q : 'stdx4';
       if (cht.q == 'list') return cht.reply(infos.tools.enhance);
@@ -239,6 +240,8 @@ export default async function on({ cht, Exp, store, ev, is }) {
         return cht.reply(
           'Type tidak ada! mungkin salah ketik!\n\n' + infos.tools.enhance
         );
+      let ok = await _continue();
+      if (!ok) return;
       await cht.edit('Uploading image...', _key, true);
       let imgurl = await TermaiCdn(await func.minimizeImage(media));
       let ai = await fetch(

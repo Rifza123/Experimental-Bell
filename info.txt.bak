@@ -1,67 +1,114 @@
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/connection/systemConnext.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/ai.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/converter.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/game.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/others.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/owner.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/events.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/initialize.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/interactive.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/utils.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/machine/livechart.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/ffmpeg.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/set/locale/en.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/set/locale/id.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/set/prototype.js
+https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/toolkit/tmpfiles.js
+
+==================================================
+
+*[ NEW UPDATE ]*
+
+* Experimental-Bell
+* Versi: v2.7.0 
+* Repository: https://github.com/Rifza123/Experimental-Bell
+* Daftar Fitur & Perbaikan Baru:
+
+`Detail Update & Perbaikan:`
+
+1. Sistem Antrean Notifikasi Offline (Offline Queue & Auto-Sync):
+> Notifikasi balasan tiket saat bot offline otomatis ditampung di database dan langsung dikirim saat bot kembali online.
+2. Balasan Tiket Cepat via Quoted Reply:
+> Merespons balasan tiket bantuan developer cukup dengan me-reply / quote pesan notifikasi tiket di WhatsApp.
+3. Sistem Cumulative Smart Update (.checkupdate):
+> Cek pembaruan kumulatif berbasis SemVer dengan deduplikasi berkas unik otomatis. Cukup balas notifikasi dengan "y" untuk menerapkan update.
+4. Anti-Spam Notifikasi Update Persisten:
+> Status versi yang dinotifikasi tersimpan permanen di database sehingga tidak terkirim berulang kali saat bot restart atau reconnect.
+5. Perbaikan & Peningkatan Audio Saluran (.sendch & .playch):
+> Audio saluran dikirim sebagai Voice Note (PTT) dengan waveform visual & CDN unencrypted, mempertahankan 2-channel stereo asli untuk efek binaural/8D, serta tautan langsung saluran.
+6. [.tmpfiles] Perbaikan Direct Download:
+> Memperbarui modul & command .tmpfiles agar selalu menghasilkan link unduhan langsung (direct file biner), bukan halaman HTML.
+7. [.luma / .i2v] Video AI Continue:
+> Balas (reply) hasil video dengan prompt baru untuk melanjutkan adegan video secara otomatis (ekstraksi frame terakhir).
+8. Downloader Media Pesan Interaktif & Relay:
+> Dukungan ekstraksi dan download media dari interactiveMessage, relay, dan viewOnce.
+9. Laporan Pemulihan Koneksi Otomatis (Reconnect Alert):
+> Bot mengirim laporan ke owner saat koneksi WhatsApp tersambung kembali setelah terputus (lengkap dengan waktu, penyebab, dan durasi downtime).
+10. Alert Kegagalan Pengiriman Pesan Sistem:
+> Notifikasi ke owner apabila ada pesan tiket penting yang gagal terkirim ke WhatsApp pengguna.
+11. Integrasi Sistem Update & Tiket pada .stats (Owner Mode):
+> Menampilkan status versi, livechart, serta panduan .infoupdate dan .infoticket.
+
+`New Feature:`
+*OWNER*:
+1. .checkupdate
+> Memeriksa pembaruan rilis kumulatif secara real-time via WebSocket
+2. .infoupdate & .infoticket
+> Panduan lengkap arsitektur update sistem & helpdesk tiket bantuan
+3. Direct Message (DM) Admin ↔ Owner
+> Obrolan langsung dua arah dengan admin developer Termai via WebSocket terenkripsi
+
+*CONVERTER*:
+1. .16d
+> Filter Audio AI 16D Stems untuk memisahkan vokal dan instrumen ke telinga kiri & kanan (mode default, reverse, dan 8d motion)
+2. .merge
+> Menggabungkan beberapa file video atau audio secara berantai (multi-reply)
+
+*GAME & INTERACTIVE*:
+1. .minigame <keyword>
+> Pencarian dan eksplorasi 500+ katalog minigame Termai API dengan NES & Retro Web Player khusus mobile (D-Pad, A/B, Turbo)
+
+*TICKET*:
+1. .ticket <pesan> / .ticket <kategori> | <subjek> | <pesan>
+> Helpdesk tiket bantuan terpusat (fitur: .ticket list, check, reply, close, reopen)
 
 
-📢 `UPDATE`
-Sc: Experimental-Bell  
-V2.5.0
-Link https://github.com/Rifza123/Experimental-Bell
+==================================================
 
-## FIX
-> - Menu Linkpreview dapat terlihat
+*CARA UPDATE*
 
-### UPDATE
-- *AI*
-1. .bingimg`
-> generator gambar AI dari Bing Image Creator (DALL-E 3). Menghasilkan 4 gambar sekaligus.
-2. .bingedit
-> editor gambar menggunakan Bing Image Creator (MAI-Image-2.5-Flash).
-- *Downloader*
-1. .fixvideo (new)
-> untuk memperbaiki masalah video tidak bisa diputar 
-2. .ytmp4
-> perbaikan eror tidak dapat mengunduh video
-> Video sudah ada suaranya
-> lebih banyak dukungan resolusi
-- *maker*
-1. qc (perbaikan)
-> mengganti api ke termai.cc yang lebih stabil
-- *group*
-1. absen (start, stop, <NAMA_KAPITAL>)
-2. hidetag (perbaikan)
-3. totag (new)
-> Mengubah pesan teks atau media apapun menjadi hidetag
-- *game*
-1. Ulartangga
-> Fitur game ulartangga yang di adaptasi dari bot lama(XilverMoods 2021)
+.update https://pastebin.com/XXXXX
 
-- `AI Interactive`
-> AI kini dapat membalas percakapan menggunakan stiker ekspresi Pinterest (`send_sticker`). Gambar dicari secara otomatis dari Pinterest (Top 5 hasil acak)
-> AI dapat melihat sticker yang dikirim oleh lawan bicara
-*Proteksi Role Anti-Manipulasi:* 
-> Dilarang keras mengubah role jika user mencoba memaksa/memerintahkan ganti role secara langsung. Kenaikan role tingkat tinggi (Sahabat, Pacar, Soulmate) hanya terjadi secara alami berdasarkan konsistensi obrolan & akumulasi Total Interaksi (`user.autoai.total`).
-> Peningkatan Memory LLM: Kapasitas riwayat percakapan aktif LLM resmi ditingkatkan dari 15 menjadi 25 pesan terakhir untuk pemahaman konteks yang lebih mendalam.
+==================================================
 
-*## CARA UPDATE*
-*Sebelum update, harap lakukan .backup dulu (untuk antisipasi!).*
-
-Disarankan update dilakukan di private chat atau grup yang tidak ramai supaya prosesnya bersih. Semua file saling terkait, jadi hindari spam command saat update berlangsung.
-Ketik: .update  https://raw.githubusercontent.com/Rifza123/Experimental-Bell/refs/heads/master/helpers/Events/ai.js
-
-Jika berhasil:
-*⠇[ 🛠️ ] UPDATE*
+*⠙[ 🛠️ ] UPDATE*
 
 *📂File Changed:*
-- `modifed`: ./helpers/Events/ai.js
+- `modified`: ./connection/systemConnext.js
+- `modified`: ./helpers/Events/ai.js
+- `modified`: ./helpers/Events/converter.js
+- `modified`: ./helpers/Events/game.js
+- `modified`: ./helpers/Events/others.js
+- `modified`: ./helpers/Events/owner.js
+- `modified`: ./helpers/events.js
+- `modified`: ./helpers/initialize.js
+- `modified`: ./helpers/interactive.js
+- `modified`: ./helpers/utils.js
+- `modified`: ./machine/livechart.js
+- `modified`: ./toolkit/ffmpeg.js
+- `modified`: ./toolkit/set/locale/en.js
+- `modified`: ./toolkit/set/locale/id.js
+- `modified`: ./toolkit/set/prototype.js
+- `modified`: ./toolkit/tmpfiles.js
+
 
 Success ✅
 
-*JIKA TIDAK DAPAT MENAUTKAN PERANGKAT DAN TIDAK MEMUNGKINKAN UPDATE MELALUI BOT*
-- update manual
-> atau
-- unduh script melalui github secara utuh
+==================================================
 
-*SETELAH UPDATE WAJIB LAKUKAN RESTART* ❗
+*INFORMASI PENUTUP*
 
-Jika ada bug, error, atau butuh bantuan: 
-> support@termai.cc / rifza@kua.lat
-_Informasi tambahan akan disiarkan melalui saluran update jika diperlukan._
-
+* Wajib melakukan restart bot setelah proses update selesai (.restart / npm restart).
+* Alternatif update manual: Pull commit terbaru dari GitHub via 'git pull'.
+* Download script langsung melalui GitHub: https://github.com/Rifza123/Experimental-Bell
+* Hubungi support / WhatsApp pada DESC ch ini untuk pertanyaan dan informasi tambahan.

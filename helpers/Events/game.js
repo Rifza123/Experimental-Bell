@@ -1,9 +1,12 @@
-let raw = 'https://c.termai.cc/json/';
+let raw = 'https://c.termai.cc/json/',
+  DB_URL = "https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/"
 
+const { prepareWAMessageMedia } = await import('@whiskeysockets/baileys/lib/Utils/messages.js');
 let { Chess } = await (fol[2] + 'chess.js').r();
 const chess = new Chess();
 
 let exif = await (fol[0] + 'exif.js').r();
+let crypto = 'crypto'.import()
 
 global.timeouts = global.timeouts || {};
 cfg.hadiah = cfg.hadiah || {
@@ -242,10 +245,10 @@ Jawaban: ${answer}`);
       if ('game' in metadata) return cht.reply(hasGame);
       let maxAge = 60000;
       let countries = await fetch(
-        'https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/countries.json'
+        DB_URL + 'countries.json'
       ).then((a) => a.json());
       let name = Object.values(countries).getRandom();
-      let url = `https://raw.githubusercontent.com/Rifza123/lib/refs/heads/main/db/image/flags/${name.slugify()}.png`;
+      let url = `${DB_URL}image/flags/${name.slugify()}.png`;
       metadata.game = {
         type: cht.cmd,
         startTime: Date.now(),
@@ -2502,6 +2505,405 @@ ${Array.isArray(game.answer) ? game.answer.map((item, index) => `${index + 1}. $
         },
         {}
       );
+    }
+  );
+  const getMinigameLinkPreview = async () => {
+    if (!keys['minigame_lp_media']) {
+      try {
+        let rawBuf = await Exp.func.getBuffer('https://c.termai.cc/i131/QRq.png');
+        let resMedia = await prepareWAMessageMedia(
+          { image: rawBuf },
+          { upload: Exp.waUploadToServer, mediaTypeOverride: 'thumbnail-link' }
+        );
+        if (resMedia?.imageMessage) {
+          keys['minigame_lp_media'] = resMedia.imageMessage;
+          keys['minigame_lp_thumb'] = rawBuf;
+        }
+      } catch {}
+    }
+    let imgMsg = keys['minigame_lp_media'];
+    return {
+      'matched-text': 'https://termai.cc',
+      title: '🎮 Termai Minigames • 500+ Games Arcade & Retro',
+      description: 'Mainkan 500+ game seru langsung di WhatsApp atau Web Player',
+      jpegThumbnail: imgMsg?.jpegThumbnail
+        ? Buffer.from(imgMsg.jpegThumbnail)
+        : keys['minigame_lp_thumb'] || undefined,
+      highQualityThumbnail: imgMsg
+        ? {
+            ...imgMsg,
+            width: 1280,
+            height: 720,
+          }
+        : undefined,
+    };
+  };
+
+  ev.on(
+    {
+      cmd: ['minigames', 'minigame'],
+      listmenu: ['minigame'],
+      tag: 'game',
+      isRich: true,
+      energy: 10,
+      continue: true,
+    },
+    async ({ args, cht, continue: _continue }) => {
+      let p = cht.prefix || '.';
+      let q = (args || '').trim();
+      let infosGame = Data.infos?.game || {};
+
+      if (!q || q === 'help' || q === '--help') {
+        let helpText = infosGame.minigameHelp ? infosGame.minigameHelp(p) : 'Gunakan: ' + p + 'minigame <judul>';
+        let linkPreview = await getMinigameLinkPreview();
+        return Exp.sendMessage(
+          cht.id,
+          {
+            text: `https://termai.cc\n` + helpText,
+            linkPreview,
+          },
+          { quoted: cht }
+        );
+      }
+
+      if (q.toLowerCase() === 'refresh' || q.toLowerCase() === '-r' || q.toLowerCase() === '--refresh') {
+        let ok = await _continue();
+        if (!ok) return;
+        await fetch(`${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&refresh=true&format=list&limit=1`).catch(() => null);
+        return cht.reply('🔄 *Minigames Berhasil Di-refresh!*\n\n• Data minigames dari database telah disinkronkan kembali.\n• Ketik *' + p + 'minigame list* untuk melihat daftar game terbaru.');
+      }
+
+      let playMatch = q.match(/^(?:play|main|info|detail)\s+(.+)$/i);
+      let catMatch = q.match(/^(?:category|cat)\s+(.+)$/i);
+      let listMatch = q.match(/^(?:list|all)(?:\s+(\d+))?$/i);
+
+      let targetSlug = playMatch ? playMatch[1].trim() : null;
+      let targetCat = catMatch ? catMatch[1].trim() : null;
+      let isList = Boolean(listMatch);
+      let pageNum = listMatch ? parseInt(listMatch[1] || '1', 10) : 1;
+
+      let ok = await _continue();
+      if (!ok) return;
+
+      if (targetSlug) {
+        let res = await fetch(`${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&id=${encodeURIComponent(targetSlug)}`).then(a => a.json()).catch(() => null);
+        let item = res?.data;
+        if (!item) {
+          let searchRes = await fetch(`${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&search=${encodeURIComponent(targetSlug)}&format=list&limit=1`).then(a => a.json()).catch(() => null);
+          item = searchRes?.data?.[0];
+        }
+        if (!item) {
+          return cht.reply(infosGame.minigameNotFound ? infosGame.minigameNotFound(targetSlug) : 'Game tidak ditemukan!');
+        }
+
+        let formattedDate = item.createdAt ? (Exp.func?.dateFormatter ? Exp.func.dateFormatter(item.createdAt, 'Asia/Jakarta') : new Date(item.createdAt).toLocaleDateString('id-ID')) : '-';
+        let detailText = infosGame.minigameDetail ? infosGame.minigameDetail(item, formattedDate) : `🎮 *${item.title}*\n${item.description || ''}`;
+
+        if (item.web_view) {
+          if (cfg.button) {
+            return Exp.relayMessage(
+              cht.id,
+              {
+                interactiveMessage: {
+                  header: {
+                    title: item.title || 'Minigame',
+                    subtitle: '',
+                    hasMediaAttachment: false
+                  },
+                  body: {
+                    text: detailText
+                  },
+                  footer: {
+                    text: item.credits ? 'Credits: ' + item.credits : '.'
+                  },
+                  nativeFlowMessage: {
+                    buttons: [
+                      {
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                          display_text: infosGame.minigamePlayButton || '▶️ Mainkan Sekarang',
+                          icon: 'Promotion',
+                          url: item.url,
+                          webview_interaction: true
+                        })
+                      }
+                    ],
+                    messageParamsJson: '{}',
+                    messageVersion: 1
+                  }
+                }
+              },
+              {
+                additionalNodes: [
+                  {
+                    tag: 'biz',
+                    attrs: {},
+                    content: [
+                      {
+                        tag: 'interactive',
+                        attrs: {
+                          v: '1',
+                          type: 'native_flow'
+                        },
+                        content: [
+                          {
+                            tag: 'native_flow',
+                            attrs: {
+                              v: '9',
+                              name: 'mixed'
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            );
+          } else {
+            return cht.reply(detailText + (infosGame.minigamePlayUrlNotice ? infosGame.minigamePlayUrlNotice(item.url) : '\n🔗 URL: ' + item.url));
+          }
+        }
+
+        return Exp.relayMessage(
+          cht.id,
+          {
+            botForwardedMessage: {
+              message: {
+                richResponseMessage: {
+                  messageType: 1,
+                  unifiedResponse: {
+                    data: Buffer.from(
+                      {
+                        __typename: "GenAIUnifiedResponse",
+                        response_id: crypto.randomUUID(),
+                        sections: [
+                          {
+                            __typename: "GenAIUnifiedResponseSection",
+                            view_model: {
+                              __typename: "GenAISingleLayoutViewModel",
+                              primitive: {
+                                __typename: "FOAHtmlPrimitiveDemoDONOTUSE",
+                                trusted_sources: [],
+                                payload: await fetch(item.url).then(a => a.text())
+                              }
+                            }
+                          }
+                        ]
+                      }.String()
+                    ).toString("base64")
+                  },
+                  contextInfo: {
+                    isForwarded: true,
+                    forwardOrigin: 4
+                  }
+                }
+              }
+            }
+          },
+          {
+            additionalAttributes: { type: "text" },
+            edit: false
+          }
+        );
+      }
+
+      let apiUrl = '';
+      if (isList) {
+        apiUrl = `${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&format=list&limit=10&page=${pageNum}`;
+      } else if (targetCat) {
+        apiUrl = `${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&category=${encodeURIComponent(targetCat)}&format=list&limit=10&page=1`;
+      } else {
+        apiUrl = `${api.xterm.url}/api/games/minigames?key=${api.xterm.key}&search=${encodeURIComponent(q)}&format=list&limit=10&page=1`;
+      }
+
+      let listRes = await fetch(apiUrl).then(a => a.json()).catch(() => null);
+      if (!listRes || !listRes.status || !Array.isArray(listRes.data) || listRes.data.length === 0) {
+        return cht.reply(infosGame.minigameNotFound ? infosGame.minigameNotFound(targetCat || q) : 'Minigame tidak ditemukan!');
+      }
+
+      if (!isList && !targetCat && listRes.data.length === 1 && (listRes.data[0].slug === q.toLowerCase() || listRes.data[0]._id === q)) {
+        let singleItem = listRes.data[0];
+        let formattedDate = singleItem.createdAt ? (Exp.func?.dateFormatter ? Exp.func.dateFormatter(singleItem.createdAt, 'Asia/Jakarta') : new Date(singleItem.createdAt).toLocaleDateString('id-ID')) : '-';
+        let detailText = infosGame.minigameDetail ? infosGame.minigameDetail(singleItem, formattedDate) : `🎮 *${singleItem.title}*\n${singleItem.description || ''}`;
+
+        if (singleItem.web_view) {
+          if (cfg.button) {
+            return Exp.relayMessage(
+              cht.id,
+              {
+                interactiveMessage: {
+                  header: {
+                    title: singleItem.title || 'Minigame',
+                    subtitle: '',
+                    hasMediaAttachment: false
+                  },
+                  body: {
+                    text: detailText
+                  },
+                  footer: {
+                    text: singleItem.credits ? 'Credits: ' + singleItem.credits : '.'
+                  },
+                  nativeFlowMessage: {
+                    buttons: [
+                      {
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                          display_text: infosGame.minigamePlayButton || '▶️ Mainkan Sekarang',
+                          icon: 'Promotion',
+                          url: singleItem.url,
+                          webview_interaction: true
+                        })
+                      }
+                    ],
+                    messageParamsJson: '{}',
+                    messageVersion: 1
+                  }
+                }
+              },
+              {
+                additionalNodes: [
+                  {
+                    tag: 'biz',
+                    attrs: {},
+                    content: [
+                      {
+                        tag: 'interactive',
+                        attrs: {
+                          v: '1',
+                          type: 'native_flow'
+                        },
+                        content: [
+                          {
+                            tag: 'native_flow',
+                            attrs: {
+                              v: '9',
+                              name: 'mixed'
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            );
+          } else {
+            return cht.reply(detailText + (infosGame.minigamePlayUrlNotice ? infosGame.minigamePlayUrlNotice(singleItem.url) : '\n🔗 URL: ' + singleItem.url));
+          }
+        }
+      }
+
+      if (cfg.button) {
+        let sections = [
+          {
+            title: 'Daftar Minigame (' + listRes.data.length + ' Game)',
+            rows: listRes.data.map((v, i) => ({
+              title: (i + 1) + '. ' + (v.title || v.slug),
+              description: '[' + (v.category || 'Game') + '] • By ' + (v.author || v.credits || 'Termai'),
+              id: p + 'minigame play ' + (v.slug || v._id)
+            }))
+          }
+        ];
+        let headerTitle = isList ? '🎮 Minigames List' : (targetCat ? '🎮 Kategori: ' + targetCat : '🎮 Hasil Pencarian');
+        let bodyText = isList
+          ? '• *Halaman:* ' + listRes.page + '/' + listRes.totalPages + '\n• *Total:* ' + listRes.total + ' game\n\n_Pilih game di bawah untuk melihat detail & memainkannya:_'
+          : '• *Pencarian:* "' + q + '"\n• *Ditemukan:* ' + listRes.total + ' game\n\n_Pilih game di bawah untuk melihat detail & memainkannya:_';
+
+        return Exp.relayMessage(
+          cht.id,
+          {
+            interactiveMessage: {
+              header: {
+                title: headerTitle,
+                subtitle: '',
+                hasMediaAttachment: false
+              },
+              body: {
+                text: bodyText
+              },
+              footer: {
+                text: 'Klik tombol di bawah untuk memilih game'
+              },
+              nativeFlowMessage: {
+                buttons: [
+                  {
+                    name: 'single_select',
+                    buttonParamsJson: { has_multiple_buttons: true }.String()
+                  },
+                  {
+                    name: 'single_select',
+                    buttonParamsJson: JSON.stringify({
+                      title: '🎮 Pilih Minigame',
+                      has_multiple_buttons: true,
+                      sections
+                    })
+                  }
+                ],
+                messageParamsJson: '{}',
+                messageVersion: 1
+              }
+            }
+          },
+          {
+            additionalNodes: [
+              {
+                tag: 'biz',
+                attrs: {},
+                content: [
+                  {
+                    tag: 'interactive',
+                    attrs: {
+                      v: '1',
+                      type: 'native_flow'
+                    },
+                    content: [
+                      {
+                        tag: 'native_flow',
+                        attrs: {
+                          v: '9',
+                          name: 'mixed'
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        );
+      } else {
+        let textList = '';
+        let Keys = {};
+        for (let i = 0; i < listRes.data.length; i++) {
+          let v = listRes.data[i];
+          let slug = v.slug || v._id;
+          Keys[i + 1] = slug;
+          textList += '*' + (i + 1) + '. ' + (v.title || slug) + '*\n';
+          textList += '• Kategori: ' + (v.category || '-') + '\n';
+          textList += '• Author: ' + (v.author || v.credits || '-') + '\n';
+          textList += '• Mainkan: ' + p + 'minigame play ' + slug + '\n\n';
+        }
+        let promptMsg = isList
+          ? (infosGame.minigameListResult ? infosGame.minigameListResult(listRes.page, listRes.totalPages, listRes.total, textList.trim(), p) : textList)
+          : (infosGame.minigameSearchResult ? infosGame.minigameSearchResult(targetCat || q, listRes.total, textList.trim()) : textList);
+
+        return cht.question(
+          promptMsg,
+          {
+            emit: p + 'minigame play ',
+            sender: cht.sender,
+            exp: Date.now() + (Exp.func?.parseTimeString ? Exp.func.parseTimeString('5 menit') : 300000),
+            accepts: Object.keys(Keys),
+            Keys,
+            maxUse: 5
+          },
+          {
+            footer: infosGame.minigamePromptFooter ? infosGame.minigamePromptFooter(listRes.data.length, p) : undefined,
+            mentions: [cht.sender]
+          }
+        );
+      }
     }
   );
 }

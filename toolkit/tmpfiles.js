@@ -21,7 +21,9 @@ export const tmpFiles = async (buffer) => {
       }
     );
 
-    return response.data.data.url.replace('s.org/', 's.org/dl/');
+    const page = await axios.get(response.data.data.url);
+    const match = page.data.match(/<a class="download" href="([^"]+)"/);
+    return match ? match[1] : response.data.data.url;
   } catch (error) {
     console.error('Error uploading file:', error);
     throw error;

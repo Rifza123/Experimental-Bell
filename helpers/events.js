@@ -266,6 +266,13 @@ export default class EventEmitter {
             !ev.onlyGame.includes(metadata.game?.type),
           message: Data.infos.events.onlyGame(metadata, ev),
         },
+        {
+          condition: ev.isRich && !cfg.rich,
+          message:
+            typeof ev.isRich === 'string'
+              ? ev.isRich
+              : Data.infos.owner.richDisabled,
+        },
       ];
 
       for (const { condition, message } of checks) {
@@ -283,7 +290,7 @@ export default class EventEmitter {
           return cht.reply(messages.isNotAvailableOnTrial);
       }
 
-      if (ev.energy && !isNaN(ev.energy) && cht.memories.energy < ev.energy) {
+      if (!ev.continue && ev.energy && !isNaN(ev.energy) && cht.memories.energy < ev.energy) {
         return cht.reply(
           messages.isEnergy({
             uEnergy: cht.memories.energy,
@@ -472,17 +479,45 @@ export default class EventEmitter {
 
       const isSilent = Boolean(opts?.silent || isReactionAudio);
 
-      if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
-        await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
-        if (!isSilent) {
-          await cht.reply(`-${ev.energy} Energy⚡`, {
-            replyAi: false,
-            ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
-          });
+      let continueFunc = async (customEnergy) => {
+        let cost = !isNaN(customEnergy) ? customEnergy : ev.energy;
+        if (cost && !isNaN(cost) && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
+          let currentEnergy = cht.memories.energy;
+          if (currentEnergy < cost) {
+            await cht.reply(
+              messages.isEnergy({
+                uEnergy: currentEnergy,
+                energy: cost,
+                charging: cht.memories.charging,
+              })
+            );
+            return false;
+          }
+          await ArchiveMemories.reduceEnergy(cht.sender, cost);
+          if (!isSilent) {
+            await cht.reply(`-${cost} Energy⚡`, {
+              replyAi: false,
+              ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
+            });
+          }
+          return true;
         }
-      } else {
-        if (!isSilent) {
-          ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
+        return true;
+      };
+
+      if (!ev.continue) {
+        if (ev.energy && ('energy_mode' in cfg ? cfg.energy_mode : true)) {
+          await ArchiveMemories.reduceEnergy(cht.sender, ev.energy);
+          if (!isSilent) {
+            await cht.reply(`-${ev.energy} Energy⚡`, {
+              replyAi: false,
+              ...(isAudioEvent ? { footer: 'Supported by termai.cc' } : {}),
+            });
+          }
+        } else {
+          if (!isSilent) {
+            ev.energy && (await cht.reply(`⏱️Wait...`, { replyAi: false }));
+          }
         }
       }
 
@@ -491,6 +526,7 @@ export default class EventEmitter {
         urls,
         args,
         cht,
+        continue: continueFunc,
         argsText:
           typeof ev.args == 'string'
             ? ev.args
