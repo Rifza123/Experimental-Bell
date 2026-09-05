@@ -23,7 +23,7 @@
 - [Konfigurasi Bot (`.set`)](#-konfigurasi-bot-set)
 - [Sistem Jadibot (Sub-Bot Engine)](#-sistem-jadibot-sub-bot-engine)
 - [Sistem Pembaruan Sistem (OTA Update)](#-sistem-pembaruan-sistem-ota-update)
-- [Sistem Lokalisasi & Standar Format Pesan](#-sistem-lokalisasi--standar-format-pesan)
+- [Sistem Lokalisasi (i18n)](#-sistem-lokalisasi-i18n)
 - [Livechart Cloud & Sistem Tiket](#-livechart-cloud--sistem-tiket)
 - [Kontributor & Lisensi](#-kontributor--lisensi)
 
@@ -151,14 +151,17 @@ Buka dan sesuaikan berkas `toolkit/set/config.json`:
   },
   "api": {
     "xterm": {
-      "key": "YOUR_TERMAI_API_KEY",
+      "key": "Bell409",
       "url": "https://api.termai.cc"
     }
   }
 }
 ```
 
-> **Catatan API Key:** Dapatkan API Key melalui [termai.cc](https://termai.cc) untuk mengaktifkan seluruh fitur AI, generator media, dan layanan backend bot.
+> 💡 **Informasi Pengaturan API Key Termai:**
+> - **Setup Bersifat Opsional**: Anda dapat memasukkan API Key pribadi milik Anda pada bagian `"api.xterm.key"`, atau **tidak perlu diubah sama sekali (gunakan default bawaan `Bell409`)**. Jika tidak di-setup atau dikosongkan, bot akan secara otomatis menggunakan API Key bawaan resmi yang sudah siap pakai.
+> - **Pembelian / Upgrade API Key Pribadi**: Apabila Anda membutuhkan kuota limit request yang lebih besar, performa kecepatan prioritas tanpa antrean, dan akses penuh ke seluruh model AI premium, Anda dapat membeli atau berlangganan API Key resmi melalui tautan:
+>   👉 **[termai.cc#pricing](https://termai.cc#pricing)**
 
 ### 4. Menghubungkan WhatsApp (Pairing / QR)
 
@@ -451,21 +454,13 @@ Bot dilengkapi sistem pembaruan Over-The-Air (OTA) langsung dari repository resm
 
 ---
 
-## 🌐 Sistem Lokalisasi & Standar Format Pesan
+## 🌐 Sistem Lokalisasi (i18n)
 
-Seluruh respon teks disimpan terpusat di `toolkit/set/locale/id.js` (Bahasa Indonesia) dan `toolkit/set/locale/en.js` (Bahasa Inggris).
+Seluruh respon teks dan template pesan bot disimpan secara terpusat pada direktori bahasa:
+- `toolkit/set/locale/id.js` — Bahasa Indonesia (Default)
+- `toolkit/set/locale/en.js` — Bahasa Inggris
 
-### Standar Format Pesan WhatsApp:
-- **Format Deskripsi Komando**: Tulis nama command pada baris tersendiri, diikuti baris deskripsi dengan awalan `> ` untuk format *quote subtext*:
-  ```text
-  • .jadibot <nomor>
-  > Tautkan bot baru menggunakan Pairing Code
-  ```
-- **Judul & Seksi**: Gunakan emoji dan huruf kapital tebal (contoh: `📱 *KONEKSI & MANAGEMENT*`).
-- **Native WhatsApp Footer**: Gunakan properti `footer` bawaan `Exp.sendMessage`:
-  ```javascript
-  Exp.sendMessage(cht.id, { text: 'Pesan utama', footer: 'Teks footer polos' }, { quoted: cht });
-  ```
+Anda dapat mengatur bahasa bot melalui konfigurasi `"locale": "id"` pada `toolkit/set/config.json` atau menggunakan perintah `.set locale <id/en>` langsung dari WhatsApp.
 
 ---
 
