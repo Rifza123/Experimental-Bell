@@ -2,7 +2,7 @@ const { default: WebSocket } = await import('ws');
 const { prepareWAMessageMedia } = await import('@whiskeysockets/baileys/lib/Utils/messages.js');
 const fs = await import('fs');
 
-let pkgVer = '2.6.0';
+let pkgVer = '2.7.0';
 try {
   let pkgData = JSON.parse(fs.default.readFileSync('./package.json', 'utf8'));
   if (pkgData?.version) pkgVer = pkgData.version;
@@ -593,6 +593,7 @@ function livechart({ Exp } = {}) {
                     use: 0,
                     maxUse: 1,
                   };
+                  Data.pendingReleaseVersion = rel.version;
                 }
               }
             }

@@ -1890,6 +1890,7 @@ export default async function on({ cht, Exp, store, ev, is }) {
               use: 0,
               maxUse: 1,
             };
+            Data.pendingReleaseVersion = updateInfo.latestVersion;
           }
           return sentMsg;
         } catch (err) {
@@ -2024,6 +2025,24 @@ export default async function on({ cht, Exp, store, ev, is }) {
           await cht.edit(text, keys[sender]);
           await sleep(750);
         }
+
+        try {
+          let targetVer = pending?.latestVersion || updateInfo?.latestVersion || Data.pendingReleaseVersion;
+          if (!targetVer) {
+            let chk = await global.checkUpdate?.().catch(() => null);
+            if (chk?.latestVersion) targetVer = chk.latestVersion;
+          }
+          if (targetVer) {
+            let pkgPath = './package.json';
+            if (fs.existsSync(pkgPath)) {
+              let pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+              if (pkgJson.version !== targetVer) {
+                pkgJson.version = targetVer;
+                fs.writeFileSync(pkgPath, JSON.stringify(pkgJson, null, 2));
+              }
+            }
+          }
+        } catch {}
 
         if (failed.length > 12) text += failed;
         await cht.edit(text, keys[sender]);

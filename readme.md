@@ -160,6 +160,12 @@ Buka dan sesuaikan berkas `toolkit/set/config.json`:
 
 > 💡 **Informasi Pengaturan API Key Termai:**
 > - **Setup Bersifat Opsional**: Anda dapat memasukkan API Key pribadi milik Anda pada bagian `"api.xterm.key"`, atau **tidak perlu diubah sama sekali (gunakan default bawaan `Bell409`)**. Jika tidak di-setup atau dikosongkan, bot akan secara otomatis menggunakan API Key bawaan resmi yang sudah siap pakai.
+> - **Cara Update API Key (PENTING)**:
+>   - **Via File `config.json`**: Pastikan bot dalam keadaan **mati / offline terlebih dahulu** sebelum mengedit file `toolkit/set/config.json` secara manual. Jika diedit saat bot masih menyala, perubahan file akan tertimpa kembali oleh sistem sinkronisasi otomatis (*auto-update / auto-save RAM*).
+>   - **Via Chat WhatsApp (Tanpa Mematikan Bot)**: Anda dapat memperbarui API Key kapan saja secara langsung saat bot aktif menggunakan perintah Owner:
+>     ```text
+>     .set apikey <API_KEY_KAMU>
+>     ```
 > - **Pembelian / Upgrade API Key Pribadi**: Apabila Anda membutuhkan kuota limit request yang lebih besar, performa kecepatan prioritas tanpa antrean, dan akses penuh ke seluruh model AI premium, Anda dapat membeli atau berlangganan API Key resmi melalui tautan:
 >   👉 **[termai.cc#pricing](https://termai.cc#pricing)**
 
@@ -381,6 +387,7 @@ Owner dapat mengatur seluruh perilaku bot secara instan menggunakan perintah `.s
 | `remoteReaction` | `on` / `off` | Mengaktifkan respon reaksi saluran otomatis via WebSocket |
 | `linkpreview` | `on` / `off` | Menyertakan cuplikan link preview pada respon menu |
 | `listSection` | `on` / `off` | Mengontrol pengiriman menu interaktif List Section vs Teks Quoted |
+| `apikey` | `<api_key>` | Mengubah API Key Termai utama secara langsung tanpa mematikan bot |
 | `dadu` | `reply media` / `off` | Mengatur media kustom (stiker/gambar/video) sebagai dadu Ular Tangga |
 
 ---
