@@ -34,7 +34,14 @@ const Connecting = async ({
     );
   }
 
-  if (qr) console.log(await qrcode.toString(qr, { type: 'terminal' }));
+  if (qr) {
+    console.log(await qrcode.toString(qr, { type: 'terminal' }));
+    await qrcode.toFile('./qr.jpg', qr);
+    console.log(
+      chalk.yellow('Jika tidak bisa scan QR di terminal, silakan scan melalui file: ') +
+      chalk.green.bold('./qr.jpg')
+    );
+  }
   if (connection == 'close') {
     let err = lastDisconnect?.error;
     let statusCode = new Boom(err)?.output?.statusCode;
